@@ -30,11 +30,37 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen> {
   );
 
   bool _hasScanned = false;
+  bool _externalScannerMode = false;
+  final _externalController = TextEditingController();
+  final _externalFocusNode = FocusNode();
 
   @override
   void dispose() {
     _cameraController.dispose();
+    _externalController.dispose();
+    _externalFocusNode.dispose();
     super.dispose();
+  }
+
+  void _toggleExternalScannerMode() {
+    setState(() {
+      _externalScannerMode = !_externalScannerMode;
+      if (_externalScannerMode) {
+        _cameraController.stop();
+        // Delay focus request to after the build
+        Future.microtask(() => _externalFocusNode.requestFocus());
+      } else {
+        _cameraController.start();
+        _hasScanned = false;
+      }
+    });
+  }
+
+  void _onExternalBarcodeSubmitted(String barcode) {
+    if (barcode.trim().isEmpty) return;
+    _externalController.clear();
+    HapticFeedback.mediumImpact();
+    ref.read(scannerProvider.notifier).onBarcodeScanned(barcode.trim());
   }
 
   void _onBarcodeDetected(BarcodeCapture capture) {
@@ -208,63 +234,164 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen> {
               );
             },
           ),
-          // Manual entry
+          // External scanner mode toggle (Bluetooth/USB)
           IconButton(
-            icon: const Icon(Icons.keyboard),
-            onPressed: _showManualEntryDialog,
-            tooltip: 'Enter barcode manually',
+            icon: Icon(
+              _externalScannerMode ? Icons.camera_alt : Icons.bluetooth,
+            ),
+            onPressed: _toggleExternalScannerMode,
+            tooltip: _externalScannerMode
+                ? 'Switch to camera'
+                : 'Bluetooth/USB scanner',
           ),
+          // Manual entry
+          if (!_externalScannerMode)
+            IconButton(
+              icon: const Icon(Icons.keyboard),
+              onPressed: _showManualEntryDialog,
+              tooltip: 'Enter barcode manually',
+            ),
         ],
       ),
-      body: Stack(
-        children: [
-          // Camera preview with permission handling
-          MobileScanner(
-            controller: _cameraController,
-            onDetect: _onBarcodeDetected,
-            errorBuilder: (context, error) {
-              if (error.errorCode == MobileScannerErrorCode.permissionDenied) {
-                return _PermissionDeniedView(
-                  onOpenSettings: () async {
-                    // On most platforms, opening app settings requires a
-                    // platform-specific plugin. Show guidance instead.
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Please grant camera permission in your device '
-                            'settings.',
-                          ),
-                          duration: Duration(seconds: 5),
+      body: _externalScannerMode
+          ? _buildExternalScannerBody(scannerState)
+          : _buildCameraBody(scannerState),
+    );
+  }
+
+  Widget _buildCameraBody(ScannerState scannerState) {
+    return Stack(
+      children: [
+        MobileScanner(
+          controller: _cameraController,
+          onDetect: _onBarcodeDetected,
+          errorBuilder: (context, error) {
+            if (error.errorCode == MobileScannerErrorCode.permissionDenied) {
+              return _PermissionDeniedView(
+                onOpenSettings: () async {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Please grant camera permission in your device '
+                          'settings.',
                         ),
-                      );
-                    }
-                  },
-                );
-              }
-              return Center(
+                        duration: Duration(seconds: 5),
+                      ),
+                    );
+                  }
+                },
+              );
+            }
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.error, color: Colors.white, size: 48),
+                  const SizedBox(height: 16),
+                  Text(
+                    error.errorCode.message,
+                    style: const TextStyle(color: Colors.white),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+        const ScanOverlay(),
+        if (scannerState.state == ScanState.lookingUp)
+          Container(
+            color: Colors.black54,
+            child: const LoadingIndicator(message: 'Looking up metadata...'),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildExternalScannerBody(ScannerState scannerState) {
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.bluetooth_searching,
+            size: 64,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Bluetooth / USB Scanner Mode',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Scan a barcode with your external scanner, or type it below',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.outline,
+                ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: 400,
+            child: TextField(
+              controller: _externalController,
+              focusNode: _externalFocusNode,
+              autofocus: true,
+              decoration: const InputDecoration(
+                hintText: 'Barcode / ISBN',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.qr_code),
+              ),
+              onSubmitted: _onExternalBarcodeSubmitted,
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[\dXx]')),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          if (scannerState.state == ScanState.lookingUp)
+            const LoadingIndicator(message: 'Looking up metadata...'),
+          if (scannerState.state == ScanState.error)
+            Text(
+              scannerState.error ?? 'Unknown error',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.error,
+              ),
+            ),
+          if (scannerState.state == ScanState.duplicate)
+            Card(
+              color: Theme.of(context).colorScheme.errorContainer,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.error, color: Colors.white, size: 48),
-                    const SizedBox(height: 16),
-                    Text(
-                      error.errorCode.message,
-                      style: const TextStyle(color: Colors.white),
-                      textAlign: TextAlign.center,
+                    const Text(
+                        'This barcode already exists in your collection.'),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            ref.read(scannerProvider.notifier).reset();
+                            _externalController.clear();
+                            _externalFocusNode.requestFocus();
+                          },
+                          child: const Text('Scan again'),
+                        ),
+                        const SizedBox(width: 8),
+                        FilledButton(
+                          onPressed: () => context.go('/scan/confirm'),
+                          child: const Text('Add anyway'),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              );
-            },
-          ),
-          // Scan overlay
-          const ScanOverlay(),
-          // Loading indicator when looking up metadata
-          if (scannerState.state == ScanState.lookingUp)
-            Container(
-              color: Colors.black54,
-              child: const LoadingIndicator(message: 'Looking up metadata...'),
+              ),
             ),
         ],
       ),
