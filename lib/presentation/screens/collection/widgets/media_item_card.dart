@@ -10,11 +10,13 @@ class MediaItemCard extends StatelessWidget {
     required this.item,
     required this.onTap,
     this.isLent = false,
+    this.isRipped = false,
   });
 
   final MediaItem item;
   final VoidCallback onTap;
   final bool isLent;
+  final bool isRipped;
 
   Color _typeColour(MediaType type) => switch (type) {
         MediaType.film => AppColors.filmColor,
@@ -125,6 +127,23 @@ class MediaItemCard extends StatelessWidget {
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                     ),
+                  ),
+                ),
+              ),
+            if (isRipped)
+              Positioned(
+                top: 6,
+                left: 6,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.85),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: const Icon(
+                    Icons.album,
+                    color: Colors.white,
+                    size: 14,
                   ),
                 ),
               ),

@@ -41,6 +41,13 @@ class FilterBar extends ConsumerWidget {
             onSelected: (_) =>
                 ref.read(collectionFilterProvider.notifier).toggleLentOnly(),
           ),
+          const SizedBox(width: 8),
+          FilterChip(
+            label: const Text('Ripped'),
+            selected: filter.rippedOnly,
+            onSelected: (_) =>
+                ref.read(collectionFilterProvider.notifier).toggleRippedOnly(),
+          ),
         ],
       ),
     );

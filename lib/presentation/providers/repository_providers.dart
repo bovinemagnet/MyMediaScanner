@@ -14,6 +14,7 @@ import 'package:mymediascanner/data/repositories/tag_repository_impl.dart';
 import 'package:mymediascanner/data/repositories/shelf_repository_impl.dart';
 import 'package:mymediascanner/data/repositories/borrower_repository_impl.dart';
 import 'package:mymediascanner/data/repositories/loan_repository_impl.dart';
+import 'package:mymediascanner/data/repositories/rip_library_repository_impl.dart';
 import 'package:mymediascanner/domain/repositories/i_media_item_repository.dart';
 import 'package:mymediascanner/domain/repositories/i_metadata_repository.dart';
 import 'package:mymediascanner/domain/repositories/i_sync_repository.dart';
@@ -21,6 +22,7 @@ import 'package:mymediascanner/domain/repositories/i_tag_repository.dart';
 import 'package:mymediascanner/domain/repositories/i_shelf_repository.dart';
 import 'package:mymediascanner/domain/repositories/i_borrower_repository.dart';
 import 'package:mymediascanner/domain/repositories/i_loan_repository.dart';
+import 'package:mymediascanner/domain/repositories/i_rip_library_repository.dart';
 import 'package:mymediascanner/presentation/providers/database_provider.dart';
 import 'package:mymediascanner/presentation/providers/settings_provider.dart';
 
@@ -89,6 +91,12 @@ final borrowerRepositoryProvider = Provider<IBorrowerRepository>((ref) {
 final loanRepositoryProvider = Provider<ILoanRepository>((ref) {
   return LoanRepositoryImpl(
     loansDao: ref.watch(loansDaoProvider),
+  );
+});
+
+final ripLibraryRepositoryProvider = Provider<IRipLibraryRepository>((ref) {
+  return RipLibraryRepositoryImpl(
+    ripLibraryDao: ref.watch(ripLibraryDaoProvider),
   );
 });
 

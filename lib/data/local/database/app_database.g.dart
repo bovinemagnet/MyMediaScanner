@@ -4418,6 +4418,1806 @@ class LoansTableCompanion extends UpdateCompanion<LoansTableData> {
   }
 }
 
+class $RipAlbumsTableTable extends RipAlbumsTable
+    with TableInfo<$RipAlbumsTableTable, RipAlbumsTableData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RipAlbumsTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _libraryPathMeta = const VerificationMeta(
+    'libraryPath',
+  );
+  @override
+  late final GeneratedColumn<String> libraryPath = GeneratedColumn<String>(
+    'library_path',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _artistMeta = const VerificationMeta('artist');
+  @override
+  late final GeneratedColumn<String> artist = GeneratedColumn<String>(
+    'artist',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _albumTitleMeta = const VerificationMeta(
+    'albumTitle',
+  );
+  @override
+  late final GeneratedColumn<String> albumTitle = GeneratedColumn<String>(
+    'album_title',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _barcodeMeta = const VerificationMeta(
+    'barcode',
+  );
+  @override
+  late final GeneratedColumn<String> barcode = GeneratedColumn<String>(
+    'barcode',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _trackCountMeta = const VerificationMeta(
+    'trackCount',
+  );
+  @override
+  late final GeneratedColumn<int> trackCount = GeneratedColumn<int>(
+    'track_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _discCountMeta = const VerificationMeta(
+    'discCount',
+  );
+  @override
+  late final GeneratedColumn<int> discCount = GeneratedColumn<int>(
+    'disc_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _totalSizeBytesMeta = const VerificationMeta(
+    'totalSizeBytes',
+  );
+  @override
+  late final GeneratedColumn<int> totalSizeBytes = GeneratedColumn<int>(
+    'total_size_bytes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _mediaItemIdMeta = const VerificationMeta(
+    'mediaItemId',
+  );
+  @override
+  late final GeneratedColumn<String> mediaItemId = GeneratedColumn<String>(
+    'media_item_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES media_items (id)',
+    ),
+  );
+  static const VerificationMeta _lastScannedAtMeta = const VerificationMeta(
+    'lastScannedAt',
+  );
+  @override
+  late final GeneratedColumn<int> lastScannedAt = GeneratedColumn<int>(
+    'last_scanned_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _deletedMeta = const VerificationMeta(
+    'deleted',
+  );
+  @override
+  late final GeneratedColumn<int> deleted = GeneratedColumn<int>(
+    'deleted',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    libraryPath,
+    artist,
+    albumTitle,
+    barcode,
+    trackCount,
+    discCount,
+    totalSizeBytes,
+    mediaItemId,
+    lastScannedAt,
+    updatedAt,
+    deleted,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'rip_albums';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RipAlbumsTableData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('library_path')) {
+      context.handle(
+        _libraryPathMeta,
+        libraryPath.isAcceptableOrUnknown(
+          data['library_path']!,
+          _libraryPathMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_libraryPathMeta);
+    }
+    if (data.containsKey('artist')) {
+      context.handle(
+        _artistMeta,
+        artist.isAcceptableOrUnknown(data['artist']!, _artistMeta),
+      );
+    }
+    if (data.containsKey('album_title')) {
+      context.handle(
+        _albumTitleMeta,
+        albumTitle.isAcceptableOrUnknown(data['album_title']!, _albumTitleMeta),
+      );
+    }
+    if (data.containsKey('barcode')) {
+      context.handle(
+        _barcodeMeta,
+        barcode.isAcceptableOrUnknown(data['barcode']!, _barcodeMeta),
+      );
+    }
+    if (data.containsKey('track_count')) {
+      context.handle(
+        _trackCountMeta,
+        trackCount.isAcceptableOrUnknown(data['track_count']!, _trackCountMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_trackCountMeta);
+    }
+    if (data.containsKey('disc_count')) {
+      context.handle(
+        _discCountMeta,
+        discCount.isAcceptableOrUnknown(data['disc_count']!, _discCountMeta),
+      );
+    }
+    if (data.containsKey('total_size_bytes')) {
+      context.handle(
+        _totalSizeBytesMeta,
+        totalSizeBytes.isAcceptableOrUnknown(
+          data['total_size_bytes']!,
+          _totalSizeBytesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_totalSizeBytesMeta);
+    }
+    if (data.containsKey('media_item_id')) {
+      context.handle(
+        _mediaItemIdMeta,
+        mediaItemId.isAcceptableOrUnknown(
+          data['media_item_id']!,
+          _mediaItemIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('last_scanned_at')) {
+      context.handle(
+        _lastScannedAtMeta,
+        lastScannedAt.isAcceptableOrUnknown(
+          data['last_scanned_at']!,
+          _lastScannedAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_lastScannedAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('deleted')) {
+      context.handle(
+        _deletedMeta,
+        deleted.isAcceptableOrUnknown(data['deleted']!, _deletedMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  RipAlbumsTableData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RipAlbumsTableData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      libraryPath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}library_path'],
+      )!,
+      artist: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}artist'],
+      ),
+      albumTitle: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}album_title'],
+      ),
+      barcode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}barcode'],
+      ),
+      trackCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}track_count'],
+      )!,
+      discCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}disc_count'],
+      )!,
+      totalSizeBytes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}total_size_bytes'],
+      )!,
+      mediaItemId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}media_item_id'],
+      ),
+      lastScannedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}last_scanned_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      deleted: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}deleted'],
+      )!,
+    );
+  }
+
+  @override
+  $RipAlbumsTableTable createAlias(String alias) {
+    return $RipAlbumsTableTable(attachedDatabase, alias);
+  }
+}
+
+class RipAlbumsTableData extends DataClass
+    implements Insertable<RipAlbumsTableData> {
+  final String id;
+  final String libraryPath;
+  final String? artist;
+  final String? albumTitle;
+  final String? barcode;
+  final int trackCount;
+  final int discCount;
+  final int totalSizeBytes;
+  final String? mediaItemId;
+  final int lastScannedAt;
+  final int updatedAt;
+  final int deleted;
+  const RipAlbumsTableData({
+    required this.id,
+    required this.libraryPath,
+    this.artist,
+    this.albumTitle,
+    this.barcode,
+    required this.trackCount,
+    required this.discCount,
+    required this.totalSizeBytes,
+    this.mediaItemId,
+    required this.lastScannedAt,
+    required this.updatedAt,
+    required this.deleted,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['library_path'] = Variable<String>(libraryPath);
+    if (!nullToAbsent || artist != null) {
+      map['artist'] = Variable<String>(artist);
+    }
+    if (!nullToAbsent || albumTitle != null) {
+      map['album_title'] = Variable<String>(albumTitle);
+    }
+    if (!nullToAbsent || barcode != null) {
+      map['barcode'] = Variable<String>(barcode);
+    }
+    map['track_count'] = Variable<int>(trackCount);
+    map['disc_count'] = Variable<int>(discCount);
+    map['total_size_bytes'] = Variable<int>(totalSizeBytes);
+    if (!nullToAbsent || mediaItemId != null) {
+      map['media_item_id'] = Variable<String>(mediaItemId);
+    }
+    map['last_scanned_at'] = Variable<int>(lastScannedAt);
+    map['updated_at'] = Variable<int>(updatedAt);
+    map['deleted'] = Variable<int>(deleted);
+    return map;
+  }
+
+  RipAlbumsTableCompanion toCompanion(bool nullToAbsent) {
+    return RipAlbumsTableCompanion(
+      id: Value(id),
+      libraryPath: Value(libraryPath),
+      artist: artist == null && nullToAbsent
+          ? const Value.absent()
+          : Value(artist),
+      albumTitle: albumTitle == null && nullToAbsent
+          ? const Value.absent()
+          : Value(albumTitle),
+      barcode: barcode == null && nullToAbsent
+          ? const Value.absent()
+          : Value(barcode),
+      trackCount: Value(trackCount),
+      discCount: Value(discCount),
+      totalSizeBytes: Value(totalSizeBytes),
+      mediaItemId: mediaItemId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(mediaItemId),
+      lastScannedAt: Value(lastScannedAt),
+      updatedAt: Value(updatedAt),
+      deleted: Value(deleted),
+    );
+  }
+
+  factory RipAlbumsTableData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RipAlbumsTableData(
+      id: serializer.fromJson<String>(json['id']),
+      libraryPath: serializer.fromJson<String>(json['libraryPath']),
+      artist: serializer.fromJson<String?>(json['artist']),
+      albumTitle: serializer.fromJson<String?>(json['albumTitle']),
+      barcode: serializer.fromJson<String?>(json['barcode']),
+      trackCount: serializer.fromJson<int>(json['trackCount']),
+      discCount: serializer.fromJson<int>(json['discCount']),
+      totalSizeBytes: serializer.fromJson<int>(json['totalSizeBytes']),
+      mediaItemId: serializer.fromJson<String?>(json['mediaItemId']),
+      lastScannedAt: serializer.fromJson<int>(json['lastScannedAt']),
+      updatedAt: serializer.fromJson<int>(json['updatedAt']),
+      deleted: serializer.fromJson<int>(json['deleted']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'libraryPath': serializer.toJson<String>(libraryPath),
+      'artist': serializer.toJson<String?>(artist),
+      'albumTitle': serializer.toJson<String?>(albumTitle),
+      'barcode': serializer.toJson<String?>(barcode),
+      'trackCount': serializer.toJson<int>(trackCount),
+      'discCount': serializer.toJson<int>(discCount),
+      'totalSizeBytes': serializer.toJson<int>(totalSizeBytes),
+      'mediaItemId': serializer.toJson<String?>(mediaItemId),
+      'lastScannedAt': serializer.toJson<int>(lastScannedAt),
+      'updatedAt': serializer.toJson<int>(updatedAt),
+      'deleted': serializer.toJson<int>(deleted),
+    };
+  }
+
+  RipAlbumsTableData copyWith({
+    String? id,
+    String? libraryPath,
+    Value<String?> artist = const Value.absent(),
+    Value<String?> albumTitle = const Value.absent(),
+    Value<String?> barcode = const Value.absent(),
+    int? trackCount,
+    int? discCount,
+    int? totalSizeBytes,
+    Value<String?> mediaItemId = const Value.absent(),
+    int? lastScannedAt,
+    int? updatedAt,
+    int? deleted,
+  }) => RipAlbumsTableData(
+    id: id ?? this.id,
+    libraryPath: libraryPath ?? this.libraryPath,
+    artist: artist.present ? artist.value : this.artist,
+    albumTitle: albumTitle.present ? albumTitle.value : this.albumTitle,
+    barcode: barcode.present ? barcode.value : this.barcode,
+    trackCount: trackCount ?? this.trackCount,
+    discCount: discCount ?? this.discCount,
+    totalSizeBytes: totalSizeBytes ?? this.totalSizeBytes,
+    mediaItemId: mediaItemId.present ? mediaItemId.value : this.mediaItemId,
+    lastScannedAt: lastScannedAt ?? this.lastScannedAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    deleted: deleted ?? this.deleted,
+  );
+  RipAlbumsTableData copyWithCompanion(RipAlbumsTableCompanion data) {
+    return RipAlbumsTableData(
+      id: data.id.present ? data.id.value : this.id,
+      libraryPath: data.libraryPath.present
+          ? data.libraryPath.value
+          : this.libraryPath,
+      artist: data.artist.present ? data.artist.value : this.artist,
+      albumTitle: data.albumTitle.present
+          ? data.albumTitle.value
+          : this.albumTitle,
+      barcode: data.barcode.present ? data.barcode.value : this.barcode,
+      trackCount: data.trackCount.present
+          ? data.trackCount.value
+          : this.trackCount,
+      discCount: data.discCount.present ? data.discCount.value : this.discCount,
+      totalSizeBytes: data.totalSizeBytes.present
+          ? data.totalSizeBytes.value
+          : this.totalSizeBytes,
+      mediaItemId: data.mediaItemId.present
+          ? data.mediaItemId.value
+          : this.mediaItemId,
+      lastScannedAt: data.lastScannedAt.present
+          ? data.lastScannedAt.value
+          : this.lastScannedAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      deleted: data.deleted.present ? data.deleted.value : this.deleted,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RipAlbumsTableData(')
+          ..write('id: $id, ')
+          ..write('libraryPath: $libraryPath, ')
+          ..write('artist: $artist, ')
+          ..write('albumTitle: $albumTitle, ')
+          ..write('barcode: $barcode, ')
+          ..write('trackCount: $trackCount, ')
+          ..write('discCount: $discCount, ')
+          ..write('totalSizeBytes: $totalSizeBytes, ')
+          ..write('mediaItemId: $mediaItemId, ')
+          ..write('lastScannedAt: $lastScannedAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deleted: $deleted')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    libraryPath,
+    artist,
+    albumTitle,
+    barcode,
+    trackCount,
+    discCount,
+    totalSizeBytes,
+    mediaItemId,
+    lastScannedAt,
+    updatedAt,
+    deleted,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RipAlbumsTableData &&
+          other.id == this.id &&
+          other.libraryPath == this.libraryPath &&
+          other.artist == this.artist &&
+          other.albumTitle == this.albumTitle &&
+          other.barcode == this.barcode &&
+          other.trackCount == this.trackCount &&
+          other.discCount == this.discCount &&
+          other.totalSizeBytes == this.totalSizeBytes &&
+          other.mediaItemId == this.mediaItemId &&
+          other.lastScannedAt == this.lastScannedAt &&
+          other.updatedAt == this.updatedAt &&
+          other.deleted == this.deleted);
+}
+
+class RipAlbumsTableCompanion extends UpdateCompanion<RipAlbumsTableData> {
+  final Value<String> id;
+  final Value<String> libraryPath;
+  final Value<String?> artist;
+  final Value<String?> albumTitle;
+  final Value<String?> barcode;
+  final Value<int> trackCount;
+  final Value<int> discCount;
+  final Value<int> totalSizeBytes;
+  final Value<String?> mediaItemId;
+  final Value<int> lastScannedAt;
+  final Value<int> updatedAt;
+  final Value<int> deleted;
+  final Value<int> rowid;
+  const RipAlbumsTableCompanion({
+    this.id = const Value.absent(),
+    this.libraryPath = const Value.absent(),
+    this.artist = const Value.absent(),
+    this.albumTitle = const Value.absent(),
+    this.barcode = const Value.absent(),
+    this.trackCount = const Value.absent(),
+    this.discCount = const Value.absent(),
+    this.totalSizeBytes = const Value.absent(),
+    this.mediaItemId = const Value.absent(),
+    this.lastScannedAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.deleted = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RipAlbumsTableCompanion.insert({
+    required String id,
+    required String libraryPath,
+    this.artist = const Value.absent(),
+    this.albumTitle = const Value.absent(),
+    this.barcode = const Value.absent(),
+    required int trackCount,
+    this.discCount = const Value.absent(),
+    required int totalSizeBytes,
+    this.mediaItemId = const Value.absent(),
+    required int lastScannedAt,
+    required int updatedAt,
+    this.deleted = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       libraryPath = Value(libraryPath),
+       trackCount = Value(trackCount),
+       totalSizeBytes = Value(totalSizeBytes),
+       lastScannedAt = Value(lastScannedAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<RipAlbumsTableData> custom({
+    Expression<String>? id,
+    Expression<String>? libraryPath,
+    Expression<String>? artist,
+    Expression<String>? albumTitle,
+    Expression<String>? barcode,
+    Expression<int>? trackCount,
+    Expression<int>? discCount,
+    Expression<int>? totalSizeBytes,
+    Expression<String>? mediaItemId,
+    Expression<int>? lastScannedAt,
+    Expression<int>? updatedAt,
+    Expression<int>? deleted,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (libraryPath != null) 'library_path': libraryPath,
+      if (artist != null) 'artist': artist,
+      if (albumTitle != null) 'album_title': albumTitle,
+      if (barcode != null) 'barcode': barcode,
+      if (trackCount != null) 'track_count': trackCount,
+      if (discCount != null) 'disc_count': discCount,
+      if (totalSizeBytes != null) 'total_size_bytes': totalSizeBytes,
+      if (mediaItemId != null) 'media_item_id': mediaItemId,
+      if (lastScannedAt != null) 'last_scanned_at': lastScannedAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (deleted != null) 'deleted': deleted,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RipAlbumsTableCompanion copyWith({
+    Value<String>? id,
+    Value<String>? libraryPath,
+    Value<String?>? artist,
+    Value<String?>? albumTitle,
+    Value<String?>? barcode,
+    Value<int>? trackCount,
+    Value<int>? discCount,
+    Value<int>? totalSizeBytes,
+    Value<String?>? mediaItemId,
+    Value<int>? lastScannedAt,
+    Value<int>? updatedAt,
+    Value<int>? deleted,
+    Value<int>? rowid,
+  }) {
+    return RipAlbumsTableCompanion(
+      id: id ?? this.id,
+      libraryPath: libraryPath ?? this.libraryPath,
+      artist: artist ?? this.artist,
+      albumTitle: albumTitle ?? this.albumTitle,
+      barcode: barcode ?? this.barcode,
+      trackCount: trackCount ?? this.trackCount,
+      discCount: discCount ?? this.discCount,
+      totalSizeBytes: totalSizeBytes ?? this.totalSizeBytes,
+      mediaItemId: mediaItemId ?? this.mediaItemId,
+      lastScannedAt: lastScannedAt ?? this.lastScannedAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      deleted: deleted ?? this.deleted,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (libraryPath.present) {
+      map['library_path'] = Variable<String>(libraryPath.value);
+    }
+    if (artist.present) {
+      map['artist'] = Variable<String>(artist.value);
+    }
+    if (albumTitle.present) {
+      map['album_title'] = Variable<String>(albumTitle.value);
+    }
+    if (barcode.present) {
+      map['barcode'] = Variable<String>(barcode.value);
+    }
+    if (trackCount.present) {
+      map['track_count'] = Variable<int>(trackCount.value);
+    }
+    if (discCount.present) {
+      map['disc_count'] = Variable<int>(discCount.value);
+    }
+    if (totalSizeBytes.present) {
+      map['total_size_bytes'] = Variable<int>(totalSizeBytes.value);
+    }
+    if (mediaItemId.present) {
+      map['media_item_id'] = Variable<String>(mediaItemId.value);
+    }
+    if (lastScannedAt.present) {
+      map['last_scanned_at'] = Variable<int>(lastScannedAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<int>(updatedAt.value);
+    }
+    if (deleted.present) {
+      map['deleted'] = Variable<int>(deleted.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RipAlbumsTableCompanion(')
+          ..write('id: $id, ')
+          ..write('libraryPath: $libraryPath, ')
+          ..write('artist: $artist, ')
+          ..write('albumTitle: $albumTitle, ')
+          ..write('barcode: $barcode, ')
+          ..write('trackCount: $trackCount, ')
+          ..write('discCount: $discCount, ')
+          ..write('totalSizeBytes: $totalSizeBytes, ')
+          ..write('mediaItemId: $mediaItemId, ')
+          ..write('lastScannedAt: $lastScannedAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deleted: $deleted, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $RipTracksTableTable extends RipTracksTable
+    with TableInfo<$RipTracksTableTable, RipTracksTableData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RipTracksTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _ripAlbumIdMeta = const VerificationMeta(
+    'ripAlbumId',
+  );
+  @override
+  late final GeneratedColumn<String> ripAlbumId = GeneratedColumn<String>(
+    'rip_album_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES rip_albums (id)',
+    ),
+  );
+  static const VerificationMeta _discNumberMeta = const VerificationMeta(
+    'discNumber',
+  );
+  @override
+  late final GeneratedColumn<int> discNumber = GeneratedColumn<int>(
+    'disc_number',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _trackNumberMeta = const VerificationMeta(
+    'trackNumber',
+  );
+  @override
+  late final GeneratedColumn<int> trackNumber = GeneratedColumn<int>(
+    'track_number',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _filePathMeta = const VerificationMeta(
+    'filePath',
+  );
+  @override
+  late final GeneratedColumn<String> filePath = GeneratedColumn<String>(
+    'file_path',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _durationMsMeta = const VerificationMeta(
+    'durationMs',
+  );
+  @override
+  late final GeneratedColumn<int> durationMs = GeneratedColumn<int>(
+    'duration_ms',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _fileSizeBytesMeta = const VerificationMeta(
+    'fileSizeBytes',
+  );
+  @override
+  late final GeneratedColumn<int> fileSizeBytes = GeneratedColumn<int>(
+    'file_size_bytes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _accurateripStatusMeta = const VerificationMeta(
+    'accurateripStatus',
+  );
+  @override
+  late final GeneratedColumn<String> accurateripStatus =
+      GeneratedColumn<String>(
+        'accuraterip_status',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _accurateripConfidenceMeta =
+      const VerificationMeta('accurateripConfidence');
+  @override
+  late final GeneratedColumn<int> accurateripConfidence = GeneratedColumn<int>(
+    'accuraterip_confidence',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _accurateripCrcMeta = const VerificationMeta(
+    'accurateripCrc',
+  );
+  @override
+  late final GeneratedColumn<String> accurateripCrc = GeneratedColumn<String>(
+    'accuraterip_crc',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _peakLevelMeta = const VerificationMeta(
+    'peakLevel',
+  );
+  @override
+  late final GeneratedColumn<double> peakLevel = GeneratedColumn<double>(
+    'peak_level',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _trackQualityMeta = const VerificationMeta(
+    'trackQuality',
+  );
+  @override
+  late final GeneratedColumn<double> trackQuality = GeneratedColumn<double>(
+    'track_quality',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _copyCrcMeta = const VerificationMeta(
+    'copyCrc',
+  );
+  @override
+  late final GeneratedColumn<String> copyCrc = GeneratedColumn<String>(
+    'copy_crc',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _clickCountMeta = const VerificationMeta(
+    'clickCount',
+  );
+  @override
+  late final GeneratedColumn<int> clickCount = GeneratedColumn<int>(
+    'click_count',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _ripLogSourceMeta = const VerificationMeta(
+    'ripLogSource',
+  );
+  @override
+  late final GeneratedColumn<String> ripLogSource = GeneratedColumn<String>(
+    'rip_log_source',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _qualityCheckedAtMeta = const VerificationMeta(
+    'qualityCheckedAt',
+  );
+  @override
+  late final GeneratedColumn<int> qualityCheckedAt = GeneratedColumn<int>(
+    'quality_checked_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    ripAlbumId,
+    discNumber,
+    trackNumber,
+    title,
+    filePath,
+    durationMs,
+    fileSizeBytes,
+    updatedAt,
+    accurateripStatus,
+    accurateripConfidence,
+    accurateripCrc,
+    peakLevel,
+    trackQuality,
+    copyCrc,
+    clickCount,
+    ripLogSource,
+    qualityCheckedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'rip_tracks';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RipTracksTableData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('rip_album_id')) {
+      context.handle(
+        _ripAlbumIdMeta,
+        ripAlbumId.isAcceptableOrUnknown(
+          data['rip_album_id']!,
+          _ripAlbumIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ripAlbumIdMeta);
+    }
+    if (data.containsKey('disc_number')) {
+      context.handle(
+        _discNumberMeta,
+        discNumber.isAcceptableOrUnknown(data['disc_number']!, _discNumberMeta),
+      );
+    }
+    if (data.containsKey('track_number')) {
+      context.handle(
+        _trackNumberMeta,
+        trackNumber.isAcceptableOrUnknown(
+          data['track_number']!,
+          _trackNumberMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_trackNumberMeta);
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    }
+    if (data.containsKey('file_path')) {
+      context.handle(
+        _filePathMeta,
+        filePath.isAcceptableOrUnknown(data['file_path']!, _filePathMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_filePathMeta);
+    }
+    if (data.containsKey('duration_ms')) {
+      context.handle(
+        _durationMsMeta,
+        durationMs.isAcceptableOrUnknown(data['duration_ms']!, _durationMsMeta),
+      );
+    }
+    if (data.containsKey('file_size_bytes')) {
+      context.handle(
+        _fileSizeBytesMeta,
+        fileSizeBytes.isAcceptableOrUnknown(
+          data['file_size_bytes']!,
+          _fileSizeBytesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_fileSizeBytesMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('accuraterip_status')) {
+      context.handle(
+        _accurateripStatusMeta,
+        accurateripStatus.isAcceptableOrUnknown(
+          data['accuraterip_status']!,
+          _accurateripStatusMeta,
+        ),
+      );
+    }
+    if (data.containsKey('accuraterip_confidence')) {
+      context.handle(
+        _accurateripConfidenceMeta,
+        accurateripConfidence.isAcceptableOrUnknown(
+          data['accuraterip_confidence']!,
+          _accurateripConfidenceMeta,
+        ),
+      );
+    }
+    if (data.containsKey('accuraterip_crc')) {
+      context.handle(
+        _accurateripCrcMeta,
+        accurateripCrc.isAcceptableOrUnknown(
+          data['accuraterip_crc']!,
+          _accurateripCrcMeta,
+        ),
+      );
+    }
+    if (data.containsKey('peak_level')) {
+      context.handle(
+        _peakLevelMeta,
+        peakLevel.isAcceptableOrUnknown(data['peak_level']!, _peakLevelMeta),
+      );
+    }
+    if (data.containsKey('track_quality')) {
+      context.handle(
+        _trackQualityMeta,
+        trackQuality.isAcceptableOrUnknown(
+          data['track_quality']!,
+          _trackQualityMeta,
+        ),
+      );
+    }
+    if (data.containsKey('copy_crc')) {
+      context.handle(
+        _copyCrcMeta,
+        copyCrc.isAcceptableOrUnknown(data['copy_crc']!, _copyCrcMeta),
+      );
+    }
+    if (data.containsKey('click_count')) {
+      context.handle(
+        _clickCountMeta,
+        clickCount.isAcceptableOrUnknown(data['click_count']!, _clickCountMeta),
+      );
+    }
+    if (data.containsKey('rip_log_source')) {
+      context.handle(
+        _ripLogSourceMeta,
+        ripLogSource.isAcceptableOrUnknown(
+          data['rip_log_source']!,
+          _ripLogSourceMeta,
+        ),
+      );
+    }
+    if (data.containsKey('quality_checked_at')) {
+      context.handle(
+        _qualityCheckedAtMeta,
+        qualityCheckedAt.isAcceptableOrUnknown(
+          data['quality_checked_at']!,
+          _qualityCheckedAtMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  RipTracksTableData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RipTracksTableData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      ripAlbumId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}rip_album_id'],
+      )!,
+      discNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}disc_number'],
+      )!,
+      trackNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}track_number'],
+      )!,
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      ),
+      filePath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}file_path'],
+      )!,
+      durationMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}duration_ms'],
+      ),
+      fileSizeBytes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}file_size_bytes'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      accurateripStatus: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}accuraterip_status'],
+      ),
+      accurateripConfidence: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}accuraterip_confidence'],
+      ),
+      accurateripCrc: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}accuraterip_crc'],
+      ),
+      peakLevel: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}peak_level'],
+      ),
+      trackQuality: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}track_quality'],
+      ),
+      copyCrc: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}copy_crc'],
+      ),
+      clickCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}click_count'],
+      ),
+      ripLogSource: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}rip_log_source'],
+      ),
+      qualityCheckedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}quality_checked_at'],
+      ),
+    );
+  }
+
+  @override
+  $RipTracksTableTable createAlias(String alias) {
+    return $RipTracksTableTable(attachedDatabase, alias);
+  }
+}
+
+class RipTracksTableData extends DataClass
+    implements Insertable<RipTracksTableData> {
+  final String id;
+  final String ripAlbumId;
+  final int discNumber;
+  final int trackNumber;
+  final String? title;
+  final String filePath;
+  final int? durationMs;
+  final int fileSizeBytes;
+  final int updatedAt;
+  final String? accurateripStatus;
+  final int? accurateripConfidence;
+  final String? accurateripCrc;
+  final double? peakLevel;
+  final double? trackQuality;
+  final String? copyCrc;
+  final int? clickCount;
+  final String? ripLogSource;
+  final int? qualityCheckedAt;
+  const RipTracksTableData({
+    required this.id,
+    required this.ripAlbumId,
+    required this.discNumber,
+    required this.trackNumber,
+    this.title,
+    required this.filePath,
+    this.durationMs,
+    required this.fileSizeBytes,
+    required this.updatedAt,
+    this.accurateripStatus,
+    this.accurateripConfidence,
+    this.accurateripCrc,
+    this.peakLevel,
+    this.trackQuality,
+    this.copyCrc,
+    this.clickCount,
+    this.ripLogSource,
+    this.qualityCheckedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['rip_album_id'] = Variable<String>(ripAlbumId);
+    map['disc_number'] = Variable<int>(discNumber);
+    map['track_number'] = Variable<int>(trackNumber);
+    if (!nullToAbsent || title != null) {
+      map['title'] = Variable<String>(title);
+    }
+    map['file_path'] = Variable<String>(filePath);
+    if (!nullToAbsent || durationMs != null) {
+      map['duration_ms'] = Variable<int>(durationMs);
+    }
+    map['file_size_bytes'] = Variable<int>(fileSizeBytes);
+    map['updated_at'] = Variable<int>(updatedAt);
+    if (!nullToAbsent || accurateripStatus != null) {
+      map['accuraterip_status'] = Variable<String>(accurateripStatus);
+    }
+    if (!nullToAbsent || accurateripConfidence != null) {
+      map['accuraterip_confidence'] = Variable<int>(accurateripConfidence);
+    }
+    if (!nullToAbsent || accurateripCrc != null) {
+      map['accuraterip_crc'] = Variable<String>(accurateripCrc);
+    }
+    if (!nullToAbsent || peakLevel != null) {
+      map['peak_level'] = Variable<double>(peakLevel);
+    }
+    if (!nullToAbsent || trackQuality != null) {
+      map['track_quality'] = Variable<double>(trackQuality);
+    }
+    if (!nullToAbsent || copyCrc != null) {
+      map['copy_crc'] = Variable<String>(copyCrc);
+    }
+    if (!nullToAbsent || clickCount != null) {
+      map['click_count'] = Variable<int>(clickCount);
+    }
+    if (!nullToAbsent || ripLogSource != null) {
+      map['rip_log_source'] = Variable<String>(ripLogSource);
+    }
+    if (!nullToAbsent || qualityCheckedAt != null) {
+      map['quality_checked_at'] = Variable<int>(qualityCheckedAt);
+    }
+    return map;
+  }
+
+  RipTracksTableCompanion toCompanion(bool nullToAbsent) {
+    return RipTracksTableCompanion(
+      id: Value(id),
+      ripAlbumId: Value(ripAlbumId),
+      discNumber: Value(discNumber),
+      trackNumber: Value(trackNumber),
+      title: title == null && nullToAbsent
+          ? const Value.absent()
+          : Value(title),
+      filePath: Value(filePath),
+      durationMs: durationMs == null && nullToAbsent
+          ? const Value.absent()
+          : Value(durationMs),
+      fileSizeBytes: Value(fileSizeBytes),
+      updatedAt: Value(updatedAt),
+      accurateripStatus: accurateripStatus == null && nullToAbsent
+          ? const Value.absent()
+          : Value(accurateripStatus),
+      accurateripConfidence: accurateripConfidence == null && nullToAbsent
+          ? const Value.absent()
+          : Value(accurateripConfidence),
+      accurateripCrc: accurateripCrc == null && nullToAbsent
+          ? const Value.absent()
+          : Value(accurateripCrc),
+      peakLevel: peakLevel == null && nullToAbsent
+          ? const Value.absent()
+          : Value(peakLevel),
+      trackQuality: trackQuality == null && nullToAbsent
+          ? const Value.absent()
+          : Value(trackQuality),
+      copyCrc: copyCrc == null && nullToAbsent
+          ? const Value.absent()
+          : Value(copyCrc),
+      clickCount: clickCount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(clickCount),
+      ripLogSource: ripLogSource == null && nullToAbsent
+          ? const Value.absent()
+          : Value(ripLogSource),
+      qualityCheckedAt: qualityCheckedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(qualityCheckedAt),
+    );
+  }
+
+  factory RipTracksTableData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RipTracksTableData(
+      id: serializer.fromJson<String>(json['id']),
+      ripAlbumId: serializer.fromJson<String>(json['ripAlbumId']),
+      discNumber: serializer.fromJson<int>(json['discNumber']),
+      trackNumber: serializer.fromJson<int>(json['trackNumber']),
+      title: serializer.fromJson<String?>(json['title']),
+      filePath: serializer.fromJson<String>(json['filePath']),
+      durationMs: serializer.fromJson<int?>(json['durationMs']),
+      fileSizeBytes: serializer.fromJson<int>(json['fileSizeBytes']),
+      updatedAt: serializer.fromJson<int>(json['updatedAt']),
+      accurateripStatus: serializer.fromJson<String?>(
+        json['accurateripStatus'],
+      ),
+      accurateripConfidence: serializer.fromJson<int?>(
+        json['accurateripConfidence'],
+      ),
+      accurateripCrc: serializer.fromJson<String?>(json['accurateripCrc']),
+      peakLevel: serializer.fromJson<double?>(json['peakLevel']),
+      trackQuality: serializer.fromJson<double?>(json['trackQuality']),
+      copyCrc: serializer.fromJson<String?>(json['copyCrc']),
+      clickCount: serializer.fromJson<int?>(json['clickCount']),
+      ripLogSource: serializer.fromJson<String?>(json['ripLogSource']),
+      qualityCheckedAt: serializer.fromJson<int?>(json['qualityCheckedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'ripAlbumId': serializer.toJson<String>(ripAlbumId),
+      'discNumber': serializer.toJson<int>(discNumber),
+      'trackNumber': serializer.toJson<int>(trackNumber),
+      'title': serializer.toJson<String?>(title),
+      'filePath': serializer.toJson<String>(filePath),
+      'durationMs': serializer.toJson<int?>(durationMs),
+      'fileSizeBytes': serializer.toJson<int>(fileSizeBytes),
+      'updatedAt': serializer.toJson<int>(updatedAt),
+      'accurateripStatus': serializer.toJson<String?>(accurateripStatus),
+      'accurateripConfidence': serializer.toJson<int?>(accurateripConfidence),
+      'accurateripCrc': serializer.toJson<String?>(accurateripCrc),
+      'peakLevel': serializer.toJson<double?>(peakLevel),
+      'trackQuality': serializer.toJson<double?>(trackQuality),
+      'copyCrc': serializer.toJson<String?>(copyCrc),
+      'clickCount': serializer.toJson<int?>(clickCount),
+      'ripLogSource': serializer.toJson<String?>(ripLogSource),
+      'qualityCheckedAt': serializer.toJson<int?>(qualityCheckedAt),
+    };
+  }
+
+  RipTracksTableData copyWith({
+    String? id,
+    String? ripAlbumId,
+    int? discNumber,
+    int? trackNumber,
+    Value<String?> title = const Value.absent(),
+    String? filePath,
+    Value<int?> durationMs = const Value.absent(),
+    int? fileSizeBytes,
+    int? updatedAt,
+    Value<String?> accurateripStatus = const Value.absent(),
+    Value<int?> accurateripConfidence = const Value.absent(),
+    Value<String?> accurateripCrc = const Value.absent(),
+    Value<double?> peakLevel = const Value.absent(),
+    Value<double?> trackQuality = const Value.absent(),
+    Value<String?> copyCrc = const Value.absent(),
+    Value<int?> clickCount = const Value.absent(),
+    Value<String?> ripLogSource = const Value.absent(),
+    Value<int?> qualityCheckedAt = const Value.absent(),
+  }) => RipTracksTableData(
+    id: id ?? this.id,
+    ripAlbumId: ripAlbumId ?? this.ripAlbumId,
+    discNumber: discNumber ?? this.discNumber,
+    trackNumber: trackNumber ?? this.trackNumber,
+    title: title.present ? title.value : this.title,
+    filePath: filePath ?? this.filePath,
+    durationMs: durationMs.present ? durationMs.value : this.durationMs,
+    fileSizeBytes: fileSizeBytes ?? this.fileSizeBytes,
+    updatedAt: updatedAt ?? this.updatedAt,
+    accurateripStatus: accurateripStatus.present
+        ? accurateripStatus.value
+        : this.accurateripStatus,
+    accurateripConfidence: accurateripConfidence.present
+        ? accurateripConfidence.value
+        : this.accurateripConfidence,
+    accurateripCrc: accurateripCrc.present
+        ? accurateripCrc.value
+        : this.accurateripCrc,
+    peakLevel: peakLevel.present ? peakLevel.value : this.peakLevel,
+    trackQuality: trackQuality.present ? trackQuality.value : this.trackQuality,
+    copyCrc: copyCrc.present ? copyCrc.value : this.copyCrc,
+    clickCount: clickCount.present ? clickCount.value : this.clickCount,
+    ripLogSource: ripLogSource.present ? ripLogSource.value : this.ripLogSource,
+    qualityCheckedAt: qualityCheckedAt.present
+        ? qualityCheckedAt.value
+        : this.qualityCheckedAt,
+  );
+  RipTracksTableData copyWithCompanion(RipTracksTableCompanion data) {
+    return RipTracksTableData(
+      id: data.id.present ? data.id.value : this.id,
+      ripAlbumId: data.ripAlbumId.present
+          ? data.ripAlbumId.value
+          : this.ripAlbumId,
+      discNumber: data.discNumber.present
+          ? data.discNumber.value
+          : this.discNumber,
+      trackNumber: data.trackNumber.present
+          ? data.trackNumber.value
+          : this.trackNumber,
+      title: data.title.present ? data.title.value : this.title,
+      filePath: data.filePath.present ? data.filePath.value : this.filePath,
+      durationMs: data.durationMs.present
+          ? data.durationMs.value
+          : this.durationMs,
+      fileSizeBytes: data.fileSizeBytes.present
+          ? data.fileSizeBytes.value
+          : this.fileSizeBytes,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      accurateripStatus: data.accurateripStatus.present
+          ? data.accurateripStatus.value
+          : this.accurateripStatus,
+      accurateripConfidence: data.accurateripConfidence.present
+          ? data.accurateripConfidence.value
+          : this.accurateripConfidence,
+      accurateripCrc: data.accurateripCrc.present
+          ? data.accurateripCrc.value
+          : this.accurateripCrc,
+      peakLevel: data.peakLevel.present ? data.peakLevel.value : this.peakLevel,
+      trackQuality: data.trackQuality.present
+          ? data.trackQuality.value
+          : this.trackQuality,
+      copyCrc: data.copyCrc.present ? data.copyCrc.value : this.copyCrc,
+      clickCount: data.clickCount.present
+          ? data.clickCount.value
+          : this.clickCount,
+      ripLogSource: data.ripLogSource.present
+          ? data.ripLogSource.value
+          : this.ripLogSource,
+      qualityCheckedAt: data.qualityCheckedAt.present
+          ? data.qualityCheckedAt.value
+          : this.qualityCheckedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RipTracksTableData(')
+          ..write('id: $id, ')
+          ..write('ripAlbumId: $ripAlbumId, ')
+          ..write('discNumber: $discNumber, ')
+          ..write('trackNumber: $trackNumber, ')
+          ..write('title: $title, ')
+          ..write('filePath: $filePath, ')
+          ..write('durationMs: $durationMs, ')
+          ..write('fileSizeBytes: $fileSizeBytes, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('accurateripStatus: $accurateripStatus, ')
+          ..write('accurateripConfidence: $accurateripConfidence, ')
+          ..write('accurateripCrc: $accurateripCrc, ')
+          ..write('peakLevel: $peakLevel, ')
+          ..write('trackQuality: $trackQuality, ')
+          ..write('copyCrc: $copyCrc, ')
+          ..write('clickCount: $clickCount, ')
+          ..write('ripLogSource: $ripLogSource, ')
+          ..write('qualityCheckedAt: $qualityCheckedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    ripAlbumId,
+    discNumber,
+    trackNumber,
+    title,
+    filePath,
+    durationMs,
+    fileSizeBytes,
+    updatedAt,
+    accurateripStatus,
+    accurateripConfidence,
+    accurateripCrc,
+    peakLevel,
+    trackQuality,
+    copyCrc,
+    clickCount,
+    ripLogSource,
+    qualityCheckedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RipTracksTableData &&
+          other.id == this.id &&
+          other.ripAlbumId == this.ripAlbumId &&
+          other.discNumber == this.discNumber &&
+          other.trackNumber == this.trackNumber &&
+          other.title == this.title &&
+          other.filePath == this.filePath &&
+          other.durationMs == this.durationMs &&
+          other.fileSizeBytes == this.fileSizeBytes &&
+          other.updatedAt == this.updatedAt &&
+          other.accurateripStatus == this.accurateripStatus &&
+          other.accurateripConfidence == this.accurateripConfidence &&
+          other.accurateripCrc == this.accurateripCrc &&
+          other.peakLevel == this.peakLevel &&
+          other.trackQuality == this.trackQuality &&
+          other.copyCrc == this.copyCrc &&
+          other.clickCount == this.clickCount &&
+          other.ripLogSource == this.ripLogSource &&
+          other.qualityCheckedAt == this.qualityCheckedAt);
+}
+
+class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
+  final Value<String> id;
+  final Value<String> ripAlbumId;
+  final Value<int> discNumber;
+  final Value<int> trackNumber;
+  final Value<String?> title;
+  final Value<String> filePath;
+  final Value<int?> durationMs;
+  final Value<int> fileSizeBytes;
+  final Value<int> updatedAt;
+  final Value<String?> accurateripStatus;
+  final Value<int?> accurateripConfidence;
+  final Value<String?> accurateripCrc;
+  final Value<double?> peakLevel;
+  final Value<double?> trackQuality;
+  final Value<String?> copyCrc;
+  final Value<int?> clickCount;
+  final Value<String?> ripLogSource;
+  final Value<int?> qualityCheckedAt;
+  final Value<int> rowid;
+  const RipTracksTableCompanion({
+    this.id = const Value.absent(),
+    this.ripAlbumId = const Value.absent(),
+    this.discNumber = const Value.absent(),
+    this.trackNumber = const Value.absent(),
+    this.title = const Value.absent(),
+    this.filePath = const Value.absent(),
+    this.durationMs = const Value.absent(),
+    this.fileSizeBytes = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.accurateripStatus = const Value.absent(),
+    this.accurateripConfidence = const Value.absent(),
+    this.accurateripCrc = const Value.absent(),
+    this.peakLevel = const Value.absent(),
+    this.trackQuality = const Value.absent(),
+    this.copyCrc = const Value.absent(),
+    this.clickCount = const Value.absent(),
+    this.ripLogSource = const Value.absent(),
+    this.qualityCheckedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RipTracksTableCompanion.insert({
+    required String id,
+    required String ripAlbumId,
+    this.discNumber = const Value.absent(),
+    required int trackNumber,
+    this.title = const Value.absent(),
+    required String filePath,
+    this.durationMs = const Value.absent(),
+    required int fileSizeBytes,
+    required int updatedAt,
+    this.accurateripStatus = const Value.absent(),
+    this.accurateripConfidence = const Value.absent(),
+    this.accurateripCrc = const Value.absent(),
+    this.peakLevel = const Value.absent(),
+    this.trackQuality = const Value.absent(),
+    this.copyCrc = const Value.absent(),
+    this.clickCount = const Value.absent(),
+    this.ripLogSource = const Value.absent(),
+    this.qualityCheckedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       ripAlbumId = Value(ripAlbumId),
+       trackNumber = Value(trackNumber),
+       filePath = Value(filePath),
+       fileSizeBytes = Value(fileSizeBytes),
+       updatedAt = Value(updatedAt);
+  static Insertable<RipTracksTableData> custom({
+    Expression<String>? id,
+    Expression<String>? ripAlbumId,
+    Expression<int>? discNumber,
+    Expression<int>? trackNumber,
+    Expression<String>? title,
+    Expression<String>? filePath,
+    Expression<int>? durationMs,
+    Expression<int>? fileSizeBytes,
+    Expression<int>? updatedAt,
+    Expression<String>? accurateripStatus,
+    Expression<int>? accurateripConfidence,
+    Expression<String>? accurateripCrc,
+    Expression<double>? peakLevel,
+    Expression<double>? trackQuality,
+    Expression<String>? copyCrc,
+    Expression<int>? clickCount,
+    Expression<String>? ripLogSource,
+    Expression<int>? qualityCheckedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (ripAlbumId != null) 'rip_album_id': ripAlbumId,
+      if (discNumber != null) 'disc_number': discNumber,
+      if (trackNumber != null) 'track_number': trackNumber,
+      if (title != null) 'title': title,
+      if (filePath != null) 'file_path': filePath,
+      if (durationMs != null) 'duration_ms': durationMs,
+      if (fileSizeBytes != null) 'file_size_bytes': fileSizeBytes,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (accurateripStatus != null) 'accuraterip_status': accurateripStatus,
+      if (accurateripConfidence != null)
+        'accuraterip_confidence': accurateripConfidence,
+      if (accurateripCrc != null) 'accuraterip_crc': accurateripCrc,
+      if (peakLevel != null) 'peak_level': peakLevel,
+      if (trackQuality != null) 'track_quality': trackQuality,
+      if (copyCrc != null) 'copy_crc': copyCrc,
+      if (clickCount != null) 'click_count': clickCount,
+      if (ripLogSource != null) 'rip_log_source': ripLogSource,
+      if (qualityCheckedAt != null) 'quality_checked_at': qualityCheckedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RipTracksTableCompanion copyWith({
+    Value<String>? id,
+    Value<String>? ripAlbumId,
+    Value<int>? discNumber,
+    Value<int>? trackNumber,
+    Value<String?>? title,
+    Value<String>? filePath,
+    Value<int?>? durationMs,
+    Value<int>? fileSizeBytes,
+    Value<int>? updatedAt,
+    Value<String?>? accurateripStatus,
+    Value<int?>? accurateripConfidence,
+    Value<String?>? accurateripCrc,
+    Value<double?>? peakLevel,
+    Value<double?>? trackQuality,
+    Value<String?>? copyCrc,
+    Value<int?>? clickCount,
+    Value<String?>? ripLogSource,
+    Value<int?>? qualityCheckedAt,
+    Value<int>? rowid,
+  }) {
+    return RipTracksTableCompanion(
+      id: id ?? this.id,
+      ripAlbumId: ripAlbumId ?? this.ripAlbumId,
+      discNumber: discNumber ?? this.discNumber,
+      trackNumber: trackNumber ?? this.trackNumber,
+      title: title ?? this.title,
+      filePath: filePath ?? this.filePath,
+      durationMs: durationMs ?? this.durationMs,
+      fileSizeBytes: fileSizeBytes ?? this.fileSizeBytes,
+      updatedAt: updatedAt ?? this.updatedAt,
+      accurateripStatus: accurateripStatus ?? this.accurateripStatus,
+      accurateripConfidence:
+          accurateripConfidence ?? this.accurateripConfidence,
+      accurateripCrc: accurateripCrc ?? this.accurateripCrc,
+      peakLevel: peakLevel ?? this.peakLevel,
+      trackQuality: trackQuality ?? this.trackQuality,
+      copyCrc: copyCrc ?? this.copyCrc,
+      clickCount: clickCount ?? this.clickCount,
+      ripLogSource: ripLogSource ?? this.ripLogSource,
+      qualityCheckedAt: qualityCheckedAt ?? this.qualityCheckedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (ripAlbumId.present) {
+      map['rip_album_id'] = Variable<String>(ripAlbumId.value);
+    }
+    if (discNumber.present) {
+      map['disc_number'] = Variable<int>(discNumber.value);
+    }
+    if (trackNumber.present) {
+      map['track_number'] = Variable<int>(trackNumber.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (filePath.present) {
+      map['file_path'] = Variable<String>(filePath.value);
+    }
+    if (durationMs.present) {
+      map['duration_ms'] = Variable<int>(durationMs.value);
+    }
+    if (fileSizeBytes.present) {
+      map['file_size_bytes'] = Variable<int>(fileSizeBytes.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<int>(updatedAt.value);
+    }
+    if (accurateripStatus.present) {
+      map['accuraterip_status'] = Variable<String>(accurateripStatus.value);
+    }
+    if (accurateripConfidence.present) {
+      map['accuraterip_confidence'] = Variable<int>(
+        accurateripConfidence.value,
+      );
+    }
+    if (accurateripCrc.present) {
+      map['accuraterip_crc'] = Variable<String>(accurateripCrc.value);
+    }
+    if (peakLevel.present) {
+      map['peak_level'] = Variable<double>(peakLevel.value);
+    }
+    if (trackQuality.present) {
+      map['track_quality'] = Variable<double>(trackQuality.value);
+    }
+    if (copyCrc.present) {
+      map['copy_crc'] = Variable<String>(copyCrc.value);
+    }
+    if (clickCount.present) {
+      map['click_count'] = Variable<int>(clickCount.value);
+    }
+    if (ripLogSource.present) {
+      map['rip_log_source'] = Variable<String>(ripLogSource.value);
+    }
+    if (qualityCheckedAt.present) {
+      map['quality_checked_at'] = Variable<int>(qualityCheckedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RipTracksTableCompanion(')
+          ..write('id: $id, ')
+          ..write('ripAlbumId: $ripAlbumId, ')
+          ..write('discNumber: $discNumber, ')
+          ..write('trackNumber: $trackNumber, ')
+          ..write('title: $title, ')
+          ..write('filePath: $filePath, ')
+          ..write('durationMs: $durationMs, ')
+          ..write('fileSizeBytes: $fileSizeBytes, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('accurateripStatus: $accurateripStatus, ')
+          ..write('accurateripConfidence: $accurateripConfidence, ')
+          ..write('accurateripCrc: $accurateripCrc, ')
+          ..write('peakLevel: $peakLevel, ')
+          ..write('trackQuality: $trackQuality, ')
+          ..write('copyCrc: $copyCrc, ')
+          ..write('clickCount: $clickCount, ')
+          ..write('ripLogSource: $ripLogSource, ')
+          ..write('qualityCheckedAt: $qualityCheckedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -4436,6 +6236,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $SyncLogTableTable syncLogTable = $SyncLogTableTable(this);
   late final $BorrowersTableTable borrowersTable = $BorrowersTableTable(this);
   late final $LoansTableTable loansTable = $LoansTableTable(this);
+  late final $RipAlbumsTableTable ripAlbumsTable = $RipAlbumsTableTable(this);
+  late final $RipTracksTableTable ripTracksTable = $RipTracksTableTable(this);
   late final MediaItemsDao mediaItemsDao = MediaItemsDao(this as AppDatabase);
   late final TagsDao tagsDao = TagsDao(this as AppDatabase);
   late final ShelvesDao shelvesDao = ShelvesDao(this as AppDatabase);
@@ -4445,6 +6247,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final SyncLogDao syncLogDao = SyncLogDao(this as AppDatabase);
   late final BorrowersDao borrowersDao = BorrowersDao(this as AppDatabase);
   late final LoansDao loansDao = LoansDao(this as AppDatabase);
+  late final RipLibraryDao ripLibraryDao = RipLibraryDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -4459,6 +6262,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     syncLogTable,
     borrowersTable,
     loansTable,
+    ripAlbumsTable,
+    ripTracksTable,
   ];
 }
 
@@ -4596,6 +6401,27 @@ final class $$MediaItemsTableTableReferences
     ).filter((f) => f.mediaItemId.id.sqlEquals($_itemColumn<String>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_loansTableRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$RipAlbumsTableTable, List<RipAlbumsTableData>>
+  _ripAlbumsTableRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.ripAlbumsTable,
+    aliasName: $_aliasNameGenerator(
+      db.mediaItemsTable.id,
+      db.ripAlbumsTable.mediaItemId,
+    ),
+  );
+
+  $$RipAlbumsTableTableProcessedTableManager get ripAlbumsTableRefs {
+    final manager = $$RipAlbumsTableTableTableManager(
+      $_db,
+      $_db.ripAlbumsTable,
+    ).filter((f) => f.mediaItemId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_ripAlbumsTableRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -4792,6 +6618,31 @@ class $$MediaItemsTableTableFilterComposer
           }) => $$LoansTableTableFilterComposer(
             $db: $db,
             $table: $db.loansTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> ripAlbumsTableRefs(
+    Expression<bool> Function($$RipAlbumsTableTableFilterComposer f) f,
+  ) {
+    final $$RipAlbumsTableTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.ripAlbumsTable,
+      getReferencedColumn: (t) => t.mediaItemId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RipAlbumsTableTableFilterComposer(
+            $db: $db,
+            $table: $db.ripAlbumsTable,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -5098,6 +6949,31 @@ class $$MediaItemsTableTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> ripAlbumsTableRefs<T extends Object>(
+    Expression<T> Function($$RipAlbumsTableTableAnnotationComposer a) f,
+  ) {
+    final $$RipAlbumsTableTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.ripAlbumsTable,
+      getReferencedColumn: (t) => t.mediaItemId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RipAlbumsTableTableAnnotationComposer(
+            $db: $db,
+            $table: $db.ripAlbumsTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$MediaItemsTableTableTableManager
@@ -5117,6 +6993,7 @@ class $$MediaItemsTableTableTableManager
             bool mediaItemTagsTableRefs,
             bool shelfItemsTableRefs,
             bool loansTableRefs,
+            bool ripAlbumsTableRefs,
           })
         > {
   $$MediaItemsTableTableTableManager(
@@ -5249,6 +7126,7 @@ class $$MediaItemsTableTableTableManager
                 mediaItemTagsTableRefs = false,
                 shelfItemsTableRefs = false,
                 loansTableRefs = false,
+                ripAlbumsTableRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -5256,6 +7134,7 @@ class $$MediaItemsTableTableTableManager
                     if (mediaItemTagsTableRefs) db.mediaItemTagsTable,
                     if (shelfItemsTableRefs) db.shelfItemsTable,
                     if (loansTableRefs) db.loansTable,
+                    if (ripAlbumsTableRefs) db.ripAlbumsTable,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -5323,6 +7202,27 @@ class $$MediaItemsTableTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (ripAlbumsTableRefs)
+                        await $_getPrefetchedData<
+                          MediaItemsTableData,
+                          $MediaItemsTableTable,
+                          RipAlbumsTableData
+                        >(
+                          currentTable: table,
+                          referencedTable: $$MediaItemsTableTableReferences
+                              ._ripAlbumsTableRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$MediaItemsTableTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).ripAlbumsTableRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.mediaItemId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -5347,6 +7247,7 @@ typedef $$MediaItemsTableTableProcessedTableManager =
         bool mediaItemTagsTableRefs,
         bool shelfItemsTableRefs,
         bool loansTableRefs,
+        bool ripAlbumsTableRefs,
       })
     >;
 typedef $$TagsTableTableCreateCompanionBuilder =
@@ -8049,6 +9950,1183 @@ typedef $$LoansTableTableProcessedTableManager =
       LoansTableData,
       PrefetchHooks Function({bool mediaItemId, bool borrowerId})
     >;
+typedef $$RipAlbumsTableTableCreateCompanionBuilder =
+    RipAlbumsTableCompanion Function({
+      required String id,
+      required String libraryPath,
+      Value<String?> artist,
+      Value<String?> albumTitle,
+      Value<String?> barcode,
+      required int trackCount,
+      Value<int> discCount,
+      required int totalSizeBytes,
+      Value<String?> mediaItemId,
+      required int lastScannedAt,
+      required int updatedAt,
+      Value<int> deleted,
+      Value<int> rowid,
+    });
+typedef $$RipAlbumsTableTableUpdateCompanionBuilder =
+    RipAlbumsTableCompanion Function({
+      Value<String> id,
+      Value<String> libraryPath,
+      Value<String?> artist,
+      Value<String?> albumTitle,
+      Value<String?> barcode,
+      Value<int> trackCount,
+      Value<int> discCount,
+      Value<int> totalSizeBytes,
+      Value<String?> mediaItemId,
+      Value<int> lastScannedAt,
+      Value<int> updatedAt,
+      Value<int> deleted,
+      Value<int> rowid,
+    });
+
+final class $$RipAlbumsTableTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $RipAlbumsTableTable,
+          RipAlbumsTableData
+        > {
+  $$RipAlbumsTableTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $MediaItemsTableTable _mediaItemIdTable(_$AppDatabase db) =>
+      db.mediaItemsTable.createAlias(
+        $_aliasNameGenerator(
+          db.ripAlbumsTable.mediaItemId,
+          db.mediaItemsTable.id,
+        ),
+      );
+
+  $$MediaItemsTableTableProcessedTableManager? get mediaItemId {
+    final $_column = $_itemColumn<String>('media_item_id');
+    if ($_column == null) return null;
+    final manager = $$MediaItemsTableTableTableManager(
+      $_db,
+      $_db.mediaItemsTable,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_mediaItemIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static MultiTypedResultKey<$RipTracksTableTable, List<RipTracksTableData>>
+  _ripTracksTableRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.ripTracksTable,
+    aliasName: $_aliasNameGenerator(
+      db.ripAlbumsTable.id,
+      db.ripTracksTable.ripAlbumId,
+    ),
+  );
+
+  $$RipTracksTableTableProcessedTableManager get ripTracksTableRefs {
+    final manager = $$RipTracksTableTableTableManager(
+      $_db,
+      $_db.ripTracksTable,
+    ).filter((f) => f.ripAlbumId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_ripTracksTableRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$RipAlbumsTableTableFilterComposer
+    extends Composer<_$AppDatabase, $RipAlbumsTableTable> {
+  $$RipAlbumsTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get libraryPath => $composableBuilder(
+    column: $table.libraryPath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get artist => $composableBuilder(
+    column: $table.artist,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get albumTitle => $composableBuilder(
+    column: $table.albumTitle,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get barcode => $composableBuilder(
+    column: $table.barcode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get trackCount => $composableBuilder(
+    column: $table.trackCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get discCount => $composableBuilder(
+    column: $table.discCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get totalSizeBytes => $composableBuilder(
+    column: $table.totalSizeBytes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get lastScannedAt => $composableBuilder(
+    column: $table.lastScannedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get deleted => $composableBuilder(
+    column: $table.deleted,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$MediaItemsTableTableFilterComposer get mediaItemId {
+    final $$MediaItemsTableTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.mediaItemId,
+      referencedTable: $db.mediaItemsTable,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$MediaItemsTableTableFilterComposer(
+            $db: $db,
+            $table: $db.mediaItemsTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<bool> ripTracksTableRefs(
+    Expression<bool> Function($$RipTracksTableTableFilterComposer f) f,
+  ) {
+    final $$RipTracksTableTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.ripTracksTable,
+      getReferencedColumn: (t) => t.ripAlbumId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RipTracksTableTableFilterComposer(
+            $db: $db,
+            $table: $db.ripTracksTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$RipAlbumsTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $RipAlbumsTableTable> {
+  $$RipAlbumsTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get libraryPath => $composableBuilder(
+    column: $table.libraryPath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get artist => $composableBuilder(
+    column: $table.artist,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get albumTitle => $composableBuilder(
+    column: $table.albumTitle,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get barcode => $composableBuilder(
+    column: $table.barcode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get trackCount => $composableBuilder(
+    column: $table.trackCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get discCount => $composableBuilder(
+    column: $table.discCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get totalSizeBytes => $composableBuilder(
+    column: $table.totalSizeBytes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get lastScannedAt => $composableBuilder(
+    column: $table.lastScannedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get deleted => $composableBuilder(
+    column: $table.deleted,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$MediaItemsTableTableOrderingComposer get mediaItemId {
+    final $$MediaItemsTableTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.mediaItemId,
+      referencedTable: $db.mediaItemsTable,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$MediaItemsTableTableOrderingComposer(
+            $db: $db,
+            $table: $db.mediaItemsTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$RipAlbumsTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $RipAlbumsTableTable> {
+  $$RipAlbumsTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get libraryPath => $composableBuilder(
+    column: $table.libraryPath,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get artist =>
+      $composableBuilder(column: $table.artist, builder: (column) => column);
+
+  GeneratedColumn<String> get albumTitle => $composableBuilder(
+    column: $table.albumTitle,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get barcode =>
+      $composableBuilder(column: $table.barcode, builder: (column) => column);
+
+  GeneratedColumn<int> get trackCount => $composableBuilder(
+    column: $table.trackCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get discCount =>
+      $composableBuilder(column: $table.discCount, builder: (column) => column);
+
+  GeneratedColumn<int> get totalSizeBytes => $composableBuilder(
+    column: $table.totalSizeBytes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get lastScannedAt => $composableBuilder(
+    column: $table.lastScannedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get deleted =>
+      $composableBuilder(column: $table.deleted, builder: (column) => column);
+
+  $$MediaItemsTableTableAnnotationComposer get mediaItemId {
+    final $$MediaItemsTableTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.mediaItemId,
+      referencedTable: $db.mediaItemsTable,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$MediaItemsTableTableAnnotationComposer(
+            $db: $db,
+            $table: $db.mediaItemsTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<T> ripTracksTableRefs<T extends Object>(
+    Expression<T> Function($$RipTracksTableTableAnnotationComposer a) f,
+  ) {
+    final $$RipTracksTableTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.ripTracksTable,
+      getReferencedColumn: (t) => t.ripAlbumId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RipTracksTableTableAnnotationComposer(
+            $db: $db,
+            $table: $db.ripTracksTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$RipAlbumsTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $RipAlbumsTableTable,
+          RipAlbumsTableData,
+          $$RipAlbumsTableTableFilterComposer,
+          $$RipAlbumsTableTableOrderingComposer,
+          $$RipAlbumsTableTableAnnotationComposer,
+          $$RipAlbumsTableTableCreateCompanionBuilder,
+          $$RipAlbumsTableTableUpdateCompanionBuilder,
+          (RipAlbumsTableData, $$RipAlbumsTableTableReferences),
+          RipAlbumsTableData,
+          PrefetchHooks Function({bool mediaItemId, bool ripTracksTableRefs})
+        > {
+  $$RipAlbumsTableTableTableManager(
+    _$AppDatabase db,
+    $RipAlbumsTableTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RipAlbumsTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RipAlbumsTableTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$RipAlbumsTableTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> libraryPath = const Value.absent(),
+                Value<String?> artist = const Value.absent(),
+                Value<String?> albumTitle = const Value.absent(),
+                Value<String?> barcode = const Value.absent(),
+                Value<int> trackCount = const Value.absent(),
+                Value<int> discCount = const Value.absent(),
+                Value<int> totalSizeBytes = const Value.absent(),
+                Value<String?> mediaItemId = const Value.absent(),
+                Value<int> lastScannedAt = const Value.absent(),
+                Value<int> updatedAt = const Value.absent(),
+                Value<int> deleted = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RipAlbumsTableCompanion(
+                id: id,
+                libraryPath: libraryPath,
+                artist: artist,
+                albumTitle: albumTitle,
+                barcode: barcode,
+                trackCount: trackCount,
+                discCount: discCount,
+                totalSizeBytes: totalSizeBytes,
+                mediaItemId: mediaItemId,
+                lastScannedAt: lastScannedAt,
+                updatedAt: updatedAt,
+                deleted: deleted,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String libraryPath,
+                Value<String?> artist = const Value.absent(),
+                Value<String?> albumTitle = const Value.absent(),
+                Value<String?> barcode = const Value.absent(),
+                required int trackCount,
+                Value<int> discCount = const Value.absent(),
+                required int totalSizeBytes,
+                Value<String?> mediaItemId = const Value.absent(),
+                required int lastScannedAt,
+                required int updatedAt,
+                Value<int> deleted = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RipAlbumsTableCompanion.insert(
+                id: id,
+                libraryPath: libraryPath,
+                artist: artist,
+                albumTitle: albumTitle,
+                barcode: barcode,
+                trackCount: trackCount,
+                discCount: discCount,
+                totalSizeBytes: totalSizeBytes,
+                mediaItemId: mediaItemId,
+                lastScannedAt: lastScannedAt,
+                updatedAt: updatedAt,
+                deleted: deleted,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$RipAlbumsTableTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback:
+              ({mediaItemId = false, ripTracksTableRefs = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (ripTracksTableRefs) db.ripTracksTable,
+                  ],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (mediaItemId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.mediaItemId,
+                                    referencedTable:
+                                        $$RipAlbumsTableTableReferences
+                                            ._mediaItemIdTable(db),
+                                    referencedColumn:
+                                        $$RipAlbumsTableTableReferences
+                                            ._mediaItemIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
+
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (ripTracksTableRefs)
+                        await $_getPrefetchedData<
+                          RipAlbumsTableData,
+                          $RipAlbumsTableTable,
+                          RipTracksTableData
+                        >(
+                          currentTable: table,
+                          referencedTable: $$RipAlbumsTableTableReferences
+                              ._ripTracksTableRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$RipAlbumsTableTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).ripTracksTableRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.ripAlbumId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
+              },
+        ),
+      );
+}
+
+typedef $$RipAlbumsTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $RipAlbumsTableTable,
+      RipAlbumsTableData,
+      $$RipAlbumsTableTableFilterComposer,
+      $$RipAlbumsTableTableOrderingComposer,
+      $$RipAlbumsTableTableAnnotationComposer,
+      $$RipAlbumsTableTableCreateCompanionBuilder,
+      $$RipAlbumsTableTableUpdateCompanionBuilder,
+      (RipAlbumsTableData, $$RipAlbumsTableTableReferences),
+      RipAlbumsTableData,
+      PrefetchHooks Function({bool mediaItemId, bool ripTracksTableRefs})
+    >;
+typedef $$RipTracksTableTableCreateCompanionBuilder =
+    RipTracksTableCompanion Function({
+      required String id,
+      required String ripAlbumId,
+      Value<int> discNumber,
+      required int trackNumber,
+      Value<String?> title,
+      required String filePath,
+      Value<int?> durationMs,
+      required int fileSizeBytes,
+      required int updatedAt,
+      Value<String?> accurateripStatus,
+      Value<int?> accurateripConfidence,
+      Value<String?> accurateripCrc,
+      Value<double?> peakLevel,
+      Value<double?> trackQuality,
+      Value<String?> copyCrc,
+      Value<int?> clickCount,
+      Value<String?> ripLogSource,
+      Value<int?> qualityCheckedAt,
+      Value<int> rowid,
+    });
+typedef $$RipTracksTableTableUpdateCompanionBuilder =
+    RipTracksTableCompanion Function({
+      Value<String> id,
+      Value<String> ripAlbumId,
+      Value<int> discNumber,
+      Value<int> trackNumber,
+      Value<String?> title,
+      Value<String> filePath,
+      Value<int?> durationMs,
+      Value<int> fileSizeBytes,
+      Value<int> updatedAt,
+      Value<String?> accurateripStatus,
+      Value<int?> accurateripConfidence,
+      Value<String?> accurateripCrc,
+      Value<double?> peakLevel,
+      Value<double?> trackQuality,
+      Value<String?> copyCrc,
+      Value<int?> clickCount,
+      Value<String?> ripLogSource,
+      Value<int?> qualityCheckedAt,
+      Value<int> rowid,
+    });
+
+final class $$RipTracksTableTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $RipTracksTableTable,
+          RipTracksTableData
+        > {
+  $$RipTracksTableTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $RipAlbumsTableTable _ripAlbumIdTable(_$AppDatabase db) =>
+      db.ripAlbumsTable.createAlias(
+        $_aliasNameGenerator(
+          db.ripTracksTable.ripAlbumId,
+          db.ripAlbumsTable.id,
+        ),
+      );
+
+  $$RipAlbumsTableTableProcessedTableManager get ripAlbumId {
+    final $_column = $_itemColumn<String>('rip_album_id')!;
+
+    final manager = $$RipAlbumsTableTableTableManager(
+      $_db,
+      $_db.ripAlbumsTable,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_ripAlbumIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$RipTracksTableTableFilterComposer
+    extends Composer<_$AppDatabase, $RipTracksTableTable> {
+  $$RipTracksTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get discNumber => $composableBuilder(
+    column: $table.discNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get trackNumber => $composableBuilder(
+    column: $table.trackNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get filePath => $composableBuilder(
+    column: $table.filePath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get durationMs => $composableBuilder(
+    column: $table.durationMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get fileSizeBytes => $composableBuilder(
+    column: $table.fileSizeBytes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get accurateripStatus => $composableBuilder(
+    column: $table.accurateripStatus,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get accurateripConfidence => $composableBuilder(
+    column: $table.accurateripConfidence,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get accurateripCrc => $composableBuilder(
+    column: $table.accurateripCrc,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get peakLevel => $composableBuilder(
+    column: $table.peakLevel,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get trackQuality => $composableBuilder(
+    column: $table.trackQuality,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get copyCrc => $composableBuilder(
+    column: $table.copyCrc,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get clickCount => $composableBuilder(
+    column: $table.clickCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get ripLogSource => $composableBuilder(
+    column: $table.ripLogSource,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get qualityCheckedAt => $composableBuilder(
+    column: $table.qualityCheckedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$RipAlbumsTableTableFilterComposer get ripAlbumId {
+    final $$RipAlbumsTableTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.ripAlbumId,
+      referencedTable: $db.ripAlbumsTable,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RipAlbumsTableTableFilterComposer(
+            $db: $db,
+            $table: $db.ripAlbumsTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$RipTracksTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $RipTracksTableTable> {
+  $$RipTracksTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get discNumber => $composableBuilder(
+    column: $table.discNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get trackNumber => $composableBuilder(
+    column: $table.trackNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get filePath => $composableBuilder(
+    column: $table.filePath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get durationMs => $composableBuilder(
+    column: $table.durationMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get fileSizeBytes => $composableBuilder(
+    column: $table.fileSizeBytes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get accurateripStatus => $composableBuilder(
+    column: $table.accurateripStatus,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get accurateripConfidence => $composableBuilder(
+    column: $table.accurateripConfidence,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get accurateripCrc => $composableBuilder(
+    column: $table.accurateripCrc,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get peakLevel => $composableBuilder(
+    column: $table.peakLevel,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get trackQuality => $composableBuilder(
+    column: $table.trackQuality,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get copyCrc => $composableBuilder(
+    column: $table.copyCrc,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get clickCount => $composableBuilder(
+    column: $table.clickCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get ripLogSource => $composableBuilder(
+    column: $table.ripLogSource,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get qualityCheckedAt => $composableBuilder(
+    column: $table.qualityCheckedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$RipAlbumsTableTableOrderingComposer get ripAlbumId {
+    final $$RipAlbumsTableTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.ripAlbumId,
+      referencedTable: $db.ripAlbumsTable,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RipAlbumsTableTableOrderingComposer(
+            $db: $db,
+            $table: $db.ripAlbumsTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$RipTracksTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $RipTracksTableTable> {
+  $$RipTracksTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get discNumber => $composableBuilder(
+    column: $table.discNumber,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get trackNumber => $composableBuilder(
+    column: $table.trackNumber,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<String> get filePath =>
+      $composableBuilder(column: $table.filePath, builder: (column) => column);
+
+  GeneratedColumn<int> get durationMs => $composableBuilder(
+    column: $table.durationMs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get fileSizeBytes => $composableBuilder(
+    column: $table.fileSizeBytes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get accurateripStatus => $composableBuilder(
+    column: $table.accurateripStatus,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get accurateripConfidence => $composableBuilder(
+    column: $table.accurateripConfidence,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get accurateripCrc => $composableBuilder(
+    column: $table.accurateripCrc,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get peakLevel =>
+      $composableBuilder(column: $table.peakLevel, builder: (column) => column);
+
+  GeneratedColumn<double> get trackQuality => $composableBuilder(
+    column: $table.trackQuality,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get copyCrc =>
+      $composableBuilder(column: $table.copyCrc, builder: (column) => column);
+
+  GeneratedColumn<int> get clickCount => $composableBuilder(
+    column: $table.clickCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get ripLogSource => $composableBuilder(
+    column: $table.ripLogSource,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get qualityCheckedAt => $composableBuilder(
+    column: $table.qualityCheckedAt,
+    builder: (column) => column,
+  );
+
+  $$RipAlbumsTableTableAnnotationComposer get ripAlbumId {
+    final $$RipAlbumsTableTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.ripAlbumId,
+      referencedTable: $db.ripAlbumsTable,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RipAlbumsTableTableAnnotationComposer(
+            $db: $db,
+            $table: $db.ripAlbumsTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$RipTracksTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $RipTracksTableTable,
+          RipTracksTableData,
+          $$RipTracksTableTableFilterComposer,
+          $$RipTracksTableTableOrderingComposer,
+          $$RipTracksTableTableAnnotationComposer,
+          $$RipTracksTableTableCreateCompanionBuilder,
+          $$RipTracksTableTableUpdateCompanionBuilder,
+          (RipTracksTableData, $$RipTracksTableTableReferences),
+          RipTracksTableData,
+          PrefetchHooks Function({bool ripAlbumId})
+        > {
+  $$RipTracksTableTableTableManager(
+    _$AppDatabase db,
+    $RipTracksTableTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RipTracksTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RipTracksTableTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$RipTracksTableTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> ripAlbumId = const Value.absent(),
+                Value<int> discNumber = const Value.absent(),
+                Value<int> trackNumber = const Value.absent(),
+                Value<String?> title = const Value.absent(),
+                Value<String> filePath = const Value.absent(),
+                Value<int?> durationMs = const Value.absent(),
+                Value<int> fileSizeBytes = const Value.absent(),
+                Value<int> updatedAt = const Value.absent(),
+                Value<String?> accurateripStatus = const Value.absent(),
+                Value<int?> accurateripConfidence = const Value.absent(),
+                Value<String?> accurateripCrc = const Value.absent(),
+                Value<double?> peakLevel = const Value.absent(),
+                Value<double?> trackQuality = const Value.absent(),
+                Value<String?> copyCrc = const Value.absent(),
+                Value<int?> clickCount = const Value.absent(),
+                Value<String?> ripLogSource = const Value.absent(),
+                Value<int?> qualityCheckedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RipTracksTableCompanion(
+                id: id,
+                ripAlbumId: ripAlbumId,
+                discNumber: discNumber,
+                trackNumber: trackNumber,
+                title: title,
+                filePath: filePath,
+                durationMs: durationMs,
+                fileSizeBytes: fileSizeBytes,
+                updatedAt: updatedAt,
+                accurateripStatus: accurateripStatus,
+                accurateripConfidence: accurateripConfidence,
+                accurateripCrc: accurateripCrc,
+                peakLevel: peakLevel,
+                trackQuality: trackQuality,
+                copyCrc: copyCrc,
+                clickCount: clickCount,
+                ripLogSource: ripLogSource,
+                qualityCheckedAt: qualityCheckedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String ripAlbumId,
+                Value<int> discNumber = const Value.absent(),
+                required int trackNumber,
+                Value<String?> title = const Value.absent(),
+                required String filePath,
+                Value<int?> durationMs = const Value.absent(),
+                required int fileSizeBytes,
+                required int updatedAt,
+                Value<String?> accurateripStatus = const Value.absent(),
+                Value<int?> accurateripConfidence = const Value.absent(),
+                Value<String?> accurateripCrc = const Value.absent(),
+                Value<double?> peakLevel = const Value.absent(),
+                Value<double?> trackQuality = const Value.absent(),
+                Value<String?> copyCrc = const Value.absent(),
+                Value<int?> clickCount = const Value.absent(),
+                Value<String?> ripLogSource = const Value.absent(),
+                Value<int?> qualityCheckedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RipTracksTableCompanion.insert(
+                id: id,
+                ripAlbumId: ripAlbumId,
+                discNumber: discNumber,
+                trackNumber: trackNumber,
+                title: title,
+                filePath: filePath,
+                durationMs: durationMs,
+                fileSizeBytes: fileSizeBytes,
+                updatedAt: updatedAt,
+                accurateripStatus: accurateripStatus,
+                accurateripConfidence: accurateripConfidence,
+                accurateripCrc: accurateripCrc,
+                peakLevel: peakLevel,
+                trackQuality: trackQuality,
+                copyCrc: copyCrc,
+                clickCount: clickCount,
+                ripLogSource: ripLogSource,
+                qualityCheckedAt: qualityCheckedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$RipTracksTableTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({ripAlbumId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (ripAlbumId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.ripAlbumId,
+                                referencedTable: $$RipTracksTableTableReferences
+                                    ._ripAlbumIdTable(db),
+                                referencedColumn:
+                                    $$RipTracksTableTableReferences
+                                        ._ripAlbumIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$RipTracksTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $RipTracksTableTable,
+      RipTracksTableData,
+      $$RipTracksTableTableFilterComposer,
+      $$RipTracksTableTableOrderingComposer,
+      $$RipTracksTableTableAnnotationComposer,
+      $$RipTracksTableTableCreateCompanionBuilder,
+      $$RipTracksTableTableUpdateCompanionBuilder,
+      (RipTracksTableData, $$RipTracksTableTableReferences),
+      RipTracksTableData,
+      PrefetchHooks Function({bool ripAlbumId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -8071,4 +11149,8 @@ class $AppDatabaseManager {
       $$BorrowersTableTableTableManager(_db, _db.borrowersTable);
   $$LoansTableTableTableManager get loansTable =>
       $$LoansTableTableTableManager(_db, _db.loansTable);
+  $$RipAlbumsTableTableTableManager get ripAlbumsTable =>
+      $$RipAlbumsTableTableTableManager(_db, _db.ripAlbumsTable);
+  $$RipTracksTableTableTableManager get ripTracksTable =>
+      $$RipTracksTableTableTableManager(_db, _db.ripTracksTable);
 }

@@ -4,6 +4,7 @@ import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/domain/usecases/get_collection_usecase.dart';
 import 'package:mymediascanner/presentation/providers/loan_provider.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
+import 'package:mymediascanner/presentation/providers/rip_provider.dart';
 
 /// Filter state for the collection screen.
 typedef CollectionFilterState = ({
@@ -12,6 +13,7 @@ typedef CollectionFilterState = ({
   String? sortBy,
   bool ascending,
   bool lentOnly,
+  bool rippedOnly,
 });
 
 class CollectionFilter extends Notifier<CollectionFilterState> {
@@ -23,6 +25,7 @@ class CollectionFilter extends Notifier<CollectionFilterState> {
       sortBy: 'dateAdded',
       ascending: false,
       lentOnly: false,
+      rippedOnly: false,
     );
   }
 
@@ -33,6 +36,7 @@ class CollectionFilter extends Notifier<CollectionFilterState> {
       sortBy: state.sortBy,
       ascending: state.ascending,
       lentOnly: state.lentOnly,
+      rippedOnly: state.rippedOnly,
     );
   }
 
@@ -43,6 +47,7 @@ class CollectionFilter extends Notifier<CollectionFilterState> {
       sortBy: state.sortBy,
       ascending: state.ascending,
       lentOnly: state.lentOnly,
+      rippedOnly: state.rippedOnly,
     );
   }
 
@@ -53,6 +58,7 @@ class CollectionFilter extends Notifier<CollectionFilterState> {
       sortBy: sortBy,
       ascending: ascending ?? state.ascending,
       lentOnly: state.lentOnly,
+      rippedOnly: state.rippedOnly,
     );
   }
 
@@ -63,6 +69,18 @@ class CollectionFilter extends Notifier<CollectionFilterState> {
       sortBy: state.sortBy,
       ascending: state.ascending,
       lentOnly: !state.lentOnly,
+      rippedOnly: state.rippedOnly,
+    );
+  }
+
+  void toggleRippedOnly() {
+    state = (
+      mediaType: state.mediaType,
+      search: state.search,
+      sortBy: state.sortBy,
+      ascending: state.ascending,
+      lentOnly: state.lentOnly,
+      rippedOnly: !state.rippedOnly,
     );
   }
 }
@@ -83,10 +101,15 @@ final collectionProvider = StreamProvider<List<MediaItem>>((ref) {
     ascending: filter.ascending,
   );
 
-  if (!filter.lentOnly) return stream;
+  if (!filter.lentOnly && !filter.rippedOnly) return stream;
 
   final lentIds = ref.watch(lentItemIdsProvider).value ?? <String>{};
+  final rippedIds = ref.watch(rippedItemIdsProvider).value ?? <String>{};
   return stream.map(
-    (items) => items.where((item) => lentIds.contains(item.id)).toList(),
+    (items) => items.where((item) {
+      if (filter.lentOnly && !lentIds.contains(item.id)) return false;
+      if (filter.rippedOnly && !rippedIds.contains(item.id)) return false;
+      return true;
+    }).toList(),
   );
 });
