@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mymediascanner/presentation/screens/collection/collection_screen.dart';
+import 'package:mymediascanner/presentation/screens/metadata_confirm/metadata_confirm_screen.dart';
 import 'package:mymediascanner/presentation/screens/scanner/scanner_screen.dart';
 import 'package:mymediascanner/presentation/screens/shelves/shelves_screen.dart';
 import 'package:mymediascanner/presentation/screens/settings/settings_screen.dart';
@@ -50,8 +51,7 @@ final router = GoRouter(
                 GoRoute(
                   path: 'confirm',
                   parentNavigatorKey: _rootNavigatorKey,
-                  builder: (context, state) =>
-                      const Center(child: Text('Confirm metadata')),
+                  builder: (context, state) => const MetadataConfirmScreen(),
                 ),
               ],
             ),
