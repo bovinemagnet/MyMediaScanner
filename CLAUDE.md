@@ -6,10 +6,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Cross-platform Flutter/Dart application for scanning barcodes on physical media (CDs, DVDs, Blu-rays, books, video games) and building a personal collection catalogue. Supports Android, iOS, macOS, Windows, and Linux. Data is stored locally in SQLite with optional sync to self-hosted PostgreSQL.
 
+### Additional Features
+
+- Lending tracker (borrowers and loans management)
+- Critic scores from TMDB, Discogs, and Google Books
+- FLAC rip library scanner with coverage comparison against physical collection
+- Audio quality analysis (AccurateRip verification + click/pop detection)
+- Statistics dashboard with CSV/JSON export
+- Camera + Bluetooth/USB scanner support on mobile
+- Media type filter on scan screen
+
 ## Technology Stack
 
 - **UI:** Flutter (all platforms), Material 3 adaptive layout
-- **State:** Riverpod with `@riverpod` codegen (AsyncNotifier, not StateNotifier)
+- **State:** Riverpod 3.x with hand-written providers (Notifier and AsyncNotifier); `riverpod_generator` is not used due to incompatibility with `drift_dev`
 - **Local DB:** Drift (SQLite) with type-safe DAOs
 - **Remote DB:** PostgreSQL via `postgres` Dart package (direct connection, no intermediary API)
 - **HTTP:** Dio + Retrofit for metadata API clients (TMDB, Discogs, Google Books, Open Library, UPCitemdb)
@@ -38,7 +48,17 @@ flutter run
 
 # Analyse code
 flutter analyze
+
+# Build Android APK (debug)
+flutter build apk --debug
+
+# Build iOS (without codesigning)
+flutter build ios --no-codesign
 ```
+
+## Testing
+
+The project has ~94 tests covering domain logic, data layer, and presentation. Run `flutter test` to execute the full suite.
 
 ## Architecture
 
@@ -60,7 +80,7 @@ lib/
     repositories/ → Abstract interfaces (prefixed with I)
     usecases/   → Business logic orchestrators
   presentation/
-    providers/  → Riverpod providers (code-generated)
+    providers/  → Riverpod providers (hand-written)
     screens/    → Feature screens with controllers and widgets
     widgets/    → Shared widgets (app_scaffold, empty/error/loading states)
 ```
@@ -68,12 +88,13 @@ lib/
 ## Key Conventions
 
 - Repository interfaces live in `domain/repositories/` and are prefixed with `I` (e.g. `IMediaItemRepository`)
-- All Riverpod providers use `@riverpod` annotation (code-generated), never hand-written
+- All Riverpod providers are hand-written using Riverpod 3.x Notifier/AsyncNotifier classes (`riverpod_generator` is not used)
 - Platform checks use `core/utils/platform_utils.dart` — never use `dart:io Platform` directly in presentation layer
 - Soft deletes only: set `deleted = 1`, never hard-delete rows; deleted records are included in sync
 - Metadata lookup follows a tiered strategy: cache check → barcode type detection → specialist API → UPCitemdb fallback
 - Sync uses last-write-wins per-field conflict resolution based on `updated_at` timestamps
 - Database schema changes require a new migration in `AppDatabase`
+- Current schema version is 5 with 11 tables: `media_items`, `tags`, `media_item_tags`, `shelves`, `shelf_items`, `barcode_cache`, `sync_log`, `borrowers`, `loans`, `rip_albums`, `rip_tracks`
 
 ## External APIs
 
