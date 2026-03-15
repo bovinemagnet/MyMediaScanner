@@ -108,37 +108,50 @@ class RipLogTrackResult {
 
 ### Disc ID Computation
 
-AccurateRip identifies discs using three values computed from the CD's table of contents (track offsets):
-- `discId1` — sum of track start offsets
-- `discId2` — sum of (track start offset × (track number + 1))
-- `cddbDiscId` — CDDB/FreeDB disc ID
+AccurateRip identifies discs using three values computed from the CD's table of contents (track offsets in sectors, where 1 sector = 588 stereo samples = 1/75 second):
 
-Since we don't have the physical disc, we derive track offsets from track durations (samples ÷ 588 frames per sector). This works for most rips where the full disc was ripped.
+**Track offsets:** Derive from FLAC metadata. Track 1 starts at sector 0 (after the standard 150-sector lead-in, which AccurateRip accounts for by adding 150 to each offset). For subsequent tracks, cumulate: `offset[n] = offset[n-1] + (totalSamples[n-1] / 588)`. The lead-out offset = last track offset + last track's sector count.
+
+**discId1:** `sum(trackOffset[i] + 150)` for all tracks, plus the lead-out offset + 150.
+
+**discId2:** `sum((trackOffset[i] + 150) × (i + 1))` for all tracks (1-indexed), plus `(leadOutOffset + 150) × (trackCount + 1)`.
+
+**cddbDiscId (CDDB/FreeDB):**
+```
+For each track: seconds = (offset + 150) / 75; digitSum = sum of decimal digits of seconds
+n = sum of all digitSums
+t = (leadOutOffset + 150) / 75 - (firstTrackOffset + 150) / 75  (total disc length in seconds)
+cddbDiscId = ((n % 0xFF) << 24) | (t << 8) | trackCount
+```
+
+**Partial rips:** If only some tracks were ripped (e.g. a compilation where you skipped some), the disc ID computation will be incorrect and the AccurateRip lookup will return no match. This is expected — the implementation should treat it as `not_found`, not as an error.
 
 ### CRC Computation
 
 **Location:** `lib/core/utils/accuraterip_crc.dart`
 
+**Sample packing:** Read the raw PCM stream (16-bit signed LE, stereo interleaved) as sequential little-endian uint32 values. Each uint32 naturally packs as `left_16bit | (right_16bit << 16)` — no manual bit manipulation needed.
+
 **AccurateRip v1 CRC:**
 ```
-crc = 0
-for each 32-bit sample at index i:
-  crc += sample * (i + 1)
+uint32 crc = 0
+// i is zero-based index into the uint32 sample stream
+// multiplier is (i + 1), i.e. 1-based, starting from the first NON-SKIPPED sample
+for each uint32 sample at index i (after skip region):
+  crc += (uint32)(sample * (i + 1))   // 32-bit overflow wraps naturally
 ```
-For the first track: skip the first 5 × 588 samples (2940 samples).
-For the last track: skip the last 5 × 588 samples.
+For the first track on the disc: skip the first 5 × 588 = 2940 uint32 samples.
+For the last track on the disc: skip the last 5 × 588 = 2940 uint32 samples.
+The multiplier `(i + 1)` counts from 1 starting at the first non-skipped sample.
 
 **AccurateRip v2 CRC:**
 ```
-crc = 0
-for each 32-bit sample at index i:
-  product = sample * (i + 1)
-  crc = crc + product
-  crc = crc + (product >> 32)  // upper 32 bits added back
+uint32 crc = 0
+for each uint32 sample at index i (after skip region):
+  uint64 mult = (uint64)sample * (uint64)(i + 1)   // 64-bit multiply
+  crc += (uint32)(mult & 0xFFFFFFFF) + (uint32)(mult >> 32)  // fold upper 32 bits back
 ```
-Same first/last track skip rules.
-
-Both computed over interleaved stereo 16-bit PCM (combined as 32-bit pairs: left | right << 16).
+Same first/last track skip rules. In Dart, `int` is 64-bit so compute as: `int mult = sample * (i + 1); crc = (crc + (mult & 0xFFFFFFFF) + ((mult >> 32) & 0xFFFFFFFF)) & 0xFFFFFFFF;`
 
 ### HTTP Query
 
@@ -148,9 +161,25 @@ GET http://www.accuraterip.com/accuraterip/{a}/{b}/{c}/dBAR-{trackCount}-{discId
 
 Where `{a}` = last hex char of discId1, `{b}` = second-to-last + last of discId1, `{c}` = third-to-last + second-to-last + last of discId1.
 
-Response is a binary file with entries per track: `confidenceCount (1 byte) + crcV1 (4 bytes) + ??? (4 bytes)`. Multiple entries per track for different pressings.
+**Response binary format:**
 
-Match our computed CRCs against all entries. If any match, the track is verified with the corresponding confidence count.
+The response contains one or more "chunks", each representing a different pressing of the disc:
+
+```
+Per chunk:
+  trackCount     (1 byte)
+  discId1        (4 bytes, LE uint32)
+  discId2        (4 bytes, LE uint32)
+  cddbDiscId     (4 bytes, LE uint32)
+  Per track (trackCount entries):
+    confidence   (1 byte)
+    crcV1        (4 bytes, LE uint32)
+    crcV2        (4 bytes, LE uint32)
+```
+
+Chunks repeat until end of file. Multiple chunks = multiple pressings of the same disc.
+
+Match our computed v1 CRC against each chunk's `crcV1` per track, and v2 CRC against `crcV2`. If either matches, the track is verified with the corresponding confidence count. Prefer v2 matches (more reliable).
 
 **Client class:**
 
@@ -265,7 +294,34 @@ Add columns to `rip_tracks` table (Drift migration, schema version 5):
 
 ---
 
-## 8. Use Cases
+## 8. DAO and Entity Updates
+
+### RipTrack Entity Update
+
+Update `lib/domain/entities/rip_track.dart` (@freezed) to add:
+- `accurateRipStatus` (String?) — `verified`, `not_found`, `mismatch`, `not_checked`
+- `accurateRipConfidence` (int?)
+- `accurateRipCrc` (String?)
+- `peakLevel` (double?)
+- `trackQuality` (double?)
+- `copyCrc` (String?)
+- `clickCount` (int?)
+- `ripLogSource` (String?)
+- `qualityCheckedAt` (int?)
+
+### DAO Update
+
+Add to `RipLibraryDao`:
+- `updateTrackQuality(String trackId, {...fields})` — updates quality-related columns
+- `getTracksWithQualityForAlbum(String ripAlbumId)` — returns tracks with all quality fields
+
+Update `RipLibraryRepositoryImpl` mapper to include the new fields in both directions.
+
+---
+
+## 9. Use Cases
+
+Note: All internal data transfer objects (`RipLogTrackResult`, `ClickDetectionResult`, `ClickEvent`, `QualityAnalysisProgress`, AccurateRip model classes) are plain Dart classes, not Freezed — they are ephemeral DTOs, not persisted domain entities.
 
 ### AnalyseRipQualityUseCase
 
@@ -291,11 +347,13 @@ class QualityAnalysisProgress {
 }
 ```
 
-Entire pipeline runs in an isolate except for the HTTP call (which uses the main isolate's Dio instance passed as a callback or URL).
+**Isolate boundary:** CPU-intensive work (FLAC decoding via Process.run, CRC computation, click detection) runs in an isolate via `Isolate.run()`. The orchestration and HTTP calls stay on the main isolate. Flow: main isolate decodes FLAC in isolate → gets PCM bytes back → computes disc ID in isolate → gets CRCs back → main isolate calls AccurateRip HTTP → if no match, sends PCM bytes to isolate for click detection → gets results back. Dio cannot cross isolate boundaries.
+
+**Memory:** Decode and analyse one track at a time to bound memory usage (~50 MB for a 5-minute track). Do not hold multiple tracks' PCM data simultaneously.
 
 ---
 
-## 9. Presentation
+## 10. Presentation
 
 ### Item Detail — Enhanced Rip Status
 
@@ -326,7 +384,7 @@ Add to existing FLAC Library section (desktop only):
 
 ---
 
-## 10. Providers
+## 11. Providers
 
 All hand-written (no riverpod_generator).
 
@@ -337,7 +395,7 @@ All hand-written (no riverpod_generator).
 
 ---
 
-## 11. Testing
+## 12. Testing
 
 ### Rip Log Parser
 - EAC format: fixture string with 3 tracks, verify all fields extracted
@@ -368,7 +426,7 @@ All hand-written (no riverpod_generator).
 
 ---
 
-## 12. Dependencies
+## 13. Dependencies
 
 No new pub dependencies. Uses:
 - `dart:io` Process for `flac` CLI
@@ -378,7 +436,7 @@ No new pub dependencies. Uses:
 
 ---
 
-## 13. Out of Scope
+## 14. Out of Scope
 
 - Automatic re-ripping
 - Audio waveform visualisation (could be Phase C)
