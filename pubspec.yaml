@@ -68,6 +68,7 @@ dev_dependencies:
   json_serializable: ^6.13.0
   retrofit_generator: ^10.2.3
   mocktail: ^1.0.4
+  flutter_launcher_icons: ^0.14.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -110,3 +111,13 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/icon/app_icon.png"
+  adaptive_icon_background: "#1565C0"
+  adaptive_icon_foreground: "assets/icon/app_icon_foreground.png"
+  macos:
+    generate: true
+    image_path: "assets/icon/app_icon.png"
