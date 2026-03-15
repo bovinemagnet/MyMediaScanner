@@ -27,11 +27,11 @@ abstract final class UpcMapper {
     if (lower.contains('music') || lower.contains('cd') || lower.contains('vinyl')) {
       return MediaType.music;
     }
+    if (lower.contains('game')) return MediaType.game;
     if (lower.contains('movie') || lower.contains('dvd') ||
         lower.contains('blu-ray') || lower.contains('video')) {
       return MediaType.film;
     }
-    if (lower.contains('game')) return MediaType.game;
     return MediaType.unknown;
   }
 }
