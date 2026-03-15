@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:mymediascanner/data/remote/sync/postgres_sync_client.dart';
 
 final secureStorageProvider = Provider<FlutterSecureStorage>((ref) {
   return const FlutterSecureStorage();
@@ -38,6 +39,47 @@ class ApiKeysNotifier extends AsyncNotifier<Map<String, String?>> {
   Future<void> setUpcitemdbKey(String key) async {
     await ref.read(secureStorageProvider).write(
         key: _upcitemdbKey, value: key);
+    ref.invalidateSelf();
+  }
+}
+
+final postgresConfigProvider =
+    AsyncNotifierProvider<PostgresConfigNotifier, PostgresConfig?>(
+  PostgresConfigNotifier.new,
+);
+
+class PostgresConfigNotifier extends AsyncNotifier<PostgresConfig?> {
+  static const _hostKey = 'pg_host';
+  static const _portKey = 'pg_port';
+  static const _dbKey = 'pg_database';
+  static const _userKey = 'pg_username';
+  static const _passKey = 'pg_password';
+  static const _tlsKey = 'pg_require_tls';
+
+  @override
+  Future<PostgresConfig?> build() async {
+    final storage = ref.watch(secureStorageProvider);
+    final host = await storage.read(key: _hostKey);
+    if (host == null) return null;
+
+    return PostgresConfig(
+      host: host,
+      port: int.tryParse(await storage.read(key: _portKey) ?? '') ?? 5432,
+      database: await storage.read(key: _dbKey) ?? '',
+      username: await storage.read(key: _userKey) ?? '',
+      password: await storage.read(key: _passKey) ?? '',
+      requireTls: (await storage.read(key: _tlsKey)) != 'false',
+    );
+  }
+
+  Future<void> save(PostgresConfig config) async {
+    final storage = ref.read(secureStorageProvider);
+    await storage.write(key: _hostKey, value: config.host);
+    await storage.write(key: _portKey, value: config.port.toString());
+    await storage.write(key: _dbKey, value: config.database);
+    await storage.write(key: _userKey, value: config.username);
+    await storage.write(key: _passKey, value: config.password);
+    await storage.write(key: _tlsKey, value: config.requireTls.toString());
     ref.invalidateSelf();
   }
 }

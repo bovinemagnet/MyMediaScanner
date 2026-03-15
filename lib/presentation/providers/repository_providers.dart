@@ -6,12 +6,15 @@ import 'package:mymediascanner/data/remote/api/google_books/google_books_api.dar
 import 'package:mymediascanner/data/remote/api/open_library/open_library_api.dart';
 import 'package:mymediascanner/data/remote/api/tmdb/tmdb_api.dart';
 import 'package:mymediascanner/data/remote/api/upc/upcitemdb_api.dart';
+import 'package:mymediascanner/data/remote/sync/postgres_sync_client.dart';
 import 'package:mymediascanner/data/repositories/media_item_repository_impl.dart';
 import 'package:mymediascanner/data/repositories/metadata_repository_impl.dart';
+import 'package:mymediascanner/data/repositories/sync_repository_impl.dart';
 import 'package:mymediascanner/data/repositories/tag_repository_impl.dart';
 import 'package:mymediascanner/data/repositories/shelf_repository_impl.dart';
 import 'package:mymediascanner/domain/repositories/i_media_item_repository.dart';
 import 'package:mymediascanner/domain/repositories/i_metadata_repository.dart';
+import 'package:mymediascanner/domain/repositories/i_sync_repository.dart';
 import 'package:mymediascanner/domain/repositories/i_tag_repository.dart';
 import 'package:mymediascanner/domain/repositories/i_shelf_repository.dart';
 import 'package:mymediascanner/presentation/providers/database_provider.dart';
@@ -70,5 +73,16 @@ final metadataRepositoryProvider = Provider<IMetadataRepository>((ref) {
             apiKey: upcKey,
           ))
         : null,
+  );
+});
+
+final syncRepositoryProvider = Provider<ISyncRepository?>((ref) {
+  final config = ref.watch(postgresConfigProvider).valueOrNull;
+  if (config == null) return null;
+
+  return SyncRepositoryImpl(
+    mediaItemsDao: ref.watch(mediaItemsDaoProvider),
+    syncLogDao: ref.watch(syncLogDaoProvider),
+    syncClient: PostgresSyncClient(config: config),
   );
 });
