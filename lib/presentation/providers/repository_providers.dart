@@ -77,7 +77,7 @@ final metadataRepositoryProvider = Provider<IMetadataRepository>((ref) {
 });
 
 final syncRepositoryProvider = Provider<ISyncRepository?>((ref) {
-  final config = ref.watch(postgresConfigProvider).valueOrNull;
+  final config = ref.watch(postgresConfigProvider).value;
   if (config == null) return null;
 
   return SyncRepositoryImpl(

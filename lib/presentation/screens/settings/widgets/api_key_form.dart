@@ -21,7 +21,7 @@ class _ApiKeyFormState extends ConsumerState<ApiKeyForm> {
   }
 
   void _loadExisting() {
-    final keys = ref.read(apiKeysProvider).valueOrNull ?? {};
+    final keys = ref.read(apiKeysProvider).value ?? {};
     _tmdbController.text = keys['tmdb'] ?? '';
     _discogsController.text = keys['discogs'] ?? '';
     _upcController.text = keys['upcitemdb'] ?? '';

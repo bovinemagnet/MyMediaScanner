@@ -40,7 +40,7 @@ class PostgresSyncClient {
     _connection = await Connection.open(
       endpoint,
       settings: ConnectionSettings(
-        sslMode: config.requireTls ? SslMode.require : SslMode.prefer,
+        sslMode: config.requireTls ? SslMode.require : SslMode.disable,
       ),
     );
 

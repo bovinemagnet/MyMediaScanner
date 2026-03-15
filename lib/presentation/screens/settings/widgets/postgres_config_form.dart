@@ -29,7 +29,7 @@ class _PostgresConfigFormState extends ConsumerState<PostgresConfigForm> {
   }
 
   void _loadExisting() {
-    final config = ref.read(postgresConfigProvider).valueOrNull;
+    final config = ref.read(postgresConfigProvider).value;
     if (config != null) {
       _hostController.text = config.host;
       _portController.text = config.port.toString();
