@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/usecases/delete_media_item_usecase.dart';
+import 'package:mymediascanner/domain/usecases/refresh_metadata_usecase.dart';
 import 'package:mymediascanner/domain/usecases/update_rating_usecase.dart';
 import 'package:mymediascanner/presentation/providers/metadata_provider.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
@@ -32,6 +34,11 @@ class ItemDetailScreen extends ConsumerWidget {
           appBar: AppBar(
             title: Text(item.title),
             actions: [
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                onPressed: () => _refreshMetadata(context, ref, item),
+                tooltip: 'Refresh metadata',
+              ),
               IconButton(
                 icon: const Icon(Icons.edit),
                 onPressed: () => context.go('/item/${item.id}/edit'),
@@ -95,6 +102,38 @@ class ItemDetailScreen extends ConsumerWidget {
         );
       },
     );
+  }
+
+  Future<void> _refreshMetadata(
+    BuildContext context,
+    WidgetRef ref,
+    MediaItem item,
+  ) async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Refreshing metadata\u2026')),
+    );
+    try {
+      await RefreshMetadataUseCase(
+        metadataRepository: ref.read(metadataRepositoryProvider),
+        mediaItemRepository: ref.read(mediaItemRepositoryProvider),
+      ).execute(item);
+      ref.invalidate(mediaItemProvider(itemId));
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(content: Text('Metadata refreshed')),
+          );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(content: Text('Failed to refresh metadata: $e')),
+          );
+      }
+    }
   }
 
   void _confirmDelete(BuildContext context, WidgetRef ref) {
