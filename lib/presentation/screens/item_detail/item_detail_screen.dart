@@ -8,6 +8,7 @@ import 'package:mymediascanner/presentation/providers/repository_providers.dart'
 import 'package:mymediascanner/presentation/screens/item_detail/widgets/cover_art_hero.dart';
 import 'package:mymediascanner/presentation/screens/item_detail/widgets/metadata_section.dart';
 import 'package:mymediascanner/presentation/screens/item_detail/widgets/star_rating_widget.dart';
+import 'package:mymediascanner/presentation/screens/item_detail/widgets/tag_chips.dart';
 import 'package:mymediascanner/presentation/widgets/error_state.dart';
 import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
 
@@ -75,6 +76,8 @@ class ItemDetailScreen extends ConsumerWidget {
                     },
                   ),
                 ),
+                const SizedBox(height: 16),
+                TagChips(mediaItemId: item.id),
                 if (item.userReview != null && item.userReview!.isNotEmpty) ...[
                   const SizedBox(height: 8),
                   Card(
