@@ -20,6 +20,8 @@ class MediaItemsTable extends Table {
   TextColumn get sourceApis => text().withDefault(const Constant('[]'))();
   RealColumn get userRating => real().nullable()();
   TextColumn get userReview => text().nullable()();
+  RealColumn get criticScore => real().nullable()();
+  TextColumn get criticSource => text().nullable()();
   IntColumn get dateAdded => integer()();
   IntColumn get dateScanned => integer()();
   IntColumn get updatedAt => integer()();

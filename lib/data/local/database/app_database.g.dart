@@ -178,6 +178,28 @@ class $MediaItemsTableTable extends MediaItemsTable
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _criticScoreMeta = const VerificationMeta(
+    'criticScore',
+  );
+  @override
+  late final GeneratedColumn<double> criticScore = GeneratedColumn<double>(
+    'critic_score',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _criticSourceMeta = const VerificationMeta(
+    'criticSource',
+  );
+  @override
+  late final GeneratedColumn<String> criticSource = GeneratedColumn<String>(
+    'critic_source',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _dateAddedMeta = const VerificationMeta(
     'dateAdded',
   );
@@ -252,6 +274,8 @@ class $MediaItemsTableTable extends MediaItemsTable
     sourceApis,
     userRating,
     userReview,
+    criticScore,
+    criticSource,
     dateAdded,
     dateScanned,
     updatedAt,
@@ -382,6 +406,24 @@ class $MediaItemsTableTable extends MediaItemsTable
         userReview.isAcceptableOrUnknown(data['user_review']!, _userReviewMeta),
       );
     }
+    if (data.containsKey('critic_score')) {
+      context.handle(
+        _criticScoreMeta,
+        criticScore.isAcceptableOrUnknown(
+          data['critic_score']!,
+          _criticScoreMeta,
+        ),
+      );
+    }
+    if (data.containsKey('critic_source')) {
+      context.handle(
+        _criticSourceMeta,
+        criticSource.isAcceptableOrUnknown(
+          data['critic_source']!,
+          _criticSourceMeta,
+        ),
+      );
+    }
     if (data.containsKey('date_added')) {
       context.handle(
         _dateAddedMeta,
@@ -494,6 +536,14 @@ class $MediaItemsTableTable extends MediaItemsTable
         DriftSqlType.string,
         data['${effectivePrefix}user_review'],
       ),
+      criticScore: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}critic_score'],
+      ),
+      criticSource: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}critic_source'],
+      ),
       dateAdded: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}date_added'],
@@ -541,6 +591,8 @@ class MediaItemsTableData extends DataClass
   final String sourceApis;
   final double? userRating;
   final String? userReview;
+  final double? criticScore;
+  final String? criticSource;
   final int dateAdded;
   final int dateScanned;
   final int updatedAt;
@@ -563,6 +615,8 @@ class MediaItemsTableData extends DataClass
     required this.sourceApis,
     this.userRating,
     this.userReview,
+    this.criticScore,
+    this.criticSource,
     required this.dateAdded,
     required this.dateScanned,
     required this.updatedAt,
@@ -603,6 +657,12 @@ class MediaItemsTableData extends DataClass
     }
     if (!nullToAbsent || userReview != null) {
       map['user_review'] = Variable<String>(userReview);
+    }
+    if (!nullToAbsent || criticScore != null) {
+      map['critic_score'] = Variable<double>(criticScore);
+    }
+    if (!nullToAbsent || criticSource != null) {
+      map['critic_source'] = Variable<String>(criticSource);
     }
     map['date_added'] = Variable<int>(dateAdded);
     map['date_scanned'] = Variable<int>(dateScanned);
@@ -646,6 +706,12 @@ class MediaItemsTableData extends DataClass
       userReview: userReview == null && nullToAbsent
           ? const Value.absent()
           : Value(userReview),
+      criticScore: criticScore == null && nullToAbsent
+          ? const Value.absent()
+          : Value(criticScore),
+      criticSource: criticSource == null && nullToAbsent
+          ? const Value.absent()
+          : Value(criticSource),
       dateAdded: Value(dateAdded),
       dateScanned: Value(dateScanned),
       updatedAt: Value(updatedAt),
@@ -678,6 +744,8 @@ class MediaItemsTableData extends DataClass
       sourceApis: serializer.fromJson<String>(json['sourceApis']),
       userRating: serializer.fromJson<double?>(json['userRating']),
       userReview: serializer.fromJson<String?>(json['userReview']),
+      criticScore: serializer.fromJson<double?>(json['criticScore']),
+      criticSource: serializer.fromJson<String?>(json['criticSource']),
       dateAdded: serializer.fromJson<int>(json['dateAdded']),
       dateScanned: serializer.fromJson<int>(json['dateScanned']),
       updatedAt: serializer.fromJson<int>(json['updatedAt']),
@@ -705,6 +773,8 @@ class MediaItemsTableData extends DataClass
       'sourceApis': serializer.toJson<String>(sourceApis),
       'userRating': serializer.toJson<double?>(userRating),
       'userReview': serializer.toJson<String?>(userReview),
+      'criticScore': serializer.toJson<double?>(criticScore),
+      'criticSource': serializer.toJson<String?>(criticSource),
       'dateAdded': serializer.toJson<int>(dateAdded),
       'dateScanned': serializer.toJson<int>(dateScanned),
       'updatedAt': serializer.toJson<int>(updatedAt),
@@ -730,6 +800,8 @@ class MediaItemsTableData extends DataClass
     String? sourceApis,
     Value<double?> userRating = const Value.absent(),
     Value<String?> userReview = const Value.absent(),
+    Value<double?> criticScore = const Value.absent(),
+    Value<String?> criticSource = const Value.absent(),
     int? dateAdded,
     int? dateScanned,
     int? updatedAt,
@@ -752,6 +824,8 @@ class MediaItemsTableData extends DataClass
     sourceApis: sourceApis ?? this.sourceApis,
     userRating: userRating.present ? userRating.value : this.userRating,
     userReview: userReview.present ? userReview.value : this.userReview,
+    criticScore: criticScore.present ? criticScore.value : this.criticScore,
+    criticSource: criticSource.present ? criticSource.value : this.criticSource,
     dateAdded: dateAdded ?? this.dateAdded,
     dateScanned: dateScanned ?? this.dateScanned,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -788,6 +862,12 @@ class MediaItemsTableData extends DataClass
       userReview: data.userReview.present
           ? data.userReview.value
           : this.userReview,
+      criticScore: data.criticScore.present
+          ? data.criticScore.value
+          : this.criticScore,
+      criticSource: data.criticSource.present
+          ? data.criticSource.value
+          : this.criticSource,
       dateAdded: data.dateAdded.present ? data.dateAdded.value : this.dateAdded,
       dateScanned: data.dateScanned.present
           ? data.dateScanned.value
@@ -817,6 +897,8 @@ class MediaItemsTableData extends DataClass
           ..write('sourceApis: $sourceApis, ')
           ..write('userRating: $userRating, ')
           ..write('userReview: $userReview, ')
+          ..write('criticScore: $criticScore, ')
+          ..write('criticSource: $criticSource, ')
           ..write('dateAdded: $dateAdded, ')
           ..write('dateScanned: $dateScanned, ')
           ..write('updatedAt: $updatedAt, ')
@@ -844,6 +926,8 @@ class MediaItemsTableData extends DataClass
     sourceApis,
     userRating,
     userReview,
+    criticScore,
+    criticSource,
     dateAdded,
     dateScanned,
     updatedAt,
@@ -870,6 +954,8 @@ class MediaItemsTableData extends DataClass
           other.sourceApis == this.sourceApis &&
           other.userRating == this.userRating &&
           other.userReview == this.userReview &&
+          other.criticScore == this.criticScore &&
+          other.criticSource == this.criticSource &&
           other.dateAdded == this.dateAdded &&
           other.dateScanned == this.dateScanned &&
           other.updatedAt == this.updatedAt &&
@@ -894,6 +980,8 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
   final Value<String> sourceApis;
   final Value<double?> userRating;
   final Value<String?> userReview;
+  final Value<double?> criticScore;
+  final Value<String?> criticSource;
   final Value<int> dateAdded;
   final Value<int> dateScanned;
   final Value<int> updatedAt;
@@ -917,6 +1005,8 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
     this.sourceApis = const Value.absent(),
     this.userRating = const Value.absent(),
     this.userReview = const Value.absent(),
+    this.criticScore = const Value.absent(),
+    this.criticSource = const Value.absent(),
     this.dateAdded = const Value.absent(),
     this.dateScanned = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -941,6 +1031,8 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
     this.sourceApis = const Value.absent(),
     this.userRating = const Value.absent(),
     this.userReview = const Value.absent(),
+    this.criticScore = const Value.absent(),
+    this.criticSource = const Value.absent(),
     required int dateAdded,
     required int dateScanned,
     required int updatedAt,
@@ -972,6 +1064,8 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
     Expression<String>? sourceApis,
     Expression<double>? userRating,
     Expression<String>? userReview,
+    Expression<double>? criticScore,
+    Expression<String>? criticSource,
     Expression<int>? dateAdded,
     Expression<int>? dateScanned,
     Expression<int>? updatedAt,
@@ -996,6 +1090,8 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
       if (sourceApis != null) 'source_apis': sourceApis,
       if (userRating != null) 'user_rating': userRating,
       if (userReview != null) 'user_review': userReview,
+      if (criticScore != null) 'critic_score': criticScore,
+      if (criticSource != null) 'critic_source': criticSource,
       if (dateAdded != null) 'date_added': dateAdded,
       if (dateScanned != null) 'date_scanned': dateScanned,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -1022,6 +1118,8 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
     Value<String>? sourceApis,
     Value<double?>? userRating,
     Value<String?>? userReview,
+    Value<double?>? criticScore,
+    Value<String?>? criticSource,
     Value<int>? dateAdded,
     Value<int>? dateScanned,
     Value<int>? updatedAt,
@@ -1046,6 +1144,8 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
       sourceApis: sourceApis ?? this.sourceApis,
       userRating: userRating ?? this.userRating,
       userReview: userReview ?? this.userReview,
+      criticScore: criticScore ?? this.criticScore,
+      criticSource: criticSource ?? this.criticSource,
       dateAdded: dateAdded ?? this.dateAdded,
       dateScanned: dateScanned ?? this.dateScanned,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -1106,6 +1206,12 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
     if (userReview.present) {
       map['user_review'] = Variable<String>(userReview.value);
     }
+    if (criticScore.present) {
+      map['critic_score'] = Variable<double>(criticScore.value);
+    }
+    if (criticSource.present) {
+      map['critic_source'] = Variable<String>(criticSource.value);
+    }
     if (dateAdded.present) {
       map['date_added'] = Variable<int>(dateAdded.value);
     }
@@ -1146,6 +1252,8 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
           ..write('sourceApis: $sourceApis, ')
           ..write('userRating: $userRating, ')
           ..write('userReview: $userReview, ')
+          ..write('criticScore: $criticScore, ')
+          ..write('criticSource: $criticSource, ')
           ..write('dateAdded: $dateAdded, ')
           ..write('dateScanned: $dateScanned, ')
           ..write('updatedAt: $updatedAt, ')
@@ -4372,6 +4480,8 @@ typedef $$MediaItemsTableTableCreateCompanionBuilder =
       Value<String> sourceApis,
       Value<double?> userRating,
       Value<String?> userReview,
+      Value<double?> criticScore,
+      Value<String?> criticSource,
       required int dateAdded,
       required int dateScanned,
       required int updatedAt,
@@ -4397,6 +4507,8 @@ typedef $$MediaItemsTableTableUpdateCompanionBuilder =
       Value<String> sourceApis,
       Value<double?> userRating,
       Value<String?> userReview,
+      Value<double?> criticScore,
+      Value<String?> criticSource,
       Value<int> dateAdded,
       Value<int> dateScanned,
       Value<int> updatedAt,
@@ -4576,6 +4688,16 @@ class $$MediaItemsTableTableFilterComposer
 
   ColumnFilters<String> get userReview => $composableBuilder(
     column: $table.userReview,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get criticScore => $composableBuilder(
+    column: $table.criticScore,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get criticSource => $composableBuilder(
+    column: $table.criticSource,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4769,6 +4891,16 @@ class $$MediaItemsTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get criticScore => $composableBuilder(
+    column: $table.criticScore,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get criticSource => $composableBuilder(
+    column: $table.criticSource,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get dateAdded => $composableBuilder(
     column: $table.dateAdded,
     builder: (column) => ColumnOrderings(column),
@@ -4861,6 +4993,16 @@ class $$MediaItemsTableTableAnnotationComposer
 
   GeneratedColumn<String> get userReview => $composableBuilder(
     column: $table.userReview,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get criticScore => $composableBuilder(
+    column: $table.criticScore,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get criticSource => $composableBuilder(
+    column: $table.criticSource,
     builder: (column) => column,
   );
 
@@ -5008,6 +5150,8 @@ class $$MediaItemsTableTableTableManager
                 Value<String> sourceApis = const Value.absent(),
                 Value<double?> userRating = const Value.absent(),
                 Value<String?> userReview = const Value.absent(),
+                Value<double?> criticScore = const Value.absent(),
+                Value<String?> criticSource = const Value.absent(),
                 Value<int> dateAdded = const Value.absent(),
                 Value<int> dateScanned = const Value.absent(),
                 Value<int> updatedAt = const Value.absent(),
@@ -5031,6 +5175,8 @@ class $$MediaItemsTableTableTableManager
                 sourceApis: sourceApis,
                 userRating: userRating,
                 userReview: userReview,
+                criticScore: criticScore,
+                criticSource: criticSource,
                 dateAdded: dateAdded,
                 dateScanned: dateScanned,
                 updatedAt: updatedAt,
@@ -5056,6 +5202,8 @@ class $$MediaItemsTableTableTableManager
                 Value<String> sourceApis = const Value.absent(),
                 Value<double?> userRating = const Value.absent(),
                 Value<String?> userReview = const Value.absent(),
+                Value<double?> criticScore = const Value.absent(),
+                Value<String?> criticSource = const Value.absent(),
                 required int dateAdded,
                 required int dateScanned,
                 required int updatedAt,
@@ -5079,6 +5227,8 @@ class $$MediaItemsTableTableTableManager
                 sourceApis: sourceApis,
                 userRating: userRating,
                 userReview: userReview,
+                criticScore: criticScore,
+                criticSource: criticSource,
                 dateAdded: dateAdded,
                 dateScanned: dateScanned,
                 updatedAt: updatedAt,

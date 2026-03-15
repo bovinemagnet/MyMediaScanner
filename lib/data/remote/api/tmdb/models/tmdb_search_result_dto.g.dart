@@ -19,6 +19,8 @@ TmdbSearchResultDto _$TmdbSearchResultDtoFromJson(Map<String, dynamic> json) =>
           ?.map((e) => (e as num).toInt())
           .toList(),
       mediaType: json['media_type'] as String?,
+      voteAverage: (json['vote_average'] as num?)?.toDouble(),
+      voteCount: (json['vote_count'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$TmdbSearchResultDtoToJson(
@@ -33,6 +35,8 @@ Map<String, dynamic> _$TmdbSearchResultDtoToJson(
   'first_air_date': instance.firstAirDate,
   'genre_ids': instance.genreIds,
   'media_type': instance.mediaType,
+  'vote_average': instance.voteAverage,
+  'vote_count': instance.voteCount,
 };
 
 TmdbSearchResponseDto _$TmdbSearchResponseDtoFromJson(

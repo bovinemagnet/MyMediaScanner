@@ -20,6 +20,8 @@ void main() {
             GoogleBooksIdentifierDto(type: 'ISBN_13', identifier: '9780141036144'),
             GoogleBooksIdentifierDto(type: 'ISBN_10', identifier: '0141036141'),
           ],
+          averageRating: 4.5,
+          ratingsCount: 1200,
         ),
       );
 
@@ -35,6 +37,8 @@ void main() {
       expect(result.extraMetadata['isbn13'], '9780141036144');
       expect(result.extraMetadata['page_count'], 328);
       expect(result.sourceApis, ['google_books']);
+      expect(result.criticScore, 9.0);
+      expect(result.criticSource, 'Google Books');
     });
   });
 }

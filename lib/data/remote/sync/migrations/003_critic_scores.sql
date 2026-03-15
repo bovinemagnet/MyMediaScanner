@@ -1,0 +1,2 @@
+ALTER TABLE media_items ADD COLUMN IF NOT EXISTS critic_score DOUBLE PRECISION;
+ALTER TABLE media_items ADD COLUMN IF NOT EXISTS critic_source TEXT;

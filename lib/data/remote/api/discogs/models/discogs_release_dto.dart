@@ -15,6 +15,7 @@ class DiscogsReleaseDto {
     this.tracklist,
     this.images,
     this.catno,
+    this.community,
   });
 
   factory DiscogsReleaseDto.fromJson(Map<String, dynamic> json) =>
@@ -30,6 +31,7 @@ class DiscogsReleaseDto {
   final List<DiscogsTrackDto>? tracklist;
   final List<DiscogsImageDto>? images;
   final String? catno;
+  final DiscogsCommunityDto? community;
 
   Map<String, dynamic> toJson() => _$DiscogsReleaseDtoToJson(this);
 
@@ -103,4 +105,23 @@ class DiscogsSearchResultDto {
   @JsonKey(name: 'cover_image')
   final String? coverImage;
   Map<String, dynamic> toJson() => _$DiscogsSearchResultDtoToJson(this);
+}
+
+@JsonSerializable()
+class DiscogsCommunityDto {
+  const DiscogsCommunityDto({this.rating});
+  factory DiscogsCommunityDto.fromJson(Map<String, dynamic> json) =>
+      _$DiscogsCommunityDtoFromJson(json);
+  final DiscogsCommunityRatingDto? rating;
+  Map<String, dynamic> toJson() => _$DiscogsCommunityDtoToJson(this);
+}
+
+@JsonSerializable()
+class DiscogsCommunityRatingDto {
+  const DiscogsCommunityRatingDto({this.average, this.count});
+  factory DiscogsCommunityRatingDto.fromJson(Map<String, dynamic> json) =>
+      _$DiscogsCommunityRatingDtoFromJson(json);
+  final double? average;
+  final int? count;
+  Map<String, dynamic> toJson() => _$DiscogsCommunityRatingDtoToJson(this);
 }

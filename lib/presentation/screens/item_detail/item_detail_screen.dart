@@ -87,6 +87,44 @@ class ItemDetailScreen extends ConsumerWidget {
                     },
                   ),
                 ),
+                if (item.criticScore != null) ...[
+                  const SizedBox(height: 12),
+                  Center(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.reviews_outlined,
+                          color: Theme.of(context).colorScheme.tertiary,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '${item.criticScore!.toStringAsFixed(1)}/10',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(
+                                color:
+                                    Theme.of(context).colorScheme.tertiary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          item.criticSource ?? '',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(
+                                color:
+                                    Theme.of(context).colorScheme.tertiary,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 16),
                 TagChips(mediaItemId: item.id),
                 if (item.userReview != null &&

@@ -28,6 +28,12 @@ abstract final class GoogleBooksMapper {
         'page_count': info?.pageCount,
       },
       sourceApis: ['google_books'],
+      criticScore: info?.averageRating != null
+          ? info!.averageRating! * 2
+          : null,
+      criticSource: info?.averageRating != null
+          ? 'Google Books'
+          : null,
     );
   }
 }

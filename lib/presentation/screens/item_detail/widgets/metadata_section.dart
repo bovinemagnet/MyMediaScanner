@@ -25,6 +25,12 @@ class MetadataSection extends StatelessWidget {
         _row('Publisher', item.publisher),
         _row('Year', item.year?.toString()),
         _row('Barcode', '${item.barcode} (${item.barcodeType})'),
+        _row(
+          'Critic Score',
+          item.criticScore != null
+              ? '${item.criticScore!.toStringAsFixed(1)}/10 (${item.criticSource})'
+              : null,
+        ),
         if (item.genres.isNotEmpty)
           _row('Genres', item.genres.join(', ')),
 

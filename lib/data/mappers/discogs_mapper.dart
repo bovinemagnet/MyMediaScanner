@@ -32,6 +32,12 @@ abstract final class DiscogsMapper {
             [],
       },
       sourceApis: ['discogs'],
+      criticScore: dto.community?.rating?.average != null
+          ? dto.community!.rating!.average! * 2
+          : null,
+      criticSource: dto.community?.rating?.average != null
+          ? 'Discogs'
+          : null,
     );
   }
 }

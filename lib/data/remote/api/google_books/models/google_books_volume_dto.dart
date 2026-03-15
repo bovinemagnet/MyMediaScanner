@@ -25,6 +25,8 @@ class GoogleBooksVolumeInfoDto {
     this.categories,
     this.imageLinks,
     this.industryIdentifiers,
+    this.averageRating,
+    this.ratingsCount,
   });
 
   factory GoogleBooksVolumeInfoDto.fromJson(Map<String, dynamic> json) =>
@@ -40,6 +42,8 @@ class GoogleBooksVolumeInfoDto {
   final List<String>? categories;
   final GoogleBooksImageLinksDto? imageLinks;
   final List<GoogleBooksIdentifierDto>? industryIdentifiers;
+  final double? averageRating;
+  final int? ratingsCount;
 
   Map<String, dynamic> toJson() => _$GoogleBooksVolumeInfoDtoToJson(this);
 

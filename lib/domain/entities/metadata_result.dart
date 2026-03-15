@@ -19,5 +19,7 @@ sealed class MetadataResult with _$MetadataResult {
     @Default([]) List<String> genres,
     @Default({}) Map<String, dynamic> extraMetadata,
     @Default([]) List<String> sourceApis,
+    double? criticScore,
+    String? criticSource,
   }) = _MetadataResult;
 }

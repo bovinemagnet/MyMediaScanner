@@ -41,6 +41,8 @@ class RefreshMetadataUseCase {
           : item.extraMetadata,
       sourceApis:
           metadata.sourceApis.isNotEmpty ? metadata.sourceApis : item.sourceApis,
+      criticScore: metadata.criticScore ?? item.criticScore,
+      criticSource: metadata.criticSource ?? item.criticSource,
       updatedAt: now,
     );
 

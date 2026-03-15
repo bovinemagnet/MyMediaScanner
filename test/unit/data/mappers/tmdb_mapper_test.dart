@@ -13,6 +13,8 @@ void main() {
         posterPath: '/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg',
         releaseDate: '1999-10-15',
         mediaType: 'movie',
+        voteAverage: 8.4,
+        voteCount: 26000,
       );
 
       final result = TmdbMapper.fromSearchResult(dto, '5051892002172', 'ean13');
@@ -23,6 +25,8 @@ void main() {
       expect(result.coverUrl, contains('w500'));
       expect(result.sourceApis, ['tmdb']);
       expect(result.extraMetadata['tmdb_id'], 550);
+      expect(result.criticScore, 8.4);
+      expect(result.criticSource, 'TMDB');
     });
 
     test('maps TV search result correctly', () {

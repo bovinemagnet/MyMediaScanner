@@ -14,6 +14,8 @@ class TmdbSearchResultDto {
     this.firstAirDate,
     this.genreIds,
     this.mediaType,
+    this.voteAverage,
+    this.voteCount,
   });
 
   factory TmdbSearchResultDto.fromJson(Map<String, dynamic> json) =>
@@ -33,6 +35,10 @@ class TmdbSearchResultDto {
   final List<int>? genreIds;
   @JsonKey(name: 'media_type')
   final String? mediaType;
+  @JsonKey(name: 'vote_average')
+  final double? voteAverage;
+  @JsonKey(name: 'vote_count')
+  final int? voteCount;
 
   Map<String, dynamic> toJson() => _$TmdbSearchResultDtoToJson(this);
 

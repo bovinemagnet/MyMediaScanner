@@ -22,6 +22,8 @@ sealed class MediaItem with _$MediaItem {
     @Default([]) List<String> sourceApis,
     double? userRating,
     String? userReview,
+    double? criticScore,
+    String? criticSource,
     required int dateAdded,
     required int dateScanned,
     required int updatedAt,

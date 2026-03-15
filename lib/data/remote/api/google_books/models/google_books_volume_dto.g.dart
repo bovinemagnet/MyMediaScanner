@@ -44,6 +44,8 @@ GoogleBooksVolumeInfoDto _$GoogleBooksVolumeInfoDtoFromJson(
   industryIdentifiers: (json['industryIdentifiers'] as List<dynamic>?)
       ?.map((e) => GoogleBooksIdentifierDto.fromJson(e as Map<String, dynamic>))
       .toList(),
+  averageRating: (json['averageRating'] as num?)?.toDouble(),
+  ratingsCount: (json['ratingsCount'] as num?)?.toInt(),
 );
 
 Map<String, dynamic> _$GoogleBooksVolumeInfoDtoToJson(
@@ -59,6 +61,8 @@ Map<String, dynamic> _$GoogleBooksVolumeInfoDtoToJson(
   'categories': instance.categories,
   'imageLinks': instance.imageLinks,
   'industryIdentifiers': instance.industryIdentifiers,
+  'averageRating': instance.averageRating,
+  'ratingsCount': instance.ratingsCount,
 };
 
 GoogleBooksImageLinksDto _$GoogleBooksImageLinksDtoFromJson(

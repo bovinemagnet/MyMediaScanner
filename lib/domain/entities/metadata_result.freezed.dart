@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$MetadataResult {
 
- String get barcode; String get barcodeType; MediaType? get mediaType; String? get title; String? get subtitle; String? get description; String? get coverUrl; int? get year; String? get publisher; String? get format; List<String> get genres; Map<String, dynamic> get extraMetadata; List<String> get sourceApis;
+ String get barcode; String get barcodeType; MediaType? get mediaType; String? get title; String? get subtitle; String? get description; String? get coverUrl; int? get year; String? get publisher; String? get format; List<String> get genres; Map<String, dynamic> get extraMetadata; List<String> get sourceApis; double? get criticScore; String? get criticSource;
 /// Create a copy of MetadataResult
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $MetadataResultCopyWith<MetadataResult> get copyWith => _$MetadataResultCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is MetadataResult&&(identical(other.barcode, barcode) || other.barcode == barcode)&&(identical(other.barcodeType, barcodeType) || other.barcodeType == barcodeType)&&(identical(other.mediaType, mediaType) || other.mediaType == mediaType)&&(identical(other.title, title) || other.title == title)&&(identical(other.subtitle, subtitle) || other.subtitle == subtitle)&&(identical(other.description, description) || other.description == description)&&(identical(other.coverUrl, coverUrl) || other.coverUrl == coverUrl)&&(identical(other.year, year) || other.year == year)&&(identical(other.publisher, publisher) || other.publisher == publisher)&&(identical(other.format, format) || other.format == format)&&const DeepCollectionEquality().equals(other.genres, genres)&&const DeepCollectionEquality().equals(other.extraMetadata, extraMetadata)&&const DeepCollectionEquality().equals(other.sourceApis, sourceApis));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MetadataResult&&(identical(other.barcode, barcode) || other.barcode == barcode)&&(identical(other.barcodeType, barcodeType) || other.barcodeType == barcodeType)&&(identical(other.mediaType, mediaType) || other.mediaType == mediaType)&&(identical(other.title, title) || other.title == title)&&(identical(other.subtitle, subtitle) || other.subtitle == subtitle)&&(identical(other.description, description) || other.description == description)&&(identical(other.coverUrl, coverUrl) || other.coverUrl == coverUrl)&&(identical(other.year, year) || other.year == year)&&(identical(other.publisher, publisher) || other.publisher == publisher)&&(identical(other.format, format) || other.format == format)&&const DeepCollectionEquality().equals(other.genres, genres)&&const DeepCollectionEquality().equals(other.extraMetadata, extraMetadata)&&const DeepCollectionEquality().equals(other.sourceApis, sourceApis)&&(identical(other.criticScore, criticScore) || other.criticScore == criticScore)&&(identical(other.criticSource, criticSource) || other.criticSource == criticSource));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,barcode,barcodeType,mediaType,title,subtitle,description,coverUrl,year,publisher,format,const DeepCollectionEquality().hash(genres),const DeepCollectionEquality().hash(extraMetadata),const DeepCollectionEquality().hash(sourceApis));
+int get hashCode => Object.hash(runtimeType,barcode,barcodeType,mediaType,title,subtitle,description,coverUrl,year,publisher,format,const DeepCollectionEquality().hash(genres),const DeepCollectionEquality().hash(extraMetadata),const DeepCollectionEquality().hash(sourceApis),criticScore,criticSource);
 
 @override
 String toString() {
-  return 'MetadataResult(barcode: $barcode, barcodeType: $barcodeType, mediaType: $mediaType, title: $title, subtitle: $subtitle, description: $description, coverUrl: $coverUrl, year: $year, publisher: $publisher, format: $format, genres: $genres, extraMetadata: $extraMetadata, sourceApis: $sourceApis)';
+  return 'MetadataResult(barcode: $barcode, barcodeType: $barcodeType, mediaType: $mediaType, title: $title, subtitle: $subtitle, description: $description, coverUrl: $coverUrl, year: $year, publisher: $publisher, format: $format, genres: $genres, extraMetadata: $extraMetadata, sourceApis: $sourceApis, criticScore: $criticScore, criticSource: $criticSource)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $MetadataResultCopyWith<$Res>  {
   factory $MetadataResultCopyWith(MetadataResult value, $Res Function(MetadataResult) _then) = _$MetadataResultCopyWithImpl;
 @useResult
 $Res call({
- String barcode, String barcodeType, MediaType? mediaType, String? title, String? subtitle, String? description, String? coverUrl, int? year, String? publisher, String? format, List<String> genres, Map<String, dynamic> extraMetadata, List<String> sourceApis
+ String barcode, String barcodeType, MediaType? mediaType, String? title, String? subtitle, String? description, String? coverUrl, int? year, String? publisher, String? format, List<String> genres, Map<String, dynamic> extraMetadata, List<String> sourceApis, double? criticScore, String? criticSource
 });
 
 
@@ -62,7 +62,7 @@ class _$MetadataResultCopyWithImpl<$Res>
 
 /// Create a copy of MetadataResult
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? barcode = null,Object? barcodeType = null,Object? mediaType = freezed,Object? title = freezed,Object? subtitle = freezed,Object? description = freezed,Object? coverUrl = freezed,Object? year = freezed,Object? publisher = freezed,Object? format = freezed,Object? genres = null,Object? extraMetadata = null,Object? sourceApis = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? barcode = null,Object? barcodeType = null,Object? mediaType = freezed,Object? title = freezed,Object? subtitle = freezed,Object? description = freezed,Object? coverUrl = freezed,Object? year = freezed,Object? publisher = freezed,Object? format = freezed,Object? genres = null,Object? extraMetadata = null,Object? sourceApis = null,Object? criticScore = freezed,Object? criticSource = freezed,}) {
   return _then(_self.copyWith(
 barcode: null == barcode ? _self.barcode : barcode // ignore: cast_nullable_to_non_nullable
 as String,barcodeType: null == barcodeType ? _self.barcodeType : barcodeType // ignore: cast_nullable_to_non_nullable
@@ -77,7 +77,9 @@ as String?,format: freezed == format ? _self.format : format // ignore: cast_nul
 as String?,genres: null == genres ? _self.genres : genres // ignore: cast_nullable_to_non_nullable
 as List<String>,extraMetadata: null == extraMetadata ? _self.extraMetadata : extraMetadata // ignore: cast_nullable_to_non_nullable
 as Map<String, dynamic>,sourceApis: null == sourceApis ? _self.sourceApis : sourceApis // ignore: cast_nullable_to_non_nullable
-as List<String>,
+as List<String>,criticScore: freezed == criticScore ? _self.criticScore : criticScore // ignore: cast_nullable_to_non_nullable
+as double?,criticSource: freezed == criticSource ? _self.criticSource : criticSource // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -159,10 +161,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String barcode,  String barcodeType,  MediaType? mediaType,  String? title,  String? subtitle,  String? description,  String? coverUrl,  int? year,  String? publisher,  String? format,  List<String> genres,  Map<String, dynamic> extraMetadata,  List<String> sourceApis)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String barcode,  String barcodeType,  MediaType? mediaType,  String? title,  String? subtitle,  String? description,  String? coverUrl,  int? year,  String? publisher,  String? format,  List<String> genres,  Map<String, dynamic> extraMetadata,  List<String> sourceApis,  double? criticScore,  String? criticSource)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _MetadataResult() when $default != null:
-return $default(_that.barcode,_that.barcodeType,_that.mediaType,_that.title,_that.subtitle,_that.description,_that.coverUrl,_that.year,_that.publisher,_that.format,_that.genres,_that.extraMetadata,_that.sourceApis);case _:
+return $default(_that.barcode,_that.barcodeType,_that.mediaType,_that.title,_that.subtitle,_that.description,_that.coverUrl,_that.year,_that.publisher,_that.format,_that.genres,_that.extraMetadata,_that.sourceApis,_that.criticScore,_that.criticSource);case _:
   return orElse();
 
 }
@@ -180,10 +182,10 @@ return $default(_that.barcode,_that.barcodeType,_that.mediaType,_that.title,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String barcode,  String barcodeType,  MediaType? mediaType,  String? title,  String? subtitle,  String? description,  String? coverUrl,  int? year,  String? publisher,  String? format,  List<String> genres,  Map<String, dynamic> extraMetadata,  List<String> sourceApis)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String barcode,  String barcodeType,  MediaType? mediaType,  String? title,  String? subtitle,  String? description,  String? coverUrl,  int? year,  String? publisher,  String? format,  List<String> genres,  Map<String, dynamic> extraMetadata,  List<String> sourceApis,  double? criticScore,  String? criticSource)  $default,) {final _that = this;
 switch (_that) {
 case _MetadataResult():
-return $default(_that.barcode,_that.barcodeType,_that.mediaType,_that.title,_that.subtitle,_that.description,_that.coverUrl,_that.year,_that.publisher,_that.format,_that.genres,_that.extraMetadata,_that.sourceApis);}
+return $default(_that.barcode,_that.barcodeType,_that.mediaType,_that.title,_that.subtitle,_that.description,_that.coverUrl,_that.year,_that.publisher,_that.format,_that.genres,_that.extraMetadata,_that.sourceApis,_that.criticScore,_that.criticSource);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -197,10 +199,10 @@ return $default(_that.barcode,_that.barcodeType,_that.mediaType,_that.title,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String barcode,  String barcodeType,  MediaType? mediaType,  String? title,  String? subtitle,  String? description,  String? coverUrl,  int? year,  String? publisher,  String? format,  List<String> genres,  Map<String, dynamic> extraMetadata,  List<String> sourceApis)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String barcode,  String barcodeType,  MediaType? mediaType,  String? title,  String? subtitle,  String? description,  String? coverUrl,  int? year,  String? publisher,  String? format,  List<String> genres,  Map<String, dynamic> extraMetadata,  List<String> sourceApis,  double? criticScore,  String? criticSource)?  $default,) {final _that = this;
 switch (_that) {
 case _MetadataResult() when $default != null:
-return $default(_that.barcode,_that.barcodeType,_that.mediaType,_that.title,_that.subtitle,_that.description,_that.coverUrl,_that.year,_that.publisher,_that.format,_that.genres,_that.extraMetadata,_that.sourceApis);case _:
+return $default(_that.barcode,_that.barcodeType,_that.mediaType,_that.title,_that.subtitle,_that.description,_that.coverUrl,_that.year,_that.publisher,_that.format,_that.genres,_that.extraMetadata,_that.sourceApis,_that.criticScore,_that.criticSource);case _:
   return null;
 
 }
@@ -212,7 +214,7 @@ return $default(_that.barcode,_that.barcodeType,_that.mediaType,_that.title,_tha
 
 
 class _MetadataResult implements MetadataResult {
-  const _MetadataResult({required this.barcode, required this.barcodeType, this.mediaType, this.title, this.subtitle, this.description, this.coverUrl, this.year, this.publisher, this.format, final  List<String> genres = const [], final  Map<String, dynamic> extraMetadata = const {}, final  List<String> sourceApis = const []}): _genres = genres,_extraMetadata = extraMetadata,_sourceApis = sourceApis;
+  const _MetadataResult({required this.barcode, required this.barcodeType, this.mediaType, this.title, this.subtitle, this.description, this.coverUrl, this.year, this.publisher, this.format, final  List<String> genres = const [], final  Map<String, dynamic> extraMetadata = const {}, final  List<String> sourceApis = const [], this.criticScore, this.criticSource}): _genres = genres,_extraMetadata = extraMetadata,_sourceApis = sourceApis;
   
 
 @override final  String barcode;
@@ -246,6 +248,8 @@ class _MetadataResult implements MetadataResult {
   return EqualUnmodifiableListView(_sourceApis);
 }
 
+@override final  double? criticScore;
+@override final  String? criticSource;
 
 /// Create a copy of MetadataResult
 /// with the given fields replaced by the non-null parameter values.
@@ -257,16 +261,16 @@ _$MetadataResultCopyWith<_MetadataResult> get copyWith => __$MetadataResultCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _MetadataResult&&(identical(other.barcode, barcode) || other.barcode == barcode)&&(identical(other.barcodeType, barcodeType) || other.barcodeType == barcodeType)&&(identical(other.mediaType, mediaType) || other.mediaType == mediaType)&&(identical(other.title, title) || other.title == title)&&(identical(other.subtitle, subtitle) || other.subtitle == subtitle)&&(identical(other.description, description) || other.description == description)&&(identical(other.coverUrl, coverUrl) || other.coverUrl == coverUrl)&&(identical(other.year, year) || other.year == year)&&(identical(other.publisher, publisher) || other.publisher == publisher)&&(identical(other.format, format) || other.format == format)&&const DeepCollectionEquality().equals(other._genres, _genres)&&const DeepCollectionEquality().equals(other._extraMetadata, _extraMetadata)&&const DeepCollectionEquality().equals(other._sourceApis, _sourceApis));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _MetadataResult&&(identical(other.barcode, barcode) || other.barcode == barcode)&&(identical(other.barcodeType, barcodeType) || other.barcodeType == barcodeType)&&(identical(other.mediaType, mediaType) || other.mediaType == mediaType)&&(identical(other.title, title) || other.title == title)&&(identical(other.subtitle, subtitle) || other.subtitle == subtitle)&&(identical(other.description, description) || other.description == description)&&(identical(other.coverUrl, coverUrl) || other.coverUrl == coverUrl)&&(identical(other.year, year) || other.year == year)&&(identical(other.publisher, publisher) || other.publisher == publisher)&&(identical(other.format, format) || other.format == format)&&const DeepCollectionEquality().equals(other._genres, _genres)&&const DeepCollectionEquality().equals(other._extraMetadata, _extraMetadata)&&const DeepCollectionEquality().equals(other._sourceApis, _sourceApis)&&(identical(other.criticScore, criticScore) || other.criticScore == criticScore)&&(identical(other.criticSource, criticSource) || other.criticSource == criticSource));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,barcode,barcodeType,mediaType,title,subtitle,description,coverUrl,year,publisher,format,const DeepCollectionEquality().hash(_genres),const DeepCollectionEquality().hash(_extraMetadata),const DeepCollectionEquality().hash(_sourceApis));
+int get hashCode => Object.hash(runtimeType,barcode,barcodeType,mediaType,title,subtitle,description,coverUrl,year,publisher,format,const DeepCollectionEquality().hash(_genres),const DeepCollectionEquality().hash(_extraMetadata),const DeepCollectionEquality().hash(_sourceApis),criticScore,criticSource);
 
 @override
 String toString() {
-  return 'MetadataResult(barcode: $barcode, barcodeType: $barcodeType, mediaType: $mediaType, title: $title, subtitle: $subtitle, description: $description, coverUrl: $coverUrl, year: $year, publisher: $publisher, format: $format, genres: $genres, extraMetadata: $extraMetadata, sourceApis: $sourceApis)';
+  return 'MetadataResult(barcode: $barcode, barcodeType: $barcodeType, mediaType: $mediaType, title: $title, subtitle: $subtitle, description: $description, coverUrl: $coverUrl, year: $year, publisher: $publisher, format: $format, genres: $genres, extraMetadata: $extraMetadata, sourceApis: $sourceApis, criticScore: $criticScore, criticSource: $criticSource)';
 }
 
 
@@ -277,7 +281,7 @@ abstract mixin class _$MetadataResultCopyWith<$Res> implements $MetadataResultCo
   factory _$MetadataResultCopyWith(_MetadataResult value, $Res Function(_MetadataResult) _then) = __$MetadataResultCopyWithImpl;
 @override @useResult
 $Res call({
- String barcode, String barcodeType, MediaType? mediaType, String? title, String? subtitle, String? description, String? coverUrl, int? year, String? publisher, String? format, List<String> genres, Map<String, dynamic> extraMetadata, List<String> sourceApis
+ String barcode, String barcodeType, MediaType? mediaType, String? title, String? subtitle, String? description, String? coverUrl, int? year, String? publisher, String? format, List<String> genres, Map<String, dynamic> extraMetadata, List<String> sourceApis, double? criticScore, String? criticSource
 });
 
 
@@ -294,7 +298,7 @@ class __$MetadataResultCopyWithImpl<$Res>
 
 /// Create a copy of MetadataResult
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? barcode = null,Object? barcodeType = null,Object? mediaType = freezed,Object? title = freezed,Object? subtitle = freezed,Object? description = freezed,Object? coverUrl = freezed,Object? year = freezed,Object? publisher = freezed,Object? format = freezed,Object? genres = null,Object? extraMetadata = null,Object? sourceApis = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? barcode = null,Object? barcodeType = null,Object? mediaType = freezed,Object? title = freezed,Object? subtitle = freezed,Object? description = freezed,Object? coverUrl = freezed,Object? year = freezed,Object? publisher = freezed,Object? format = freezed,Object? genres = null,Object? extraMetadata = null,Object? sourceApis = null,Object? criticScore = freezed,Object? criticSource = freezed,}) {
   return _then(_MetadataResult(
 barcode: null == barcode ? _self.barcode : barcode // ignore: cast_nullable_to_non_nullable
 as String,barcodeType: null == barcodeType ? _self.barcodeType : barcodeType // ignore: cast_nullable_to_non_nullable
@@ -309,7 +313,9 @@ as String?,format: freezed == format ? _self.format : format // ignore: cast_nul
 as String?,genres: null == genres ? _self._genres : genres // ignore: cast_nullable_to_non_nullable
 as List<String>,extraMetadata: null == extraMetadata ? _self._extraMetadata : extraMetadata // ignore: cast_nullable_to_non_nullable
 as Map<String, dynamic>,sourceApis: null == sourceApis ? _self._sourceApis : sourceApis // ignore: cast_nullable_to_non_nullable
-as List<String>,
+as List<String>,criticScore: freezed == criticScore ? _self.criticScore : criticScore // ignore: cast_nullable_to_non_nullable
+as double?,criticSource: freezed == criticSource ? _self.criticSource : criticSource // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

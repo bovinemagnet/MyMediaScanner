@@ -27,6 +27,9 @@ DiscogsReleaseDto _$DiscogsReleaseDtoFromJson(
       ?.map((e) => DiscogsImageDto.fromJson(e as Map<String, dynamic>))
       .toList(),
   catno: json['catno'] as String?,
+  community: json['community'] == null
+      ? null
+      : DiscogsCommunityDto.fromJson(json['community'] as Map<String, dynamic>),
 );
 
 Map<String, dynamic> _$DiscogsReleaseDtoToJson(DiscogsReleaseDto instance) =>
@@ -41,6 +44,7 @@ Map<String, dynamic> _$DiscogsReleaseDtoToJson(DiscogsReleaseDto instance) =>
       'tracklist': instance.tracklist,
       'images': instance.images,
       'catno': instance.catno,
+      'community': instance.community,
     };
 
 DiscogsArtistDto _$DiscogsArtistDtoFromJson(Map<String, dynamic> json) =>
@@ -107,3 +111,27 @@ Map<String, dynamic> _$DiscogsSearchResultDtoToJson(
   'year': instance.year,
   'cover_image': instance.coverImage,
 };
+
+DiscogsCommunityDto _$DiscogsCommunityDtoFromJson(Map<String, dynamic> json) =>
+    DiscogsCommunityDto(
+      rating: json['rating'] == null
+          ? null
+          : DiscogsCommunityRatingDto.fromJson(
+              json['rating'] as Map<String, dynamic>,
+            ),
+    );
+
+Map<String, dynamic> _$DiscogsCommunityDtoToJson(
+  DiscogsCommunityDto instance,
+) => <String, dynamic>{'rating': instance.rating};
+
+DiscogsCommunityRatingDto _$DiscogsCommunityRatingDtoFromJson(
+  Map<String, dynamic> json,
+) => DiscogsCommunityRatingDto(
+  average: (json['average'] as num?)?.toDouble(),
+  count: (json['count'] as num?)?.toInt(),
+);
+
+Map<String, dynamic> _$DiscogsCommunityRatingDtoToJson(
+  DiscogsCommunityRatingDto instance,
+) => <String, dynamic>{'average': instance.average, 'count': instance.count};

@@ -28,6 +28,8 @@ class SaveMediaItemUseCase {
       genres: metadata.genres,
       extraMetadata: metadata.extraMetadata,
       sourceApis: metadata.sourceApis,
+      criticScore: metadata.criticScore,
+      criticSource: metadata.criticSource,
       dateAdded: now,
       dateScanned: now,
       updatedAt: now,

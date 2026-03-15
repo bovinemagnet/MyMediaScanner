@@ -22,6 +22,8 @@ abstract final class TmdbMapper {
         if (isTV) 'media_type': 'tv' else 'media_type': 'film',
       },
       sourceApis: ['tmdb'],
+      criticScore: dto.voteAverage, // TMDB is already 0-10 scale
+      criticSource: dto.voteAverage != null ? 'TMDB' : null,
     );
   }
 }
