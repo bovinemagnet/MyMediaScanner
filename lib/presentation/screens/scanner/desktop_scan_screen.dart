@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mymediascanner/presentation/providers/scanner_provider.dart';
 import 'package:mymediascanner/presentation/screens/scanner/widgets/batch_scan_counter.dart';
+import 'package:mymediascanner/presentation/screens/scanner/widgets/media_type_toggles.dart';
 import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
 
 class DesktopScanScreen extends ConsumerStatefulWidget {
@@ -62,6 +63,13 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
               'Scan with USB scanner or type barcode',
               style: Theme.of(context).textTheme.titleMedium,
             ),
+            const SizedBox(height: 16),
+            Text(
+              'Look up as:',
+              style: Theme.of(context).textTheme.labelMedium,
+            ),
+            const SizedBox(height: 8),
+            const MediaTypeToggles(),
             const SizedBox(height: 16),
             Row(
               mainAxisSize: MainAxisSize.min,

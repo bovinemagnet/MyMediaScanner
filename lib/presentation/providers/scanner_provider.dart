@@ -12,6 +12,13 @@ class ScannerState {
     this.error,
     this.batchMode = false,
     this.batchCount = 0,
+    this.enabledMediaTypes = const {
+      MediaType.music,
+      MediaType.film,
+      MediaType.tv,
+      MediaType.book,
+      MediaType.game,
+    },
   });
 
   final ScanState state;
@@ -19,6 +26,18 @@ class ScannerState {
   final String? error;
   final bool batchMode;
   final int batchCount;
+  /// Which media types to search for. Determines the typeHint passed to lookup.
+  final Set<MediaType> enabledMediaTypes;
+
+  /// Derives a typeHint from enabled types. If only one category is enabled,
+  /// use it as the hint. If multiple are enabled, return null (no hint).
+  MediaType? get typeHint {
+    if (enabledMediaTypes.length == 1) return enabledMediaTypes.first;
+    // If only music-related types are off, hint is film, etc.
+    final withoutGame = enabledMediaTypes.difference({MediaType.game});
+    if (withoutGame.length == 1) return withoutGame.first;
+    return null;
+  }
 
   ScannerState copyWith({
     ScanState? state,
@@ -26,12 +45,14 @@ class ScannerState {
     String? error,
     bool? batchMode,
     int? batchCount,
+    Set<MediaType>? enabledMediaTypes,
   }) => ScannerState(
     state: state ?? this.state,
     result: result ?? this.result,
     error: error ?? this.error,
     batchMode: batchMode ?? this.batchMode,
     batchCount: batchCount ?? this.batchCount,
+    enabledMediaTypes: enabledMediaTypes ?? this.enabledMediaTypes,
   );
 }
 
@@ -39,11 +60,22 @@ class ScannerNotifier extends Notifier<ScannerState> {
   @override
   ScannerState build() => const ScannerState();
 
+  void toggleMediaType(MediaType type) {
+    final current = Set<MediaType>.from(state.enabledMediaTypes);
+    if (current.contains(type)) {
+      if (current.length > 1) current.remove(type); // Don't allow empty set
+    } else {
+      current.add(type);
+    }
+    state = state.copyWith(enabledMediaTypes: current);
+  }
+
   Future<void> onBarcodeScanned(
     String barcode, {
     MediaType? typeHint,
   }) async {
-    state = const ScannerState(state: ScanState.lookingUp);
+    final effectiveHint = typeHint ?? state.typeHint;
+    state = state.copyWith(state: ScanState.lookingUp);
 
     try {
       final useCase = ScanBarcodeUseCase(
@@ -51,7 +83,7 @@ class ScannerNotifier extends Notifier<ScannerState> {
         metadataRepository: ref.read(metadataRepositoryProvider),
       );
 
-      final scanResult = await useCase.execute(barcode, typeHint: typeHint);
+      final scanResult = await useCase.execute(barcode, typeHint: effectiveHint);
 
       if (scanResult.isDuplicate) {
         state = ScannerState(state: ScanState.duplicate, result: scanResult);

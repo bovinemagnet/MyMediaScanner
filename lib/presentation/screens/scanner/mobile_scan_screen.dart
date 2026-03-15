@@ -12,6 +12,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:mymediascanner/presentation/providers/scanner_provider.dart';
 import 'package:mymediascanner/presentation/screens/scanner/widgets/batch_scan_counter.dart';
+import 'package:mymediascanner/presentation/screens/scanner/widgets/media_type_toggles.dart';
 import 'package:mymediascanner/presentation/screens/scanner/widgets/scan_overlay.dart';
 import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
 
@@ -300,6 +301,20 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen> {
           },
         ),
         const ScanOverlay(),
+        // Media type toggles at the bottom
+        Positioned(
+          left: 16,
+          right: 16,
+          bottom: 32,
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.black54,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const MediaTypeToggles(),
+          ),
+        ),
         if (scannerState.state == ScanState.lookingUp)
           Container(
             color: Colors.black54,
@@ -333,6 +348,8 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen> {
                 ),
             textAlign: TextAlign.center,
           ),
+          const SizedBox(height: 16),
+          const MediaTypeToggles(),
           const SizedBox(height: 24),
           SizedBox(
             width: 400,
