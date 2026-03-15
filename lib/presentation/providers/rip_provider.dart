@@ -12,6 +12,11 @@ import 'package:mymediascanner/domain/usecases/scan_rip_library_usecase.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/settings_provider.dart';
 
+/// Stream of all non-deleted rip albums.
+final allRipAlbumsProvider = StreamProvider<List<RipAlbum>>((ref) {
+  return ref.watch(ripLibraryRepositoryProvider).watchAll();
+});
+
 /// Stream of the rip album linked to a specific media item.
 final ripAlbumForItemProvider =
     StreamProvider.family<RipAlbum?, String>((ref, mediaItemId) {

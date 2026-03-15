@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mymediascanner/core/constants/app_constants.dart';
+import 'package:mymediascanner/core/utils/platform_utils.dart';
 
 class AppScaffold extends StatelessWidget {
   const AppScaffold({
@@ -56,6 +57,12 @@ class AppScaffold extends StatelessWidget {
     ),
   ];
 
+  static const _ripsRailDestination = NavigationRailDestination(
+    icon: Icon(Icons.album_outlined),
+    selectedIcon: Icon(Icons.album),
+    label: Text('Rips'),
+  );
+
   void _onDestinationSelected(int index) {
     navigationShell.goBranch(
       index,
@@ -67,18 +74,31 @@ class AppScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     final useRail = width >= AppConstants.compactBreakpoint;
+    final isDesktop = PlatformCapability.isDesktop;
 
     if (useRail) {
+      // On desktop, include the Rips destination in the rail.
+      final destinations = [
+        ..._railDestinations,
+        if (isDesktop) _ripsRailDestination,
+      ];
+
+      // If on mobile (non-desktop) and the shell is on the rips branch
+      // (index 4), redirect to collection (index 0).
+      final currentIndex = (!isDesktop && navigationShell.currentIndex >= 4)
+          ? 0
+          : navigationShell.currentIndex;
+
       return Scaffold(
         body: Row(
           children: [
             NavigationRail(
-              selectedIndex: navigationShell.currentIndex,
+              selectedIndex: currentIndex,
               onDestinationSelected: _onDestinationSelected,
               labelType: width >= AppConstants.expandedBreakpoint
                   ? NavigationRailLabelType.all
                   : NavigationRailLabelType.selected,
-              destinations: _railDestinations,
+              destinations: destinations,
             ),
             const VerticalDivider(width: 1),
             Expanded(child: navigationShell),
@@ -87,10 +107,16 @@ class AppScaffold extends StatelessWidget {
       );
     }
 
+    // Mobile bottom nav — always 4 destinations, never show Rips.
+    // If somehow on rips branch (index 4), clamp to 0.
+    final mobileIndex = navigationShell.currentIndex >= 4
+        ? 0
+        : navigationShell.currentIndex;
+
     return Scaffold(
       body: navigationShell,
       bottomNavigationBar: NavigationBar(
-        selectedIndex: navigationShell.currentIndex,
+        selectedIndex: mobileIndex,
         onDestinationSelected: _onDestinationSelected,
         destinations: _destinations,
       ),

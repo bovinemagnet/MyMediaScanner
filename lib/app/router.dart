@@ -9,6 +9,7 @@ import 'package:mymediascanner/presentation/screens/shelves/shelf_detail_screen.
 import 'package:mymediascanner/presentation/screens/settings/settings_screen.dart';
 import 'package:mymediascanner/presentation/screens/collection/statistics_screen.dart';
 import 'package:mymediascanner/presentation/screens/settings/widgets/postgres_config_form.dart';
+import 'package:mymediascanner/presentation/screens/rips/rips_screen.dart';
 import 'package:mymediascanner/presentation/widgets/app_scaffold.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -95,6 +96,14 @@ final router = GoRouter(
                       const PostgresConfigForm(),
                 ),
               ],
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/rips',
+              builder: (context, state) => const RipsScreen(),
             ),
           ],
         ),
