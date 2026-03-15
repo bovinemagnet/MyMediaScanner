@@ -13,6 +13,8 @@ class TagRepositoryImpl implements ITagRepository {
         _syncLogDao = syncLogDao;
 
   final TagsDao _tagsDao;
+  // Retained for sync support in Slice 5.
+  // ignore: unused_field
   final SyncLogDao _syncLogDao;
 
   @override

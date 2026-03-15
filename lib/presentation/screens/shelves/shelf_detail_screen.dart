@@ -36,7 +36,7 @@ class ShelfDetailScreen extends ConsumerWidget {
                 key: ValueKey(itemIds[index]),
                 title: itemAsync.when(
                   loading: () => const Text('Loading...'),
-                  error: (_, __) => const Text('Error'),
+                  error: (_, _) => const Text('Error'),
                   data: (item) => Text(item?.title ?? 'Unknown'),
                 ),
                 onTap: () => context.go('/item/${itemIds[index]}'),

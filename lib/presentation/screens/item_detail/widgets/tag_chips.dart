@@ -16,10 +16,10 @@ class TagChips extends ConsumerWidget {
 
     return allTagsAsync.when(
       loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (allTags) => itemTagIdsAsync.when(
         loading: () => const SizedBox.shrink(),
-        error: (_, __) => const SizedBox.shrink(),
+        error: (_, _) => const SizedBox.shrink(),
         data: (itemTagIds) => Wrap(
           spacing: 8,
           runSpacing: 4,
