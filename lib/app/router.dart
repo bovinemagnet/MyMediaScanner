@@ -7,6 +7,7 @@ import 'package:mymediascanner/presentation/screens/scanner/scanner_screen.dart'
 import 'package:mymediascanner/presentation/screens/shelves/shelves_screen.dart';
 import 'package:mymediascanner/presentation/screens/shelves/shelf_detail_screen.dart';
 import 'package:mymediascanner/presentation/screens/settings/settings_screen.dart';
+import 'package:mymediascanner/presentation/screens/collection/statistics_screen.dart';
 import 'package:mymediascanner/presentation/screens/settings/widgets/postgres_config_form.dart';
 import 'package:mymediascanner/presentation/widgets/app_scaffold.dart';
 
@@ -26,6 +27,11 @@ final router = GoRouter(
               path: '/',
               builder: (context, state) => const CollectionScreen(),
               routes: [
+                GoRoute(
+                  path: 'statistics',
+                  parentNavigatorKey: _rootNavigatorKey,
+                  builder: (context, state) => const StatisticsScreen(),
+                ),
                 GoRoute(
                   path: 'item/:id',
                   builder: (context, state) => ItemDetailScreen(

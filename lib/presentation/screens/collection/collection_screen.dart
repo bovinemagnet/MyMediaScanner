@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:mymediascanner/domain/usecases/export_collection_usecase.dart';
 import 'package:mymediascanner/presentation/providers/collection_provider.dart';
+import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/screens/collection/widgets/filter_bar.dart';
 import 'package:mymediascanner/presentation/screens/collection/widgets/media_item_card.dart';
 import 'package:mymediascanner/presentation/screens/collection/widgets/sort_selector.dart';
@@ -19,7 +22,19 @@ class CollectionScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Collection'),
-        actions: const [SortSelector()],
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.download),
+            tooltip: 'Export collection',
+            onPressed: () => _showExportDialog(context, ref),
+          ),
+          IconButton(
+            icon: const Icon(Icons.bar_chart),
+            tooltip: 'Collection Statistics',
+            onPressed: () => context.go('/statistics'),
+          ),
+          const SortSelector(),
+        ],
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(56),
           child: FilterBar(),
@@ -71,5 +86,67 @@ class CollectionScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  void _showExportDialog(BuildContext context, WidgetRef ref) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Export Collection'),
+        content: const Text(
+          'Choose a format to export your collection.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              _exportCollection(context, ref, ExportFormat.csv);
+            },
+            child: const Text('Export as CSV'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              _exportCollection(context, ref, ExportFormat.json);
+            },
+            child: const Text('Export as JSON'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _exportCollection(
+    BuildContext context,
+    WidgetRef ref,
+    ExportFormat format,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+
+    try {
+      final useCase = ExportCollectionUseCase(
+        repository: ref.read(mediaItemRepositoryProvider),
+      );
+
+      final directory = await getApplicationDocumentsDirectory();
+      final filePath = await useCase.execute(
+        format: format,
+        outputDirectory: directory.path,
+      );
+
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Collection exported to $filePath'),
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Export failed: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 }
