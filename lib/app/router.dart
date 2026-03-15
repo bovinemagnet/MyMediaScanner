@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mymediascanner/presentation/screens/collection/collection_screen.dart';
+import 'package:mymediascanner/presentation/screens/item_detail/item_detail_screen.dart';
 import 'package:mymediascanner/presentation/screens/metadata_confirm/metadata_confirm_screen.dart';
 import 'package:mymediascanner/presentation/screens/scanner/scanner_screen.dart';
 import 'package:mymediascanner/presentation/screens/shelves/shelves_screen.dart';
@@ -25,8 +26,8 @@ final router = GoRouter(
               routes: [
                 GoRoute(
                   path: 'item/:id',
-                  builder: (context, state) => Center(
-                    child: Text('Item ${state.pathParameters['id']}'),
+                  builder: (context, state) => ItemDetailScreen(
+                    itemId: state.pathParameters['id']!,
                   ),
                   routes: [
                     GoRoute(
