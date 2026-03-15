@@ -28,12 +28,19 @@ class MediaItemRepositoryImpl implements IMediaItemRepository {
     String? sortBy,
     bool ascending = true,
   }) {
-    // Basic watch — filtering/sorting will be enhanced in Slice 3
-    return _mediaItemsDao.watchAll().map(
+    final useFts =
+        searchQuery != null && searchQuery.trim().length >= 2;
+
+    final Stream<List<MediaItemsTableData>> baseStream = useFts
+        ? _mediaItemsDao.watchSearch(searchQuery)
+        : _mediaItemsDao.watchAll();
+
+    return baseStream.map(
       (rows) => rows
+          .where((r) => mediaType == null || r.mediaType == mediaType.name)
           .where((r) =>
-              mediaType == null || r.mediaType == mediaType.name)
-          .where((r) =>
+              // For very short queries (< 2 chars), fall back to in-memory filter
+              useFts ||
               searchQuery == null ||
               r.title.toLowerCase().contains(searchQuery.toLowerCase()))
           .map(_fromRow)

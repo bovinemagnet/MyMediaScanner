@@ -64,11 +64,14 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        onCreate: (m) => m.createAll(),
+        onCreate: (m) async {
+          await m.createAll();
+          await _createFts5Table(m);
+        },
         onUpgrade: (m, from, to) async {
           if (from < 2) {
             await m.createTable(borrowersTable);
@@ -97,6 +100,55 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(
                 ripTracksTable, ripTracksTable.qualityCheckedAt);
           }
+          if (from < 6) {
+            await _createFts5Table(m);
+          }
         },
       );
+
+  /// Creates the FTS5 virtual table and sync triggers for full-text search.
+  Future<void> _createFts5Table(Migrator m) async {
+    await customStatement('''
+      CREATE VIRTUAL TABLE IF NOT EXISTS media_items_fts USING fts5(
+        title,
+        subtitle,
+        description,
+        publisher,
+        genres,
+        content='media_items',
+        content_rowid='rowid'
+      )
+    ''');
+
+    await customStatement('''
+      CREATE TRIGGER IF NOT EXISTS media_items_fts_insert
+      AFTER INSERT ON media_items BEGIN
+        INSERT INTO media_items_fts(rowid, title, subtitle, description, publisher, genres)
+        VALUES (new.rowid, new.title, new.subtitle, new.description, new.publisher, new.genres);
+      END
+    ''');
+
+    await customStatement('''
+      CREATE TRIGGER IF NOT EXISTS media_items_fts_update
+      AFTER UPDATE ON media_items BEGIN
+        INSERT INTO media_items_fts(media_items_fts, rowid, title, subtitle, description, publisher, genres)
+        VALUES ('delete', old.rowid, old.title, old.subtitle, old.description, old.publisher, old.genres);
+        INSERT INTO media_items_fts(rowid, title, subtitle, description, publisher, genres)
+        VALUES (new.rowid, new.title, new.subtitle, new.description, new.publisher, new.genres);
+      END
+    ''');
+
+    await customStatement('''
+      CREATE TRIGGER IF NOT EXISTS media_items_fts_delete
+      AFTER DELETE ON media_items BEGIN
+        INSERT INTO media_items_fts(media_items_fts, rowid, title, subtitle, description, publisher, genres)
+        VALUES ('delete', old.rowid, old.title, old.subtitle, old.description, old.publisher, old.genres);
+      END
+    ''');
+
+    // Rebuild index from existing data (for upgrades from previous versions).
+    await customStatement(
+      "INSERT INTO media_items_fts(media_items_fts) VALUES('rebuild')",
+    );
+  }
 }
