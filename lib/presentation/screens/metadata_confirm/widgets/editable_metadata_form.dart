@@ -83,7 +83,7 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
                 child: Image.network(
                   widget.initial.coverUrl!,
                   height: 200,
-                  errorBuilder: (_, __, ___) => const Icon(
+                  errorBuilder: (_, _, _) => const Icon(
                     Icons.broken_image,
                     size: 100,
                   ),
@@ -92,7 +92,7 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
             ),
           const SizedBox(height: 16),
           DropdownButtonFormField<MediaType>(
-            value: _mediaType,
+            initialValue: _mediaType,
             decoration: const InputDecoration(labelText: 'Media Type'),
             items: MediaType.values
                 .map((t) =>

@@ -12,7 +12,7 @@ void main() {
   late MockMediaItemRepository mockRepo;
 
   setUpAll(() {
-    registerFallbackValue(MediaItem(
+    registerFallbackValue(const MediaItem(
       id: '', barcode: '', barcodeType: '', mediaType: MediaType.unknown,
       title: '', dateAdded: 0, dateScanned: 0, updatedAt: 0,
     ));
@@ -24,7 +24,7 @@ void main() {
   });
 
   test('updates item rating and review', () async {
-    final item = MediaItem(
+    const item = MediaItem(
       id: 'item-1', barcode: '123', barcodeType: 'ean13',
       mediaType: MediaType.film, title: 'Test',
       dateAdded: 1000, dateScanned: 1000, updatedAt: 1000,

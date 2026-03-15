@@ -6,7 +6,7 @@ import 'package:mymediascanner/domain/entities/media_type.dart';
 void main() {
   group('GoogleBooksMapper', () {
     test('maps volume to MetadataResult', () {
-      final dto = GoogleBooksVolumeDto(
+      const dto = GoogleBooksVolumeDto(
         id: 'abc123',
         volumeInfo: GoogleBooksVolumeInfoDto(
           title: '1984',

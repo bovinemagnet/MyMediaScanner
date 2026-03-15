@@ -85,7 +85,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     if (cached == null) return null;
 
     final age = DateTime.now().millisecondsSinceEpoch - cached.cachedAt;
-    final maxAge = ApiConstants.cacheDurationDays * 24 * 60 * 60 * 1000;
+    const maxAge = ApiConstants.cacheDurationDays * 24 * 60 * 60 * 1000;
     if (age > maxAge) return null;
 
     // Re-map through the original mapper for full fidelity

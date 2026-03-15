@@ -13,7 +13,7 @@ void main() {
   late MockMediaItemRepository mockRepo;
 
   setUpAll(() {
-    registerFallbackValue(MediaItem(
+    registerFallbackValue(const MediaItem(
       id: '',
       barcode: '',
       barcodeType: '',
@@ -34,7 +34,7 @@ void main() {
     test('creates MediaItem from MetadataResult and saves', () async {
       when(() => mockRepo.save(any())).thenAnswer((_) async {});
 
-      final metadata = MetadataResult(
+      const metadata = MetadataResult(
         barcode: '9780141036144',
         barcodeType: 'isbn13',
         title: '1984',

@@ -17,7 +17,7 @@ void main() {
   late MockMetadataRepository mockMetadataRepo;
 
   setUpAll(() {
-    registerFallbackValue(MediaItem(
+    registerFallbackValue(const MediaItem(
       id: '',
       barcode: '',
       barcodeType: '',
@@ -40,7 +40,7 @@ void main() {
 
   group('RefreshMetadataUseCase', () {
     const barcode = '9780141036144';
-    final existingItem = MediaItem(
+    const existingItem = MediaItem(
       id: 'item-1',
       barcode: barcode,
       barcodeType: 'isbn13',
@@ -57,7 +57,7 @@ void main() {
     );
 
     test('calls lookupBarcode with the item barcode and media type', () async {
-      final metadata = MetadataResult(
+      const metadata = MetadataResult(
         barcode: barcode,
         barcodeType: 'isbn13',
         title: 'New Title',
@@ -80,7 +80,7 @@ void main() {
     });
 
     test('preserves userRating and userReview from original item', () async {
-      final metadata = MetadataResult(
+      const metadata = MetadataResult(
         barcode: barcode,
         barcodeType: 'isbn13',
         title: 'New Title',
@@ -105,7 +105,7 @@ void main() {
 
     test('updates title, description, and coverUrl from new metadata',
         () async {
-      final metadata = MetadataResult(
+      const metadata = MetadataResult(
         barcode: barcode,
         barcodeType: 'isbn13',
         title: 'Updated Title',
@@ -130,7 +130,7 @@ void main() {
     });
 
     test('keeps original values when metadata fields are null', () async {
-      final metadata = MetadataResult(
+      const metadata = MetadataResult(
         barcode: barcode,
         barcodeType: 'isbn13',
       );
@@ -151,7 +151,7 @@ void main() {
     });
 
     test('calls update on the media item repository', () async {
-      final metadata = MetadataResult(
+      const metadata = MetadataResult(
         barcode: barcode,
         barcodeType: 'isbn13',
         title: 'New Title',

@@ -6,7 +6,7 @@ import 'package:mymediascanner/domain/entities/media_type.dart';
 void main() {
   group('TmdbMapper', () {
     test('maps movie search result to MetadataResult', () {
-      final dto = TmdbSearchResultDto(
+      const dto = TmdbSearchResultDto(
         id: 550,
         title: 'Fight Club',
         overview: 'An insomniac office worker...',
@@ -30,7 +30,7 @@ void main() {
     });
 
     test('maps TV search result correctly', () {
-      final dto = TmdbSearchResultDto(
+      const dto = TmdbSearchResultDto(
         id: 1396,
         name: 'Breaking Bad',
         firstAirDate: '2008-01-20',

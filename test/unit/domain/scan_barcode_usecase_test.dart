@@ -26,7 +26,7 @@ void main() {
   group('ScanBarcodeUseCase', () {
     test('returns metadata result for new barcode', () async {
       const barcode = '9780141036144';
-      final expected = MetadataResult(
+      const expected = MetadataResult(
         barcode: barcode,
         barcodeType: 'isbn13',
         title: '1984',
@@ -50,7 +50,7 @@ void main() {
       when(() => mockMediaItemRepo.barcodeExists(barcode))
           .thenAnswer((_) async => true);
       when(() => mockMetadataRepo.lookupBarcode(barcode, typeHint: null))
-          .thenAnswer((_) async => MetadataResult(
+          .thenAnswer((_) async => const MetadataResult(
                 barcode: barcode,
                 barcodeType: 'isbn13',
               ));
