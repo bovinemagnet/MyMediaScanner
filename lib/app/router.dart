@@ -5,6 +5,7 @@ import 'package:mymediascanner/presentation/screens/item_detail/item_detail_scre
 import 'package:mymediascanner/presentation/screens/metadata_confirm/metadata_confirm_screen.dart';
 import 'package:mymediascanner/presentation/screens/scanner/scanner_screen.dart';
 import 'package:mymediascanner/presentation/screens/shelves/shelves_screen.dart';
+import 'package:mymediascanner/presentation/screens/shelves/shelf_detail_screen.dart';
 import 'package:mymediascanner/presentation/screens/settings/settings_screen.dart';
 import 'package:mymediascanner/presentation/widgets/app_scaffold.dart';
 
@@ -66,9 +67,8 @@ final router = GoRouter(
               routes: [
                 GoRoute(
                   path: ':id',
-                  builder: (context, state) => Center(
-                    child: Text(
-                        'Shelf ${state.pathParameters['id']}'),
+                  builder: (context, state) => ShelfDetailScreen(
+                    shelfId: state.pathParameters['id']!,
                   ),
                 ),
               ],
