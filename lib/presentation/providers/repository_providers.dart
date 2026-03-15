@@ -8,8 +8,12 @@ import 'package:mymediascanner/data/remote/api/tmdb/tmdb_api.dart';
 import 'package:mymediascanner/data/remote/api/upc/upcitemdb_api.dart';
 import 'package:mymediascanner/data/repositories/media_item_repository_impl.dart';
 import 'package:mymediascanner/data/repositories/metadata_repository_impl.dart';
+import 'package:mymediascanner/data/repositories/tag_repository_impl.dart';
+import 'package:mymediascanner/data/repositories/shelf_repository_impl.dart';
 import 'package:mymediascanner/domain/repositories/i_media_item_repository.dart';
 import 'package:mymediascanner/domain/repositories/i_metadata_repository.dart';
+import 'package:mymediascanner/domain/repositories/i_tag_repository.dart';
+import 'package:mymediascanner/domain/repositories/i_shelf_repository.dart';
 import 'package:mymediascanner/presentation/providers/database_provider.dart';
 import 'package:mymediascanner/presentation/providers/settings_provider.dart';
 
@@ -17,6 +21,19 @@ final mediaItemRepositoryProvider = Provider<IMediaItemRepository>((ref) {
   return MediaItemRepositoryImpl(
     mediaItemsDao: ref.watch(mediaItemsDaoProvider),
     syncLogDao: ref.watch(syncLogDaoProvider),
+  );
+});
+
+final tagRepositoryProvider = Provider<ITagRepository>((ref) {
+  return TagRepositoryImpl(
+    tagsDao: ref.watch(tagsDaoProvider),
+    syncLogDao: ref.watch(syncLogDaoProvider),
+  );
+});
+
+final shelfRepositoryProvider = Provider<IShelfRepository>((ref) {
+  return ShelfRepositoryImpl(
+    shelvesDao: ref.watch(shelvesDaoProvider),
   );
 });
 
