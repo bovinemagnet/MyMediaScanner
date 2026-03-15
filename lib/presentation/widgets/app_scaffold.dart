@@ -22,8 +22,8 @@ class AppScaffold extends StatelessWidget {
       label: 'Scan',
     ),
     NavigationDestination(
-      icon: Icon(Icons.shelves_outlined),
-      selectedIcon: Icon(Icons.shelves),
+      icon: Icon(Icons.view_comfy_outlined),
+      selectedIcon: Icon(Icons.view_comfy),
       label: 'Shelves',
     ),
     NavigationDestination(
@@ -45,8 +45,8 @@ class AppScaffold extends StatelessWidget {
       label: Text('Scan'),
     ),
     NavigationRailDestination(
-      icon: Icon(Icons.shelves_outlined),
-      selectedIcon: Icon(Icons.shelves),
+      icon: Icon(Icons.view_comfy_outlined),
+      selectedIcon: Icon(Icons.view_comfy),
       label: Text('Shelves'),
     ),
     NavigationRailDestination(
