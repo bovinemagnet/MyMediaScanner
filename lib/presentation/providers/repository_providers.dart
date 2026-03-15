@@ -12,11 +12,15 @@ import 'package:mymediascanner/data/repositories/metadata_repository_impl.dart';
 import 'package:mymediascanner/data/repositories/sync_repository_impl.dart';
 import 'package:mymediascanner/data/repositories/tag_repository_impl.dart';
 import 'package:mymediascanner/data/repositories/shelf_repository_impl.dart';
+import 'package:mymediascanner/data/repositories/borrower_repository_impl.dart';
+import 'package:mymediascanner/data/repositories/loan_repository_impl.dart';
 import 'package:mymediascanner/domain/repositories/i_media_item_repository.dart';
 import 'package:mymediascanner/domain/repositories/i_metadata_repository.dart';
 import 'package:mymediascanner/domain/repositories/i_sync_repository.dart';
 import 'package:mymediascanner/domain/repositories/i_tag_repository.dart';
 import 'package:mymediascanner/domain/repositories/i_shelf_repository.dart';
+import 'package:mymediascanner/domain/repositories/i_borrower_repository.dart';
+import 'package:mymediascanner/domain/repositories/i_loan_repository.dart';
 import 'package:mymediascanner/presentation/providers/database_provider.dart';
 import 'package:mymediascanner/presentation/providers/settings_provider.dart';
 
@@ -73,6 +77,18 @@ final metadataRepositoryProvider = Provider<IMetadataRepository>((ref) {
             apiKey: upcKey,
           ))
         : null,
+  );
+});
+
+final borrowerRepositoryProvider = Provider<IBorrowerRepository>((ref) {
+  return BorrowerRepositoryImpl(
+    borrowersDao: ref.watch(borrowersDaoProvider),
+  );
+});
+
+final loanRepositoryProvider = Provider<ILoanRepository>((ref) {
+  return LoanRepositoryImpl(
+    loansDao: ref.watch(loansDaoProvider),
   );
 });
 

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:mymediascanner/domain/usecases/export_collection_usecase.dart';
 import 'package:mymediascanner/presentation/providers/collection_provider.dart';
+import 'package:mymediascanner/presentation/providers/loan_provider.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/screens/collection/widgets/filter_bar.dart';
 import 'package:mymediascanner/presentation/screens/collection/widgets/media_item_card.dart';
@@ -18,6 +19,7 @@ class CollectionScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final collectionAsync = ref.watch(collectionProvider);
+    final lentIds = ref.watch(lentItemIdsProvider).value ?? <String>{};
 
     return Scaffold(
       appBar: AppBar(
@@ -77,6 +79,7 @@ class CollectionScreen extends ConsumerWidget {
                   itemCount: items.length,
                   itemBuilder: (context, index) => MediaItemCard(
                     item: items[index],
+                    isLent: lentIds.contains(items[index].id),
                     onTap: () => context.go('/item/${items[index].id}'),
                   ),
                 );

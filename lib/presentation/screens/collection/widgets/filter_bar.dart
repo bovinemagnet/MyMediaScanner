@@ -35,6 +35,12 @@ class FilterBar extends ConsumerWidget {
                               filter.mediaType == type ? null : type),
                     ),
                   )),
+          FilterChip(
+            label: const Text('Lent out'),
+            selected: filter.lentOnly,
+            onSelected: (_) =>
+                ref.read(collectionFilterProvider.notifier).toggleLentOnly(),
+          ),
         ],
       ),
     );

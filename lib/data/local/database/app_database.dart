@@ -8,11 +8,15 @@ import 'package:mymediascanner/data/local/database/tables/shelves_table.dart';
 import 'package:mymediascanner/data/local/database/tables/shelf_items_table.dart';
 import 'package:mymediascanner/data/local/database/tables/barcode_cache_table.dart';
 import 'package:mymediascanner/data/local/database/tables/sync_log_table.dart';
+import 'package:mymediascanner/data/local/database/tables/borrowers_table.dart';
+import 'package:mymediascanner/data/local/database/tables/loans_table.dart';
 import 'package:mymediascanner/data/local/dao/media_items_dao.dart';
 import 'package:mymediascanner/data/local/dao/tags_dao.dart';
 import 'package:mymediascanner/data/local/dao/shelves_dao.dart';
 import 'package:mymediascanner/data/local/dao/barcode_cache_dao.dart';
 import 'package:mymediascanner/data/local/dao/sync_log_dao.dart';
+import 'package:mymediascanner/data/local/dao/borrowers_dao.dart';
+import 'package:mymediascanner/data/local/dao/loans_dao.dart';
 
 part 'app_database.g.dart';
 
@@ -25,6 +29,8 @@ part 'app_database.g.dart';
     ShelfItemsTable,
     BarcodeCacheTable,
     SyncLogTable,
+    BorrowersTable,
+    LoansTable,
   ],
   daos: [
     MediaItemsDao,
@@ -32,6 +38,8 @@ part 'app_database.g.dart';
     ShelvesDao,
     BarcodeCacheDao,
     SyncLogDao,
+    BorrowersDao,
+    LoansDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -50,5 +58,16 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (m) => m.createAll(),
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            await m.createTable(borrowersTable);
+            await m.createTable(loansTable);
+          }
+        },
+      );
 }

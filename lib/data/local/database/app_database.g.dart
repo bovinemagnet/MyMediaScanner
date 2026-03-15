@@ -3336,6 +3336,980 @@ class SyncLogTableCompanion extends UpdateCompanion<SyncLogTableData> {
   }
 }
 
+class $BorrowersTableTable extends BorrowersTable
+    with TableInfo<$BorrowersTableTable, BorrowersTableData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $BorrowersTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _emailMeta = const VerificationMeta('email');
+  @override
+  late final GeneratedColumn<String> email = GeneratedColumn<String>(
+    'email',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _phoneMeta = const VerificationMeta('phone');
+  @override
+  late final GeneratedColumn<String> phone = GeneratedColumn<String>(
+    'phone',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
+  @override
+  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
+    'notes',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _deletedMeta = const VerificationMeta(
+    'deleted',
+  );
+  @override
+  late final GeneratedColumn<int> deleted = GeneratedColumn<int>(
+    'deleted',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    name,
+    email,
+    phone,
+    notes,
+    updatedAt,
+    deleted,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'borrowers';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<BorrowersTableData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('email')) {
+      context.handle(
+        _emailMeta,
+        email.isAcceptableOrUnknown(data['email']!, _emailMeta),
+      );
+    }
+    if (data.containsKey('phone')) {
+      context.handle(
+        _phoneMeta,
+        phone.isAcceptableOrUnknown(data['phone']!, _phoneMeta),
+      );
+    }
+    if (data.containsKey('notes')) {
+      context.handle(
+        _notesMeta,
+        notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('deleted')) {
+      context.handle(
+        _deletedMeta,
+        deleted.isAcceptableOrUnknown(data['deleted']!, _deletedMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  BorrowersTableData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return BorrowersTableData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      email: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}email'],
+      ),
+      phone: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}phone'],
+      ),
+      notes: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}notes'],
+      ),
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      deleted: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}deleted'],
+      )!,
+    );
+  }
+
+  @override
+  $BorrowersTableTable createAlias(String alias) {
+    return $BorrowersTableTable(attachedDatabase, alias);
+  }
+}
+
+class BorrowersTableData extends DataClass
+    implements Insertable<BorrowersTableData> {
+  final String id;
+  final String name;
+  final String? email;
+  final String? phone;
+  final String? notes;
+  final int updatedAt;
+  final int deleted;
+  const BorrowersTableData({
+    required this.id,
+    required this.name,
+    this.email,
+    this.phone,
+    this.notes,
+    required this.updatedAt,
+    required this.deleted,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['name'] = Variable<String>(name);
+    if (!nullToAbsent || email != null) {
+      map['email'] = Variable<String>(email);
+    }
+    if (!nullToAbsent || phone != null) {
+      map['phone'] = Variable<String>(phone);
+    }
+    if (!nullToAbsent || notes != null) {
+      map['notes'] = Variable<String>(notes);
+    }
+    map['updated_at'] = Variable<int>(updatedAt);
+    map['deleted'] = Variable<int>(deleted);
+    return map;
+  }
+
+  BorrowersTableCompanion toCompanion(bool nullToAbsent) {
+    return BorrowersTableCompanion(
+      id: Value(id),
+      name: Value(name),
+      email: email == null && nullToAbsent
+          ? const Value.absent()
+          : Value(email),
+      phone: phone == null && nullToAbsent
+          ? const Value.absent()
+          : Value(phone),
+      notes: notes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(notes),
+      updatedAt: Value(updatedAt),
+      deleted: Value(deleted),
+    );
+  }
+
+  factory BorrowersTableData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return BorrowersTableData(
+      id: serializer.fromJson<String>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      email: serializer.fromJson<String?>(json['email']),
+      phone: serializer.fromJson<String?>(json['phone']),
+      notes: serializer.fromJson<String?>(json['notes']),
+      updatedAt: serializer.fromJson<int>(json['updatedAt']),
+      deleted: serializer.fromJson<int>(json['deleted']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'name': serializer.toJson<String>(name),
+      'email': serializer.toJson<String?>(email),
+      'phone': serializer.toJson<String?>(phone),
+      'notes': serializer.toJson<String?>(notes),
+      'updatedAt': serializer.toJson<int>(updatedAt),
+      'deleted': serializer.toJson<int>(deleted),
+    };
+  }
+
+  BorrowersTableData copyWith({
+    String? id,
+    String? name,
+    Value<String?> email = const Value.absent(),
+    Value<String?> phone = const Value.absent(),
+    Value<String?> notes = const Value.absent(),
+    int? updatedAt,
+    int? deleted,
+  }) => BorrowersTableData(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    email: email.present ? email.value : this.email,
+    phone: phone.present ? phone.value : this.phone,
+    notes: notes.present ? notes.value : this.notes,
+    updatedAt: updatedAt ?? this.updatedAt,
+    deleted: deleted ?? this.deleted,
+  );
+  BorrowersTableData copyWithCompanion(BorrowersTableCompanion data) {
+    return BorrowersTableData(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      email: data.email.present ? data.email.value : this.email,
+      phone: data.phone.present ? data.phone.value : this.phone,
+      notes: data.notes.present ? data.notes.value : this.notes,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      deleted: data.deleted.present ? data.deleted.value : this.deleted,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BorrowersTableData(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('email: $email, ')
+          ..write('phone: $phone, ')
+          ..write('notes: $notes, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deleted: $deleted')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, name, email, phone, notes, updatedAt, deleted);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BorrowersTableData &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.email == this.email &&
+          other.phone == this.phone &&
+          other.notes == this.notes &&
+          other.updatedAt == this.updatedAt &&
+          other.deleted == this.deleted);
+}
+
+class BorrowersTableCompanion extends UpdateCompanion<BorrowersTableData> {
+  final Value<String> id;
+  final Value<String> name;
+  final Value<String?> email;
+  final Value<String?> phone;
+  final Value<String?> notes;
+  final Value<int> updatedAt;
+  final Value<int> deleted;
+  final Value<int> rowid;
+  const BorrowersTableCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.email = const Value.absent(),
+    this.phone = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.deleted = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  BorrowersTableCompanion.insert({
+    required String id,
+    required String name,
+    this.email = const Value.absent(),
+    this.phone = const Value.absent(),
+    this.notes = const Value.absent(),
+    required int updatedAt,
+    this.deleted = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       name = Value(name),
+       updatedAt = Value(updatedAt);
+  static Insertable<BorrowersTableData> custom({
+    Expression<String>? id,
+    Expression<String>? name,
+    Expression<String>? email,
+    Expression<String>? phone,
+    Expression<String>? notes,
+    Expression<int>? updatedAt,
+    Expression<int>? deleted,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (email != null) 'email': email,
+      if (phone != null) 'phone': phone,
+      if (notes != null) 'notes': notes,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (deleted != null) 'deleted': deleted,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  BorrowersTableCompanion copyWith({
+    Value<String>? id,
+    Value<String>? name,
+    Value<String?>? email,
+    Value<String?>? phone,
+    Value<String?>? notes,
+    Value<int>? updatedAt,
+    Value<int>? deleted,
+    Value<int>? rowid,
+  }) {
+    return BorrowersTableCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      phone: phone ?? this.phone,
+      notes: notes ?? this.notes,
+      updatedAt: updatedAt ?? this.updatedAt,
+      deleted: deleted ?? this.deleted,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (email.present) {
+      map['email'] = Variable<String>(email.value);
+    }
+    if (phone.present) {
+      map['phone'] = Variable<String>(phone.value);
+    }
+    if (notes.present) {
+      map['notes'] = Variable<String>(notes.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<int>(updatedAt.value);
+    }
+    if (deleted.present) {
+      map['deleted'] = Variable<int>(deleted.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BorrowersTableCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('email: $email, ')
+          ..write('phone: $phone, ')
+          ..write('notes: $notes, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deleted: $deleted, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $LoansTableTable extends LoansTable
+    with TableInfo<$LoansTableTable, LoansTableData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LoansTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _mediaItemIdMeta = const VerificationMeta(
+    'mediaItemId',
+  );
+  @override
+  late final GeneratedColumn<String> mediaItemId = GeneratedColumn<String>(
+    'media_item_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES media_items (id)',
+    ),
+  );
+  static const VerificationMeta _borrowerIdMeta = const VerificationMeta(
+    'borrowerId',
+  );
+  @override
+  late final GeneratedColumn<String> borrowerId = GeneratedColumn<String>(
+    'borrower_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES borrowers (id)',
+    ),
+  );
+  static const VerificationMeta _lentAtMeta = const VerificationMeta('lentAt');
+  @override
+  late final GeneratedColumn<int> lentAt = GeneratedColumn<int>(
+    'lent_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _returnedAtMeta = const VerificationMeta(
+    'returnedAt',
+  );
+  @override
+  late final GeneratedColumn<int> returnedAt = GeneratedColumn<int>(
+    'returned_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
+  @override
+  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
+    'notes',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _deletedMeta = const VerificationMeta(
+    'deleted',
+  );
+  @override
+  late final GeneratedColumn<int> deleted = GeneratedColumn<int>(
+    'deleted',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    mediaItemId,
+    borrowerId,
+    lentAt,
+    returnedAt,
+    notes,
+    updatedAt,
+    deleted,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'loans';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<LoansTableData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('media_item_id')) {
+      context.handle(
+        _mediaItemIdMeta,
+        mediaItemId.isAcceptableOrUnknown(
+          data['media_item_id']!,
+          _mediaItemIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_mediaItemIdMeta);
+    }
+    if (data.containsKey('borrower_id')) {
+      context.handle(
+        _borrowerIdMeta,
+        borrowerId.isAcceptableOrUnknown(data['borrower_id']!, _borrowerIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_borrowerIdMeta);
+    }
+    if (data.containsKey('lent_at')) {
+      context.handle(
+        _lentAtMeta,
+        lentAt.isAcceptableOrUnknown(data['lent_at']!, _lentAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_lentAtMeta);
+    }
+    if (data.containsKey('returned_at')) {
+      context.handle(
+        _returnedAtMeta,
+        returnedAt.isAcceptableOrUnknown(data['returned_at']!, _returnedAtMeta),
+      );
+    }
+    if (data.containsKey('notes')) {
+      context.handle(
+        _notesMeta,
+        notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('deleted')) {
+      context.handle(
+        _deletedMeta,
+        deleted.isAcceptableOrUnknown(data['deleted']!, _deletedMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  LoansTableData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return LoansTableData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      mediaItemId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}media_item_id'],
+      )!,
+      borrowerId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}borrower_id'],
+      )!,
+      lentAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}lent_at'],
+      )!,
+      returnedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}returned_at'],
+      ),
+      notes: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}notes'],
+      ),
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      deleted: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}deleted'],
+      )!,
+    );
+  }
+
+  @override
+  $LoansTableTable createAlias(String alias) {
+    return $LoansTableTable(attachedDatabase, alias);
+  }
+}
+
+class LoansTableData extends DataClass implements Insertable<LoansTableData> {
+  final String id;
+  final String mediaItemId;
+  final String borrowerId;
+  final int lentAt;
+  final int? returnedAt;
+  final String? notes;
+  final int updatedAt;
+  final int deleted;
+  const LoansTableData({
+    required this.id,
+    required this.mediaItemId,
+    required this.borrowerId,
+    required this.lentAt,
+    this.returnedAt,
+    this.notes,
+    required this.updatedAt,
+    required this.deleted,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['media_item_id'] = Variable<String>(mediaItemId);
+    map['borrower_id'] = Variable<String>(borrowerId);
+    map['lent_at'] = Variable<int>(lentAt);
+    if (!nullToAbsent || returnedAt != null) {
+      map['returned_at'] = Variable<int>(returnedAt);
+    }
+    if (!nullToAbsent || notes != null) {
+      map['notes'] = Variable<String>(notes);
+    }
+    map['updated_at'] = Variable<int>(updatedAt);
+    map['deleted'] = Variable<int>(deleted);
+    return map;
+  }
+
+  LoansTableCompanion toCompanion(bool nullToAbsent) {
+    return LoansTableCompanion(
+      id: Value(id),
+      mediaItemId: Value(mediaItemId),
+      borrowerId: Value(borrowerId),
+      lentAt: Value(lentAt),
+      returnedAt: returnedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(returnedAt),
+      notes: notes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(notes),
+      updatedAt: Value(updatedAt),
+      deleted: Value(deleted),
+    );
+  }
+
+  factory LoansTableData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return LoansTableData(
+      id: serializer.fromJson<String>(json['id']),
+      mediaItemId: serializer.fromJson<String>(json['mediaItemId']),
+      borrowerId: serializer.fromJson<String>(json['borrowerId']),
+      lentAt: serializer.fromJson<int>(json['lentAt']),
+      returnedAt: serializer.fromJson<int?>(json['returnedAt']),
+      notes: serializer.fromJson<String?>(json['notes']),
+      updatedAt: serializer.fromJson<int>(json['updatedAt']),
+      deleted: serializer.fromJson<int>(json['deleted']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'mediaItemId': serializer.toJson<String>(mediaItemId),
+      'borrowerId': serializer.toJson<String>(borrowerId),
+      'lentAt': serializer.toJson<int>(lentAt),
+      'returnedAt': serializer.toJson<int?>(returnedAt),
+      'notes': serializer.toJson<String?>(notes),
+      'updatedAt': serializer.toJson<int>(updatedAt),
+      'deleted': serializer.toJson<int>(deleted),
+    };
+  }
+
+  LoansTableData copyWith({
+    String? id,
+    String? mediaItemId,
+    String? borrowerId,
+    int? lentAt,
+    Value<int?> returnedAt = const Value.absent(),
+    Value<String?> notes = const Value.absent(),
+    int? updatedAt,
+    int? deleted,
+  }) => LoansTableData(
+    id: id ?? this.id,
+    mediaItemId: mediaItemId ?? this.mediaItemId,
+    borrowerId: borrowerId ?? this.borrowerId,
+    lentAt: lentAt ?? this.lentAt,
+    returnedAt: returnedAt.present ? returnedAt.value : this.returnedAt,
+    notes: notes.present ? notes.value : this.notes,
+    updatedAt: updatedAt ?? this.updatedAt,
+    deleted: deleted ?? this.deleted,
+  );
+  LoansTableData copyWithCompanion(LoansTableCompanion data) {
+    return LoansTableData(
+      id: data.id.present ? data.id.value : this.id,
+      mediaItemId: data.mediaItemId.present
+          ? data.mediaItemId.value
+          : this.mediaItemId,
+      borrowerId: data.borrowerId.present
+          ? data.borrowerId.value
+          : this.borrowerId,
+      lentAt: data.lentAt.present ? data.lentAt.value : this.lentAt,
+      returnedAt: data.returnedAt.present
+          ? data.returnedAt.value
+          : this.returnedAt,
+      notes: data.notes.present ? data.notes.value : this.notes,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      deleted: data.deleted.present ? data.deleted.value : this.deleted,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LoansTableData(')
+          ..write('id: $id, ')
+          ..write('mediaItemId: $mediaItemId, ')
+          ..write('borrowerId: $borrowerId, ')
+          ..write('lentAt: $lentAt, ')
+          ..write('returnedAt: $returnedAt, ')
+          ..write('notes: $notes, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deleted: $deleted')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    mediaItemId,
+    borrowerId,
+    lentAt,
+    returnedAt,
+    notes,
+    updatedAt,
+    deleted,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LoansTableData &&
+          other.id == this.id &&
+          other.mediaItemId == this.mediaItemId &&
+          other.borrowerId == this.borrowerId &&
+          other.lentAt == this.lentAt &&
+          other.returnedAt == this.returnedAt &&
+          other.notes == this.notes &&
+          other.updatedAt == this.updatedAt &&
+          other.deleted == this.deleted);
+}
+
+class LoansTableCompanion extends UpdateCompanion<LoansTableData> {
+  final Value<String> id;
+  final Value<String> mediaItemId;
+  final Value<String> borrowerId;
+  final Value<int> lentAt;
+  final Value<int?> returnedAt;
+  final Value<String?> notes;
+  final Value<int> updatedAt;
+  final Value<int> deleted;
+  final Value<int> rowid;
+  const LoansTableCompanion({
+    this.id = const Value.absent(),
+    this.mediaItemId = const Value.absent(),
+    this.borrowerId = const Value.absent(),
+    this.lentAt = const Value.absent(),
+    this.returnedAt = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.deleted = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  LoansTableCompanion.insert({
+    required String id,
+    required String mediaItemId,
+    required String borrowerId,
+    required int lentAt,
+    this.returnedAt = const Value.absent(),
+    this.notes = const Value.absent(),
+    required int updatedAt,
+    this.deleted = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       mediaItemId = Value(mediaItemId),
+       borrowerId = Value(borrowerId),
+       lentAt = Value(lentAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<LoansTableData> custom({
+    Expression<String>? id,
+    Expression<String>? mediaItemId,
+    Expression<String>? borrowerId,
+    Expression<int>? lentAt,
+    Expression<int>? returnedAt,
+    Expression<String>? notes,
+    Expression<int>? updatedAt,
+    Expression<int>? deleted,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (mediaItemId != null) 'media_item_id': mediaItemId,
+      if (borrowerId != null) 'borrower_id': borrowerId,
+      if (lentAt != null) 'lent_at': lentAt,
+      if (returnedAt != null) 'returned_at': returnedAt,
+      if (notes != null) 'notes': notes,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (deleted != null) 'deleted': deleted,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  LoansTableCompanion copyWith({
+    Value<String>? id,
+    Value<String>? mediaItemId,
+    Value<String>? borrowerId,
+    Value<int>? lentAt,
+    Value<int?>? returnedAt,
+    Value<String?>? notes,
+    Value<int>? updatedAt,
+    Value<int>? deleted,
+    Value<int>? rowid,
+  }) {
+    return LoansTableCompanion(
+      id: id ?? this.id,
+      mediaItemId: mediaItemId ?? this.mediaItemId,
+      borrowerId: borrowerId ?? this.borrowerId,
+      lentAt: lentAt ?? this.lentAt,
+      returnedAt: returnedAt ?? this.returnedAt,
+      notes: notes ?? this.notes,
+      updatedAt: updatedAt ?? this.updatedAt,
+      deleted: deleted ?? this.deleted,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (mediaItemId.present) {
+      map['media_item_id'] = Variable<String>(mediaItemId.value);
+    }
+    if (borrowerId.present) {
+      map['borrower_id'] = Variable<String>(borrowerId.value);
+    }
+    if (lentAt.present) {
+      map['lent_at'] = Variable<int>(lentAt.value);
+    }
+    if (returnedAt.present) {
+      map['returned_at'] = Variable<int>(returnedAt.value);
+    }
+    if (notes.present) {
+      map['notes'] = Variable<String>(notes.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<int>(updatedAt.value);
+    }
+    if (deleted.present) {
+      map['deleted'] = Variable<int>(deleted.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LoansTableCompanion(')
+          ..write('id: $id, ')
+          ..write('mediaItemId: $mediaItemId, ')
+          ..write('borrowerId: $borrowerId, ')
+          ..write('lentAt: $lentAt, ')
+          ..write('returnedAt: $returnedAt, ')
+          ..write('notes: $notes, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deleted: $deleted, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3352,6 +4326,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $BarcodeCacheTableTable barcodeCacheTable =
       $BarcodeCacheTableTable(this);
   late final $SyncLogTableTable syncLogTable = $SyncLogTableTable(this);
+  late final $BorrowersTableTable borrowersTable = $BorrowersTableTable(this);
+  late final $LoansTableTable loansTable = $LoansTableTable(this);
   late final MediaItemsDao mediaItemsDao = MediaItemsDao(this as AppDatabase);
   late final TagsDao tagsDao = TagsDao(this as AppDatabase);
   late final ShelvesDao shelvesDao = ShelvesDao(this as AppDatabase);
@@ -3359,6 +4335,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     this as AppDatabase,
   );
   late final SyncLogDao syncLogDao = SyncLogDao(this as AppDatabase);
+  late final BorrowersDao borrowersDao = BorrowersDao(this as AppDatabase);
+  late final LoansDao loansDao = LoansDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3371,6 +4349,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     shelfItemsTable,
     barcodeCacheTable,
     syncLogTable,
+    borrowersTable,
+    loansTable,
   ];
 }
 
@@ -3483,6 +4463,27 @@ final class $$MediaItemsTableTableReferences
     final cache = $_typedResult.readTableOrNull(
       _shelfItemsTableRefsTable($_db),
     );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$LoansTableTable, List<LoansTableData>>
+  _loansTableRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.loansTable,
+    aliasName: $_aliasNameGenerator(
+      db.mediaItemsTable.id,
+      db.loansTable.mediaItemId,
+    ),
+  );
+
+  $$LoansTableTableProcessedTableManager get loansTableRefs {
+    final manager = $$LoansTableTableTableManager(
+      $_db,
+      $_db.loansTable,
+    ).filter((f) => f.mediaItemId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_loansTableRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -3644,6 +4645,31 @@ class $$MediaItemsTableTableFilterComposer
           }) => $$ShelfItemsTableTableFilterComposer(
             $db: $db,
             $table: $db.shelfItemsTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> loansTableRefs(
+    Expression<bool> Function($$LoansTableTableFilterComposer f) f,
+  ) {
+    final $$LoansTableTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.loansTable,
+      getReferencedColumn: (t) => t.mediaItemId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$LoansTableTableFilterComposer(
+            $db: $db,
+            $table: $db.loansTable,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -3905,6 +4931,31 @@ class $$MediaItemsTableTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> loansTableRefs<T extends Object>(
+    Expression<T> Function($$LoansTableTableAnnotationComposer a) f,
+  ) {
+    final $$LoansTableTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.loansTable,
+      getReferencedColumn: (t) => t.mediaItemId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$LoansTableTableAnnotationComposer(
+            $db: $db,
+            $table: $db.loansTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$MediaItemsTableTableTableManager
@@ -3923,6 +4974,7 @@ class $$MediaItemsTableTableTableManager
           PrefetchHooks Function({
             bool mediaItemTagsTableRefs,
             bool shelfItemsTableRefs,
+            bool loansTableRefs,
           })
         > {
   $$MediaItemsTableTableTableManager(
@@ -4043,12 +5095,17 @@ class $$MediaItemsTableTableTableManager
               )
               .toList(),
           prefetchHooksCallback:
-              ({mediaItemTagsTableRefs = false, shelfItemsTableRefs = false}) {
+              ({
+                mediaItemTagsTableRefs = false,
+                shelfItemsTableRefs = false,
+                loansTableRefs = false,
+              }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
                     if (mediaItemTagsTableRefs) db.mediaItemTagsTable,
                     if (shelfItemsTableRefs) db.shelfItemsTable,
+                    if (loansTableRefs) db.loansTable,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -4095,6 +5152,27 @@ class $$MediaItemsTableTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (loansTableRefs)
+                        await $_getPrefetchedData<
+                          MediaItemsTableData,
+                          $MediaItemsTableTable,
+                          LoansTableData
+                        >(
+                          currentTable: table,
+                          referencedTable: $$MediaItemsTableTableReferences
+                              ._loansTableRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$MediaItemsTableTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).loansTableRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.mediaItemId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -4118,6 +5196,7 @@ typedef $$MediaItemsTableTableProcessedTableManager =
       PrefetchHooks Function({
         bool mediaItemTagsTableRefs,
         bool shelfItemsTableRefs,
+        bool loansTableRefs,
       })
     >;
 typedef $$TagsTableTableCreateCompanionBuilder =
@@ -6001,6 +7080,825 @@ typedef $$SyncLogTableTableProcessedTableManager =
       SyncLogTableData,
       PrefetchHooks Function()
     >;
+typedef $$BorrowersTableTableCreateCompanionBuilder =
+    BorrowersTableCompanion Function({
+      required String id,
+      required String name,
+      Value<String?> email,
+      Value<String?> phone,
+      Value<String?> notes,
+      required int updatedAt,
+      Value<int> deleted,
+      Value<int> rowid,
+    });
+typedef $$BorrowersTableTableUpdateCompanionBuilder =
+    BorrowersTableCompanion Function({
+      Value<String> id,
+      Value<String> name,
+      Value<String?> email,
+      Value<String?> phone,
+      Value<String?> notes,
+      Value<int> updatedAt,
+      Value<int> deleted,
+      Value<int> rowid,
+    });
+
+final class $$BorrowersTableTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $BorrowersTableTable,
+          BorrowersTableData
+        > {
+  $$BorrowersTableTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static MultiTypedResultKey<$LoansTableTable, List<LoansTableData>>
+  _loansTableRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.loansTable,
+    aliasName: $_aliasNameGenerator(
+      db.borrowersTable.id,
+      db.loansTable.borrowerId,
+    ),
+  );
+
+  $$LoansTableTableProcessedTableManager get loansTableRefs {
+    final manager = $$LoansTableTableTableManager(
+      $_db,
+      $_db.loansTable,
+    ).filter((f) => f.borrowerId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_loansTableRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$BorrowersTableTableFilterComposer
+    extends Composer<_$AppDatabase, $BorrowersTableTable> {
+  $$BorrowersTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get email => $composableBuilder(
+    column: $table.email,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get phone => $composableBuilder(
+    column: $table.phone,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get deleted => $composableBuilder(
+    column: $table.deleted,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> loansTableRefs(
+    Expression<bool> Function($$LoansTableTableFilterComposer f) f,
+  ) {
+    final $$LoansTableTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.loansTable,
+      getReferencedColumn: (t) => t.borrowerId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$LoansTableTableFilterComposer(
+            $db: $db,
+            $table: $db.loansTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$BorrowersTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $BorrowersTableTable> {
+  $$BorrowersTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get email => $composableBuilder(
+    column: $table.email,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get phone => $composableBuilder(
+    column: $table.phone,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get deleted => $composableBuilder(
+    column: $table.deleted,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$BorrowersTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $BorrowersTableTable> {
+  $$BorrowersTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get email =>
+      $composableBuilder(column: $table.email, builder: (column) => column);
+
+  GeneratedColumn<String> get phone =>
+      $composableBuilder(column: $table.phone, builder: (column) => column);
+
+  GeneratedColumn<String> get notes =>
+      $composableBuilder(column: $table.notes, builder: (column) => column);
+
+  GeneratedColumn<int> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get deleted =>
+      $composableBuilder(column: $table.deleted, builder: (column) => column);
+
+  Expression<T> loansTableRefs<T extends Object>(
+    Expression<T> Function($$LoansTableTableAnnotationComposer a) f,
+  ) {
+    final $$LoansTableTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.loansTable,
+      getReferencedColumn: (t) => t.borrowerId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$LoansTableTableAnnotationComposer(
+            $db: $db,
+            $table: $db.loansTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$BorrowersTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $BorrowersTableTable,
+          BorrowersTableData,
+          $$BorrowersTableTableFilterComposer,
+          $$BorrowersTableTableOrderingComposer,
+          $$BorrowersTableTableAnnotationComposer,
+          $$BorrowersTableTableCreateCompanionBuilder,
+          $$BorrowersTableTableUpdateCompanionBuilder,
+          (BorrowersTableData, $$BorrowersTableTableReferences),
+          BorrowersTableData,
+          PrefetchHooks Function({bool loansTableRefs})
+        > {
+  $$BorrowersTableTableTableManager(
+    _$AppDatabase db,
+    $BorrowersTableTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$BorrowersTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$BorrowersTableTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$BorrowersTableTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String?> email = const Value.absent(),
+                Value<String?> phone = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<int> updatedAt = const Value.absent(),
+                Value<int> deleted = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => BorrowersTableCompanion(
+                id: id,
+                name: name,
+                email: email,
+                phone: phone,
+                notes: notes,
+                updatedAt: updatedAt,
+                deleted: deleted,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String name,
+                Value<String?> email = const Value.absent(),
+                Value<String?> phone = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                required int updatedAt,
+                Value<int> deleted = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => BorrowersTableCompanion.insert(
+                id: id,
+                name: name,
+                email: email,
+                phone: phone,
+                notes: notes,
+                updatedAt: updatedAt,
+                deleted: deleted,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$BorrowersTableTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({loansTableRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [if (loansTableRefs) db.loansTable],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (loansTableRefs)
+                    await $_getPrefetchedData<
+                      BorrowersTableData,
+                      $BorrowersTableTable,
+                      LoansTableData
+                    >(
+                      currentTable: table,
+                      referencedTable: $$BorrowersTableTableReferences
+                          ._loansTableRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$BorrowersTableTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).loansTableRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where((e) => e.borrowerId == item.id),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$BorrowersTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $BorrowersTableTable,
+      BorrowersTableData,
+      $$BorrowersTableTableFilterComposer,
+      $$BorrowersTableTableOrderingComposer,
+      $$BorrowersTableTableAnnotationComposer,
+      $$BorrowersTableTableCreateCompanionBuilder,
+      $$BorrowersTableTableUpdateCompanionBuilder,
+      (BorrowersTableData, $$BorrowersTableTableReferences),
+      BorrowersTableData,
+      PrefetchHooks Function({bool loansTableRefs})
+    >;
+typedef $$LoansTableTableCreateCompanionBuilder =
+    LoansTableCompanion Function({
+      required String id,
+      required String mediaItemId,
+      required String borrowerId,
+      required int lentAt,
+      Value<int?> returnedAt,
+      Value<String?> notes,
+      required int updatedAt,
+      Value<int> deleted,
+      Value<int> rowid,
+    });
+typedef $$LoansTableTableUpdateCompanionBuilder =
+    LoansTableCompanion Function({
+      Value<String> id,
+      Value<String> mediaItemId,
+      Value<String> borrowerId,
+      Value<int> lentAt,
+      Value<int?> returnedAt,
+      Value<String?> notes,
+      Value<int> updatedAt,
+      Value<int> deleted,
+      Value<int> rowid,
+    });
+
+final class $$LoansTableTableReferences
+    extends BaseReferences<_$AppDatabase, $LoansTableTable, LoansTableData> {
+  $$LoansTableTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $MediaItemsTableTable _mediaItemIdTable(_$AppDatabase db) =>
+      db.mediaItemsTable.createAlias(
+        $_aliasNameGenerator(db.loansTable.mediaItemId, db.mediaItemsTable.id),
+      );
+
+  $$MediaItemsTableTableProcessedTableManager get mediaItemId {
+    final $_column = $_itemColumn<String>('media_item_id')!;
+
+    final manager = $$MediaItemsTableTableTableManager(
+      $_db,
+      $_db.mediaItemsTable,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_mediaItemIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $BorrowersTableTable _borrowerIdTable(_$AppDatabase db) =>
+      db.borrowersTable.createAlias(
+        $_aliasNameGenerator(db.loansTable.borrowerId, db.borrowersTable.id),
+      );
+
+  $$BorrowersTableTableProcessedTableManager get borrowerId {
+    final $_column = $_itemColumn<String>('borrower_id')!;
+
+    final manager = $$BorrowersTableTableTableManager(
+      $_db,
+      $_db.borrowersTable,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_borrowerIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$LoansTableTableFilterComposer
+    extends Composer<_$AppDatabase, $LoansTableTable> {
+  $$LoansTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get lentAt => $composableBuilder(
+    column: $table.lentAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get returnedAt => $composableBuilder(
+    column: $table.returnedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get deleted => $composableBuilder(
+    column: $table.deleted,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$MediaItemsTableTableFilterComposer get mediaItemId {
+    final $$MediaItemsTableTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.mediaItemId,
+      referencedTable: $db.mediaItemsTable,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$MediaItemsTableTableFilterComposer(
+            $db: $db,
+            $table: $db.mediaItemsTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$BorrowersTableTableFilterComposer get borrowerId {
+    final $$BorrowersTableTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.borrowerId,
+      referencedTable: $db.borrowersTable,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BorrowersTableTableFilterComposer(
+            $db: $db,
+            $table: $db.borrowersTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$LoansTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $LoansTableTable> {
+  $$LoansTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get lentAt => $composableBuilder(
+    column: $table.lentAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get returnedAt => $composableBuilder(
+    column: $table.returnedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get deleted => $composableBuilder(
+    column: $table.deleted,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$MediaItemsTableTableOrderingComposer get mediaItemId {
+    final $$MediaItemsTableTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.mediaItemId,
+      referencedTable: $db.mediaItemsTable,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$MediaItemsTableTableOrderingComposer(
+            $db: $db,
+            $table: $db.mediaItemsTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$BorrowersTableTableOrderingComposer get borrowerId {
+    final $$BorrowersTableTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.borrowerId,
+      referencedTable: $db.borrowersTable,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BorrowersTableTableOrderingComposer(
+            $db: $db,
+            $table: $db.borrowersTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$LoansTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $LoansTableTable> {
+  $$LoansTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get lentAt =>
+      $composableBuilder(column: $table.lentAt, builder: (column) => column);
+
+  GeneratedColumn<int> get returnedAt => $composableBuilder(
+    column: $table.returnedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get notes =>
+      $composableBuilder(column: $table.notes, builder: (column) => column);
+
+  GeneratedColumn<int> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get deleted =>
+      $composableBuilder(column: $table.deleted, builder: (column) => column);
+
+  $$MediaItemsTableTableAnnotationComposer get mediaItemId {
+    final $$MediaItemsTableTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.mediaItemId,
+      referencedTable: $db.mediaItemsTable,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$MediaItemsTableTableAnnotationComposer(
+            $db: $db,
+            $table: $db.mediaItemsTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$BorrowersTableTableAnnotationComposer get borrowerId {
+    final $$BorrowersTableTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.borrowerId,
+      referencedTable: $db.borrowersTable,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BorrowersTableTableAnnotationComposer(
+            $db: $db,
+            $table: $db.borrowersTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$LoansTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $LoansTableTable,
+          LoansTableData,
+          $$LoansTableTableFilterComposer,
+          $$LoansTableTableOrderingComposer,
+          $$LoansTableTableAnnotationComposer,
+          $$LoansTableTableCreateCompanionBuilder,
+          $$LoansTableTableUpdateCompanionBuilder,
+          (LoansTableData, $$LoansTableTableReferences),
+          LoansTableData,
+          PrefetchHooks Function({bool mediaItemId, bool borrowerId})
+        > {
+  $$LoansTableTableTableManager(_$AppDatabase db, $LoansTableTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$LoansTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$LoansTableTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$LoansTableTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> mediaItemId = const Value.absent(),
+                Value<String> borrowerId = const Value.absent(),
+                Value<int> lentAt = const Value.absent(),
+                Value<int?> returnedAt = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<int> updatedAt = const Value.absent(),
+                Value<int> deleted = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LoansTableCompanion(
+                id: id,
+                mediaItemId: mediaItemId,
+                borrowerId: borrowerId,
+                lentAt: lentAt,
+                returnedAt: returnedAt,
+                notes: notes,
+                updatedAt: updatedAt,
+                deleted: deleted,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String mediaItemId,
+                required String borrowerId,
+                required int lentAt,
+                Value<int?> returnedAt = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                required int updatedAt,
+                Value<int> deleted = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LoansTableCompanion.insert(
+                id: id,
+                mediaItemId: mediaItemId,
+                borrowerId: borrowerId,
+                lentAt: lentAt,
+                returnedAt: returnedAt,
+                notes: notes,
+                updatedAt: updatedAt,
+                deleted: deleted,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$LoansTableTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({mediaItemId = false, borrowerId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (mediaItemId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.mediaItemId,
+                                referencedTable: $$LoansTableTableReferences
+                                    ._mediaItemIdTable(db),
+                                referencedColumn: $$LoansTableTableReferences
+                                    ._mediaItemIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+                    if (borrowerId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.borrowerId,
+                                referencedTable: $$LoansTableTableReferences
+                                    ._borrowerIdTable(db),
+                                referencedColumn: $$LoansTableTableReferences
+                                    ._borrowerIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$LoansTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $LoansTableTable,
+      LoansTableData,
+      $$LoansTableTableFilterComposer,
+      $$LoansTableTableOrderingComposer,
+      $$LoansTableTableAnnotationComposer,
+      $$LoansTableTableCreateCompanionBuilder,
+      $$LoansTableTableUpdateCompanionBuilder,
+      (LoansTableData, $$LoansTableTableReferences),
+      LoansTableData,
+      PrefetchHooks Function({bool mediaItemId, bool borrowerId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -6019,4 +7917,8 @@ class $AppDatabaseManager {
       $$BarcodeCacheTableTableTableManager(_db, _db.barcodeCacheTable);
   $$SyncLogTableTableTableManager get syncLogTable =>
       $$SyncLogTableTableTableManager(_db, _db.syncLogTable);
+  $$BorrowersTableTableTableManager get borrowersTable =>
+      $$BorrowersTableTableTableManager(_db, _db.borrowersTable);
+  $$LoansTableTableTableManager get loansTable =>
+      $$LoansTableTableTableManager(_db, _db.loansTable);
 }
