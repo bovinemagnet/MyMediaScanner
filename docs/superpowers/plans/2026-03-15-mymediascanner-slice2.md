@@ -1377,19 +1377,23 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     final maxAge = ApiConstants.cacheDurationDays * 24 * 60 * 60 * 1000;
     if (age > maxAge) return null;
 
-    // Re-map from cached response
-    // For simplicity, return a basic result from cached data
+    // Re-map through the original mapper for full fidelity
     try {
       final json = jsonDecode(cached.responseJson) as Map<String, dynamic>;
-      return MetadataResult(
-        barcode: barcode,
-        barcodeType: BarcodeUtils.detectBarcodeType(barcode).name,
-        title: json['title'] as String?,
-        mediaType: cached.mediaTypeHint != null
-            ? MediaType.fromString(cached.mediaTypeHint!)
-            : null,
-        sourceApis: [cached.sourceApi],
-      );
+      final barcodeType = BarcodeUtils.detectBarcodeType(barcode).name;
+      return switch (cached.sourceApi) {
+        'tmdb' => TmdbMapper.fromSearchResult(
+            TmdbSearchResultDto.fromJson(json), barcode, barcodeType),
+        'discogs' => DiscogsMapper.fromRelease(
+            DiscogsReleaseDto.fromJson(json), barcode, barcodeType),
+        'google_books' => GoogleBooksMapper.fromVolume(
+            GoogleBooksVolumeDto.fromJson(json), barcode, barcodeType),
+        'open_library' => OpenLibraryMapper.fromBook(
+            OpenLibraryBookDto.fromJson(json), barcode, barcodeType),
+        'upcitemdb' => UpcMapper.fromItem(
+            UpcItemDto.fromJson(json), barcode, barcodeType),
+        _ => null,
+      };
     } catch (_) {
       return null;
     }
@@ -1429,15 +1433,16 @@ class MetadataRepositoryImpl implements IMetadataRepository {
   }
 
   Future<MetadataResult?> _lookupFilm(
-      String barcode, String barcodeType) async {
+      String barcode, String barcodeType, {MetadataResult? upcHint}) async {
     if (tmdbApi == null) return null;
     try {
       // TMDB doesn't support barcode search directly — use UPCitemdb
-      // to get a title, then search TMDB by title
-      final upcResult = await _lookupUpc(barcode, barcodeType);
-      if (upcResult?.title == null) return null;
+      // to get a title, then search TMDB by title.
+      // Accept a pre-fetched UPC result to avoid double lookups.
+      final titleSource = upcHint ?? await _lookupUpc(barcode, barcodeType);
+      if (titleSource?.title == null) return null;
 
-      final response = await tmdbApi!.searchMulti(upcResult!.title!);
+      final response = await tmdbApi!.searchMulti(titleSource!.title!);
       final result = response.results?.firstOrNull;
       if (result != null) {
         await _cacheResponse(barcode, 'film', 'tmdb', result.toJson());
@@ -1477,7 +1482,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     }
     if (upcResult.mediaType == MediaType.film ||
         upcResult.mediaType == MediaType.tv) {
-      final filmResult = await _lookupFilm(barcode, barcodeType);
+      final filmResult = await _lookupFilm(barcode, barcodeType, upcHint: upcResult);
       return filmResult ?? upcResult;
     }
     if (upcResult.mediaType == MediaType.music) {
@@ -2449,7 +2454,161 @@ git commit -m "feat: add MetadataConfirmScreen with editable form"
 
 ---
 
-## Task 18: Verify Slice 2
+## Task 18: Batch Scan Mode (SCAN-07)
+
+**Files:**
+- Create: `lib/presentation/screens/scanner/widgets/batch_scan_counter.dart`
+
+- [ ] **Step 1: Create batch_scan_counter.dart**
+
+```dart
+import 'package:flutter/material.dart';
+
+class BatchScanCounter extends StatelessWidget {
+  const BatchScanCounter({super.key, required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primaryContainer,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.check_circle, size: 16,
+              color: Theme.of(context).colorScheme.onPrimaryContainer),
+          const SizedBox(width: 4),
+          Text(
+            '$count scanned',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onPrimaryContainer,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+```
+
+- [ ] **Step 2: Add batch mode toggle to ScannerState**
+
+In `scanner_provider.dart`, add `batchMode` and `batchCount` fields to `ScannerState`:
+
+```dart
+class ScannerState {
+  const ScannerState({
+    this.state = ScanState.idle,
+    this.result,
+    this.error,
+    this.batchMode = false,
+    this.batchCount = 0,
+  });
+
+  final ScanState state;
+  final ScanResult? result;
+  final String? error;
+  final bool batchMode;
+  final int batchCount;
+
+  ScannerState copyWith({
+    ScanState? state,
+    ScanResult? result,
+    String? error,
+    bool? batchMode,
+    int? batchCount,
+  }) => ScannerState(
+    state: state ?? this.state,
+    result: result ?? this.result,
+    error: error ?? this.error,
+    batchMode: batchMode ?? this.batchMode,
+    batchCount: batchCount ?? this.batchCount,
+  );
+}
+```
+
+Add methods to the `Scanner` notifier:
+
+```dart
+void toggleBatchMode() {
+  state = state.copyWith(batchMode: !state.batchMode, batchCount: 0);
+}
+
+void incrementBatchCount() {
+  state = state.copyWith(
+    state: ScanState.idle,
+    batchCount: state.batchCount + 1,
+  );
+}
+```
+
+- [ ] **Step 3: Update MetadataConfirmScreen to support batch mode**
+
+In `metadata_confirm_screen.dart`, after saving, check batch mode:
+
+```dart
+onSave: (edited) async {
+  final useCase = SaveMediaItemUseCase(
+    repository: ref.read(mediaItemRepositoryProvider),
+  );
+  await useCase.execute(edited);
+
+  final scanner = ref.read(scannerProvider.notifier);
+  if (ref.read(scannerProvider).batchMode) {
+    scanner.incrementBatchCount();
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${edited.title ?? "Item"} saved')),
+      );
+      context.go('/scan');
+    }
+  } else {
+    scanner.reset();
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${edited.title ?? "Item"} saved')),
+      );
+      context.go('/');
+    }
+  }
+},
+```
+
+- [ ] **Step 4: Add batch toggle and counter to DesktopScanScreen**
+
+Add to the desktop scan screen UI (in the Column children, before the text field):
+
+```dart
+Row(
+  mainAxisSize: MainAxisSize.min,
+  children: [
+    const Text('Batch mode'),
+    Switch(
+      value: scannerState.batchMode,
+      onChanged: (_) => ref.read(scannerProvider.notifier).toggleBatchMode(),
+    ),
+    if (scannerState.batchMode && scannerState.batchCount > 0)
+      BatchScanCounter(count: scannerState.batchCount),
+  ],
+),
+```
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add lib/presentation/screens/scanner/widgets/ lib/presentation/providers/scanner_provider.dart lib/presentation/screens/metadata_confirm/ lib/presentation/screens/scanner/desktop_scan_screen.dart
+git commit -m "feat: add batch scan mode with counter (SCAN-07)"
+```
+
+---
+
+## Task 19: Verify Slice 2
 
 - [ ] **Step 1: Run full code generation**
 
