@@ -1942,18 +1942,38 @@ part 'scanner_provider.g.dart';
 
 enum ScanState { idle, scanning, lookingUp, found, notFound, duplicate, error }
 
+class ScannerState {
+  const ScannerState({
+    this.state = ScanState.idle,
+    this.result,
+    this.error,
+  });
+
+  final ScanState state;
+  final ScanResult? result;
+  final String? error;
+
+  ScannerState copyWith({
+    ScanState? state,
+    ScanResult? result,
+    String? error,
+  }) => ScannerState(
+    state: state ?? this.state,
+    result: result ?? this.result,
+    error: error ?? this.error,
+  );
+}
+
 @riverpod
 class Scanner extends _$Scanner {
   @override
-  ({ScanState state, ScanResult? result, String? error}) build() {
-    return (state: ScanState.idle, result: null, error: null);
-  }
+  ScannerState build() => const ScannerState();
 
   Future<void> onBarcodeScanned(
     String barcode, {
     MediaType? typeHint,
   }) async {
-    state = (state: ScanState.lookingUp, result: null, error: null);
+    state = const ScannerState(state: ScanState.lookingUp);
 
     try {
       final useCase = ScanBarcodeUseCase(
@@ -1964,23 +1984,19 @@ class Scanner extends _$Scanner {
       final scanResult = await useCase.execute(barcode, typeHint: typeHint);
 
       if (scanResult.isDuplicate) {
-        state = (
-          state: ScanState.duplicate,
-          result: scanResult,
-          error: null,
-        );
+        state = ScannerState(state: ScanState.duplicate, result: scanResult);
       } else if (scanResult.metadataResult.title != null) {
-        state = (state: ScanState.found, result: scanResult, error: null);
+        state = ScannerState(state: ScanState.found, result: scanResult);
       } else {
-        state = (state: ScanState.notFound, result: scanResult, error: null);
+        state = ScannerState(state: ScanState.notFound, result: scanResult);
       }
     } on Exception catch (e) {
-      state = (state: ScanState.error, result: null, error: e.toString());
+      state = ScannerState(state: ScanState.error, error: e.toString());
     }
   }
 
   void reset() {
-    state = (state: ScanState.idle, result: null, error: null);
+    state = const ScannerState();
   }
 }
 ```
@@ -2041,7 +2057,7 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final scanState = ref.watch(scannerProvider);
+    final scannerState = ref.watch(scannerProvider);
 
     ref.listen(scannerProvider, (prev, next) {
       if (next.state == ScanState.found || next.state == ScanState.notFound) {
@@ -2076,7 +2092,7 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
                 decoration: const InputDecoration(
                   hintText: 'Barcode / ISBN',
                   border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.barcode_reader),
+                  prefixIcon: Icon(Icons.qr_code),
                 ),
                 onSubmitted: _onSubmitted,
                 inputFormatters: [
@@ -2085,15 +2101,15 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            if (scanState.state == ScanState.lookingUp)
+            if (scannerState.state == ScanState.lookingUp)
               const LoadingIndicator(message: 'Looking up metadata...'),
-            if (scanState.state == ScanState.error)
+            if (scannerState.state == ScanState.error)
               Text(
-                scanState.error ?? 'Unknown error',
+                scannerState.error ?? 'Unknown error',
                 style: TextStyle(
                     color: Theme.of(context).colorScheme.error),
               ),
-            if (scanState.state == ScanState.duplicate)
+            if (scannerState.state == ScanState.duplicate)
               Card(
                 color: Theme.of(context).colorScheme.errorContainer,
                 child: Padding(
@@ -2369,8 +2385,8 @@ class MetadataConfirmScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final scanState = ref.watch(scannerProvider);
-    final metadata = scanState.result?.metadataResult;
+    final scannerState = ref.watch(scannerProvider);
+    final metadata = scannerState.result?.metadataResult;
 
     if (metadata == null) {
       return Scaffold(
