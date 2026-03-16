@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/domain/usecases/scan_barcode_usecase.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
+import 'package:mymediascanner/presentation/providers/settings_provider.dart';
 
 enum ScanState { idle, scanning, lookingUp, found, notFound, duplicate, error }
 
@@ -78,6 +79,10 @@ class ScannerNotifier extends Notifier<ScannerState> {
     state = state.copyWith(state: ScanState.lookingUp);
 
     try {
+      // Ensure API keys are loaded before reading the metadata repository,
+      // otherwise the provider may be built with null API clients.
+      await ref.read(apiKeysProvider.future);
+
       final useCase = ScanBarcodeUseCase(
         mediaItemRepository: ref.read(mediaItemRepositoryProvider),
         metadataRepository: ref.read(metadataRepositoryProvider),
