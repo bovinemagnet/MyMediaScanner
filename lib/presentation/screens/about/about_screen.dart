@@ -83,7 +83,7 @@ class AboutScreen extends StatelessWidget {
               const Divider(),
 
               // Features
-              _SectionHeader(title: 'Features'),
+              const _SectionHeader(title: 'Features'),
               const _FeatureTile(
                 icon: Icons.qr_code_scanner,
                 text: 'Barcode scanning for CDs, DVDs, Blu-rays, books and games',
@@ -144,8 +144,12 @@ class AboutScreen extends StatelessWidget {
   }
 
   Future<void> _openUrl(String url) async {
-    final uri = Uri.parse(url);
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
+    try {
+      final uri = Uri.parse(url);
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } on Exception {
+      // Silently handle — URL launch may fail on some platforms
+    }
   }
 }
 
