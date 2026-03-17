@@ -32,6 +32,18 @@ void main() {
     expect(find.text(AppConstants.githubUrl), findsOneWidget);
   });
 
+  testWidgets('GitHub tile is tappable', (tester) async {
+    await tester.pumpWidget(buildTestWidget());
+    await tester.pumpAndSettle();
+
+    final githubTile = find.widgetWithText(ListTile, 'GitHub Repository');
+    expect(githubTile, findsOneWidget);
+
+    // Verify the tile has an onTap handler (i.e. is tappable)
+    final listTile = tester.widget<ListTile>(githubTile);
+    expect(listTile.onTap, isNotNull);
+  });
+
   testWidgets('renders features section', (tester) async {
     await tester.pumpWidget(buildTestWidget());
     await tester.pumpAndSettle();
