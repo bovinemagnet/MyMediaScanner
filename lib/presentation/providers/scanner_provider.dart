@@ -16,6 +16,9 @@ enum ScanState {
   error,
 }
 
+/// Whether the user is scanning a standard barcode or an ISBN.
+enum ScanMode { barcode, isbn }
+
 class ScannerState {
   const ScannerState({
     this.state = ScanState.idle,
@@ -23,6 +26,7 @@ class ScannerState {
     this.error,
     this.batchMode = false,
     this.batchCount = 0,
+    this.scanMode = ScanMode.barcode,
     this.enabledMediaTypes = const {
       MediaType.music,
       MediaType.film,
@@ -37,6 +41,7 @@ class ScannerState {
   final String? error;
   final bool batchMode;
   final int batchCount;
+  final ScanMode scanMode;
   final Set<MediaType> enabledMediaTypes;
 
   MediaType? get typeHint {
@@ -52,6 +57,7 @@ class ScannerState {
     String? error,
     bool? batchMode,
     int? batchCount,
+    ScanMode? scanMode,
     Set<MediaType>? enabledMediaTypes,
   }) => ScannerState(
     state: state ?? this.state,
@@ -59,6 +65,7 @@ class ScannerState {
     error: error ?? this.error,
     batchMode: batchMode ?? this.batchMode,
     batchCount: batchCount ?? this.batchCount,
+    scanMode: scanMode ?? this.scanMode,
     enabledMediaTypes: enabledMediaTypes ?? this.enabledMediaTypes,
   );
 }
@@ -77,6 +84,10 @@ class ScannerNotifier extends Notifier<ScannerState> {
     state = state.copyWith(enabledMediaTypes: current);
   }
 
+  void setScanMode(ScanMode mode) {
+    state = state.copyWith(scanMode: mode);
+  }
+
   Future<void> onBarcodeScanned(
     String barcode, {
     MediaType? typeHint,
@@ -92,8 +103,11 @@ class ScannerNotifier extends Notifier<ScannerState> {
         metadataRepository: ref.read(metadataRepositoryProvider),
       );
 
-      final scanResult =
-          await useCase.execute(barcode, typeHint: effectiveHint);
+      final scanResult = await useCase.execute(
+        barcode,
+        typeHint: effectiveHint,
+        forceIsbn: state.scanMode == ScanMode.isbn,
+      );
 
       switch (scanResult) {
         case SingleScanResult(:final isDuplicate):
@@ -104,6 +118,7 @@ class ScannerNotifier extends Notifier<ScannerState> {
               batchMode: state.batchMode,
               batchCount: state.batchCount,
               enabledMediaTypes: state.enabledMediaTypes,
+              scanMode: state.scanMode,
             );
           } else {
             state = ScannerState(
@@ -112,6 +127,7 @@ class ScannerNotifier extends Notifier<ScannerState> {
               batchMode: state.batchMode,
               batchCount: state.batchCount,
               enabledMediaTypes: state.enabledMediaTypes,
+              scanMode: state.scanMode,
             );
           }
         case MultiMatchScanResult():
@@ -143,6 +159,7 @@ class ScannerNotifier extends Notifier<ScannerState> {
                 batchMode: state.batchMode,
                 batchCount: state.batchCount,
                 enabledMediaTypes: state.enabledMediaTypes,
+                scanMode: state.scanMode,
               );
             }
           } else {
@@ -152,6 +169,7 @@ class ScannerNotifier extends Notifier<ScannerState> {
               batchMode: state.batchMode,
               batchCount: state.batchCount,
               enabledMediaTypes: state.enabledMediaTypes,
+              scanMode: state.scanMode,
             );
           }
         case NotFoundScanResult():
@@ -161,6 +179,7 @@ class ScannerNotifier extends Notifier<ScannerState> {
             batchMode: state.batchMode,
             batchCount: state.batchCount,
             enabledMediaTypes: state.enabledMediaTypes,
+            scanMode: state.scanMode,
           );
       }
     } on Exception catch (e) {
@@ -170,6 +189,7 @@ class ScannerNotifier extends Notifier<ScannerState> {
         batchMode: state.batchMode,
         batchCount: state.batchCount,
         enabledMediaTypes: state.enabledMediaTypes,
+        scanMode: state.scanMode,
       );
     }
   }
@@ -182,6 +202,7 @@ class ScannerNotifier extends Notifier<ScannerState> {
       batchMode: state.batchMode,
       batchCount: state.batchCount,
       enabledMediaTypes: state.enabledMediaTypes,
+      scanMode: state.scanMode,
     );
   }
 
@@ -196,11 +217,12 @@ class ScannerNotifier extends Notifier<ScannerState> {
       batchMode: state.batchMode,
       batchCount: state.batchCount,
       enabledMediaTypes: state.enabledMediaTypes,
+      scanMode: state.scanMode,
     );
   }
 
   void reset() {
-    state = const ScannerState();
+    state = ScannerState(scanMode: state.scanMode);
   }
 
   void toggleBatchMode() {

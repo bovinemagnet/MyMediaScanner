@@ -52,6 +52,7 @@ final metadataRepositoryProvider = Provider<IMetadataRepository>((ref) {
   final tmdbKey = apiKeys['tmdb'];
   final discogsKey = apiKeys['discogs'];
   final upcKey = apiKeys['upcitemdb'];
+  final googleBooksKey = apiKeys['google_books'];
 
   return MetadataRepositoryImpl(
     cacheDao: ref.watch(barcodeCacheDaoProvider),
@@ -69,8 +70,13 @@ final metadataRepositoryProvider = Provider<IMetadataRepository>((ref) {
             defaultHeaders: {'User-Agent': 'MyMediaScanner/1.0'},
           ))
         : null,
-    googleBooksApi: GoogleBooksApi(
-        DioFactory.create(baseUrl: ApiConstants.googleBooksBaseUrl)),
+    googleBooksApi: GoogleBooksApi(googleBooksKey != null
+        ? DioFactory.createWithApiKey(
+            baseUrl: ApiConstants.googleBooksBaseUrl,
+            apiKeyParam: 'key',
+            apiKey: googleBooksKey,
+          )
+        : DioFactory.create(baseUrl: ApiConstants.googleBooksBaseUrl)),
     openLibraryApi: OpenLibraryApi(),
     upcitemdbApi: upcKey != null
         ? UpcitemdbApi(DioFactory.createWithApiKey(

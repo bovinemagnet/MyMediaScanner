@@ -1,13 +1,16 @@
+import 'package:dio/dio.dart';
 import 'package:drift/drift.dart' hide isNotNull;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:mymediascanner/core/constants/app_constants.dart';
+import 'package:mymediascanner/core/utils/api_circuit_breaker.dart';
 import 'package:mymediascanner/data/local/dao/barcode_cache_dao.dart';
 import 'package:mymediascanner/data/local/database/app_database.dart';
 import 'package:mymediascanner/data/remote/api/discogs/discogs_api.dart';
 import 'package:mymediascanner/data/remote/api/discogs/models/discogs_release_dto.dart';
 import 'package:mymediascanner/data/remote/api/google_books/google_books_api.dart';
 import 'package:mymediascanner/data/remote/api/google_books/models/google_books_volume_dto.dart';
+import 'package:mymediascanner/data/remote/api/open_library/models/open_library_work_dto.dart';
 import 'package:mymediascanner/data/remote/api/open_library/open_library_api.dart';
 import 'package:mymediascanner/data/remote/api/tmdb/models/tmdb_search_result_dto.dart';
 import 'package:mymediascanner/data/remote/api/tmdb/tmdb_api.dart';
@@ -263,6 +266,137 @@ void main() {
       );
 
       expect(result, equals(null));
+    });
+  });
+
+  group('Google Books 429 handling', () {
+    const isbn = '9780141036144';
+    late MockGoogleBooksApi mockGoogleBooksApi;
+    late MockOpenLibraryApi mockOpenLibraryApi;
+    late MockBarcodeCacheDao mockCache;
+    late ApiCircuitBreaker breaker;
+
+    setUp(() {
+      mockGoogleBooksApi = MockGoogleBooksApi();
+      mockOpenLibraryApi = MockOpenLibraryApi();
+      mockCache = MockBarcodeCacheDao();
+      breaker = ApiCircuitBreaker(
+        cooldownDuration: const Duration(hours: 1),
+      );
+
+      when(() => mockCache.getByBarcode(isbn))
+          .thenAnswer((_) async => null);
+      when(() => mockCache.upsert(any()))
+          .thenAnswer((_) async {});
+    });
+
+    DioException _make429() {
+      return DioException(
+        requestOptions: RequestOptions(path: '/volumes'),
+        response: Response(
+          requestOptions: RequestOptions(path: '/volumes'),
+          statusCode: 429,
+        ),
+        type: DioExceptionType.badResponse,
+      );
+    }
+
+    test('falls back to Open Library on 429', () async {
+      final booksRepo = MetadataRepositoryImpl(
+        cacheDao: mockCache,
+        googleBooksApi: mockGoogleBooksApi,
+        openLibraryApi: mockOpenLibraryApi,
+        googleBooksBreaker: breaker,
+      );
+
+      when(() => mockGoogleBooksApi.searchByIsbn('isbn:$isbn'))
+          .thenThrow(_make429());
+      when(() => mockOpenLibraryApi.getByIsbn(isbn))
+          .thenAnswer((_) async => const OpenLibraryBookDto(
+                title: '1984',
+                publishers: [OpenLibraryPublisherDto(name: 'Penguin')],
+              ));
+
+      final result = await booksRepo.lookupBarcode(isbn);
+
+      expect(result, isA<SingleScanResult>());
+      final single = result as SingleScanResult;
+      expect(single.metadata.title, '1984');
+      expect(single.metadata.sourceApis, contains('open_library'));
+    });
+
+    test('trips circuit breaker on 429', () async {
+      final booksRepo = MetadataRepositoryImpl(
+        cacheDao: mockCache,
+        googleBooksApi: mockGoogleBooksApi,
+        openLibraryApi: mockOpenLibraryApi,
+        googleBooksBreaker: breaker,
+      );
+
+      when(() => mockGoogleBooksApi.searchByIsbn('isbn:$isbn'))
+          .thenThrow(_make429());
+      when(() => mockOpenLibraryApi.getByIsbn(isbn))
+          .thenAnswer((_) async => null);
+
+      await booksRepo.lookupBarcode(isbn);
+
+      expect(breaker.isOpen, isFalse);
+    });
+
+    test('skips Google Books when circuit breaker is tripped', () async {
+      breaker.trip(); // Pre-trip the breaker
+
+      final booksRepo = MetadataRepositoryImpl(
+        cacheDao: mockCache,
+        googleBooksApi: mockGoogleBooksApi,
+        openLibraryApi: mockOpenLibraryApi,
+        googleBooksBreaker: breaker,
+      );
+
+      when(() => mockOpenLibraryApi.getByIsbn(isbn))
+          .thenAnswer((_) async => const OpenLibraryBookDto(
+                title: '1984',
+                publishers: [OpenLibraryPublisherDto(name: 'Penguin')],
+              ));
+
+      final result = await booksRepo.lookupBarcode(isbn);
+
+      // Google Books should NOT have been called
+      verifyNever(() => mockGoogleBooksApi.searchByIsbn(any()));
+      expect(result, isA<SingleScanResult>());
+    });
+
+    test('resets circuit breaker on successful Google Books response', () async {
+      breaker.trip();
+      // Use zero cooldown so the breaker allows a probe
+      final probableBreaker = ApiCircuitBreaker(
+        cooldownDuration: Duration.zero,
+      );
+      probableBreaker.trip();
+
+      final booksRepo = MetadataRepositoryImpl(
+        cacheDao: mockCache,
+        googleBooksApi: mockGoogleBooksApi,
+        googleBooksBreaker: probableBreaker,
+      );
+
+      when(() => mockGoogleBooksApi.searchByIsbn('isbn:$isbn'))
+          .thenAnswer((_) async => const GoogleBooksSearchResponseDto(
+                totalItems: 1,
+                items: [
+                  GoogleBooksVolumeDto(
+                    id: 'abc123',
+                    volumeInfo: GoogleBooksVolumeInfoDto(
+                      title: '1984',
+                      authors: ['George Orwell'],
+                    ),
+                  ),
+                ],
+              ));
+
+      await booksRepo.lookupBarcode(isbn);
+
+      expect(probableBreaker.isOpen, isTrue);
     });
   });
 }

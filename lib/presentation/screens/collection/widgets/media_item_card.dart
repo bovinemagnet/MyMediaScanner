@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:mymediascanner/app/theme/app_colors.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
+import 'package:mymediascanner/presentation/widgets/desktop_context_menu.dart';
 
 class MediaItemCard extends StatelessWidget {
   const MediaItemCard({
@@ -11,12 +12,14 @@ class MediaItemCard extends StatelessWidget {
     required this.onTap,
     this.isLent = false,
     this.isRipped = false,
+    this.contextMenuActions = const [],
   });
 
   final MediaItem item;
   final VoidCallback onTap;
   final bool isLent;
   final bool isRipped;
+  final List<ContextMenuAction> contextMenuActions;
 
   Color _typeColour(MediaType type) => switch (type) {
         MediaType.film => AppColors.filmColor,
@@ -29,7 +32,9 @@ class MediaItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return DesktopContextMenu(
+      actions: contextMenuActions,
+      child: Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
@@ -150,6 +155,7 @@ class MediaItemCard extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }

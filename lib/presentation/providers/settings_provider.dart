@@ -15,6 +15,7 @@ class ApiKeysNotifier extends AsyncNotifier<Map<String, String?>> {
   static const _tmdbKey = 'api_key_tmdb';
   static const _discogsKey = 'api_key_discogs';
   static const _upcitemdbKey = 'api_key_upcitemdb';
+  static const _googleBooksKey = 'api_key_google_books';
 
   @override
   Future<Map<String, String?>> build() async {
@@ -23,6 +24,7 @@ class ApiKeysNotifier extends AsyncNotifier<Map<String, String?>> {
       'tmdb': await storage.read(key: _tmdbKey),
       'discogs': await storage.read(key: _discogsKey),
       'upcitemdb': await storage.read(key: _upcitemdbKey),
+      'google_books': await storage.read(key: _googleBooksKey),
     };
   }
 
@@ -39,6 +41,12 @@ class ApiKeysNotifier extends AsyncNotifier<Map<String, String?>> {
   Future<void> setUpcitemdbKey(String key) async {
     await ref.read(secureStorageProvider).write(
         key: _upcitemdbKey, value: key);
+    ref.invalidateSelf();
+  }
+
+  Future<void> setGoogleBooksKey(String key) async {
+    await ref.read(secureStorageProvider).write(
+        key: _googleBooksKey, value: key);
     ref.invalidateSelf();
   }
 }

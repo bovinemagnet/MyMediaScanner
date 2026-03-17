@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mymediascanner/core/constants/app_constants.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
+import 'package:mymediascanner/presentation/widgets/desktop_shortcuts.dart';
 
 class AppScaffold extends StatelessWidget {
   const AppScaffold({
@@ -76,6 +77,14 @@ class AppScaffold extends StatelessWidget {
     final useRail = width >= AppConstants.compactBreakpoint;
     final isDesktop = PlatformCapability.isDesktop;
 
+    Widget wrapWithShortcuts(Widget scaffold) {
+      if (!isDesktop) return scaffold;
+      return DesktopShortcuts(
+        onSwitchTab: _onDestinationSelected,
+        child: scaffold,
+      );
+    }
+
     if (useRail) {
       // On desktop, include the Rips destination in the rail.
       final destinations = [
@@ -89,20 +98,22 @@ class AppScaffold extends StatelessWidget {
           ? 0
           : navigationShell.currentIndex;
 
-      return Scaffold(
-        body: Row(
-          children: [
-            NavigationRail(
-              selectedIndex: currentIndex,
-              onDestinationSelected: _onDestinationSelected,
-              labelType: width >= AppConstants.expandedBreakpoint
-                  ? NavigationRailLabelType.all
-                  : NavigationRailLabelType.selected,
-              destinations: destinations,
-            ),
-            const VerticalDivider(width: 1),
-            Expanded(child: navigationShell),
-          ],
+      return wrapWithShortcuts(
+        Scaffold(
+          body: Row(
+            children: [
+              NavigationRail(
+                selectedIndex: currentIndex,
+                onDestinationSelected: _onDestinationSelected,
+                labelType: width >= AppConstants.expandedBreakpoint
+                    ? NavigationRailLabelType.all
+                    : NavigationRailLabelType.selected,
+                destinations: destinations,
+              ),
+              const VerticalDivider(width: 1),
+              Expanded(child: navigationShell),
+            ],
+          ),
         ),
       );
     }
@@ -113,12 +124,14 @@ class AppScaffold extends StatelessWidget {
         ? 0
         : navigationShell.currentIndex;
 
-    return Scaffold(
-      body: navigationShell,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: mobileIndex,
-        onDestinationSelected: _onDestinationSelected,
-        destinations: _destinations,
+    return wrapWithShortcuts(
+      Scaffold(
+        body: navigationShell,
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: mobileIndex,
+          onDestinationSelected: _onDestinationSelected,
+          destinations: _destinations,
+        ),
       ),
     );
   }

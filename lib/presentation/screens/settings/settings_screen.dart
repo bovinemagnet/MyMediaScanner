@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -140,16 +141,35 @@ class _FlacLibrarySectionState extends ConsumerState<_FlacLibrarySection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        TextField(
-          controller: _pathController,
-          decoration: const InputDecoration(
-            labelText: 'Library root path',
-            hintText: '/path/to/flac/library',
-            border: OutlineInputBorder(),
-          ),
-          onSubmitted: (value) {
-            ref.read(ripLibraryPathProvider.notifier).setPath(value);
-          },
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _pathController,
+                decoration: const InputDecoration(
+                  labelText: 'Library root path',
+                  hintText: '/path/to/flac/library',
+                  border: OutlineInputBorder(),
+                ),
+                onSubmitted: (value) {
+                  ref.read(ripLibraryPathProvider.notifier).setPath(value);
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              icon: const Icon(Icons.folder_open),
+              tooltip: 'Browse\u2026',
+              onPressed: () async {
+                final path =
+                    await FilePicker.platform.getDirectoryPath();
+                if (path != null) {
+                  _pathController.text = path;
+                  ref.read(ripLibraryPathProvider.notifier).setPath(path);
+                }
+              },
+            ),
+          ],
         ),
         const SizedBox(height: 12),
         Row(
@@ -202,19 +222,42 @@ class _FlacLibrarySectionState extends ConsumerState<_FlacLibrarySection> {
         ),
         const SizedBox(height: 16),
         // flac binary path override
-        TextField(
-          controller: _flacBinaryController,
-          decoration: const InputDecoration(
-            labelText: 'flac binary path (optional)',
-            hintText: '/opt/homebrew/bin/flac',
-            helperText: 'Leave empty to use flac from PATH',
-            border: OutlineInputBorder(),
-          ),
-          onSubmitted: (value) {
-            ref
-                .read(flacBinaryPathOverrideProvider.notifier)
-                .setPath(value.trim());
-          },
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _flacBinaryController,
+                decoration: const InputDecoration(
+                  labelText: 'flac binary path (optional)',
+                  hintText: '/opt/homebrew/bin/flac',
+                  helperText: 'Leave empty to use flac from PATH',
+                  border: OutlineInputBorder(),
+                ),
+                onSubmitted: (value) {
+                  ref
+                      .read(flacBinaryPathOverrideProvider.notifier)
+                      .setPath(value.trim());
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              icon: const Icon(Icons.folder_open),
+              tooltip: 'Browse\u2026',
+              onPressed: () async {
+                final result = await FilePicker.platform.pickFiles(
+                  dialogTitle: 'Select flac binary',
+                );
+                if (result != null && result.files.single.path != null) {
+                  final path = result.files.single.path!;
+                  _flacBinaryController.text = path;
+                  ref
+                      .read(flacBinaryPathOverrideProvider.notifier)
+                      .setPath(path);
+                }
+              },
+            ),
+          ],
         ),
         const SizedBox(height: 16),
         // Click detection threshold slider
