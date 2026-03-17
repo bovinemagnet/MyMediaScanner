@@ -3,6 +3,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/domain/entities/metadata_result.dart';
+import 'package:mymediascanner/domain/entities/scan_result.dart';
 import 'package:mymediascanner/domain/repositories/i_media_item_repository.dart';
 import 'package:mymediascanner/domain/repositories/i_metadata_repository.dart';
 import 'package:mymediascanner/domain/usecases/refresh_metadata_usecase.dart';
@@ -67,7 +68,8 @@ void main() {
       when(() => mockMetadataRepo.lookupBarcode(
             barcode,
             typeHint: MediaType.book,
-          )).thenAnswer((_) async => metadata);
+          )).thenAnswer((_) async =>
+              const ScanResult.single(metadata: metadata, isDuplicate: false));
       when(() => mockMediaItemRepo.update(any()))
           .thenAnswer((_) async => {});
 
@@ -92,7 +94,8 @@ void main() {
       when(() => mockMetadataRepo.lookupBarcode(
             barcode,
             typeHint: MediaType.book,
-          )).thenAnswer((_) async => metadata);
+          )).thenAnswer((_) async =>
+              const ScanResult.single(metadata: metadata, isDuplicate: false));
       when(() => mockMediaItemRepo.update(any()))
           .thenAnswer((_) async => {});
 
@@ -117,7 +120,8 @@ void main() {
       when(() => mockMetadataRepo.lookupBarcode(
             barcode,
             typeHint: MediaType.book,
-          )).thenAnswer((_) async => metadata);
+          )).thenAnswer((_) async =>
+              const ScanResult.single(metadata: metadata, isDuplicate: false));
       when(() => mockMediaItemRepo.update(any()))
           .thenAnswer((_) async => {});
 
@@ -138,7 +142,8 @@ void main() {
       when(() => mockMetadataRepo.lookupBarcode(
             barcode,
             typeHint: MediaType.book,
-          )).thenAnswer((_) async => metadata);
+          )).thenAnswer((_) async =>
+              const ScanResult.single(metadata: metadata, isDuplicate: false));
       when(() => mockMediaItemRepo.update(any()))
           .thenAnswer((_) async => {});
 
@@ -160,7 +165,8 @@ void main() {
       when(() => mockMetadataRepo.lookupBarcode(
             barcode,
             typeHint: MediaType.book,
-          )).thenAnswer((_) async => metadata);
+          )).thenAnswer((_) async =>
+              const ScanResult.single(metadata: metadata, isDuplicate: false));
       when(() => mockMediaItemRepo.update(any()))
           .thenAnswer((_) async => {});
 

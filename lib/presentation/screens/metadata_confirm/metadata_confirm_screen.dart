@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mymediascanner/domain/usecases/save_media_item_usecase.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/scanner_provider.dart';
+import 'package:mymediascanner/domain/entities/scan_result.dart';
 import 'package:mymediascanner/presentation/screens/metadata_confirm/widgets/editable_metadata_form.dart';
 
 class MetadataConfirmScreen extends ConsumerWidget {
@@ -12,7 +13,10 @@ class MetadataConfirmScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final scannerState = ref.watch(scannerProvider);
-    final metadata = scannerState.result?.metadataResult;
+    final metadata = switch (scannerState.result) {
+      SingleScanResult(:final metadata) => metadata,
+      _ => null,
+    };
 
     if (metadata == null) {
       return Scaffold(
