@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mymediascanner/data/mappers/upc_mapper.dart';
 import 'package:mymediascanner/data/remote/api/upc/models/upc_item_dto.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
+import 'package:mymediascanner/domain/entities/metadata_candidate.dart';
 
 void main() {
   group('UpcMapper', () {
@@ -121,6 +122,31 @@ void main() {
 
       final result = UpcMapper.fromItem(dto, '0000', 'ean13');
       expect(result.mediaType, MediaType.unknown);
+    });
+  });
+
+  group('UpcMapper.toCandidate', () {
+    test('maps item to MetadataCandidate', () {
+      const dto = UpcItemDto(
+        ean: '0123456789012',
+        title: 'Some Product',
+        category: 'Music > CDs',
+        images: ['https://example.com/img.jpg'],
+      );
+
+      final candidate = UpcMapper.toCandidate(dto, '0123456789012');
+
+      expect(candidate.sourceApi, 'upcitemdb');
+      expect(candidate.sourceId, '0123456789012');
+      expect(candidate.title, 'Some Product');
+      expect(candidate.coverUrl, 'https://example.com/img.jpg');
+      expect(candidate.mediaType, MediaType.music);
+    });
+
+    test('uses barcode as sourceId when ean is null', () {
+      const dto = UpcItemDto(title: 'Item');
+      final candidate = UpcMapper.toCandidate(dto, '999');
+      expect(candidate.sourceId, '999');
     });
   });
 }

@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mymediascanner/data/mappers/discogs_mapper.dart';
 import 'package:mymediascanner/data/remote/api/discogs/models/discogs_release_dto.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
+import 'package:mymediascanner/domain/entities/metadata_candidate.dart';
 
 void main() {
   group('DiscogsMapper', () {
@@ -94,6 +95,39 @@ void main() {
       final tracks = result.extraMetadata['track_listing'] as List;
       expect(tracks.length, 1);
       expect((tracks[0] as Map)['title'], 'Side A Track 1');
+    });
+  });
+
+  group('DiscogsMapper.toCandidate', () {
+    test('maps search result to MetadataCandidate', () {
+      const dto = DiscogsSearchResultDto(
+        id: 12345,
+        title: 'Pink Floyd - Dark Side of the Moon',
+        year: '1973',
+        coverImage: 'https://example.com/cover.jpg',
+      );
+
+      final candidate = DiscogsMapper.toCandidate(dto);
+
+      expect(candidate.sourceApi, 'discogs');
+      expect(candidate.sourceId, '12345');
+      expect(candidate.title, 'Pink Floyd - Dark Side of the Moon');
+      expect(candidate.coverUrl, 'https://example.com/cover.jpg');
+      expect(candidate.year, 1973);
+      expect(candidate.mediaType, MediaType.music);
+    });
+
+    test('handles null year gracefully', () {
+      const dto = DiscogsSearchResultDto(id: 1, title: 'Unknown Album');
+      final candidate = DiscogsMapper.toCandidate(dto);
+      expect(candidate.year, isNull);
+      expect(candidate.coverUrl, isNull);
+    });
+
+    test('handles non-numeric year string', () {
+      const dto = DiscogsSearchResultDto(id: 1, title: 'Album', year: 'Unknown');
+      final candidate = DiscogsMapper.toCandidate(dto);
+      expect(candidate.year, isNull);
     });
   });
 }

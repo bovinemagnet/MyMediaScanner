@@ -1,5 +1,6 @@
 import 'package:mymediascanner/data/remote/api/upc/models/upc_item_dto.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
+import 'package:mymediascanner/domain/entities/metadata_candidate.dart';
 import 'package:mymediascanner/domain/entities/metadata_result.dart';
 
 abstract final class UpcMapper {
@@ -17,6 +18,16 @@ abstract final class UpcMapper {
       coverUrl: dto.primaryImageUrl,
       publisher: dto.brand,
       sourceApis: ['upcitemdb'],
+    );
+  }
+
+  static MetadataCandidate toCandidate(UpcItemDto dto, String barcode) {
+    return MetadataCandidate(
+      sourceApi: 'upcitemdb',
+      sourceId: dto.ean ?? barcode,
+      title: dto.title ?? '',
+      coverUrl: dto.primaryImageUrl,
+      mediaType: _guessMediaType(dto.category),
     );
   }
 

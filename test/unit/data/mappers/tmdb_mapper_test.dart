@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mymediascanner/data/mappers/tmdb_mapper.dart';
 import 'package:mymediascanner/data/remote/api/tmdb/models/tmdb_search_result_dto.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
+import 'package:mymediascanner/domain/entities/metadata_candidate.dart';
 
 void main() {
   group('TmdbMapper', () {
@@ -42,6 +43,43 @@ void main() {
       expect(result.title, 'Breaking Bad');
       expect(result.mediaType, MediaType.tv);
       expect(result.year, 2008);
+    });
+  });
+
+  group('TmdbMapper.toCandidate', () {
+    test('maps movie search result to MetadataCandidate', () {
+      const dto = TmdbSearchResultDto(
+        id: 550,
+        title: 'Fight Club',
+        releaseDate: '1999-10-15',
+        posterPath: '/poster.jpg',
+        mediaType: 'movie',
+      );
+
+      final candidate = TmdbMapper.toCandidate(dto);
+
+      expect(candidate.sourceApi, 'tmdb');
+      expect(candidate.sourceId, '550');
+      expect(candidate.title, 'Fight Club');
+      expect(candidate.year, 1999);
+      expect(candidate.coverUrl, 'https://image.tmdb.org/t/p/w500/poster.jpg');
+      expect(candidate.mediaType, MediaType.film);
+    });
+
+    test('maps TV search result to MetadataCandidate', () {
+      const dto = TmdbSearchResultDto(
+        id: 1399,
+        name: 'Breaking Bad',
+        firstAirDate: '2008-01-20',
+        posterPath: '/bb.jpg',
+        mediaType: 'tv',
+      );
+
+      final candidate = TmdbMapper.toCandidate(dto);
+
+      expect(candidate.sourceApi, 'tmdb');
+      expect(candidate.title, 'Breaking Bad');
+      expect(candidate.mediaType, MediaType.tv);
     });
   });
 }

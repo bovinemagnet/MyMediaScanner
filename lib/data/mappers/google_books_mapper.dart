@@ -1,5 +1,6 @@
 import 'package:mymediascanner/data/remote/api/google_books/models/google_books_volume_dto.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
+import 'package:mymediascanner/domain/entities/metadata_candidate.dart';
 import 'package:mymediascanner/domain/entities/metadata_result.dart';
 
 abstract final class GoogleBooksMapper {
@@ -34,6 +35,19 @@ abstract final class GoogleBooksMapper {
       criticSource: info?.averageRating != null
           ? 'Google Books'
           : null,
+    );
+  }
+
+  static MetadataCandidate toCandidate(GoogleBooksVolumeDto dto) {
+    final info = dto.volumeInfo;
+    return MetadataCandidate(
+      sourceApi: 'google_books',
+      sourceId: dto.id ?? '',
+      title: info?.title ?? '',
+      subtitle: info?.authors?.join(', '),
+      coverUrl: info?.imageLinks?.thumbnail,
+      year: info?.year,
+      mediaType: MediaType.book,
     );
   }
 }
