@@ -1,4 +1,6 @@
 import 'package:mymediascanner/domain/entities/media_item.dart';
+import 'package:mymediascanner/domain/entities/metadata_result.dart';
+import 'package:mymediascanner/domain/entities/scan_result.dart';
 import 'package:mymediascanner/domain/repositories/i_media_item_repository.dart';
 import 'package:mymediascanner/domain/repositories/i_metadata_repository.dart';
 
@@ -19,11 +21,22 @@ class RefreshMetadataUseCase {
 
   /// Re-fetches metadata for [item] from the API and merges the result,
   /// preserving user data (rating, review, tags, dateAdded).
+  /// Returns the updated item, or the original item unchanged if no single
+  /// match was found.
   Future<MediaItem> execute(MediaItem item) async {
-    final metadata = await _metadataRepo.lookupBarcode(
+    final scanResult = await _metadataRepo.lookupBarcode(
       item.barcode,
       typeHint: item.mediaType,
     );
+
+    // Only merge when we have exactly one result; ignore multi-match and
+    // not-found so the caller gets back the unchanged item.
+    final MetadataResult? metadata = switch (scanResult) {
+      SingleScanResult(:final metadata) => metadata,
+      _ => null,
+    };
+
+    if (metadata == null) return item;
 
     final now = DateTime.now().millisecondsSinceEpoch;
 

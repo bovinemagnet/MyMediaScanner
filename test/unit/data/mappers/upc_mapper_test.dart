@@ -123,4 +123,29 @@ void main() {
       expect(result.mediaType, MediaType.unknown);
     });
   });
+
+  group('UpcMapper.toCandidate', () {
+    test('maps item to MetadataCandidate', () {
+      const dto = UpcItemDto(
+        ean: '0123456789012',
+        title: 'Some Product',
+        category: 'Music > CDs',
+        images: ['https://example.com/img.jpg'],
+      );
+
+      final candidate = UpcMapper.toCandidate(dto, '0123456789012');
+
+      expect(candidate.sourceApi, 'upcitemdb');
+      expect(candidate.sourceId, '0123456789012');
+      expect(candidate.title, 'Some Product');
+      expect(candidate.coverUrl, 'https://example.com/img.jpg');
+      expect(candidate.mediaType, MediaType.music);
+    });
+
+    test('uses barcode as sourceId when ean is null', () {
+      const dto = UpcItemDto(title: 'Item');
+      final candidate = UpcMapper.toCandidate(dto, '999');
+      expect(candidate.sourceId, '999');
+    });
+  });
 }

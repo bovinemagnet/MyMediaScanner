@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 import 'package:mymediascanner/core/constants/api_constants.dart';
+import 'package:mymediascanner/core/constants/app_constants.dart';
 import 'package:mymediascanner/core/utils/barcode_utils.dart';
 import 'package:mymediascanner/data/local/dao/barcode_cache_dao.dart';
 import 'package:mymediascanner/data/local/database/app_database.dart';
@@ -21,7 +22,9 @@ import 'package:mymediascanner/data/remote/api/tmdb/tmdb_api.dart';
 import 'package:mymediascanner/data/remote/api/upc/models/upc_item_dto.dart';
 import 'package:mymediascanner/data/remote/api/upc/upcitemdb_api.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
+import 'package:mymediascanner/domain/entities/metadata_candidate.dart';
 import 'package:mymediascanner/domain/entities/metadata_result.dart';
+import 'package:mymediascanner/domain/entities/scan_result.dart';
 import 'package:mymediascanner/domain/repositories/i_metadata_repository.dart';
 
 class MetadataRepositoryImpl implements IMetadataRepository {
@@ -42,7 +45,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
   final UpcitemdbApi? upcitemdbApi;
 
   @override
-  Future<MetadataResult> lookupBarcode(
+  Future<ScanResult> lookupBarcode(
     String barcode, {
     MediaType? typeHint,
   }) async {
@@ -54,7 +57,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     if (cached != null) return cached;
 
     // 2. Route by barcode type + hint
-    MetadataResult? result;
+    ScanResult? result;
 
     if (BarcodeUtils.isIsbn(barcode)) {
       result = await _lookupBook(barcode, barcodeTypeStr);
@@ -72,15 +75,126 @@ class MetadataRepositoryImpl implements IMetadataRepository {
       result = await _lookupUpc(barcode, barcodeTypeStr);
     }
 
-    // 4. Return barcode-only result if all lookups failed
+    // 4. Return notFound if all lookups failed
     return result ??
-        MetadataResult(
-          barcode: barcode,
-          barcodeType: barcodeTypeStr,
-        );
+        ScanResult.notFound(barcode: barcode, barcodeType: barcodeTypeStr);
   }
 
-  Future<MetadataResult?> _checkCache(String barcode) async {
+  @override
+  Future<MetadataResult?> fetchCandidateDetail(
+    MetadataCandidate candidate,
+    String barcode,
+    String barcodeType,
+  ) async {
+    return switch (candidate.sourceApi) {
+      'discogs' => _fetchDiscogsDetail(candidate, barcode, barcodeType),
+      'tmdb' => _fetchTmdbDetail(candidate, barcode, barcodeType),
+      'google_books' =>
+        _fetchGoogleBooksDetail(candidate, barcode, barcodeType),
+      'open_library' =>
+        _fetchOpenLibraryDetail(candidate, barcode, barcodeType),
+      'upcitemdb' => _fetchUpcDetail(candidate, barcode, barcodeType),
+      _ => null,
+    };
+  }
+
+  // -- Detail fetchers for disambiguation --
+
+  Future<MetadataResult?> _fetchDiscogsDetail(
+    MetadataCandidate candidate,
+    String barcode,
+    String barcodeType,
+  ) async {
+    if (discogsApi == null) return null;
+    try {
+      final id = int.parse(candidate.sourceId);
+      final release = await discogsApi!.getRelease(id);
+      await _cacheResponse(barcode, 'music', 'discogs', release.toJson());
+      return DiscogsMapper.fromRelease(release, barcode, barcodeType);
+    } on Exception catch (_) {
+      return null;
+    }
+  }
+
+  Future<MetadataResult?> _fetchTmdbDetail(
+    MetadataCandidate candidate,
+    String barcode,
+    String barcodeType,
+  ) async {
+    if (tmdbApi == null) return null;
+    try {
+      final response = await tmdbApi!.searchMulti(candidate.title);
+      final match = response.results?.firstWhere(
+        (r) => r.id?.toString() == candidate.sourceId,
+        orElse: () => response.results!.first,
+      );
+      if (match != null) {
+        await _cacheResponse(barcode, 'film', 'tmdb', match.toJson());
+        return TmdbMapper.fromSearchResult(match, barcode, barcodeType);
+      }
+    } on Exception catch (_) {}
+    return null;
+  }
+
+  Future<MetadataResult?> _fetchGoogleBooksDetail(
+    MetadataCandidate candidate,
+    String barcode,
+    String barcodeType,
+  ) async {
+    if (googleBooksApi == null) return null;
+    try {
+      final response = await googleBooksApi!.searchByIsbn('isbn:$barcode');
+      final match = response.items?.firstWhere(
+        (v) => v.id == candidate.sourceId,
+        orElse: () => response.items!.first,
+      );
+      if (match != null) {
+        await _cacheResponse(barcode, 'book', 'google_books', match.toJson());
+        return GoogleBooksMapper.fromVolume(match, barcode, barcodeType);
+      }
+    } on Exception catch (_) {}
+    return null;
+  }
+
+  Future<MetadataResult?> _fetchOpenLibraryDetail(
+    MetadataCandidate candidate,
+    String barcode,
+    String barcodeType,
+  ) async {
+    if (openLibraryApi == null) return null;
+    try {
+      final book = await openLibraryApi!.getByIsbn(barcode);
+      if (book != null) {
+        await _cacheResponse(barcode, 'book', 'open_library', book.toJson());
+        return OpenLibraryMapper.fromBook(book, barcode, barcodeType);
+      }
+    } on Exception catch (_) {}
+    return null;
+  }
+
+  Future<MetadataResult?> _fetchUpcDetail(
+    MetadataCandidate candidate,
+    String barcode,
+    String barcodeType,
+  ) async {
+    if (upcitemdbApi == null) return null;
+    try {
+      final response = await upcitemdbApi!.lookup(barcode);
+      final match = response.items?.firstWhere(
+        (i) => (i.ean ?? barcode) == candidate.sourceId,
+        orElse: () => response.items!.first,
+      );
+      if (match != null) {
+        await _cacheResponse(barcode, null, 'upcitemdb', match.toJson());
+        return UpcMapper.fromItem(match, barcode, barcodeType);
+      }
+    } on Exception catch (_) {}
+    return null;
+  }
+
+  // -- Cache --
+
+  Future<ScanResult?> _checkCache(String barcode) async {
     final cached = await _cacheDao.getByBarcode(barcode);
     if (cached == null) return null;
 
@@ -92,7 +206,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     try {
       final json = jsonDecode(cached.responseJson) as Map<String, dynamic>;
       final barcodeType = BarcodeUtils.detectBarcodeType(barcode).name;
-      return switch (cached.sourceApi) {
+      final metadata = switch (cached.sourceApi) {
         'tmdb' => TmdbMapper.fromSearchResult(
             TmdbSearchResultDto.fromJson(json), barcode, barcodeType),
         'discogs' => DiscogsMapper.fromRelease(
@@ -105,22 +219,42 @@ class MetadataRepositoryImpl implements IMetadataRepository {
             UpcItemDto.fromJson(json), barcode, barcodeType),
         _ => null,
       };
+      if (metadata == null) return null;
+      return ScanResult.single(metadata: metadata, isDuplicate: false);
     } catch (_) {
       return null;
     }
   }
 
-  Future<MetadataResult?> _lookupBook(
+  // -- Lookup methods --
+
+  Future<ScanResult?> _lookupBook(
       String barcode, String barcodeType) async {
     // Try Google Books first
     if (googleBooksApi != null) {
       try {
         final response =
             await googleBooksApi!.searchByIsbn('isbn:$barcode');
-        final volume = response.items?.firstOrNull;
-        if (volume != null) {
-          await _cacheResponse(barcode, 'book', 'google_books', volume.toJson());
-          return GoogleBooksMapper.fromVolume(volume, barcode, barcodeType);
+        final items = response.items;
+        if (items != null && items.isNotEmpty) {
+          if (items.length == 1) {
+            await _cacheResponse(
+                barcode, 'book', 'google_books', items.first.toJson());
+            return ScanResult.single(
+              metadata: GoogleBooksMapper.fromVolume(
+                  items.first, barcode, barcodeType),
+              isDuplicate: false,
+            );
+          }
+          final candidates = items
+              .take(AppConstants.maxCandidates)
+              .map(GoogleBooksMapper.toCandidate)
+              .toList();
+          return ScanResult.multiMatch(
+            candidates: candidates,
+            barcode: barcode,
+            barcodeType: barcodeType,
+          );
         }
       } on Exception catch (_) {
         // Fall through to Open Library
@@ -132,8 +266,13 @@ class MetadataRepositoryImpl implements IMetadataRepository {
       try {
         final book = await openLibraryApi!.getByIsbn(barcode);
         if (book != null) {
-          await _cacheResponse(barcode, 'book', 'open_library', book.toJson());
-          return OpenLibraryMapper.fromBook(book, barcode, barcodeType);
+          await _cacheResponse(
+              barcode, 'book', 'open_library', book.toJson());
+          return ScanResult.single(
+            metadata:
+                OpenLibraryMapper.fromBook(book, barcode, barcodeType),
+            isDuplicate: false,
+          );
         }
       } on Exception catch (_) {
         // Fall through
@@ -143,69 +282,120 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     return null;
   }
 
-  Future<MetadataResult?> _lookupFilm(
-      String barcode, String barcodeType, {MetadataResult? upcHint}) async {
+  Future<ScanResult?> _lookupFilm(
+      String barcode, String barcodeType,
+      {MetadataResult? upcHint}) async {
     if (tmdbApi == null) return null;
     try {
       // TMDB doesn't support barcode search directly — use UPCitemdb
       // to get a title, then search TMDB by title.
       // Accept a pre-fetched UPC result to avoid double lookups.
-      final titleSource = upcHint ?? await _lookupUpc(barcode, barcodeType);
+      final titleSource =
+          upcHint ?? await _lookupUpcMetadata(barcode, barcodeType);
       if (titleSource?.title == null) return null;
 
       final response = await tmdbApi!.searchMulti(titleSource!.title!);
-      final result = response.results?.firstOrNull;
-      if (result != null) {
-        await _cacheResponse(barcode, 'film', 'tmdb', result.toJson());
-        return TmdbMapper.fromSearchResult(result, barcode, barcodeType);
+      final results = response.results;
+      if (results == null || results.isEmpty) return null;
+
+      if (results.length == 1) {
+        await _cacheResponse(
+            barcode, 'film', 'tmdb', results.first.toJson());
+        return ScanResult.single(
+          metadata: TmdbMapper.fromSearchResult(
+              results.first, barcode, barcodeType),
+          isDuplicate: false,
+        );
       }
-    } on Exception catch (_) {
-      // Fall through
-    }
+
+      final candidates = results
+          .take(AppConstants.maxCandidates)
+          .map(TmdbMapper.toCandidate)
+          .toList();
+      return ScanResult.multiMatch(
+        candidates: candidates,
+        barcode: barcode,
+        barcodeType: barcodeType,
+      );
+    } on Exception catch (_) {}
     return null;
   }
 
-  Future<MetadataResult?> _lookupMusic(
+  Future<ScanResult?> _lookupMusic(
       String barcode, String barcodeType) async {
     if (discogsApi == null) return null;
     try {
       final response = await discogsApi!.searchByBarcode(barcode);
-      final searchResult = response.results?.firstOrNull;
-      if (searchResult?.id != null) {
-        final release = await discogsApi!.getRelease(searchResult!.id!);
-        await _cacheResponse(barcode, 'music', 'discogs', release.toJson());
-        return DiscogsMapper.fromRelease(release, barcode, barcodeType);
+      final results = response.results;
+      if (results == null || results.isEmpty) return null;
+
+      if (results.length == 1) {
+        final searchResult = results.first;
+        if (searchResult.id != null) {
+          final release = await discogsApi!.getRelease(searchResult.id!);
+          await _cacheResponse(
+              barcode, 'music', 'discogs', release.toJson());
+          return ScanResult.single(
+            metadata: DiscogsMapper.fromRelease(
+                release, barcode, barcodeType),
+            isDuplicate: false,
+          );
+        }
+        return null;
       }
-    } on Exception catch (_) {
-      // Fall through
-    }
+
+      final candidates = results
+          .take(AppConstants.maxCandidates)
+          .map(DiscogsMapper.toCandidate)
+          .toList();
+      return ScanResult.multiMatch(
+        candidates: candidates,
+        barcode: barcode,
+        barcodeType: barcodeType,
+      );
+    } on Exception catch (_) {}
     return null;
   }
 
-  Future<MetadataResult?> _lookupGeneral(
+  Future<ScanResult?> _lookupGeneral(
       String barcode, String barcodeType) async {
-    final upcResult = await _lookupUpc(barcode, barcodeType);
+    final upcResult = await _lookupUpcMetadata(barcode, barcodeType);
     if (upcResult == null) return null;
 
     // If UPC gave us a type hint, try the specialist API
     if (upcResult.mediaType == MediaType.book) {
-      return await _lookupBook(barcode, barcodeType) ?? upcResult;
+      return await _lookupBook(barcode, barcodeType) ??
+          ScanResult.single(metadata: upcResult, isDuplicate: false);
     }
     if (upcResult.mediaType == MediaType.film ||
         upcResult.mediaType == MediaType.tv) {
-      final filmResult = await _lookupFilm(barcode, barcodeType, upcHint: upcResult);
-      return filmResult ?? upcResult;
+      final filmResult =
+          await _lookupFilm(barcode, barcodeType, upcHint: upcResult);
+      return filmResult ??
+          ScanResult.single(metadata: upcResult, isDuplicate: false);
     }
     if (upcResult.mediaType == MediaType.music) {
       final musicResult = await _lookupMusic(barcode, barcodeType);
-      return musicResult ?? upcResult;
+      return musicResult ??
+          ScanResult.single(metadata: upcResult, isDuplicate: false);
     }
 
-    return upcResult;
+    return ScanResult.single(metadata: upcResult, isDuplicate: false);
   }
 
-  Future<MetadataResult?> _lookupUpc(
+  Future<ScanResult?> _lookupUpc(
       String barcode, String barcodeType) async {
+    final metadata = await _lookupUpcMetadata(barcode, barcodeType);
+    if (metadata == null) return null;
+    return ScanResult.single(metadata: metadata, isDuplicate: false);
+  }
+
+  /// Raw UPC lookup returning MetadataResult (for use as title hint in
+  /// _lookupFilm).
+  Future<MetadataResult?> _lookupUpcMetadata(
+    String barcode,
+    String barcodeType,
+  ) async {
     if (upcitemdbApi == null) return null;
     try {
       final response = await upcitemdbApi!.lookup(barcode);
@@ -214,9 +404,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
         await _cacheResponse(barcode, null, 'upcitemdb', item.toJson());
         return UpcMapper.fromItem(item, barcode, barcodeType);
       }
-    } on Exception catch (_) {
-      // Fall through
-    }
+    } on Exception catch (_) {}
     return null;
   }
 

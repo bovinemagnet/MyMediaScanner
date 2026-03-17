@@ -41,4 +41,29 @@ void main() {
       expect(result.criticSource, 'Google Books');
     });
   });
+
+  group('GoogleBooksMapper.toCandidate', () {
+    test('maps volume to MetadataCandidate', () {
+      const dto = GoogleBooksVolumeDto(
+        id: 'abc123',
+        volumeInfo: GoogleBooksVolumeInfoDto(
+          title: '1984',
+          authors: ['George Orwell'],
+          publishedDate: '1949-06-08',
+          imageLinks: GoogleBooksImageLinksDto(
+            thumbnail: 'https://example.com/thumb.jpg',
+          ),
+        ),
+      );
+
+      final candidate = GoogleBooksMapper.toCandidate(dto);
+
+      expect(candidate.sourceApi, 'google_books');
+      expect(candidate.sourceId, 'abc123');
+      expect(candidate.title, '1984');
+      expect(candidate.subtitle, 'George Orwell');
+      expect(candidate.year, 1949);
+      expect(candidate.mediaType, MediaType.book);
+    });
+  });
 }

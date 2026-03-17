@@ -1,5 +1,6 @@
 import 'package:mymediascanner/data/remote/api/discogs/models/discogs_release_dto.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
+import 'package:mymediascanner/domain/entities/metadata_candidate.dart';
 import 'package:mymediascanner/domain/entities/metadata_result.dart';
 
 abstract final class DiscogsMapper {
@@ -38,6 +39,17 @@ abstract final class DiscogsMapper {
       criticSource: dto.community?.rating?.average != null
           ? 'Discogs'
           : null,
+    );
+  }
+
+  static MetadataCandidate toCandidate(DiscogsSearchResultDto dto) {
+    return MetadataCandidate(
+      sourceApi: 'discogs',
+      sourceId: dto.id?.toString() ?? '',
+      title: dto.title ?? '',
+      coverUrl: dto.coverImage,
+      year: dto.year != null ? int.tryParse(dto.year!) : null,
+      mediaType: MediaType.music,
     );
   }
 }

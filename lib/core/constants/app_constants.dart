@@ -12,4 +12,7 @@ abstract final class AppConstants {
 
   // Sync
   static const defaultPostgresPort = 5432;
+
+  // Disambiguation
+  static const maxCandidates = 5;
 }

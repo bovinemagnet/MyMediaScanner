@@ -44,6 +44,9 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
       if (next.state == ScanState.found || next.state == ScanState.notFound) {
         context.go('/scan/confirm');
       }
+      if (next.state == ScanState.disambiguating) {
+        context.go('/scan/disambiguate');
+      }
     });
 
     return Scaffold(

@@ -1,10 +1,20 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
+import 'package:mymediascanner/domain/entities/metadata_result.dart';
 import 'package:mymediascanner/domain/usecases/scan_barcode_usecase.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/settings_provider.dart';
 
-enum ScanState { idle, scanning, lookingUp, found, notFound, duplicate, error }
+enum ScanState {
+  idle,
+  scanning,
+  lookingUp,
+  found,
+  notFound,
+  duplicate,
+  disambiguating,
+  error,
+}
 
 class ScannerState {
   const ScannerState({
@@ -27,14 +37,10 @@ class ScannerState {
   final String? error;
   final bool batchMode;
   final int batchCount;
-  /// Which media types to search for. Determines the typeHint passed to lookup.
   final Set<MediaType> enabledMediaTypes;
 
-  /// Derives a typeHint from enabled types. If only one category is enabled,
-  /// use it as the hint. If multiple are enabled, return null (no hint).
   MediaType? get typeHint {
     if (enabledMediaTypes.length == 1) return enabledMediaTypes.first;
-    // If only music-related types are off, hint is film, etc.
     final withoutGame = enabledMediaTypes.difference({MediaType.game});
     if (withoutGame.length == 1) return withoutGame.first;
     return null;
@@ -64,7 +70,7 @@ class ScannerNotifier extends Notifier<ScannerState> {
   void toggleMediaType(MediaType type) {
     final current = Set<MediaType>.from(state.enabledMediaTypes);
     if (current.contains(type)) {
-      if (current.length > 1) current.remove(type); // Don't allow empty set
+      if (current.length > 1) current.remove(type);
     } else {
       current.add(type);
     }
@@ -79,8 +85,6 @@ class ScannerNotifier extends Notifier<ScannerState> {
     state = state.copyWith(state: ScanState.lookingUp);
 
     try {
-      // Ensure API keys are loaded before reading the metadata repository,
-      // otherwise the provider may be built with null API clients.
       await ref.read(apiKeysProvider.future);
 
       final useCase = ScanBarcodeUseCase(
@@ -88,18 +92,111 @@ class ScannerNotifier extends Notifier<ScannerState> {
         metadataRepository: ref.read(metadataRepositoryProvider),
       );
 
-      final scanResult = await useCase.execute(barcode, typeHint: effectiveHint);
+      final scanResult =
+          await useCase.execute(barcode, typeHint: effectiveHint);
 
-      if (scanResult.isDuplicate) {
-        state = ScannerState(state: ScanState.duplicate, result: scanResult);
-      } else if (scanResult.metadataResult.title != null) {
-        state = ScannerState(state: ScanState.found, result: scanResult);
-      } else {
-        state = ScannerState(state: ScanState.notFound, result: scanResult);
+      switch (scanResult) {
+        case SingleScanResult(:final isDuplicate):
+          if (isDuplicate) {
+            state = ScannerState(
+              state: ScanState.duplicate,
+              result: scanResult,
+              batchMode: state.batchMode,
+              batchCount: state.batchCount,
+              enabledMediaTypes: state.enabledMediaTypes,
+            );
+          } else {
+            state = ScannerState(
+              state: ScanState.found,
+              result: scanResult,
+              batchMode: state.batchMode,
+              batchCount: state.batchCount,
+              enabledMediaTypes: state.enabledMediaTypes,
+            );
+          }
+        case MultiMatchScanResult():
+          if (state.batchMode) {
+            // In batch mode, auto-select first candidate
+            final repo = ref.read(metadataRepositoryProvider);
+            final multi = scanResult;
+            final detail = await repo.fetchCandidateDetail(
+              multi.candidates.first,
+              multi.barcode,
+              multi.barcodeType,
+            );
+            if (detail != null) {
+              state = ScannerState(
+                state: ScanState.found,
+                result: ScanResult.single(
+                    metadata: detail, isDuplicate: false),
+                batchMode: state.batchMode,
+                batchCount: state.batchCount,
+                enabledMediaTypes: state.enabledMediaTypes,
+              );
+            } else {
+              state = ScannerState(
+                state: ScanState.notFound,
+                result: ScanResult.notFound(
+                  barcode: multi.barcode,
+                  barcodeType: multi.barcodeType,
+                ),
+                batchMode: state.batchMode,
+                batchCount: state.batchCount,
+                enabledMediaTypes: state.enabledMediaTypes,
+              );
+            }
+          } else {
+            state = ScannerState(
+              state: ScanState.disambiguating,
+              result: scanResult,
+              batchMode: state.batchMode,
+              batchCount: state.batchCount,
+              enabledMediaTypes: state.enabledMediaTypes,
+            );
+          }
+        case NotFoundScanResult():
+          state = ScannerState(
+            state: ScanState.notFound,
+            result: scanResult,
+            batchMode: state.batchMode,
+            batchCount: state.batchCount,
+            enabledMediaTypes: state.enabledMediaTypes,
+          );
       }
     } on Exception catch (e) {
-      state = ScannerState(state: ScanState.error, error: e.toString());
+      state = ScannerState(
+        state: ScanState.error,
+        error: e.toString(),
+        batchMode: state.batchMode,
+        batchCount: state.batchCount,
+        enabledMediaTypes: state.enabledMediaTypes,
+      );
     }
+  }
+
+  /// Called after disambiguation screen selects a candidate.
+  void onCandidateSelected(MetadataResult metadata) {
+    state = ScannerState(
+      state: ScanState.found,
+      result: ScanResult.single(metadata: metadata, isDuplicate: false),
+      batchMode: state.batchMode,
+      batchCount: state.batchCount,
+      enabledMediaTypes: state.enabledMediaTypes,
+    );
+  }
+
+  /// Called when user taps "None of these" on disambiguation screen.
+  void onNoneSelected(String barcode, String barcodeType) {
+    state = ScannerState(
+      state: ScanState.found,
+      result: ScanResult.single(
+        metadata: MetadataResult(barcode: barcode, barcodeType: barcodeType),
+        isDuplicate: false,
+      ),
+      batchMode: state.batchMode,
+      batchCount: state.batchCount,
+      enabledMediaTypes: state.enabledMediaTypes,
+    );
   }
 
   void reset() {

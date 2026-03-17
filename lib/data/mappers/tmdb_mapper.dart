@@ -1,5 +1,6 @@
 import 'package:mymediascanner/data/remote/api/tmdb/models/tmdb_search_result_dto.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
+import 'package:mymediascanner/domain/entities/metadata_candidate.dart';
 import 'package:mymediascanner/domain/entities/metadata_result.dart';
 
 abstract final class TmdbMapper {
@@ -24,6 +25,18 @@ abstract final class TmdbMapper {
       sourceApis: ['tmdb'],
       criticScore: dto.voteAverage, // TMDB is already 0-10 scale
       criticSource: dto.voteAverage != null ? 'TMDB' : null,
+    );
+  }
+
+  static MetadataCandidate toCandidate(TmdbSearchResultDto dto) {
+    final isTV = dto.mediaType == 'tv';
+    return MetadataCandidate(
+      sourceApi: 'tmdb',
+      sourceId: dto.id?.toString() ?? '',
+      title: dto.effectiveTitle ?? '',
+      coverUrl: dto.posterUrl,
+      year: dto.effectiveYear,
+      mediaType: isTV ? MediaType.tv : MediaType.film,
     );
   }
 }

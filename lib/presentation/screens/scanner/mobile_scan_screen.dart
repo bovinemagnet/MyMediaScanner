@@ -180,6 +180,9 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen> {
           context.go('/scan/confirm');
         }
       }
+      if (next.state == ScanState.disambiguating) {
+        context.go('/scan/disambiguate');
+      }
       if (next.state == ScanState.duplicate) {
         _showDuplicateDialog();
       }
