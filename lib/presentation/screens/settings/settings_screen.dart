@@ -1,5 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:mymediascanner/core/constants/app_constants.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
@@ -65,6 +66,15 @@ class SettingsScreen extends ConsumerWidget {
             title: const Text('Reset & Re-sync'),
             subtitle: const Text('Replace local data with remote'),
             onTap: () => _confirmReset(context, ref),
+          ),
+          const Divider(height: 32),
+
+          // About
+          ListTile(
+            leading: const Icon(Icons.info_outline),
+            title: Text('About ${AppConstants.appName}'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.go('/settings/about'),
           ),
         ],
       ),

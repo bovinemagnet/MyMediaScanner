@@ -11,6 +11,7 @@ import 'package:mymediascanner/presentation/screens/collection/statistics_screen
 import 'package:mymediascanner/presentation/screens/settings/widgets/postgres_config_form.dart';
 import 'package:mymediascanner/presentation/screens/disambiguation/disambiguation_screen.dart';
 import 'package:mymediascanner/presentation/screens/rips/rips_screen.dart';
+import 'package:mymediascanner/presentation/screens/about/about_screen.dart';
 import 'package:mymediascanner/presentation/widgets/app_scaffold.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -100,6 +101,11 @@ final router = GoRouter(
                   parentNavigatorKey: _rootNavigatorKey,
                   builder: (context, state) =>
                       const PostgresConfigForm(),
+                ),
+                GoRoute(
+                  path: 'about',
+                  parentNavigatorKey: _rootNavigatorKey,
+                  builder: (context, state) => const AboutScreen(),
                 ),
               ],
             ),

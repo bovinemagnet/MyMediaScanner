@@ -1,6 +1,7 @@
 abstract final class AppConstants {
   static const appName = 'MyMediaScanner';
   static const databaseName = 'mymediascanner.db';
+  static const githubUrl = 'https://github.com/bovinemagnet/MyMediaScanner';
 
   // Rating
   static const minRating = 1.0;
