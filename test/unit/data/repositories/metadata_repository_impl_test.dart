@@ -9,7 +9,9 @@ import 'package:mymediascanner/data/remote/api/discogs/models/discogs_release_dt
 import 'package:mymediascanner/data/remote/api/google_books/google_books_api.dart';
 import 'package:mymediascanner/data/remote/api/google_books/models/google_books_volume_dto.dart';
 import 'package:mymediascanner/data/remote/api/open_library/open_library_api.dart';
+import 'package:mymediascanner/data/remote/api/tmdb/models/tmdb_search_result_dto.dart';
 import 'package:mymediascanner/data/remote/api/tmdb/tmdb_api.dart';
+import 'package:mymediascanner/data/remote/api/upc/models/upc_item_dto.dart';
 import 'package:mymediascanner/data/remote/api/upc/upcitemdb_api.dart';
 import 'package:mymediascanner/data/repositories/metadata_repository_impl.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
@@ -135,6 +137,132 @@ void main() {
       expect(result, isNotNull);
       expect(result!.title, 'Dark Side of the Moon');
       expect(result.mediaType, MediaType.music);
+    });
+
+    test('fetches TMDB detail for tmdb candidate', () async {
+      final mockTmdbApi = MockTmdbApi();
+      final tmdbRepo = MetadataRepositoryImpl(
+        cacheDao: mockCacheDao,
+        tmdbApi: mockTmdbApi,
+      );
+
+      when(() => mockTmdbApi.searchMulti('Fight Club'))
+          .thenAnswer((_) async => const TmdbSearchResponseDto(
+                results: [
+                  TmdbSearchResultDto(
+                    id: 550,
+                    title: 'Fight Club',
+                    releaseDate: '1999-10-15',
+                    mediaType: 'movie',
+                    voteAverage: 8.4,
+                  ),
+                ],
+              ));
+      when(() => mockCacheDao.upsert(any()))
+          .thenAnswer((_) async {});
+
+      final result = await tmdbRepo.fetchCandidateDetail(
+        const MetadataCandidate(
+          sourceApi: 'tmdb',
+          sourceId: '550',
+          title: 'Fight Club',
+        ),
+        '0123456789012',
+        'ean13',
+      );
+
+      expect(result, isNotNull);
+      expect(result!.title, 'Fight Club');
+      expect(result.mediaType, MediaType.film);
+    });
+
+    test('fetches Google Books detail for google_books candidate', () async {
+      final mockGoogleBooksApi = MockGoogleBooksApi();
+      final booksRepo = MetadataRepositoryImpl(
+        cacheDao: mockCacheDao,
+        googleBooksApi: mockGoogleBooksApi,
+      );
+
+      when(() => mockGoogleBooksApi.searchByIsbn('isbn:9780141036144'))
+          .thenAnswer((_) async => const GoogleBooksSearchResponseDto(
+                totalItems: 1,
+                items: [
+                  GoogleBooksVolumeDto(
+                    id: 'abc123',
+                    volumeInfo: GoogleBooksVolumeInfoDto(
+                      title: '1984',
+                      authors: ['George Orwell'],
+                      publishedDate: '1949-06-08',
+                    ),
+                  ),
+                ],
+              ));
+      when(() => mockCacheDao.upsert(any()))
+          .thenAnswer((_) async {});
+
+      final result = await booksRepo.fetchCandidateDetail(
+        const MetadataCandidate(
+          sourceApi: 'google_books',
+          sourceId: 'abc123',
+          title: '1984',
+        ),
+        '9780141036144',
+        'isbn13',
+      );
+
+      expect(result, isNotNull);
+      expect(result!.title, '1984');
+      expect(result.mediaType, MediaType.book);
+    });
+
+    test('fetches UPC detail for upcitemdb candidate', () async {
+      final mockUpcApi = MockUpcitemdbApi();
+      final upcRepo = MetadataRepositoryImpl(
+        cacheDao: mockCacheDao,
+        upcitemdbApi: mockUpcApi,
+      );
+
+      when(() => mockUpcApi.lookup('0123456789012'))
+          .thenAnswer((_) async => const UpcSearchResponseDto(
+                code: 'OK',
+                total: 1,
+                items: [
+                  UpcItemDto(
+                    ean: '0123456789012',
+                    title: 'Some DVD',
+                    category: 'DVD',
+                  ),
+                ],
+              ));
+      when(() => mockCacheDao.upsert(any()))
+          .thenAnswer((_) async {});
+
+      final result = await upcRepo.fetchCandidateDetail(
+        const MetadataCandidate(
+          sourceApi: 'upcitemdb',
+          sourceId: '0123456789012',
+          title: 'Some DVD',
+        ),
+        '0123456789012',
+        'ean13',
+      );
+
+      expect(result, isNotNull);
+      expect(result!.title, 'Some DVD');
+    });
+
+    test('returns null for unknown sourceApi', () async {
+      final result = await repo.fetchCandidateDetail(
+        const MetadataCandidate(
+          sourceApi: 'unknown_api',
+          sourceId: '1',
+          title: 'Something',
+        ),
+        '0000000000000',
+        'ean13',
+      );
+
+      expect(result, equals(null));
     });
   });
 }
