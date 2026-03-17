@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mymediascanner/data/mappers/google_books_mapper.dart';
 import 'package:mymediascanner/data/remote/api/google_books/models/google_books_volume_dto.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
-import 'package:mymediascanner/domain/entities/metadata_candidate.dart';
 
 void main() {
   group('GoogleBooksMapper', () {

@@ -3,7 +3,6 @@ import 'package:mocktail/mocktail.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/domain/entities/metadata_candidate.dart';
 import 'package:mymediascanner/domain/entities/metadata_result.dart';
-import 'package:mymediascanner/domain/entities/scan_result.dart';
 import 'package:mymediascanner/domain/repositories/i_media_item_repository.dart';
 import 'package:mymediascanner/domain/repositories/i_metadata_repository.dart';
 import 'package:mymediascanner/domain/usecases/scan_barcode_usecase.dart';
@@ -24,7 +23,7 @@ void main() {
       );
 
       expect(result, isA<SingleScanResult>());
-      final single = result as SingleScanResult;
+      const single = result as SingleScanResult;
       expect(single.metadata.title, 'Test');
       expect(single.isDuplicate, isFalse);
     });
@@ -48,7 +47,7 @@ void main() {
       );
 
       expect(result, isA<MultiMatchScanResult>());
-      final multi = result as MultiMatchScanResult;
+      const multi = result as MultiMatchScanResult;
       expect(multi.candidates.length, 2);
       expect(multi.barcode, '123');
     });
@@ -60,7 +59,7 @@ void main() {
       );
 
       expect(result, isA<NotFoundScanResult>());
-      final notFound = result as NotFoundScanResult;
+      const notFound = result as NotFoundScanResult;
       expect(notFound.barcode, '123');
     });
   });

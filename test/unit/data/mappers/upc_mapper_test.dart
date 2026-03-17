@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mymediascanner/data/mappers/upc_mapper.dart';
 import 'package:mymediascanner/data/remote/api/upc/models/upc_item_dto.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
-import 'package:mymediascanner/domain/entities/metadata_candidate.dart';
 
 void main() {
   group('UpcMapper', () {

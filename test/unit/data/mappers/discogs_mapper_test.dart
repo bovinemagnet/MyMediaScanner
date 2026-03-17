@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mymediascanner/data/mappers/discogs_mapper.dart';
 import 'package:mymediascanner/data/remote/api/discogs/models/discogs_release_dto.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
-import 'package:mymediascanner/domain/entities/metadata_candidate.dart';
 
 void main() {
   group('DiscogsMapper', () {
