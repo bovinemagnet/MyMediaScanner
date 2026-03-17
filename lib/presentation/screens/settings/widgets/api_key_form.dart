@@ -13,6 +13,7 @@ class _ApiKeyFormState extends ConsumerState<ApiKeyForm> {
   final _tmdbController = TextEditingController();
   final _discogsController = TextEditingController();
   final _upcController = TextEditingController();
+  final _googleBooksController = TextEditingController();
 
   @override
   void initState() {
@@ -25,6 +26,7 @@ class _ApiKeyFormState extends ConsumerState<ApiKeyForm> {
     _tmdbController.text = keys['tmdb'] ?? '';
     _discogsController.text = keys['discogs'] ?? '';
     _upcController.text = keys['upcitemdb'] ?? '';
+    _googleBooksController.text = keys['google_books'] ?? '';
   }
 
   @override
@@ -32,6 +34,7 @@ class _ApiKeyFormState extends ConsumerState<ApiKeyForm> {
     _tmdbController.dispose();
     _discogsController.dispose();
     _upcController.dispose();
+    _googleBooksController.dispose();
     super.dispose();
   }
 
@@ -55,6 +58,11 @@ class _ApiKeyFormState extends ConsumerState<ApiKeyForm> {
         const SizedBox(height: 12),
         _keyField('UPCitemdb Key', _upcController, (key) {
           ref.read(apiKeysProvider.notifier).setUpcitemdbKey(key);
+        }),
+        const SizedBox(height: 12),
+        _keyField('Google Books API Key (optional)', _googleBooksController,
+            (key) {
+          ref.read(apiKeysProvider.notifier).setGoogleBooksKey(key);
         }),
       ],
     );

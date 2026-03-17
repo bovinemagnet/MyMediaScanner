@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:mymediascanner/core/utils/platform_utils.dart';
+import 'package:mymediascanner/domain/entities/media_item.dart';
+import 'package:mymediascanner/domain/usecases/delete_media_item_usecase.dart';
 import 'package:mymediascanner/domain/usecases/export_collection_usecase.dart';
+import 'package:mymediascanner/domain/usecases/refresh_metadata_usecase.dart';
 import 'package:mymediascanner/presentation/providers/collection_provider.dart';
 import 'package:mymediascanner/presentation/providers/loan_provider.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
@@ -10,88 +14,230 @@ import 'package:mymediascanner/presentation/providers/rip_provider.dart';
 import 'package:mymediascanner/presentation/screens/collection/widgets/filter_bar.dart';
 import 'package:mymediascanner/presentation/screens/collection/widgets/media_item_card.dart';
 import 'package:mymediascanner/presentation/screens/collection/widgets/sort_selector.dart';
+import 'package:mymediascanner/presentation/screens/collection/widgets/shelf_picker_dialog.dart';
+import 'package:mymediascanner/presentation/screens/item_detail/widgets/borrower_picker_dialog.dart';
+import 'package:mymediascanner/presentation/providers/collection_view_mode_provider.dart';
+import 'package:mymediascanner/presentation/providers/selected_item_provider.dart';
+import 'package:mymediascanner/presentation/screens/collection/collection_detail_panel.dart';
+import 'package:mymediascanner/presentation/screens/collection/widgets/collection_table_view.dart';
+import 'package:mymediascanner/presentation/screens/collection/widgets/view_mode_toggle.dart';
+import 'package:mymediascanner/presentation/widgets/context_menu_actions.dart';
+import 'package:mymediascanner/presentation/widgets/desktop_context_menu.dart';
+import 'package:mymediascanner/presentation/widgets/desktop_shortcuts.dart';
 import 'package:mymediascanner/presentation/widgets/empty_state.dart';
 import 'package:mymediascanner/presentation/widgets/error_state.dart';
 import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
+import 'package:mymediascanner/presentation/widgets/master_detail_layout.dart';
 
-class CollectionScreen extends ConsumerWidget {
+class CollectionScreen extends ConsumerStatefulWidget {
   const CollectionScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CollectionScreen> createState() => _CollectionScreenState();
+}
+
+class _CollectionScreenState extends ConsumerState<CollectionScreen> {
+  final _searchFocusNode = FocusNode();
+
+  @override
+  void dispose() {
+    _searchFocusNode.dispose();
+    super.dispose();
+  }
+
+  void _onItemTap(BuildContext context, String itemId) {
+    final width = MediaQuery.sizeOf(context).width;
+    final useDetailPanel = PlatformCapability.isDesktop && width >= 900;
+    if (useDetailPanel) {
+      ref.read(selectedItemProvider.notifier).select(itemId);
+    } else {
+      context.go('/item/$itemId');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final collectionAsync = ref.watch(collectionProvider);
     final lentIds = ref.watch(lentItemIdsProvider).value ?? <String>{};
     final rippedIds = ref.watch(rippedItemIdsProvider).value ?? <String>{};
+    final selectedId = ref.watch(selectedItemProvider);
+    final viewMode = ref.watch(collectionViewModeProvider);
+    final isDesktop = PlatformCapability.isDesktop;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Collection'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.download),
-            tooltip: 'Export collection',
-            onPressed: () => _showExportDialog(context, ref),
+    final masterContent = Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: SearchBar(
+            focusNode: _searchFocusNode,
+            hintText: 'Search collection...',
+            leading: const Icon(Icons.search),
+            onChanged: (query) =>
+                ref.read(collectionFilterProvider.notifier).setSearch(query),
           ),
-          IconButton(
-            icon: const Icon(Icons.bar_chart),
-            tooltip: 'Collection Statistics',
-            onPressed: () => context.go('/statistics'),
+        ),
+        Expanded(
+          child: collectionAsync.when(
+            loading: () => const LoadingIndicator(),
+            error: (e, _) => ErrorState(
+              message: e.toString(),
+              onRetry: () => ref.invalidate(collectionProvider),
+            ),
+            data: (items) {
+              if (items.isEmpty) {
+                return const EmptyState(
+                  message: 'No items yet. Scan a barcode to get started!',
+                  icon: Icons.library_music_outlined,
+                );
+              }
+              if (isDesktop &&
+                  viewMode == CollectionViewMode.table) {
+                return CollectionTableView(
+                  items: items,
+                  lentIds: lentIds,
+                  rippedIds: rippedIds,
+                  onItemTap: (id) => _onItemTap(context, id),
+                );
+              }
+              return GridView.builder(
+                padding: const EdgeInsets.all(16),
+                gridDelegate:
+                    const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 200,
+                  childAspectRatio: 0.65,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                ),
+                itemCount: items.length,
+                itemBuilder: (context, index) {
+                  final item = items[index];
+                  return MediaItemCard(
+                    item: item,
+                    isLent: lentIds.contains(item.id),
+                    isRipped: rippedIds.contains(item.id),
+                    onTap: () => _onItemTap(context, item.id),
+                    contextMenuActions: isDesktop
+                        ? _buildItemContextActions(
+                            context, ref, item)
+                        : const [],
+                  );
+                },
+              );
+            },
           ),
-          const SortSelector(),
-        ],
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(56),
-          child: FilterBar(),
+        ),
+      ],
+    );
+
+    return NotificationListener<SearchFocusNotification>(
+      onNotification: (_) {
+        _searchFocusNode.requestFocus();
+        return true;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('My Collection'),
+          actions: [
+            if (isDesktop) const ViewModeToggle(),
+            IconButton(
+              icon: const Icon(Icons.download),
+              tooltip: 'Export collection',
+              onPressed: () => _showExportDialog(context, ref),
+            ),
+            IconButton(
+              icon: const Icon(Icons.bar_chart),
+              tooltip: 'Collection Statistics',
+              onPressed: () => context.go('/statistics'),
+            ),
+            const SortSelector(),
+          ],
+          bottom: const PreferredSize(
+            preferredSize: Size.fromHeight(56),
+            child: FilterBar(),
+          ),
+        ),
+        body: MasterDetailLayout(
+          master: masterContent,
+          detail: selectedId != null
+              ? CollectionDetailPanel(itemId: selectedId)
+              : null,
         ),
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: SearchBar(
-              hintText: 'Search collection...',
-              leading: const Icon(Icons.search),
-              onChanged: (query) =>
-                  ref.read(collectionFilterProvider.notifier).setSearch(query),
-            ),
+    );
+  }
+
+  List<ContextMenuAction> _buildItemContextActions(
+    BuildContext context,
+    WidgetRef ref,
+    MediaItem item,
+  ) {
+    return ContextMenuActions.forMediaItem(
+      onEdit: () => context.go('/item/${item.id}/edit'),
+      onDelete: () => _confirmDeleteItem(context, ref, item.id),
+      onAddToShelf: () => showDialog<void>(
+        context: context,
+        builder: (_) => ShelfPickerDialog(mediaItemId: item.id),
+      ),
+      onLend: () => showDialog<void>(
+        context: context,
+        builder: (_) => BorrowerPickerDialog(mediaItemId: item.id),
+      ),
+      onRefreshMetadata: () => _refreshItemMetadata(context, ref, item),
+    );
+  }
+
+  void _confirmDeleteItem(
+      BuildContext context, WidgetRef ref, String itemId) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete item?'),
+        content: const Text('This item will be removed from your collection.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
           ),
-          Expanded(
-            child: collectionAsync.when(
-              loading: () => const LoadingIndicator(),
-              error: (e, _) => ErrorState(
-                message: e.toString(),
-                onRetry: () => ref.invalidate(collectionProvider),
-              ),
-              data: (items) {
-                if (items.isEmpty) {
-                  return const EmptyState(
-                    message: 'No items yet. Scan a barcode to get started!',
-                    icon: Icons.library_music_outlined,
-                  );
-                }
-                return GridView.builder(
-                  padding: const EdgeInsets.all(16),
-                  gridDelegate:
-                      const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 200,
-                    childAspectRatio: 0.65,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                  ),
-                  itemCount: items.length,
-                  itemBuilder: (context, index) => MediaItemCard(
-                    item: items[index],
-                    isLent: lentIds.contains(items[index].id),
-                    isRipped: rippedIds.contains(items[index].id),
-                    onTap: () => context.go('/item/${items[index].id}'),
-                  ),
-                );
-              },
-            ),
+          FilledButton(
+            onPressed: () async {
+              await DeleteMediaItemUseCase(
+                repository: ref.read(mediaItemRepositoryProvider),
+              ).execute(itemId);
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            child: const Text('Delete'),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _refreshItemMetadata(
+    BuildContext context,
+    WidgetRef ref,
+    MediaItem item,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(
+      const SnackBar(content: Text('Refreshing metadata\u2026')),
+    );
+    try {
+      await RefreshMetadataUseCase(
+        metadataRepository: ref.read(metadataRepositoryProvider),
+        mediaItemRepository: ref.read(mediaItemRepositoryProvider),
+      ).execute(item);
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(content: Text('Metadata refreshed')),
+        );
+    } catch (e) {
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(content: Text('Failed to refresh metadata: $e')),
+        );
+    }
   }
 
   void _showExportDialog(BuildContext context, WidgetRef ref) {

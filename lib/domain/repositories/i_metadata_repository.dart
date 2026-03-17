@@ -7,6 +7,7 @@ abstract interface class IMetadataRepository {
   Future<ScanResult> lookupBarcode(
     String barcode, {
     MediaType? typeHint,
+    bool forceIsbn = false,
   });
 
   /// Fetch full metadata for a previously returned candidate.

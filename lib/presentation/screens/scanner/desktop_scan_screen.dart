@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mymediascanner/presentation/providers/scanner_provider.dart';
 import 'package:mymediascanner/presentation/screens/scanner/widgets/batch_scan_counter.dart';
 import 'package:mymediascanner/presentation/screens/scanner/widgets/media_type_toggles.dart';
+import 'package:mymediascanner/presentation/screens/scanner/widgets/scan_mode_toggle.dart';
 import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
 
 class DesktopScanScreen extends ConsumerStatefulWidget {
@@ -67,6 +68,8 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 16),
+            const ScanModeToggle(),
+            const SizedBox(height: 16),
             Text(
               'Look up as:',
               style: Theme.of(context).textTheme.labelMedium,
@@ -90,19 +93,30 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
             const SizedBox(height: 16),
             SizedBox(
               width: 400,
-              child: TextField(
-                controller: _controller,
-                focusNode: _focusNode,
-                autofocus: true,
-                decoration: const InputDecoration(
-                  hintText: 'Barcode / ISBN',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.qr_code),
+              child: KeyboardListener(
+                focusNode: FocusNode(),
+                onKeyEvent: (event) {
+                  if (event is KeyDownEvent &&
+                      event.logicalKey == LogicalKeyboardKey.escape) {
+                    _controller.clear();
+                    ref.read(scannerProvider.notifier).reset();
+                    _focusNode.requestFocus();
+                  }
+                },
+                child: TextField(
+                  controller: _controller,
+                  focusNode: _focusNode,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    hintText: 'Barcode / ISBN',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.qr_code),
+                  ),
+                  onSubmitted: _onSubmitted,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[\dXx]')),
+                  ],
                 ),
-                onSubmitted: _onSubmitted,
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[\dXx]')),
-                ],
               ),
             ),
             const SizedBox(height: 16),

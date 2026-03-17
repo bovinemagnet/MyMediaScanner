@@ -18,11 +18,13 @@ class ScanBarcodeUseCase {
   Future<ScanResult> execute(
     String barcode, {
     MediaType? typeHint,
+    bool forceIsbn = false,
   }) async {
     final isDuplicate = await _mediaItemRepo.barcodeExists(barcode);
     final result = await _metadataRepo.lookupBarcode(
       barcode,
       typeHint: typeHint,
+      forceIsbn: forceIsbn,
     );
 
     // Repository now returns ScanResult directly.

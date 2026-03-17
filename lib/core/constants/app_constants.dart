@@ -8,6 +8,7 @@ abstract final class AppConstants {
 
   // Breakpoints (Material 3)
   static const compactBreakpoint = 600.0;
+  static const mediumBreakpoint = 900.0;
   static const expandedBreakpoint = 1200.0;
 
   // Sync

@@ -13,6 +13,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:mymediascanner/presentation/providers/scanner_provider.dart';
 import 'package:mymediascanner/presentation/screens/scanner/widgets/batch_scan_counter.dart';
 import 'package:mymediascanner/presentation/screens/scanner/widgets/media_type_toggles.dart';
+import 'package:mymediascanner/presentation/screens/scanner/widgets/scan_mode_toggle.dart';
 import 'package:mymediascanner/presentation/screens/scanner/widgets/scan_overlay.dart';
 import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
 
@@ -304,7 +305,7 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen> {
           },
         ),
         const ScanOverlay(),
-        // Media type toggles at the bottom
+        // Scan mode and media type toggles at the bottom
         Positioned(
           left: 16,
           right: 16,
@@ -315,7 +316,14 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen> {
               color: Colors.black54,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const MediaTypeToggles(),
+            child: const Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ScanModeToggle(),
+                SizedBox(height: 8),
+                MediaTypeToggles(),
+              ],
+            ),
           ),
         ),
         if (scannerState.state == ScanState.lookingUp)
@@ -352,6 +360,8 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
+          const ScanModeToggle(),
+          const SizedBox(height: 12),
           const MediaTypeToggles(),
           const SizedBox(height: 24),
           SizedBox(

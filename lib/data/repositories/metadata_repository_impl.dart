@@ -1,8 +1,11 @@
 import 'dart:convert';
 
+import 'package:dio/dio.dart';
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 import 'package:mymediascanner/core/constants/api_constants.dart';
 import 'package:mymediascanner/core/constants/app_constants.dart';
+import 'package:mymediascanner/core/utils/api_circuit_breaker.dart';
 import 'package:mymediascanner/core/utils/barcode_utils.dart';
 import 'package:mymediascanner/data/local/dao/barcode_cache_dao.dart';
 import 'package:mymediascanner/data/local/database/app_database.dart';
@@ -35,7 +38,9 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     this.googleBooksApi,
     this.openLibraryApi,
     this.upcitemdbApi,
-  }) : _cacheDao = cacheDao;
+    ApiCircuitBreaker? googleBooksBreaker,
+  })  : _cacheDao = cacheDao,
+        googleBooksBreaker = googleBooksBreaker ?? ApiCircuitBreaker();
 
   final BarcodeCacheDao _cacheDao;
   final TmdbApi? tmdbApi;
@@ -44,10 +49,20 @@ class MetadataRepositoryImpl implements IMetadataRepository {
   final OpenLibraryApi? openLibraryApi;
   final UpcitemdbApi? upcitemdbApi;
 
+  /// Circuit breaker for Google Books API — trips on 429 responses.
+  final ApiCircuitBreaker googleBooksBreaker;
+
+  /// Returns true if the exception is a 429 rate-limit response.
+  static bool _isRateLimited(Object error) {
+    return error is DioException &&
+        error.response?.statusCode == 429;
+  }
+
   @override
   Future<ScanResult> lookupBarcode(
     String barcode, {
     MediaType? typeHint,
+    bool forceIsbn = false,
   }) async {
     final barcodeType = BarcodeUtils.detectBarcodeType(barcode);
     final barcodeTypeStr = barcodeType.name;
@@ -59,7 +74,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     // 2. Route by barcode type + hint
     ScanResult? result;
 
-    if (BarcodeUtils.isIsbn(barcode)) {
+    if (forceIsbn || BarcodeUtils.isIsbn(barcode)) {
       result = await _lookupBook(barcode, barcodeTypeStr);
     } else if (typeHint == MediaType.film || typeHint == MediaType.tv) {
       result = await _lookupFilm(barcode, barcodeTypeStr);
@@ -141,9 +156,10 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     String barcode,
     String barcodeType,
   ) async {
-    if (googleBooksApi == null) return null;
+    if (googleBooksApi == null || !googleBooksBreaker.isOpen) return null;
     try {
       final response = await googleBooksApi!.searchByIsbn('isbn:$barcode');
+      googleBooksBreaker.reset();
       final match = response.items?.firstWhere(
         (v) => v.id == candidate.sourceId,
         orElse: () => response.items!.first,
@@ -152,7 +168,11 @@ class MetadataRepositoryImpl implements IMetadataRepository {
         await _cacheResponse(barcode, 'book', 'google_books', match.toJson());
         return GoogleBooksMapper.fromVolume(match, barcode, barcodeType);
       }
-    } on Exception catch (_) {}
+    } on Exception catch (e) {
+      if (_isRateLimited(e)) {
+        googleBooksBreaker.trip();
+      }
+    }
     return null;
   }
 
@@ -230,11 +250,12 @@ class MetadataRepositoryImpl implements IMetadataRepository {
 
   Future<ScanResult?> _lookupBook(
       String barcode, String barcodeType) async {
-    // Try Google Books first
-    if (googleBooksApi != null) {
+    // Try Google Books first (skip if circuit breaker is tripped)
+    if (googleBooksApi != null && googleBooksBreaker.isOpen) {
       try {
         final response =
             await googleBooksApi!.searchByIsbn('isbn:$barcode');
+        googleBooksBreaker.reset();
         final items = response.items;
         if (items != null && items.isNotEmpty) {
           if (items.length == 1) {
@@ -256,7 +277,12 @@ class MetadataRepositoryImpl implements IMetadataRepository {
             barcodeType: barcodeType,
           );
         }
-      } on Exception catch (_) {
+      } on Exception catch (e) {
+        if (_isRateLimited(e)) {
+          googleBooksBreaker.trip();
+          debugPrint('Google Books API rate-limited (429) — '
+              'circuit breaker tripped, falling back to Open Library');
+        }
         // Fall through to Open Library
       }
     }
