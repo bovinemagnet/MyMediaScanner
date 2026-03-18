@@ -101,14 +101,14 @@ class MetadataConfirmScreen extends ConsumerWidget {
                         isLoading:
                             scannerState.state == ScanState.lookingUp,
                         onSearch: (title) {
-                          final notFound =
-                              scannerState.result as NotFoundScanResult;
+                          final result = scannerState.result;
+                          if (result is! NotFoundScanResult) return;
                           ref
                               .read(scannerProvider.notifier)
                               .searchByTitle(
                                 title,
-                                notFound.barcode,
-                                notFound.barcodeType,
+                                result.barcode,
+                                result.barcodeType,
                               );
                         },
                       ),

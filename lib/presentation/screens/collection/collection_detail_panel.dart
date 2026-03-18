@@ -118,11 +118,21 @@ class CollectionDetailPanel extends ConsumerWidget {
                     Center(
                       child: StarRatingWidget(
                         rating: item.userRating ?? 0,
-                        onChanged: (rating) {
-                          UpdateRatingUseCase(
-                            repository:
-                                ref.read(mediaItemRepositoryProvider),
-                          ).execute(item.id, rating: rating);
+                        onChanged: (rating) async {
+                          try {
+                            await UpdateRatingUseCase(
+                              repository:
+                                  ref.read(mediaItemRepositoryProvider),
+                            ).execute(item.id, rating: rating);
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content: Text(
+                                        'Failed to update rating: $e')),
+                              );
+                            }
+                          }
                           ref.invalidate(mediaItemProvider(itemId));
                         },
                       ),

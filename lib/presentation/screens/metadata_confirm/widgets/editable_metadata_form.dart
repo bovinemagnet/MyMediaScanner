@@ -10,7 +10,7 @@ class EditableMetadataForm extends StatefulWidget {
   });
 
   final MetadataResult initial;
-  final void Function(MetadataResult edited) onSave;
+  final Future<void> Function(MetadataResult edited) onSave;
 
   @override
   State<EditableMetadataForm> createState() => _EditableMetadataFormState();
@@ -53,20 +53,34 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
     super.dispose();
   }
 
-  void _save() {
-    widget.onSave(widget.initial.copyWith(
-      title: _titleController.text.isEmpty ? null : _titleController.text,
-      subtitle:
-          _subtitleController.text.isEmpty ? null : _subtitleController.text,
-      description: _descriptionController.text.isEmpty
-          ? null
-          : _descriptionController.text,
-      year: int.tryParse(_yearController.text),
-      publisher:
-          _publisherController.text.isEmpty ? null : _publisherController.text,
-      format: _formatController.text.isEmpty ? null : _formatController.text,
-      mediaType: _mediaType,
-    ));
+  bool _saving = false;
+
+  Future<void> _save() async {
+    if (_saving) return;
+    setState(() => _saving = true);
+    try {
+      await widget.onSave(widget.initial.copyWith(
+        title: _titleController.text.isEmpty ? null : _titleController.text,
+        subtitle:
+            _subtitleController.text.isEmpty ? null : _subtitleController.text,
+        description: _descriptionController.text.isEmpty
+            ? null
+            : _descriptionController.text,
+        year: int.tryParse(_yearController.text),
+        publisher:
+            _publisherController.text.isEmpty ? null : _publisherController.text,
+        format: _formatController.text.isEmpty ? null : _formatController.text,
+        mediaType: _mediaType,
+      ));
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to save: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
   }
 
   @override
@@ -96,7 +110,9 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
                 .map((t) =>
                     DropdownMenuItem(value: t, child: Text(t.label)))
                 .toList(),
-            onChanged: (v) => setState(() => _mediaType = v!),
+            onChanged: (v) {
+              if (v != null) setState(() => _mediaType = v);
+            },
           ),
           const SizedBox(height: 12),
           TextField(
@@ -134,9 +150,15 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
           ),
           const SizedBox(height: 24),
           FilledButton.icon(
-            onPressed: _save,
-            icon: const Icon(Icons.save),
-            label: const Text('Save to Collection'),
+            onPressed: _saving ? null : _save,
+            icon: _saving
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.save),
+            label: Text(_saving ? 'Saving\u2026' : 'Save to Collection'),
           ),
         ],
     );

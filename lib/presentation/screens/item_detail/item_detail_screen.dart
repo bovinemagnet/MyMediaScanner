@@ -82,11 +82,19 @@ class ItemDetailScreen extends ConsumerWidget {
                 Center(
                   child: StarRatingWidget(
                     rating: item.userRating ?? 0,
-                    onChanged: (rating) {
-                      UpdateRatingUseCase(
-                              repository:
-                                  ref.read(mediaItemRepositoryProvider))
-                          .execute(item.id, rating: rating);
+                    onChanged: (rating) async {
+                      try {
+                        await UpdateRatingUseCase(
+                                repository:
+                                    ref.read(mediaItemRepositoryProvider))
+                            .execute(item.id, rating: rating);
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Failed to update rating: $e')),
+                          );
+                        }
+                      }
                       ref.invalidate(mediaItemProvider(itemId));
                     },
                   ),
@@ -281,10 +289,18 @@ class _LendingSection extends ConsumerWidget {
                       ),
                     ),
                     FilledButton.tonal(
-                      onPressed: () {
-                        ReturnItemUseCase(
-                                repository: ref.read(loanRepositoryProvider))
-                            .execute(activeLoan.id);
+                      onPressed: () async {
+                        try {
+                          await ReturnItemUseCase(
+                                  repository: ref.read(loanRepositoryProvider))
+                              .execute(activeLoan.id);
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Failed to return item: $e')),
+                            );
+                          }
+                        }
                       },
                       child: const Text('Return'),
                     ),
