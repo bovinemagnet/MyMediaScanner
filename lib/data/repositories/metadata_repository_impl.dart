@@ -10,11 +10,18 @@ import 'package:mymediascanner/core/utils/barcode_utils.dart';
 import 'package:mymediascanner/data/local/dao/barcode_cache_dao.dart';
 import 'package:mymediascanner/data/local/database/app_database.dart';
 import 'package:mymediascanner/data/mappers/discogs_mapper.dart';
+import 'package:mymediascanner/data/mappers/enrichment_merger.dart';
+import 'package:mymediascanner/data/mappers/musicbrainz_mapper.dart';
 import 'package:mymediascanner/data/mappers/google_books_mapper.dart';
 import 'package:mymediascanner/data/mappers/open_library_mapper.dart';
 import 'package:mymediascanner/data/mappers/tmdb_mapper.dart';
+import 'package:mymediascanner/data/mappers/tvdb_mapper.dart';
 import 'package:mymediascanner/data/mappers/upc_mapper.dart';
 import 'package:mymediascanner/data/remote/api/discogs/discogs_api.dart';
+import 'package:mymediascanner/data/remote/api/fanart/fanart_api.dart';
+import 'package:mymediascanner/data/remote/api/theaudiodb/theaudiodb_api.dart';
+import 'package:mymediascanner/data/remote/api/musicbrainz/models/musicbrainz_release_dto.dart';
+import 'package:mymediascanner/data/remote/api/musicbrainz/musicbrainz_api.dart';
 import 'package:mymediascanner/data/remote/api/discogs/models/discogs_release_dto.dart';
 import 'package:mymediascanner/data/remote/api/google_books/google_books_api.dart';
 import 'package:mymediascanner/data/remote/api/google_books/models/google_books_volume_dto.dart';
@@ -22,6 +29,8 @@ import 'package:mymediascanner/data/remote/api/open_library/open_library_api.dar
 import 'package:mymediascanner/data/remote/api/open_library/models/open_library_work_dto.dart';
 import 'package:mymediascanner/data/remote/api/tmdb/models/tmdb_search_result_dto.dart';
 import 'package:mymediascanner/data/remote/api/tmdb/tmdb_api.dart';
+import 'package:mymediascanner/data/remote/api/tvdb/models/tvdb_series_dto.dart';
+import 'package:mymediascanner/data/remote/api/tvdb/tvdb_api.dart';
 import 'package:mymediascanner/data/remote/api/upc/models/upc_item_dto.dart';
 import 'package:mymediascanner/data/remote/api/upc/upcitemdb_api.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
@@ -35,9 +44,13 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     required BarcodeCacheDao cacheDao,
     this.tmdbApi,
     this.discogsApi,
+    this.musicBrainzApi,
+    this.tvdbApi,
     this.googleBooksApi,
     this.openLibraryApi,
     this.upcitemdbApi,
+    this.theAudioDbApi,
+    this.fanartApi,
     ApiCircuitBreaker? googleBooksBreaker,
   })  : _cacheDao = cacheDao,
         googleBooksBreaker = googleBooksBreaker ?? ApiCircuitBreaker();
@@ -45,9 +58,13 @@ class MetadataRepositoryImpl implements IMetadataRepository {
   final BarcodeCacheDao _cacheDao;
   final TmdbApi? tmdbApi;
   final DiscogsApi? discogsApi;
+  final MusicBrainzApi? musicBrainzApi;
+  final TvdbApi? tvdbApi;
   final GoogleBooksApi? googleBooksApi;
   final OpenLibraryApi? openLibraryApi;
   final UpcitemdbApi? upcitemdbApi;
+  final TheAudioDbApi? theAudioDbApi;
+  final FanartApi? fanartApi;
 
   /// Circuit breaker for Google Books API — trips on 429 responses.
   final ApiCircuitBreaker googleBooksBreaker;
@@ -90,9 +107,181 @@ class MetadataRepositoryImpl implements IMetadataRepository {
       result = await _lookupUpc(barcode, barcodeTypeStr);
     }
 
-    // 4. Return notFound if all lookups failed
+    // 4. Enrich single results with TheAudioDB/fanart.tv data
+    if (result is SingleScanResult) {
+      final enriched = await _enrichMetadata(result.metadata);
+      return ScanResult.single(
+          metadata: enriched, isDuplicate: result.isDuplicate);
+    }
+
+    // 5. Return notFound if all lookups failed
     return result ??
         ScanResult.notFound(barcode: barcode, barcodeType: barcodeTypeStr);
+  }
+
+  @override
+  Future<ScanResult> searchByTitle(
+    String title,
+    String barcode,
+    String barcodeType, {
+    MediaType? typeHint,
+  }) async {
+    ScanResult? result;
+
+    if (typeHint == MediaType.film || typeHint == MediaType.tv) {
+      result = await _searchTmdbByTitle(title, barcode, barcodeType);
+    } else if (typeHint == MediaType.music) {
+      result = await _searchMusicByTitle(title, barcode, barcodeType);
+    } else if (typeHint == MediaType.book) {
+      result = await _searchBookByTitle(title, barcode, barcodeType);
+    } else {
+      // No type hint — try TMDB first, then MusicBrainz, then Google Books
+      result = await _searchTmdbByTitle(title, barcode, barcodeType) ??
+          await _searchMusicByTitle(title, barcode, barcodeType) ??
+          await _searchBookByTitle(title, barcode, barcodeType);
+    }
+
+    return result ??
+        ScanResult.notFound(barcode: barcode, barcodeType: barcodeType);
+  }
+
+  Future<ScanResult?> _searchTmdbByTitle(
+      String title, String barcode, String barcodeType) async {
+    if (tmdbApi == null) return null;
+    try {
+      final response = await tmdbApi!.searchMulti(title);
+      final results = response.results
+          ?.where((r) => r.mediaType != 'person')
+          .toList();
+      if (results == null || results.isEmpty) return null;
+
+      if (results.length == 1) {
+        await _cacheResponse(
+            barcode, 'film', 'tmdb', results.first.toJson());
+        return ScanResult.single(
+          metadata: TmdbMapper.fromSearchResult(
+              results.first, barcode, barcodeType),
+          isDuplicate: false,
+        );
+      }
+
+      final candidates = results
+          .take(AppConstants.maxCandidates)
+          .map(TmdbMapper.toCandidate)
+          .toList();
+      return ScanResult.multiMatch(
+        candidates: candidates,
+        barcode: barcode,
+        barcodeType: barcodeType,
+      );
+    } on Exception catch (e) {
+      debugPrint('TMDB title search failed: $e');
+    }
+    return null;
+  }
+
+  Future<ScanResult?> _searchMusicByTitle(
+      String title, String barcode, String barcodeType) async {
+    // Try MusicBrainz first
+    if (musicBrainzApi != null) {
+      try {
+        final response = await musicBrainzApi!.searchByTitle(title);
+        final releases = response.releases;
+        if (releases != null && releases.isNotEmpty) {
+          if (releases.length == 1) {
+            await _cacheResponse(
+                barcode, 'music', 'musicbrainz', releases.first.toJson());
+            return ScanResult.single(
+              metadata: MusicBrainzMapper.fromRelease(
+                  releases.first, barcode, barcodeType),
+              isDuplicate: false,
+            );
+          }
+          final candidates = releases
+              .take(AppConstants.maxCandidates)
+              .map(MusicBrainzMapper.toCandidate)
+              .toList();
+          return ScanResult.multiMatch(
+            candidates: candidates,
+            barcode: barcode,
+            barcodeType: barcodeType,
+          );
+        }
+      } on Exception catch (e) {
+        debugPrint('MusicBrainz title search failed: $e');
+      }
+    }
+
+    // Fall back to Discogs title search
+    if (discogsApi != null) {
+      try {
+        final response = await discogsApi!.searchByTitle(title);
+        final results = response.results;
+        if (results != null && results.isNotEmpty) {
+          if (results.length == 1) {
+            final searchResult = results.first;
+            if (searchResult.id != null) {
+              final release = await discogsApi!.getRelease(searchResult.id!);
+              await _cacheResponse(
+                  barcode, 'music', 'discogs', release.toJson());
+              return ScanResult.single(
+                metadata: DiscogsMapper.fromRelease(
+                    release, barcode, barcodeType),
+                isDuplicate: false,
+              );
+            }
+          }
+          final candidates = results
+              .take(AppConstants.maxCandidates)
+              .map(DiscogsMapper.toCandidate)
+              .toList();
+          return ScanResult.multiMatch(
+            candidates: candidates,
+            barcode: barcode,
+            barcodeType: barcodeType,
+          );
+        }
+      } on Exception catch (e) {
+        debugPrint('Discogs title search failed: $e');
+      }
+    }
+    return null;
+  }
+
+  Future<ScanResult?> _searchBookByTitle(
+      String title, String barcode, String barcodeType) async {
+    if (googleBooksApi != null && googleBooksBreaker.isOpen) {
+      try {
+        final response = await googleBooksApi!.searchByIsbn(title);
+        googleBooksBreaker.reset();
+        final items = response.items;
+        if (items != null && items.isNotEmpty) {
+          if (items.length == 1) {
+            await _cacheResponse(
+                barcode, 'book', 'google_books', items.first.toJson());
+            return ScanResult.single(
+              metadata: GoogleBooksMapper.fromVolume(
+                  items.first, barcode, barcodeType),
+              isDuplicate: false,
+            );
+          }
+          final candidates = items
+              .take(AppConstants.maxCandidates)
+              .map(GoogleBooksMapper.toCandidate)
+              .toList();
+          return ScanResult.multiMatch(
+            candidates: candidates,
+            barcode: barcode,
+            barcodeType: barcodeType,
+          );
+        }
+      } on Exception catch (e) {
+        if (_isRateLimited(e)) {
+          googleBooksBreaker.trip();
+        }
+      }
+    }
+    return null;
   }
 
   @override
@@ -102,8 +291,11 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     String barcodeType,
   ) async {
     return switch (candidate.sourceApi) {
+      'musicbrainz' =>
+        _fetchMusicBrainzDetail(candidate, barcode, barcodeType),
       'discogs' => _fetchDiscogsDetail(candidate, barcode, barcodeType),
       'tmdb' => _fetchTmdbDetail(candidate, barcode, barcodeType),
+      'tvdb' => _fetchTvdbDetail(candidate, barcode, barcodeType),
       'google_books' =>
         _fetchGoogleBooksDetail(candidate, barcode, barcodeType),
       'open_library' =>
@@ -212,6 +404,102 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     return null;
   }
 
+  Future<MetadataResult?> _fetchTvdbDetail(
+    MetadataCandidate candidate,
+    String barcode,
+    String barcodeType,
+  ) async {
+    if (tvdbApi == null) return null;
+    try {
+      final id = int.parse(candidate.sourceId);
+      final response = await tvdbApi!.getSeries(id);
+      final series = response.data;
+      if (series != null) {
+        await _cacheResponse(barcode, 'tv', 'tvdb', series.toJson());
+        return TvdbMapper.fromSeries(series, barcode, barcodeType);
+      }
+    } on Exception catch (e) {
+      debugPrint('TVDB detail fetch failed: $e');
+    }
+    return null;
+  }
+
+  Future<MetadataResult?> _fetchMusicBrainzDetail(
+    MetadataCandidate candidate,
+    String barcode,
+    String barcodeType,
+  ) async {
+    if (musicBrainzApi == null) return null;
+    try {
+      final release = await musicBrainzApi!.getRelease(candidate.sourceId);
+      if (release != null) {
+        await _cacheResponse(
+            barcode, 'music', 'musicbrainz', release.toJson());
+        return MusicBrainzMapper.fromRelease(release, barcode, barcodeType);
+      }
+    } on Exception catch (e) {
+      debugPrint('MusicBrainz detail fetch failed: $e');
+    }
+    return null;
+  }
+
+  // -- Enrichment --
+
+  /// Enrich a metadata result with TheAudioDB scores and fanart.tv artwork.
+  /// Failures are silently ignored — enrichment is best-effort.
+  Future<MetadataResult> _enrichMetadata(MetadataResult result) async {
+    var enriched = result;
+
+    // Music enrichment via TheAudioDB (uses MusicBrainz release group ID)
+    if (result.mediaType == MediaType.music && theAudioDbApi != null) {
+      final mbRgId =
+          result.extraMetadata['musicbrainz_release_group_id'] as String?;
+      if (mbRgId != null) {
+        try {
+          final album = await theAudioDbApi!.getByMusicBrainzId(mbRgId);
+          if (album != null) {
+            enriched = EnrichmentMerger.mergeAudioDb(enriched, album);
+          }
+        } on Exception catch (e) {
+          debugPrint('TheAudioDB enrichment failed: $e');
+        }
+      }
+    }
+
+    // Artwork enrichment via fanart.tv
+    if (fanartApi != null) {
+      try {
+        String? fanartUrl;
+        if (result.mediaType == MediaType.film) {
+          final tmdbId = result.extraMetadata['tmdb_id'] as int?;
+          if (tmdbId != null) {
+            final images = await fanartApi!.getMovieImages(tmdbId);
+            fanartUrl = images.bestPosterUrl;
+          }
+        } else if (result.mediaType == MediaType.tv) {
+          // Try TVDB ID first, fall back to TMDB ID
+          final tvdbId = result.extraMetadata['tvdb_id'] as int?;
+          if (tvdbId != null) {
+            final images = await fanartApi!.getTvImages(tvdbId);
+            fanartUrl = images.bestPosterUrl;
+          }
+        } else if (result.mediaType == MediaType.music) {
+          final mbRgId = result
+              .extraMetadata['musicbrainz_release_group_id'] as String?;
+          if (mbRgId != null) {
+            final images = await fanartApi!.getAlbumImages(mbRgId);
+            fanartUrl = images.bestCoverUrl;
+          }
+        }
+        enriched = EnrichmentMerger.mergeFanartCover(enriched, fanartUrl);
+      } on Exception catch (e) {
+        debugPrint('fanart.tv enrichment failed: $e');
+      }
+    }
+
+    return enriched;
+  }
+
   // -- Cache --
 
   Future<ScanResult?> _checkCache(String barcode) async {
@@ -237,6 +525,10 @@ class MetadataRepositoryImpl implements IMetadataRepository {
             OpenLibraryBookDto.fromJson(json), barcode, barcodeType),
         'upcitemdb' => UpcMapper.fromItem(
             UpcItemDto.fromJson(json), barcode, barcodeType),
+        'musicbrainz' => MusicBrainzMapper.fromRelease(
+            MusicBrainzReleaseDto.fromJson(json), barcode, barcodeType),
+        'tvdb' => TvdbMapper.fromSeries(
+            TvdbSeriesDto.fromJson(json), barcode, barcodeType),
         _ => null,
       };
       if (metadata == null) return null;
@@ -321,7 +613,10 @@ class MetadataRepositoryImpl implements IMetadataRepository {
       if (titleSource?.title == null) return null;
 
       final response = await tmdbApi!.searchMulti(titleSource!.title!);
-      final results = response.results;
+      // Filter out "person" results — only keep movie and TV.
+      final results = response.results
+          ?.where((r) => r.mediaType != 'person')
+          .toList();
       if (results == null || results.isEmpty) return null;
 
       if (results.length == 1) {
@@ -343,12 +638,19 @@ class MetadataRepositoryImpl implements IMetadataRepository {
         barcode: barcode,
         barcodeType: barcodeType,
       );
-    } on Exception catch (_) {}
+    } on Exception catch (e) {
+      debugPrint('Film lookup failed: $e');
+    }
     return null;
   }
 
   Future<ScanResult?> _lookupMusic(
       String barcode, String barcodeType) async {
+    // 1. Try MusicBrainz first (free, good international barcode coverage)
+    final mbResult = await _lookupMusicBrainz(barcode, barcodeType);
+    if (mbResult != null) return mbResult;
+
+    // 2. Fall back to Discogs
     if (discogsApi == null) return null;
     try {
       final response = await discogsApi!.searchByBarcode(barcode);
@@ -379,12 +681,54 @@ class MetadataRepositoryImpl implements IMetadataRepository {
         barcode: barcode,
         barcodeType: barcodeType,
       );
-    } on Exception catch (_) {}
+    } on Exception catch (e) {
+      debugPrint('Music lookup (Discogs) failed: $e');
+    }
+    return null;
+  }
+
+  Future<ScanResult?> _lookupMusicBrainz(
+      String barcode, String barcodeType) async {
+    if (musicBrainzApi == null) return null;
+    try {
+      final response = await musicBrainzApi!.searchByBarcode(barcode);
+      final releases = response.releases;
+      if (releases == null || releases.isEmpty) return null;
+
+      if (releases.length == 1) {
+        final release = releases.first;
+        await _cacheResponse(
+            barcode, 'music', 'musicbrainz', release.toJson());
+        return ScanResult.single(
+          metadata: MusicBrainzMapper.fromRelease(
+              release, barcode, barcodeType),
+          isDuplicate: false,
+        );
+      }
+
+      final candidates = releases
+          .take(AppConstants.maxCandidates)
+          .map(MusicBrainzMapper.toCandidate)
+          .toList();
+      return ScanResult.multiMatch(
+        candidates: candidates,
+        barcode: barcode,
+        barcodeType: barcodeType,
+      );
+    } on Exception catch (e) {
+      debugPrint('Music lookup (MusicBrainz) failed: $e');
+    }
     return null;
   }
 
   Future<ScanResult?> _lookupGeneral(
       String barcode, String barcodeType) async {
+    // 1. Try MusicBrainz barcode search first — if it matches, it's music.
+    // MusicBrainz has better international barcode coverage than UPCitemdb.
+    final mbResult = await _lookupMusicBrainz(barcode, barcodeType);
+    if (mbResult != null) return mbResult;
+
+    // 2. Try UPCitemdb to classify the barcode type
     final upcResult = await _lookupUpcMetadata(barcode, barcodeType);
     if (upcResult == null) return null;
 
@@ -401,9 +745,38 @@ class MetadataRepositoryImpl implements IMetadataRepository {
           ScanResult.single(metadata: upcResult, isDuplicate: false);
     }
     if (upcResult.mediaType == MediaType.music) {
-      final musicResult = await _lookupMusic(barcode, barcodeType);
-      return musicResult ??
-          ScanResult.single(metadata: upcResult, isDuplicate: false);
+      // MusicBrainz already tried above, go straight to Discogs
+      if (discogsApi != null) {
+        try {
+          final response = await discogsApi!.searchByBarcode(barcode);
+          final results = response.results;
+          if (results != null && results.isNotEmpty) {
+            if (results.length == 1 && results.first.id != null) {
+              final release =
+                  await discogsApi!.getRelease(results.first.id!);
+              await _cacheResponse(
+                  barcode, 'music', 'discogs', release.toJson());
+              return ScanResult.single(
+                metadata: DiscogsMapper.fromRelease(
+                    release, barcode, barcodeType),
+                isDuplicate: false,
+              );
+            }
+            final candidates = results
+                .take(AppConstants.maxCandidates)
+                .map(DiscogsMapper.toCandidate)
+                .toList();
+            return ScanResult.multiMatch(
+              candidates: candidates,
+              barcode: barcode,
+              barcodeType: barcodeType,
+            );
+          }
+        } on Exception catch (e) {
+          debugPrint('Discogs lookup in general flow failed: $e');
+        }
+      }
+      return ScanResult.single(metadata: upcResult, isDuplicate: false);
     }
 
     return ScanResult.single(metadata: upcResult, isDuplicate: false);
@@ -430,7 +803,9 @@ class MetadataRepositoryImpl implements IMetadataRepository {
         await _cacheResponse(barcode, null, 'upcitemdb', item.toJson());
         return UpcMapper.fromItem(item, barcode, barcodeType);
       }
-    } on Exception catch (_) {}
+    } on Exception catch (e) {
+      debugPrint('UPC metadata lookup failed: $e');
+    }
     return null;
   }
 

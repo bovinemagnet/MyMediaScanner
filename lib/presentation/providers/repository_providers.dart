@@ -2,6 +2,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/core/constants/api_constants.dart';
 import 'package:mymediascanner/data/remote/api/dio_factory.dart';
 import 'package:mymediascanner/data/remote/api/discogs/discogs_api.dart';
+import 'package:mymediascanner/data/remote/api/fanart/fanart_api.dart';
+import 'package:mymediascanner/data/remote/api/theaudiodb/theaudiodb_api.dart';
+import 'package:mymediascanner/data/remote/api/musicbrainz/musicbrainz_api.dart';
+import 'package:mymediascanner/data/remote/api/tvdb/tvdb_api.dart';
+import 'package:mymediascanner/data/remote/api/tvdb/tvdb_token_manager.dart';
 import 'package:mymediascanner/data/remote/api/google_books/google_books_api.dart';
 import 'package:mymediascanner/data/remote/api/open_library/open_library_api.dart';
 import 'package:mymediascanner/data/remote/api/tmdb/tmdb_api.dart';
@@ -53,6 +58,8 @@ final metadataRepositoryProvider = Provider<IMetadataRepository>((ref) {
   final discogsKey = apiKeys['discogs'];
   final upcKey = apiKeys['upcitemdb'];
   final googleBooksKey = apiKeys['google_books'];
+  final tvdbKey = apiKeys['tvdb'];
+  final fanartKey = apiKeys['fanart'];
 
   return MetadataRepositoryImpl(
     cacheDao: ref.watch(barcodeCacheDaoProvider),
@@ -70,6 +77,15 @@ final metadataRepositoryProvider = Provider<IMetadataRepository>((ref) {
             defaultHeaders: {'User-Agent': 'MyMediaScanner/1.0'},
           ))
         : null,
+    // MusicBrainz is always available (free, no API key needed)
+    musicBrainzApi: MusicBrainzApi(),
+    tvdbApi: tvdbKey != null
+        ? TvdbApi(DioFactory.createWithDynamicBearerToken(
+            baseUrl: ApiConstants.tvdbBaseUrl,
+            tokenProvider:
+                TvdbTokenManager(apiKey: tvdbKey).getToken,
+          ))
+        : null,
     googleBooksApi: GoogleBooksApi(googleBooksKey != null
         ? DioFactory.createWithApiKey(
             baseUrl: ApiConstants.googleBooksBaseUrl,
@@ -83,6 +99,15 @@ final metadataRepositoryProvider = Provider<IMetadataRepository>((ref) {
             baseUrl: ApiConstants.upcItemDbBaseUrl,
             apiKeyParam: 'user_key',
             apiKey: upcKey,
+          ))
+        : null,
+    // TheAudioDB free tier is always available (key = "2")
+    theAudioDbApi: TheAudioDbApi(),
+    fanartApi: fanartKey != null
+        ? FanartApi(DioFactory.createWithApiKey(
+            baseUrl: ApiConstants.fanartBaseUrl,
+            apiKeyParam: 'api_key',
+            apiKey: fanartKey,
           ))
         : null,
   );

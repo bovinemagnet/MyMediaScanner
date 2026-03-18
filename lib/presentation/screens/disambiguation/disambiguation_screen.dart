@@ -14,7 +14,15 @@ class DisambiguationScreen extends ConsumerWidget {
     final isLoading =
         disambigState.state == DisambiguationState.loading;
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          ref.read(scannerProvider.notifier).reset();
+          context.go('/scan');
+        }
+      },
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('Select the correct match'),
         leading: IconButton(
@@ -88,6 +96,7 @@ class DisambiguationScreen extends ConsumerWidget {
           ),
         ],
       ),
+    ),
     );
   }
 }

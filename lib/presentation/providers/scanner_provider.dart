@@ -13,6 +13,7 @@ enum ScanState {
   notFound,
   duplicate,
   disambiguating,
+  coverScan,
   error,
 }
 
@@ -182,7 +183,7 @@ class ScannerNotifier extends Notifier<ScannerState> {
             scanMode: state.scanMode,
           );
       }
-    } on Exception catch (e) {
+    } catch (e) {
       state = ScannerState(
         state: ScanState.error,
         error: e.toString(),
@@ -219,6 +220,72 @@ class ScannerNotifier extends Notifier<ScannerState> {
       enabledMediaTypes: state.enabledMediaTypes,
       scanMode: state.scanMode,
     );
+  }
+
+  /// Search by title when barcode lookup returned notFound.
+  Future<void> searchByTitle(
+      String title, String barcode, String barcodeType) async {
+    state = state.copyWith(state: ScanState.lookingUp);
+
+    try {
+      final repo = ref.read(metadataRepositoryProvider);
+      final scanResult = await repo.searchByTitle(
+        title,
+        barcode,
+        barcodeType,
+        typeHint: state.typeHint,
+      );
+
+      switch (scanResult) {
+        case SingleScanResult():
+          state = ScannerState(
+            state: ScanState.found,
+            result: scanResult,
+            batchMode: state.batchMode,
+            batchCount: state.batchCount,
+            enabledMediaTypes: state.enabledMediaTypes,
+            scanMode: state.scanMode,
+          );
+        case MultiMatchScanResult():
+          state = ScannerState(
+            state: ScanState.disambiguating,
+            result: scanResult,
+            batchMode: state.batchMode,
+            batchCount: state.batchCount,
+            enabledMediaTypes: state.enabledMediaTypes,
+            scanMode: state.scanMode,
+          );
+        case NotFoundScanResult():
+          state = ScannerState(
+            state: ScanState.notFound,
+            result: scanResult,
+            batchMode: state.batchMode,
+            batchCount: state.batchCount,
+            enabledMediaTypes: state.enabledMediaTypes,
+            scanMode: state.scanMode,
+          );
+      }
+    } catch (e) {
+      state = ScannerState(
+        state: ScanState.error,
+        error: e.toString(),
+        batchMode: state.batchMode,
+        batchCount: state.batchCount,
+        enabledMediaTypes: state.enabledMediaTypes,
+        scanMode: state.scanMode,
+      );
+    }
+  }
+
+  /// Transition to cover scan mode (mobile only).
+  void startCoverScan() {
+    state = state.copyWith(state: ScanState.coverScan);
+  }
+
+  /// Called when cover OCR extracts text. Searches by the extracted title.
+  Future<void> onCoverTextRecognised(
+      String text, String barcode, String barcodeType) async {
+    await searchByTitle(text, barcode, barcodeType);
   }
 
   void reset() {

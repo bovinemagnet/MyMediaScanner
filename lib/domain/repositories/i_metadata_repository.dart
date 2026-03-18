@@ -16,4 +16,15 @@ abstract interface class IMetadataRepository {
     String barcode,
     String barcodeType,
   );
+
+  /// Search for metadata by title when barcode lookup fails.
+  ///
+  /// Routes to the appropriate API based on [typeHint]:
+  /// film/TV → TMDB, music → MusicBrainz/Discogs, book → Google Books.
+  Future<ScanResult> searchByTitle(
+    String title,
+    String barcode,
+    String barcodeType, {
+    MediaType? typeHint,
+  });
 }

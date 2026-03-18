@@ -45,6 +45,20 @@ class DioFactory {
     return dio;
   }
 
+  /// Creates a Dio instance with a custom User-Agent header.
+  ///
+  /// Used for APIs like MusicBrainz that require application identification
+  /// via User-Agent rather than an API key.
+  static Dio createWithUserAgent({
+    required String baseUrl,
+    required String userAgent,
+  }) {
+    return create(
+      baseUrl: baseUrl,
+      defaultHeaders: {'User-Agent': userAgent},
+    );
+  }
+
   /// Creates a Dio instance with a Bearer token header.
   static Dio createWithBearerToken({
     required String baseUrl,
@@ -56,5 +70,24 @@ class DioFactory {
       ...?defaultHeaders,
     };
     return create(baseUrl: baseUrl, defaultHeaders: headers);
+  }
+
+  /// Creates a Dio instance with a dynamic Bearer token resolved per-request.
+  ///
+  /// Used for APIs like TVDB where the token has a limited lifetime and
+  /// must be refreshed periodically.
+  static Dio createWithDynamicBearerToken({
+    required String baseUrl,
+    required Future<String> Function() tokenProvider,
+  }) {
+    final dio = create(baseUrl: baseUrl);
+    dio.interceptors.add(InterceptorsWrapper(
+      onRequest: (options, handler) async {
+        final token = await tokenProvider();
+        options.headers['Authorization'] = 'Bearer $token';
+        handler.next(options);
+      },
+    ));
+    return dio;
   }
 }

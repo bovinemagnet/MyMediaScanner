@@ -18,6 +18,7 @@ class DesktopScanScreen extends ConsumerStatefulWidget {
 class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
+  final _keyboardFocusNode = FocusNode();
 
   @override
   void initState() {
@@ -29,11 +30,13 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
   void dispose() {
     _controller.dispose();
     _focusNode.dispose();
+    _keyboardFocusNode.dispose();
     super.dispose();
   }
 
   void _onSubmitted(String barcode) {
     if (barcode.trim().isEmpty) return;
+    _controller.clear();
     ref.read(scannerProvider.notifier).onBarcodeScanned(barcode.trim());
   }
 
@@ -43,10 +46,30 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
 
     ref.listen(scannerProvider, (prev, next) {
       if (next.state == ScanState.found || next.state == ScanState.notFound) {
-        context.go('/scan/confirm');
+        if (next.batchMode) {
+          ref.read(scannerProvider.notifier).incrementBatchCount();
+          ref.read(scannerProvider.notifier).reset();
+        } else {
+          context.go('/scan/confirm');
+        }
       }
       if (next.state == ScanState.disambiguating) {
         context.go('/scan/disambiguate');
+      }
+      if (next.state == ScanState.error) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(next.error ?? 'Lookup failed'),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+        ref.read(scannerProvider.notifier).reset();
+      }
+      if (next.state == ScanState.idle) {
+        _controller.clear();
+        _focusNode.requestFocus();
       }
     });
 
@@ -94,7 +117,7 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
             SizedBox(
               width: 400,
               child: KeyboardListener(
-                focusNode: FocusNode(),
+                focusNode: _keyboardFocusNode,
                 onKeyEvent: (event) {
                   if (event is KeyDownEvent &&
                       event.logicalKey == LogicalKeyboardKey.escape) {

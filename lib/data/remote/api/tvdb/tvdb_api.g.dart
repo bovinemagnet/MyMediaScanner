@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'discogs_api.dart';
+part of 'tvdb_api.dart';
 
 // dart format off
 
@@ -10,8 +10,8 @@ part of 'discogs_api.dart';
 
 // ignore_for_file: unnecessary_brace_in_string_interps,no_leading_underscores_for_local_identifiers,unused_element,unnecessary_string_interpolations,unused_element_parameter,avoid_unused_constructor_parameters,unreachable_from_main
 
-class _DiscogsApi implements DiscogsApi {
-  _DiscogsApi(this._dio, {this.baseUrl, this.errorLogger});
+class _TvdbApi implements TvdbApi {
+  _TvdbApi(this._dio, {this.baseUrl, this.errorLogger});
 
   final Dio _dio;
 
@@ -20,31 +20,34 @@ class _DiscogsApi implements DiscogsApi {
   final ParseErrorLogger? errorLogger;
 
   @override
-  Future<DiscogsSearchResponseDto> searchByBarcode(
-    String barcode, {
-    String type = 'release',
+  Future<TvdbSearchResponseDto> search(
+    String query, {
+    String? type,
+    int limit = 5,
   }) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{
-      r'barcode': barcode,
+      r'query': query,
       r'type': type,
+      r'limit': limit,
     };
+    queryParameters.removeWhere((k, v) => v == null);
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<DiscogsSearchResponseDto>(
+    final _options = _setStreamType<TvdbSearchResponseDto>(
       Options(method: 'GET', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            '/database/search',
+            '/search',
             queryParameters: queryParameters,
             data: _data,
           )
           .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
     );
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
-    late DiscogsSearchResponseDto _value;
+    late TvdbSearchResponseDto _value;
     try {
-      _value = DiscogsSearchResponseDto.fromJson(_result.data!);
+      _value = TvdbSearchResponseDto.fromJson(_result.data!);
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options, response: _result);
       rethrow;
@@ -53,55 +56,25 @@ class _DiscogsApi implements DiscogsApi {
   }
 
   @override
-  Future<DiscogsSearchResponseDto> searchByTitle(
-    String query, {
-    String type = 'release',
-  }) async {
-    final _extra = <String, dynamic>{};
-    final queryParameters = <String, dynamic>{r'q': query, r'type': type};
-    final _headers = <String, dynamic>{};
-    const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<DiscogsSearchResponseDto>(
-      Options(method: 'GET', headers: _headers, extra: _extra)
-          .compose(
-            _dio.options,
-            '/database/search',
-            queryParameters: queryParameters,
-            data: _data,
-          )
-          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
-    );
-    final _result = await _dio.fetch<Map<String, dynamic>>(_options);
-    late DiscogsSearchResponseDto _value;
-    try {
-      _value = DiscogsSearchResponseDto.fromJson(_result.data!);
-    } on Object catch (e, s) {
-      errorLogger?.logError(e, s, _options, response: _result);
-      rethrow;
-    }
-    return _value;
-  }
-
-  @override
-  Future<DiscogsReleaseDto> getRelease(int id) async {
+  Future<TvdbSeriesResponseDto> getSeries(int id) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<DiscogsReleaseDto>(
+    final _options = _setStreamType<TvdbSeriesResponseDto>(
       Options(method: 'GET', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            '/releases/${id}',
+            '/series/${id}',
             queryParameters: queryParameters,
             data: _data,
           )
           .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
     );
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
-    late DiscogsReleaseDto _value;
+    late TvdbSeriesResponseDto _value;
     try {
-      _value = DiscogsReleaseDto.fromJson(_result.data!);
+      _value = TvdbSeriesResponseDto.fromJson(_result.data!);
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options, response: _result);
       rethrow;

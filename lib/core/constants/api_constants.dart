@@ -13,6 +13,19 @@ abstract final class ApiConstants {
   static const openLibraryBaseUrl = 'https://openlibrary.org';
   static const openLibraryCoverUrl = 'https://covers.openlibrary.org';
 
+  // TVDB
+  static const tvdbBaseUrl = 'https://api4.thetvdb.com/v4';
+
+  // TheAudioDB
+  static const theAudioDbBaseUrl = 'https://www.theaudiodb.com/api/v1/json';
+
+  // fanart.tv
+  static const fanartBaseUrl = 'https://webservice.fanart.tv/v3';
+
+  // MusicBrainz
+  static const musicBrainzBaseUrl = 'https://musicbrainz.org/ws/2';
+  static const musicBrainzUserAgent = 'MyMediaScanner/1.0 (https://github.com/bovinemagnet/MyMediaScanner)';
+
   // UPCitemdb
   static const upcItemDbBaseUrl = 'https://api.upcitemdb.com/prod/trial';
 

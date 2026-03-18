@@ -57,6 +57,8 @@ dependencies:
   data_table_2: ^2.7.2
   package_info_plus: ^8.3.0
   url_launcher: ^6.3.1
+  google_mlkit_text_recognition: ^0.15.1
+  image_picker: ^1.2.1
 
 dev_dependencies:
   flutter_test:

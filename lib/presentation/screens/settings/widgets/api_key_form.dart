@@ -14,6 +14,8 @@ class _ApiKeyFormState extends ConsumerState<ApiKeyForm> {
   final _discogsController = TextEditingController();
   final _upcController = TextEditingController();
   final _googleBooksController = TextEditingController();
+  final _tvdbController = TextEditingController();
+  final _fanartController = TextEditingController();
 
   @override
   void initState() {
@@ -27,6 +29,8 @@ class _ApiKeyFormState extends ConsumerState<ApiKeyForm> {
     _discogsController.text = keys['discogs'] ?? '';
     _upcController.text = keys['upcitemdb'] ?? '';
     _googleBooksController.text = keys['google_books'] ?? '';
+    _tvdbController.text = keys['tvdb'] ?? '';
+    _fanartController.text = keys['fanart'] ?? '';
   }
 
   @override
@@ -35,6 +39,8 @@ class _ApiKeyFormState extends ConsumerState<ApiKeyForm> {
     _discogsController.dispose();
     _upcController.dispose();
     _googleBooksController.dispose();
+    _tvdbController.dispose();
+    _fanartController.dispose();
     super.dispose();
   }
 
@@ -47,7 +53,19 @@ class _ApiKeyFormState extends ConsumerState<ApiKeyForm> {
         const SizedBox(height: 8),
         const Text(
             'Enter your own API keys. These are stored securely on-device.'),
-        const SizedBox(height: 12),
+        const SizedBox(height: 4),
+        Text(
+          'MusicBrainz, Open Library, and TheAudioDB require no keys.',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.outline,
+              ),
+        ),
+        const SizedBox(height: 16),
+
+        // Primary sources
+        Text('Primary Sources',
+            style: Theme.of(context).textTheme.labelLarge),
+        const SizedBox(height: 8),
         _keyField('TMDB API Key', _tmdbController, (key) {
           ref.read(apiKeysProvider.notifier).setTmdbKey(key);
         }),
@@ -59,10 +77,30 @@ class _ApiKeyFormState extends ConsumerState<ApiKeyForm> {
         _keyField('UPCitemdb Key', _upcController, (key) {
           ref.read(apiKeysProvider.notifier).setUpcitemdbKey(key);
         }),
-        const SizedBox(height: 12),
-        _keyField('Google Books API Key (optional)', _googleBooksController,
-            (key) {
+
+        const SizedBox(height: 24),
+
+        // Enrichment sources
+        Text('Enrichment (optional)',
+            style: Theme.of(context).textTheme.labelLarge),
+        const SizedBox(height: 4),
+        Text(
+          'These add extra artwork, scores, and TV metadata.',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.outline,
+              ),
+        ),
+        const SizedBox(height: 8),
+        _keyField('Google Books API Key', _googleBooksController, (key) {
           ref.read(apiKeysProvider.notifier).setGoogleBooksKey(key);
+        }),
+        const SizedBox(height: 12),
+        _keyField('TVDB API Key', _tvdbController, (key) {
+          ref.read(apiKeysProvider.notifier).setTvdbKey(key);
+        }),
+        const SizedBox(height: 12),
+        _keyField('fanart.tv API Key', _fanartController, (key) {
+          ref.read(apiKeysProvider.notifier).setFanartKey(key);
         }),
       ],
     );

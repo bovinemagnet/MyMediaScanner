@@ -213,5 +213,154 @@ void main() {
         expect(single.isDuplicate, isFalse);
       });
     });
+
+    group('searchByTitle', () {
+      test('transitions to found when title search returns single', () async {
+        const searchResult = ScanResult.single(
+          metadata: MetadataResult(
+            barcode: '9325336120538',
+            barcodeType: 'ean13',
+            title: 'Harry Potter',
+            mediaType: MediaType.film,
+          ),
+          isDuplicate: false,
+        );
+
+        when(() => mockMetadataRepo.searchByTitle(
+              'Harry Potter',
+              '9325336120538',
+              'ean13',
+              typeHint: null,
+            )).thenAnswer((_) async => searchResult);
+
+        final container = createContainer();
+        addTearDown(container.dispose);
+
+        final notifier = container.read(scannerProvider.notifier);
+        await notifier.searchByTitle(
+            'Harry Potter', '9325336120538', 'ean13');
+
+        final state = container.read(scannerProvider);
+        expect(state.state, ScanState.found);
+        expect(state.result, isA<SingleScanResult>());
+      });
+
+      test('transitions to disambiguating when title search returns multi',
+          () async {
+        const multiResult = ScanResult.multiMatch(
+          candidates: [
+            MetadataCandidate(
+                sourceApi: 'tmdb', sourceId: '1', title: 'HP 1'),
+            MetadataCandidate(
+                sourceApi: 'tmdb', sourceId: '2', title: 'HP 2'),
+          ],
+          barcode: '9325336120538',
+          barcodeType: 'ean13',
+        );
+
+        when(() => mockMetadataRepo.searchByTitle(
+              'Harry Potter',
+              '9325336120538',
+              'ean13',
+              typeHint: null,
+            )).thenAnswer((_) async => multiResult);
+
+        final container = createContainer();
+        addTearDown(container.dispose);
+
+        final notifier = container.read(scannerProvider.notifier);
+        await notifier.searchByTitle(
+            'Harry Potter', '9325336120538', 'ean13');
+
+        final state = container.read(scannerProvider);
+        expect(state.state, ScanState.disambiguating);
+      });
+
+      test('transitions to notFound when title search returns nothing',
+          () async {
+        const notFoundResult = ScanResult.notFound(
+          barcode: '9325336120538',
+          barcodeType: 'ean13',
+        );
+
+        when(() => mockMetadataRepo.searchByTitle(
+              'Nonexistent',
+              '9325336120538',
+              'ean13',
+              typeHint: null,
+            )).thenAnswer((_) async => notFoundResult);
+
+        final container = createContainer();
+        addTearDown(container.dispose);
+
+        final notifier = container.read(scannerProvider.notifier);
+        await notifier.searchByTitle(
+            'Nonexistent', '9325336120538', 'ean13');
+
+        final state = container.read(scannerProvider);
+        expect(state.state, ScanState.notFound);
+      });
+
+      test('transitions to error on exception', () async {
+        when(() => mockMetadataRepo.searchByTitle(
+              any(),
+              any(),
+              any(),
+              typeHint: any(named: 'typeHint'),
+            )).thenThrow(Exception('Network error'));
+
+        final container = createContainer();
+        addTearDown(container.dispose);
+
+        final notifier = container.read(scannerProvider.notifier);
+        await notifier.searchByTitle('Test', '000', 'ean13');
+
+        final state = container.read(scannerProvider);
+        expect(state.state, ScanState.error);
+      });
+    });
+
+    group('startCoverScan', () {
+      test('transitions to coverScan state', () {
+        final container = createContainer();
+        addTearDown(container.dispose);
+
+        final notifier = container.read(scannerProvider.notifier);
+        notifier.startCoverScan();
+
+        final state = container.read(scannerProvider);
+        expect(state.state, ScanState.coverScan);
+      });
+    });
+
+    group('onCoverTextRecognised', () {
+      test('delegates to searchByTitle', () async {
+        const searchResult = ScanResult.single(
+          metadata: MetadataResult(
+            barcode: '000',
+            barcodeType: 'ean13',
+            title: 'Cover Title',
+            mediaType: MediaType.film,
+          ),
+          isDuplicate: false,
+        );
+
+        when(() => mockMetadataRepo.searchByTitle(
+              'Cover Title',
+              '000',
+              'ean13',
+              typeHint: null,
+            )).thenAnswer((_) async => searchResult);
+
+        final container = createContainer();
+        addTearDown(container.dispose);
+
+        final notifier = container.read(scannerProvider.notifier);
+        await notifier.onCoverTextRecognised('Cover Title', '000', 'ean13');
+
+        final state = container.read(scannerProvider);
+        expect(state.state, ScanState.found);
+      });
+    });
   });
 }

@@ -17,4 +17,10 @@ abstract final class PlatformCapability {
       defaultTargetPlatform == TargetPlatform.iOS;
 
   static bool get usesKeyboardScanner => isDesktop;
+
+  /// Whether cover OCR (ML Kit text recognition) is available.
+  /// Only supported on Android and iOS.
+  static bool get hasCoverOcr =>
+      defaultTargetPlatform == TargetPlatform.android ||
+      defaultTargetPlatform == TargetPlatform.iOS;
 }

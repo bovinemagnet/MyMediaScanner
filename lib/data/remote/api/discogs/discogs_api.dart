@@ -14,6 +14,12 @@ abstract class DiscogsApi {
     @Query('type') String type = 'release',
   });
 
+  @GET('/database/search')
+  Future<DiscogsSearchResponseDto> searchByTitle(
+    @Query('q') String query, {
+    @Query('type') String type = 'release',
+  });
+
   @GET('/releases/{id}')
   Future<DiscogsReleaseDto> getRelease(@Path('id') int id);
 }

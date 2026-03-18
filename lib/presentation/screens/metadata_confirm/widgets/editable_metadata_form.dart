@@ -71,11 +71,9 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
           if (widget.initial.coverUrl != null)
             Center(
               child: ClipRRect(
@@ -141,7 +139,6 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
             label: const Text('Save to Collection'),
           ),
         ],
-      ),
     );
   }
 }

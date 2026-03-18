@@ -16,6 +16,9 @@ import 'package:mymediascanner/presentation/screens/scanner/widgets/media_type_t
 import 'package:mymediascanner/presentation/screens/scanner/widgets/scan_mode_toggle.dart';
 import 'package:mymediascanner/presentation/screens/scanner/widgets/scan_overlay.dart';
 import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
+import 'package:mymediascanner/core/utils/cover_ocr_helper.dart';
+import 'package:mymediascanner/core/utils/platform_utils.dart';
+import 'package:mymediascanner/domain/entities/scan_result.dart';
 
 /// Full-screen mobile camera barcode scanner.
 class MobileScanScreen extends ConsumerStatefulWidget {
@@ -25,7 +28,8 @@ class MobileScanScreen extends ConsumerStatefulWidget {
   ConsumerState<MobileScanScreen> createState() => _MobileScanScreenState();
 }
 
-class _MobileScanScreenState extends ConsumerState<MobileScanScreen> {
+class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
+    with WidgetsBindingObserver {
   final MobileScannerController _cameraController = MobileScannerController(
     detectionSpeed: DetectionSpeed.normal,
     detectionTimeoutMs: 500,
@@ -37,11 +41,27 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen> {
   final _externalFocusNode = FocusNode();
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _cameraController.dispose();
     _externalController.dispose();
     _externalFocusNode.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState lifecycleState) {
+    if (lifecycleState == AppLifecycleState.resumed &&
+        !_externalScannerMode &&
+        _hasScanned) {
+      _resumeScanning();
+    }
   }
 
   void _toggleExternalScannerMode() {
@@ -144,6 +164,7 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen> {
   void _showDuplicateDialog() {
     showDialog<void>(
       context: context,
+      barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Duplicate Barcode'),
         content:
@@ -168,15 +189,91 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen> {
     );
   }
 
+  void _showNotFoundDialog(ScanResult? result) {
+    final notFound = result is NotFoundScanResult ? result : null;
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Barcode Not Found'),
+        content: const Text(
+          'This barcode was not found in any database. '
+          'You can photograph the cover to search by title, '
+          'or enter details manually.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              _resumeScanning();
+            },
+            child: const Text('Scan again'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              context.go('/scan/confirm');
+            },
+            child: const Text('Enter manually'),
+          ),
+          FilledButton.icon(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              _scanCover(notFound);
+            },
+            icon: const Icon(Icons.camera_alt),
+            label: const Text('Scan cover'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _scanCover(NotFoundScanResult? notFound) async {
+    if (notFound == null) {
+      _resumeScanning();
+      return;
+    }
+
+    final ocr = CoverOcrHelper();
+    try {
+      final title = await ocr.captureAndExtract();
+      if (title != null && title.isNotEmpty && mounted) {
+        await ref.read(scannerProvider.notifier).onCoverTextRecognised(
+              title,
+              notFound.barcode,
+              notFound.barcodeType,
+            );
+      } else if (mounted) {
+        // OCR failed or user cancelled — go to manual entry
+        context.go('/scan/confirm');
+      }
+    } catch (_) {
+      if (mounted) _resumeScanning();
+    } finally {
+      await ocr.dispose();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final scannerState = ref.watch(scannerProvider);
 
     ref.listen(scannerProvider, (prev, next) {
-      if (next.state == ScanState.found || next.state == ScanState.notFound) {
+      if (next.state == ScanState.found) {
         if (next.batchMode) {
           ref.read(scannerProvider.notifier).incrementBatchCount();
           _resumeScanning();
+        } else {
+          context.go('/scan/confirm');
+        }
+      }
+      if (next.state == ScanState.notFound) {
+        if (next.batchMode) {
+          ref.read(scannerProvider.notifier).incrementBatchCount();
+          _resumeScanning();
+        } else if (PlatformCapability.hasCoverOcr) {
+          _showNotFoundDialog(next.result);
         } else {
           context.go('/scan/confirm');
         }
@@ -188,6 +285,17 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen> {
         _showDuplicateDialog();
       }
       if (next.state == ScanState.error) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(next.error ?? 'Lookup failed'),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+        _resumeScanning();
+      }
+      if (next.state == ScanState.idle && _hasScanned) {
         _resumeScanning();
       }
     });
