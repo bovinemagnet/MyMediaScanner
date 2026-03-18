@@ -314,7 +314,12 @@ class ScannerNotifier extends Notifier<ScannerState> {
 
   void reset() {
     _generation++;
-    state = ScannerState(scanMode: state.scanMode);
+    state = ScannerState(
+      scanMode: state.scanMode,
+      batchMode: state.batchMode,
+      batchCount: state.batchCount,
+      enabledMediaTypes: state.enabledMediaTypes,
+    );
   }
 
   void toggleBatchMode() {
