@@ -10,6 +10,7 @@ abstract final class GoogleBooksMapper {
     String barcodeType,
   ) {
     final info = dto.volumeInfo;
+    final rating = info?.averageRating;
     return MetadataResult(
       barcode: barcode,
       barcodeType: barcodeType,
@@ -29,12 +30,8 @@ abstract final class GoogleBooksMapper {
         'page_count': info?.pageCount,
       },
       sourceApis: ['google_books'],
-      criticScore: info?.averageRating != null
-          ? info!.averageRating! * 2
-          : null,
-      criticSource: info?.averageRating != null
-          ? 'Google Books'
-          : null,
+      criticScore: rating != null ? rating * 2 : null,
+      criticSource: rating != null ? 'Google Books' : null,
     );
   }
 

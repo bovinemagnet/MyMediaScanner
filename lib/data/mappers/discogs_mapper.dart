@@ -9,6 +9,7 @@ abstract final class DiscogsMapper {
     String barcode,
     String barcodeType,
   ) {
+    final rating = dto.community?.rating?.average;
     return MetadataResult(
       barcode: barcode,
       barcodeType: barcodeType,
@@ -33,12 +34,8 @@ abstract final class DiscogsMapper {
             [],
       },
       sourceApis: ['discogs'],
-      criticScore: dto.community?.rating?.average != null
-          ? dto.community!.rating!.average! * 2
-          : null,
-      criticSource: dto.community?.rating?.average != null
-          ? 'Discogs'
-          : null,
+      criticScore: rating != null ? rating * 2 : null,
+      criticSource: rating != null ? 'Discogs' : null,
     );
   }
 

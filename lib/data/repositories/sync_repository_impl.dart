@@ -23,12 +23,13 @@ class SyncRepositoryImpl implements ISyncRepository {
 
   @override
   Future<void> pushChanges() async {
-    _emitStatus(isSyncing: true);
+    await _emitStatus(isSyncing: true);
     try {
       final pending = await _syncLogDao.getPending();
       for (final log in pending) {
-        final payload = jsonDecode(log.payloadJson) as Map<String, dynamic>;
-        await _syncClient.upsertRecords('${log.entityType}s', [payload]);
+        final decoded = jsonDecode(log.payloadJson);
+        if (decoded is! Map<String, dynamic>) continue;
+        await _syncClient.upsertRecords('${log.entityType}s', [decoded]);
         await _syncLogDao.markSynced(log.id);
       }
 
@@ -39,39 +40,40 @@ class SyncRepositoryImpl implements ISyncRepository {
         await _mediaItemsDao.markSynced(item.id, now);
       }
 
-      _emitStatus(isSyncing: false);
+      await _emitStatus(isSyncing: false);
     } on Exception catch (e) {
-      _emitStatus(isSyncing: false, error: e.toString());
+      await _emitStatus(isSyncing: false, error: e.toString());
       rethrow;
     }
   }
 
   @override
   Future<void> pullChanges() async {
-    _emitStatus(isSyncing: true);
+    await _emitStatus(isSyncing: true);
     try {
       // Pull remote media items and merge
       final remoteItems = await _syncClient.pullRecords('media_items');
 
       for (final remote in remoteItems) {
-        final localRow =
-            await _mediaItemsDao.getById(remote['id'] as String);
+        final remoteId = remote['id'];
+        if (remoteId is! String) continue;
+        final localRow = await _mediaItemsDao.getById(remoteId);
         if (localRow == null) {
-          // New remote item — insert locally
-          // Convert to companion and insert via DAO
+          // TODO: insert new remote items locally once companion
+          // factory is available.
           continue;
         }
-        // Merge using sync strategy
-        // SyncStrategy.mergeFields handles conflict resolution
+        // TODO: persist the merged result once DAO update method is
+        // available.
         SyncStrategy.mergeFields(
           localRow.toJson(),
           remote,
         );
       }
 
-      _emitStatus(isSyncing: false);
+      await _emitStatus(isSyncing: false);
     } on Exception catch (e) {
-      _emitStatus(isSyncing: false, error: e.toString());
+      await _emitStatus(isSyncing: false, error: e.toString());
       rethrow;
     }
   }
@@ -82,12 +84,12 @@ class SyncRepositoryImpl implements ISyncRepository {
   @override
   Future<void> resetLocalDatabase() async {
     // Pull all remote data and replace local
-    _emitStatus(isSyncing: true);
+    await _emitStatus(isSyncing: true);
     try {
       await pullChanges();
-      _emitStatus(isSyncing: false);
+      await _emitStatus(isSyncing: false);
     } on Exception catch (e) {
-      _emitStatus(isSyncing: false, error: e.toString());
+      await _emitStatus(isSyncing: false, error: e.toString());
       rethrow;
     }
   }
@@ -95,7 +97,7 @@ class SyncRepositoryImpl implements ISyncRepository {
   @override
   Stream<SyncStatus> watchSyncStatus() => _statusController.stream;
 
-  void _emitStatus({
+  Future<void> _emitStatus({
     bool isSyncing = false,
     String? error,
   }) async {

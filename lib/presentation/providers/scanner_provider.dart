@@ -72,6 +72,9 @@ class ScannerState {
 }
 
 class ScannerNotifier extends Notifier<ScannerState> {
+  /// Incremented on cancel/reset so in-flight lookups can detect staleness.
+  int _generation = 0;
+
   @override
   ScannerState build() => const ScannerState();
 
@@ -89,15 +92,29 @@ class ScannerNotifier extends Notifier<ScannerState> {
     state = state.copyWith(scanMode: mode);
   }
 
+  /// Cancel an in-flight lookup and return to idle.
+  void cancel() {
+    _generation++;
+    state = ScannerState(
+      scanMode: state.scanMode,
+      batchMode: state.batchMode,
+      batchCount: state.batchCount,
+      enabledMediaTypes: state.enabledMediaTypes,
+    );
+  }
+
   Future<void> onBarcodeScanned(
     String barcode, {
     MediaType? typeHint,
   }) async {
     final effectiveHint = typeHint ?? state.typeHint;
+    _generation++;
+    final gen = _generation;
     state = state.copyWith(state: ScanState.lookingUp);
 
     try {
       await ref.read(apiKeysProvider.future);
+      if (_generation != gen) return;
 
       final useCase = ScanBarcodeUseCase(
         mediaItemRepository: ref.read(mediaItemRepositoryProvider),
@@ -109,6 +126,7 @@ class ScannerNotifier extends Notifier<ScannerState> {
         typeHint: effectiveHint,
         forceIsbn: state.scanMode == ScanMode.isbn,
       );
+      if (_generation != gen) return;
 
       switch (scanResult) {
         case SingleScanResult(:final isDuplicate):
@@ -141,6 +159,7 @@ class ScannerNotifier extends Notifier<ScannerState> {
               multi.barcode,
               multi.barcodeType,
             );
+            if (_generation != gen) return;
             if (detail != null) {
               state = ScannerState(
                 state: ScanState.found,
@@ -184,6 +203,7 @@ class ScannerNotifier extends Notifier<ScannerState> {
           );
       }
     } catch (e) {
+      if (_generation != gen) return;
       state = ScannerState(
         state: ScanState.error,
         error: e.toString(),
@@ -225,6 +245,8 @@ class ScannerNotifier extends Notifier<ScannerState> {
   /// Search by title when barcode lookup returned notFound.
   Future<void> searchByTitle(
       String title, String barcode, String barcodeType) async {
+    _generation++;
+    final gen = _generation;
     state = state.copyWith(state: ScanState.lookingUp);
 
     try {
@@ -235,6 +257,7 @@ class ScannerNotifier extends Notifier<ScannerState> {
         barcodeType,
         typeHint: state.typeHint,
       );
+      if (_generation != gen) return;
 
       switch (scanResult) {
         case SingleScanResult():
@@ -266,6 +289,7 @@ class ScannerNotifier extends Notifier<ScannerState> {
           );
       }
     } catch (e) {
+      if (_generation != gen) return;
       state = ScannerState(
         state: ScanState.error,
         error: e.toString(),
@@ -289,6 +313,7 @@ class ScannerNotifier extends Notifier<ScannerState> {
   }
 
   void reset() {
+    _generation++;
     state = ScannerState(scanMode: state.scanMode);
   }
 

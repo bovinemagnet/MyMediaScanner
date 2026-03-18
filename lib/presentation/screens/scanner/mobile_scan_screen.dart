@@ -437,7 +437,24 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
         if (scannerState.state == ScanState.lookingUp)
           Container(
             color: Colors.black54,
-            child: const LoadingIndicator(message: 'Looking up metadata...'),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const LoadingIndicator(message: 'Looking up metadata...'),
+                const SizedBox(height: 24),
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white54),
+                  ),
+                  onPressed: () {
+                    ref.read(scannerProvider.notifier).cancel();
+                  },
+                  icon: const Icon(Icons.close),
+                  label: const Text('Cancel'),
+                ),
+              ],
+            ),
           ),
       ],
     );
@@ -490,8 +507,19 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
             ),
           ),
           const SizedBox(height: 16),
-          if (scannerState.state == ScanState.lookingUp)
+          if (scannerState.state == ScanState.lookingUp) ...[
             const LoadingIndicator(message: 'Looking up metadata...'),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () {
+                ref.read(scannerProvider.notifier).cancel();
+                _externalController.clear();
+                _externalFocusNode.requestFocus();
+              },
+              icon: const Icon(Icons.close),
+              label: const Text('Cancel'),
+            ),
+          ],
           if (scannerState.state == ScanState.error)
             Text(
               scannerState.error ?? 'Unknown error',

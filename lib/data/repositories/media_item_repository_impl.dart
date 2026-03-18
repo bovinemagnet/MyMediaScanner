@@ -109,9 +109,9 @@ class MediaItemRepositoryImpl implements IMediaItemRepository {
       year: row.year,
       publisher: row.publisher,
       format: row.format,
-      genres: (jsonDecode(row.genres) as List).cast<String>(),
-      extraMetadata: jsonDecode(row.extraMetadata) as Map<String, dynamic>,
-      sourceApis: (jsonDecode(row.sourceApis) as List).cast<String>(),
+      genres: _parseStringList(jsonDecode(row.genres)),
+      extraMetadata: _parseMap(jsonDecode(row.extraMetadata)),
+      sourceApis: _parseStringList(jsonDecode(row.sourceApis)),
       userRating: row.userRating,
       userReview: row.userReview,
       criticScore: row.criticScore,
@@ -122,6 +122,17 @@ class MediaItemRepositoryImpl implements IMediaItemRepository {
       syncedAt: row.syncedAt,
       deleted: row.deleted == 1,
     );
+  }
+
+  static List<String> _parseStringList(dynamic decoded) {
+    if (decoded is List) return decoded.whereType<String>().toList();
+    return [];
+  }
+
+  static Map<String, dynamic> _parseMap(dynamic decoded) {
+    if (decoded is Map<String, dynamic>) return decoded;
+    if (decoded is Map) return decoded.cast<String, dynamic>();
+    return {};
   }
 
   MediaItemsTableCompanion _toCompanion(MediaItem item) {

@@ -331,15 +331,17 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     if (tmdbApi == null) return null;
     try {
       final response = await tmdbApi!.searchMulti(candidate.title);
-      final match = response.results?.firstWhere(
+      final results = response.results;
+      if (results == null || results.isEmpty) return null;
+      final match = results.firstWhere(
         (r) => r.id?.toString() == candidate.sourceId,
-        orElse: () => response.results!.first,
+        orElse: () => results.first,
       );
-      if (match != null) {
-        await _cacheResponse(barcode, 'film', 'tmdb', match.toJson());
-        return TmdbMapper.fromSearchResult(match, barcode, barcodeType);
-      }
-    } on Exception catch (_) {}
+      await _cacheResponse(barcode, 'film', 'tmdb', match.toJson());
+      return TmdbMapper.fromSearchResult(match, barcode, barcodeType);
+    } on Exception catch (e) {
+      debugPrint('TMDB detail fetch failed: $e');
+    }
     return null;
   }
 
@@ -352,11 +354,12 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     try {
       final response = await googleBooksApi!.searchByIsbn('isbn:$barcode');
       googleBooksBreaker.reset();
-      final match = response.items?.firstWhere(
-        (v) => v.id == candidate.sourceId,
-        orElse: () => response.items!.first,
-      );
-      if (match != null) {
+      final items = response.items;
+      if (items != null && items.isNotEmpty) {
+        final match = items.firstWhere(
+          (v) => v.id == candidate.sourceId,
+          orElse: () => items.first,
+        );
         await _cacheResponse(barcode, 'book', 'google_books', match.toJson());
         return GoogleBooksMapper.fromVolume(match, barcode, barcodeType);
       }
@@ -380,7 +383,9 @@ class MetadataRepositoryImpl implements IMetadataRepository {
         await _cacheResponse(barcode, 'book', 'open_library', book.toJson());
         return OpenLibraryMapper.fromBook(book, barcode, barcodeType);
       }
-    } on Exception catch (_) {}
+    } on Exception catch (e) {
+      debugPrint('Open Library detail fetch failed: $e');
+    }
     return null;
   }
 
@@ -392,15 +397,18 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     if (upcitemdbApi == null) return null;
     try {
       final response = await upcitemdbApi!.lookup(barcode);
-      final match = response.items?.firstWhere(
-        (i) => (i.ean ?? barcode) == candidate.sourceId,
-        orElse: () => response.items!.first,
-      );
-      if (match != null) {
+      final items = response.items;
+      if (items != null && items.isNotEmpty) {
+        final match = items.firstWhere(
+          (i) => (i.ean ?? barcode) == candidate.sourceId,
+          orElse: () => items.first,
+        );
         await _cacheResponse(barcode, null, 'upcitemdb', match.toJson());
         return UpcMapper.fromItem(match, barcode, barcodeType);
       }
-    } on Exception catch (_) {}
+    } on Exception catch (e) {
+      debugPrint('UPCitemdb detail fetch failed: $e');
+    }
     return null;
   }
 
@@ -533,7 +541,8 @@ class MetadataRepositoryImpl implements IMetadataRepository {
       };
       if (metadata == null) return null;
       return ScanResult.single(metadata: metadata, isDuplicate: false);
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Cache deserialization failed for $barcode: $e');
       return null;
     }
   }

@@ -143,8 +143,17 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            if (scannerState.state == ScanState.lookingUp)
+            if (scannerState.state == ScanState.lookingUp) ...[
               const LoadingIndicator(message: 'Looking up metadata...'),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: () {
+                  ref.read(scannerProvider.notifier).cancel();
+                },
+                icon: const Icon(Icons.close),
+                label: const Text('Cancel'),
+              ),
+            ],
             if (scannerState.state == ScanState.error)
               Text(
                 scannerState.error ?? 'Unknown error',

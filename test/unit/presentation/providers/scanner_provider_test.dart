@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -317,6 +319,100 @@ void main() {
 
         final state = container.read(scannerProvider);
         expect(state.state, ScanState.error);
+      });
+    });
+
+    group('cancel', () {
+      test('resets state to idle from lookingUp', () async {
+        const barcode = '5099902894225';
+        final completer = Completer<ScanResult>();
+
+        when(() => mockMediaItemRepo.barcodeExists(barcode))
+            .thenAnswer((_) async => false);
+        when(() => mockMetadataRepo.lookupBarcode(barcode, typeHint: null))
+            .thenAnswer((_) => completer.future);
+
+        final container = createContainer();
+        addTearDown(container.dispose);
+
+        final notifier = container.read(scannerProvider.notifier);
+        final future = notifier.onBarcodeScanned(barcode);
+
+        // Should be looking up now
+        expect(container.read(scannerProvider).state, ScanState.lookingUp);
+
+        // Cancel before the lookup completes
+        notifier.cancel();
+        expect(container.read(scannerProvider).state, ScanState.idle);
+
+        // Complete the lookup — result should be discarded
+        completer.complete(const ScanResult.single(
+          metadata: MetadataResult(
+            barcode: barcode,
+            barcodeType: 'ean13',
+            title: 'Late Result',
+          ),
+          isDuplicate: false,
+        ));
+        await future;
+
+        // State should still be idle, not found
+        expect(container.read(scannerProvider).state, ScanState.idle);
+        expect(container.read(scannerProvider).result, isNull);
+      });
+
+      test('preserves batch mode and media types after cancel', () {
+        final container = createContainer();
+        addTearDown(container.dispose);
+
+        final notifier = container.read(scannerProvider.notifier);
+        notifier.toggleBatchMode();
+        // Default is all 5 types. Remove all except music.
+        notifier.toggleMediaType(MediaType.film);
+        notifier.toggleMediaType(MediaType.tv);
+        notifier.toggleMediaType(MediaType.book);
+        notifier.toggleMediaType(MediaType.game);
+
+        notifier.cancel();
+
+        final state = container.read(scannerProvider);
+        expect(state.state, ScanState.idle);
+        expect(state.batchMode, isTrue);
+        expect(state.enabledMediaTypes, {MediaType.music});
+      });
+
+      test('discards stale searchByTitle result after cancel', () async {
+        final completer = Completer<ScanResult>();
+
+        when(() => mockMetadataRepo.searchByTitle(
+              any(),
+              any(),
+              any(),
+              typeHint: any(named: 'typeHint'),
+            )).thenAnswer((_) => completer.future);
+
+        final container = createContainer();
+        addTearDown(container.dispose);
+
+        final notifier = container.read(scannerProvider.notifier);
+        final future = notifier.searchByTitle('Test', '000', 'ean13');
+
+        expect(container.read(scannerProvider).state, ScanState.lookingUp);
+
+        notifier.cancel();
+        expect(container.read(scannerProvider).state, ScanState.idle);
+
+        completer.complete(const ScanResult.single(
+          metadata: MetadataResult(
+            barcode: '000',
+            barcodeType: 'ean13',
+            title: 'Late',
+          ),
+          isDuplicate: false,
+        ));
+        await future;
+
+        expect(container.read(scannerProvider).state, ScanState.idle);
       });
     });
 

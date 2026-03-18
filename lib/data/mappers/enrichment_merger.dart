@@ -48,8 +48,8 @@ abstract final class EnrichmentMerger {
     if (fanartCoverUrl == null) return base;
     // Only upgrade if we don't have a cover, or current cover is from
     // Cover Art Archive (lower quality).
-    if (base.coverUrl == null ||
-        base.coverUrl!.contains('coverartarchive.org')) {
+    final currentCover = base.coverUrl;
+    if (currentCover == null || currentCover.contains('coverartarchive.org')) {
       return base.copyWith(coverUrl: fanartCoverUrl);
     }
     return base;

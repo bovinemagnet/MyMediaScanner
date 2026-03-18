@@ -470,11 +470,21 @@ class _RipStatusSection extends ConsumerWidget {
                           ),
                         const SizedBox(width: 8),
                         FilledButton.tonal(
-                          onPressed: () {
-                            ManageRipsUseCase(
-                              repository:
-                                  ref.read(ripLibraryRepositoryProvider),
-                            ).unlinkFromMediaItem(ripAlbum.id);
+                          onPressed: () async {
+                            try {
+                              await ManageRipsUseCase(
+                                repository:
+                                    ref.read(ripLibraryRepositoryProvider),
+                              ).unlinkFromMediaItem(ripAlbum.id);
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content:
+                                          Text('Failed to unlink rip: $e')),
+                                );
+                              }
+                            }
                           },
                           child: const Text('Unlink'),
                         ),
