@@ -3,9 +3,12 @@ import 'package:flutter/foundation.dart';
 /// Platform capability detection.
 /// Never use dart:io Platform directly in presentation layer.
 abstract final class PlatformCapability {
+  /// Whether the mobile_scanner plugin is available.
+  /// Supported on Android, iOS, and macOS. Not supported on Linux or Windows.
   static bool get canUseCamera =>
       defaultTargetPlatform == TargetPlatform.android ||
-      defaultTargetPlatform == TargetPlatform.iOS;
+      defaultTargetPlatform == TargetPlatform.iOS ||
+      defaultTargetPlatform == TargetPlatform.macOS;
 
   static bool get isDesktop =>
       defaultTargetPlatform == TargetPlatform.macOS ||
