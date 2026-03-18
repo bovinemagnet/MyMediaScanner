@@ -28,8 +28,8 @@ class DisambiguationScreen extends ConsumerWidget {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            ref.read(scannerProvider.notifier).reset();
             context.go('/scan');
+            ref.read(scannerProvider.notifier).reset();
           },
         ),
       ),
@@ -64,10 +64,10 @@ class DisambiguationScreen extends ConsumerWidget {
                             final detail =
                                 await notifier.selectCandidate(candidate);
                             if (detail != null && context.mounted) {
+                              context.go('/scan/confirm');
                               ref
                                   .read(scannerProvider.notifier)
                                   .onCandidateSelected(detail);
-                              context.go('/scan/confirm');
                             }
                           },
                   ),
@@ -83,11 +83,11 @@ class DisambiguationScreen extends ConsumerWidget {
                 onPressed: isLoading
                     ? null
                     : () {
+                        context.go('/scan/confirm');
                         ref.read(scannerProvider.notifier).onNoneSelected(
                           disambigState.barcode,
                           disambigState.barcodeType,
                         );
-                        context.go('/scan/confirm');
                       },
                 icon: const Icon(Icons.not_interested),
                 label: const Text('None of these \u2014 save with barcode only'),

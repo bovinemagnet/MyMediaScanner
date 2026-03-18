@@ -35,8 +35,8 @@ class MetadataConfirmScreen extends ConsumerWidget {
         canPop: false,
         onPopInvokedWithResult: (didPop, _) {
           if (!didPop) {
-            ref.read(scannerProvider.notifier).reset();
             context.go('/scan');
+            ref.read(scannerProvider.notifier).reset();
           }
         },
         child: Scaffold(
