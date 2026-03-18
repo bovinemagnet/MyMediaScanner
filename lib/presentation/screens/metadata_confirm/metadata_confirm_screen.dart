@@ -50,8 +50,8 @@ class MetadataConfirmScreen extends ConsumerWidget {
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) {
-          ref.read(scannerProvider.notifier).reset();
           context.go('/scan');
+          ref.read(scannerProvider.notifier).reset();
         }
       },
       child: Scaffold(
@@ -60,8 +60,8 @@ class MetadataConfirmScreen extends ConsumerWidget {
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () {
-            ref.read(scannerProvider.notifier).reset();
             context.go('/scan');
+            ref.read(scannerProvider.notifier).reset();
           },
         ),
       ),
