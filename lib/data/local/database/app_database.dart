@@ -85,7 +85,11 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(ripAlbumsTable);
             await m.createTable(ripTracksTable);
           }
-          if (from < 5) {
+          if (from == 4) {
+            // Only add columns for databases created at schema 4, where
+            // rip_tracks exists but lacks the Phase B quality columns.
+            // Databases created at schema >= 5 already have these columns
+            // because createTable uses the current table definition.
             await m.addColumn(
                 ripTracksTable, ripTracksTable.accurateripStatus);
             await m.addColumn(
