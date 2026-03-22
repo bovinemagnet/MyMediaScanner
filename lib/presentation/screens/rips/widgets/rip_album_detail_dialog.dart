@@ -7,6 +7,7 @@ import 'package:mymediascanner/domain/entities/rip_album.dart';
 import 'package:mymediascanner/domain/entities/rip_track.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
+import 'package:mymediascanner/presentation/screens/rips/widgets/quality_widgets.dart';
 import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
 
 /// Dialog showing detailed information about a rip album.
@@ -71,6 +72,10 @@ class RipAlbumDetailDialog extends ConsumerWidget {
               _LinkSection(album: album),
 
               const Divider(height: 24),
+
+              // Quality analysis
+              QualityAnalysisSection(albumId: album.id),
+              const SizedBox(height: 12),
 
               // Track listing
               Text('Tracks', style: theme.textTheme.titleSmall),
@@ -243,7 +248,7 @@ class _TrackTile extends StatelessWidget {
 
     return ListTile(
       dense: true,
-      leading: _qualityIcon(track),
+      leading: QualityIcon(track: track),
       title: Text(
         track.title ?? 'Track ${track.trackNumber}',
         style: theme.textTheme.bodyMedium,
@@ -274,29 +279,6 @@ class _TrackTile extends StatelessWidget {
             )
           : null,
     );
-  }
-
-  Widget _qualityIcon(RipTrack track) {
-    if (track.qualityCheckedAt == null) {
-      return const Icon(Icons.help_outline, color: Colors.grey, size: 20);
-    }
-
-    if (track.accurateRipStatus == 'verified') {
-      if ((track.clickCount ?? 0) > 0) {
-        return const Icon(Icons.warning_amber, color: Colors.amber, size: 20);
-      }
-      return const Icon(Icons.check_circle, color: Colors.green, size: 20);
-    }
-
-    if (track.accurateRipStatus == 'mismatch') {
-      return const Icon(Icons.cancel, color: Colors.red, size: 20);
-    }
-
-    // Not found in AccurateRip or other status
-    if ((track.clickCount ?? 0) > 0) {
-      return const Icon(Icons.warning_amber, color: Colors.amber, size: 20);
-    }
-    return const Icon(Icons.help_outline, color: Colors.grey, size: 20);
   }
 
   String _formatDuration(int? ms) {

@@ -8,6 +8,7 @@ import 'package:mymediascanner/domain/entities/rip_album.dart';
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
 import 'package:mymediascanner/presentation/providers/selected_rip_album_provider.dart';
 import 'package:mymediascanner/presentation/providers/rip_view_mode_provider.dart';
+import 'package:mymediascanner/presentation/screens/rips/widgets/quality_widgets.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/rip_album_detail_dialog.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/rip_table_view.dart';
 import 'package:mymediascanner/presentation/widgets/empty_state.dart';
@@ -363,6 +364,12 @@ class _RipAlbumDetailPanel extends ConsumerWidget {
           ),
         ),
         const Divider(),
+        // Quality analysis
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          child: QualityAnalysisSection(albumId: album.id),
+        ),
+        const Divider(),
         // Track listing
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -382,6 +389,7 @@ class _RipAlbumDetailPanel extends ConsumerWidget {
                   final track = tracks[index];
                   return ListTile(
                     dense: true,
+                    leading: QualityIcon(track: track),
                     title: Text(
                       track.title ?? 'Track ${track.trackNumber}',
                       style: theme.textTheme.bodyMedium,

@@ -265,17 +265,22 @@ class _SummaryBar extends StatelessWidget {
   }
 }
 
-class _CoverageItemTile extends StatelessWidget {
+class _CoverageItemTile extends ConsumerWidget {
   const _CoverageItemTile({required this.entry});
 
   final _CoverageEntry entry;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Check track quality for linked albums
+    final hasQualityIssues = _checkQualityIssues(ref);
+    final effectiveStatus =
+        hasQualityIssues ? CoverageStatus.qualityIssues : entry.status;
+
     return ListTile(
       leading: Icon(
-        _statusIcon(entry.status),
-        color: _statusColour(entry.status),
+        _statusIcon(effectiveStatus),
+        color: _statusColour(effectiveStatus),
       ),
       title: Text(entry.item.title),
       subtitle: Text(entry.item.subtitle ?? ''),
@@ -284,5 +289,21 @@ class _CoverageItemTile extends StatelessWidget {
           : null,
       onTap: () => context.go('/item/${entry.item.id}'),
     );
+  }
+
+  bool _checkQualityIssues(WidgetRef ref) {
+    if (entry.ripAlbum == null) return false;
+    if (entry.status != CoverageStatus.fullyRipped) return false;
+
+    final tracksAsync = ref.watch(ripTracksProvider(entry.ripAlbum!.id));
+    final tracks = tracksAsync.whenOrNull(data: (t) => t) ?? [];
+    if (tracks.isEmpty) return false;
+
+    // Only flag quality issues if analysis has been run
+    final anyChecked = tracks.any((t) => t.qualityCheckedAt != null);
+    if (!anyChecked) return false;
+
+    return tracks.any((t) =>
+        t.accurateRipStatus == 'mismatch' || (t.clickCount ?? 0) > 0);
   }
 }
