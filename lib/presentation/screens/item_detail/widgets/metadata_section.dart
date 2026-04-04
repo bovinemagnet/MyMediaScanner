@@ -10,66 +10,166 @@ class MetadataSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colors = theme.colorScheme;
     final extra = item.extraMetadata;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (item.description != null) ...[
-          Text('Description', style: theme.textTheme.titleSmall),
-          const SizedBox(height: 4),
-          Text(item.description!),
-          const SizedBox(height: 16),
+          _SectionContainer(
+            colors: colors,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('DESCRIPTION',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                      letterSpacing: 1.0,
+                      fontWeight: FontWeight.w700,
+                    )),
+                const SizedBox(height: 8),
+                Text(item.description!,
+                    style: theme.textTheme.bodyMedium),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
         ],
-        _row('Format', item.format),
-        _row('Publisher', item.publisher),
-        _row('Year', item.year?.toString()),
-        _row('Barcode', '${item.barcode} (${item.barcodeType})'),
-        _row(
-          'Critic Score',
-          item.criticScore != null
-              ? '${item.criticScore!.toStringAsFixed(1)}/10 (${item.criticSource})'
-              : null,
-        ),
-        if (item.genres.isNotEmpty)
-          _row('Genres', item.genres.join(', ')),
 
-        // Type-specific fields
-        if (item.mediaType == MediaType.film ||
-            item.mediaType == MediaType.tv) ...[
-          _row('Director', extra['director'] as String?),
-          _row('Runtime', extra['runtime_minutes'] != null
-              ? '${extra['runtime_minutes']} min'
-              : null),
-        ],
-        if (item.mediaType == MediaType.music) ...[
-          _row('Artist', (extra['artists'] as List?)?.join(', ')),
-          _row('Label', extra['label'] as String?),
-        ],
-        if (item.mediaType == MediaType.book) ...[
-          _row('Author', (extra['authors'] as List?)?.join(', ')),
-          _row('Pages', extra['page_count']?.toString()),
-          _row('ISBN', extra['isbn13'] as String? ?? extra['isbn10'] as String?),
+        // Core metadata
+        _SectionContainer(
+          colors: colors,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('DETAILS',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                    letterSpacing: 1.0,
+                    fontWeight: FontWeight.w700,
+                  )),
+              const SizedBox(height: 12),
+              _row(theme, colors, 'Format', item.format),
+              _row(theme, colors, 'Publisher', item.publisher),
+              _row(theme, colors, 'Year', item.year?.toString()),
+              _row(theme, colors, 'Barcode',
+                  '${item.barcode} (${item.barcodeType})'),
+              if (item.genres.isNotEmpty)
+                _row(theme, colors, 'Genres', item.genres.join(', ')),
+
+              // Type-specific fields
+              if (item.mediaType == MediaType.film ||
+                  item.mediaType == MediaType.tv) ...[
+                _row(theme, colors, 'Director',
+                    extra['director'] as String?),
+                _row(
+                    theme,
+                    colors,
+                    'Runtime',
+                    extra['runtime_minutes'] != null
+                        ? '${extra['runtime_minutes']} min'
+                        : null),
+              ],
+              if (item.mediaType == MediaType.music) ...[
+                _row(theme, colors, 'Artist',
+                    (extra['artists'] as List?)?.join(', ')),
+                _row(
+                    theme, colors, 'Label', extra['label'] as String?),
+              ],
+              if (item.mediaType == MediaType.book) ...[
+                _row(theme, colors, 'Author',
+                    (extra['authors'] as List?)?.join(', ')),
+                _row(theme, colors, 'Pages',
+                    extra['page_count']?.toString()),
+                _row(
+                    theme,
+                    colors,
+                    'ISBN',
+                    extra['isbn13'] as String? ??
+                        extra['isbn10'] as String?),
+              ],
+            ],
+          ),
+        ),
+
+        // Source APIs
+        if (item.sourceApis.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          _SectionContainer(
+            colors: colors,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('SOURCES',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                      letterSpacing: 1.0,
+                      fontWeight: FontWeight.w700,
+                    )),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: item.sourceApis
+                      .map((api) => Chip(
+                            label: Text(api),
+                            visualDensity: VisualDensity.compact,
+                          ))
+                      .toList(),
+                ),
+              ],
+            ),
+          ),
         ],
       ],
     );
   }
 
-  Widget _row(String label, String? value) {
+  Widget _row(
+      ThemeData theme, ColorScheme colors, String label, String? value) {
     if (value == null || value.isEmpty) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 100,
+            width: 90,
             child: Text(label,
-                style: const TextStyle(fontWeight: FontWeight.w600)),
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: colors.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                )),
           ),
-          Expanded(child: Text(value)),
+          Expanded(
+            child: Text(value, style: theme.textTheme.bodyMedium),
+          ),
         ],
       ),
+    );
+  }
+}
+
+class _SectionContainer extends StatelessWidget {
+  const _SectionContainer({
+    required this.colors,
+    required this.child,
+  });
+
+  final ColorScheme colors;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: child,
     );
   }
 }

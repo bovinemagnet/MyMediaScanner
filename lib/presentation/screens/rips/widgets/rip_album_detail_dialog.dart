@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mymediascanner/app/theme/app_colors.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
@@ -61,24 +62,43 @@ class RipAlbumDetailDialog extends ConsumerWidget {
               Text(
                 album.libraryPath,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.hintColor,
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              const Divider(height: 24),
+              const SizedBox(height: 16),
 
               // Link section
-              _LinkSection(album: album),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHigh,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: _LinkSection(album: album),
+              ),
 
-              const Divider(height: 24),
+              const SizedBox(height: 12),
 
               // Quality analysis
-              QualityAnalysisSection(albumId: album.id),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHigh,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: QualityAnalysisSection(albumId: album.id),
+              ),
               const SizedBox(height: 12),
 
               // Track listing
-              Text('Tracks', style: theme.textTheme.titleSmall),
+              Text('TRACKS',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    letterSpacing: 1.0,
+                    fontWeight: FontWeight.w700,
+                  )),
               const SizedBox(height: 8),
               Expanded(
                 child: tracksAsync.when(
@@ -123,7 +143,7 @@ class _LinkSection extends ConsumerWidget {
             ),
           ),
           TextButton.icon(
-            onPressed: () => context.go('/item/${album.mediaItemId}'),
+            onPressed: () => context.go('/collection/item/${album.mediaItemId}'),
             icon: const Icon(Icons.open_in_new, size: 16),
             label: const Text('View'),
           ),
@@ -266,7 +286,7 @@ class _TrackTile extends StatelessWidget {
                     padding: const EdgeInsets.only(right: 8),
                     child: Chip(
                       label: Text('${track.clickCount} clicks'),
-                      backgroundColor: Colors.amber.withValues(alpha: 0.3),
+                      backgroundColor: AppColors.tvColor.withValues(alpha: 0.2),
                       visualDensity: VisualDensity.compact,
                     ),
                   ),

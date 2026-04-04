@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:mymediascanner/domain/entities/metadata_candidate.dart';
 
@@ -14,6 +15,7 @@ class CandidateCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colors = theme.colorScheme;
 
     return Semantics(
       label: _accessibilityLabel,
@@ -26,15 +28,20 @@ class CandidateCard extends StatelessWidget {
             child: Row(
               children: [
                 // Cover art
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
+                Container(
+                  width: 64,
+                  height: 64,
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(
+                    color: colors.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
                   child: candidate.coverUrl != null
-                      ? Image.network(
-                          candidate.coverUrl!,
-                          width: 64,
-                          height: 64,
+                      ? CachedNetworkImage(
+                          imageUrl: candidate.coverUrl!,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
+                          placeholder: (_, _) => const SizedBox.shrink(),
+                          errorWidget: (_, _, _) =>
                               const _PlaceholderCover(),
                         )
                       : const _PlaceholderCover(),
@@ -55,19 +62,21 @@ class CandidateCard extends StatelessWidget {
                         const SizedBox(height: 2),
                         Text(
                           candidate.subtitle!,
-                          style: theme.textTheme.bodySmall,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colors.onSurfaceVariant,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ],
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 6),
                       Row(
                         children: [
                           if (candidate.year != null)
                             Text(
                               '${candidate.year}',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: colors.onSurfaceVariant,
                               ),
                             ),
                           if (candidate.year != null &&
@@ -81,17 +90,31 @@ class CandidateCard extends StatelessWidget {
                               labelStyle: theme.textTheme.labelSmall,
                             ),
                           const Spacer(),
-                          Chip(
-                            label: Text(candidate.sourceApi),
-                            visualDensity: VisualDensity.compact,
-                            padding: EdgeInsets.zero,
-                            labelStyle: theme.textTheme.labelSmall,
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color:
+                                  colors.primary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              candidate.sourceApi,
+                              style:
+                                  theme.textTheme.labelSmall?.copyWith(
+                                color: colors.primary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
                         ],
                       ),
                     ],
                   ),
                 ),
+                const SizedBox(width: 4),
+                Icon(Icons.chevron_right,
+                    size: 20, color: colors.onSurfaceVariant),
               ],
             ),
           ),
@@ -115,13 +138,12 @@ class _PlaceholderCover extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 64,
-      height: 64,
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+    final colors = Theme.of(context).colorScheme;
+    return Center(
       child: Icon(
         Icons.album,
-        color: Theme.of(context).colorScheme.onSurfaceVariant,
+        color: colors.onSurfaceVariant,
+        size: 28,
       ),
     );
   }

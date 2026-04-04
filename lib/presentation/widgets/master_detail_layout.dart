@@ -42,7 +42,13 @@ class MasterDetailLayout extends StatelessWidget {
               : width * 0.45,
           child: master,
         ),
-        const VerticalDivider(width: 1),
+        Container(
+          width: 1,
+          color: Theme.of(context)
+              .colorScheme
+              .outlineVariant
+              .withValues(alpha: 0.15),
+        ),
         Expanded(child: detail!),
       ],
     );

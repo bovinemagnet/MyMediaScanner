@@ -35,6 +35,8 @@ class _TitleSearchFieldState extends State<TitleSearchField> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
     return Row(
       children: [
         Expanded(
@@ -43,7 +45,6 @@ class _TitleSearchFieldState extends State<TitleSearchField> {
             autofocus: true,
             decoration: const InputDecoration(
               hintText: 'Enter title to search',
-              border: OutlineInputBorder(),
               prefixIcon: Icon(Icons.search),
             ),
             enabled: !widget.isLoading,
@@ -52,12 +53,15 @@ class _TitleSearchFieldState extends State<TitleSearchField> {
         ),
         const SizedBox(width: 8),
         widget.isLoading
-            ? const SizedBox(
+            ? SizedBox(
                 width: 48,
                 height: 48,
                 child: Padding(
-                  padding: EdgeInsets.all(12),
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                  padding: const EdgeInsets.all(12),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: colors.primary,
+                  ),
                 ),
               )
             : IconButton.filled(

@@ -91,7 +91,9 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     // 2. Route by barcode type + hint
     ScanResult? result;
 
-    if (forceIsbn || BarcodeUtils.isIsbn(barcode)) {
+    if (barcodeType == BarcodeType.imdbId) {
+      result = await _lookupImdbId(barcode, barcodeTypeStr);
+    } else if (forceIsbn || BarcodeUtils.isIsbn(barcode)) {
       result = await _lookupBook(barcode, barcodeTypeStr);
     } else if (typeHint == MediaType.film || typeHint == MediaType.tv) {
       result = await _lookupFilm(barcode, barcodeTypeStr);
@@ -176,6 +178,28 @@ class MetadataRepositoryImpl implements IMetadataRepository {
       );
     } on Exception catch (e) {
       debugPrint('TMDB title search failed: $e');
+    }
+    return null;
+  }
+
+  /// Look up a movie or TV show by IMDb ID (e.g. tt1234567) using TMDB's
+  /// find-by-external-ID endpoint.
+  Future<ScanResult?> _lookupImdbId(
+      String imdbId, String barcodeType) async {
+    if (tmdbApi == null) return null;
+    try {
+      final response = await tmdbApi!.findByExternalId(imdbId);
+      final results = response.allResults;
+      if (results.isEmpty) return null;
+
+      final first = results.first;
+      await _cacheResponse(imdbId, 'film', 'tmdb', first.toJson());
+      return ScanResult.single(
+        metadata: TmdbMapper.fromSearchResult(first, imdbId, barcodeType),
+        isDuplicate: false,
+      );
+    } on Exception catch (e) {
+      debugPrint('TMDB IMDb ID lookup failed: $e');
     }
     return null;
   }

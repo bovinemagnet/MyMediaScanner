@@ -23,6 +23,8 @@ import 'package:mymediascanner/presentation/screens/collection/widgets/collectio
 import 'package:mymediascanner/presentation/screens/collection/widgets/view_mode_toggle.dart';
 import 'package:mymediascanner/presentation/widgets/context_menu_actions.dart';
 import 'package:mymediascanner/presentation/widgets/desktop_context_menu.dart';
+import 'package:mymediascanner/presentation/widgets/gradient_button.dart';
+import 'package:mymediascanner/presentation/widgets/screen_header.dart';
 import 'package:mymediascanner/presentation/widgets/desktop_shortcuts.dart';
 import 'package:mymediascanner/presentation/widgets/empty_state.dart';
 import 'package:mymediascanner/presentation/widgets/error_state.dart';
@@ -51,7 +53,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     if (useDetailPanel) {
       ref.read(selectedItemProvider.notifier).select(itemId);
     } else {
-      context.go('/item/$itemId');
+      context.go('/collection/item/$itemId');
     }
   }
 
@@ -66,6 +68,39 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
 
     final masterContent = Column(
       children: [
+        if (isDesktop)
+          ScreenHeader(
+            title: 'Library',
+            subtitle: 'Managing your media collection.',
+            actions: [
+              const ViewModeToggle(),
+              IconButton(
+                icon: const Icon(Icons.download),
+                tooltip: 'Export collection',
+                onPressed: () => _showExportDialog(context, ref),
+              ),
+              IconButton(
+                icon: const Icon(Icons.bar_chart),
+                tooltip: 'Collection Statistics',
+                onPressed: () => context.go('/collection/statistics'),
+              ),
+              const SortSelector(),
+              const SizedBox(width: 8),
+              GradientButton(
+                onPressed: () => context.go('/scan'),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 8),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.add, size: 18),
+                    SizedBox(width: 6),
+                    Text('Add Media'),
+                  ],
+                ),
+              ),
+            ],
+          ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: SearchBar(
@@ -76,6 +111,16 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                 ref.read(collectionFilterProvider.notifier).setSearch(query),
           ),
         ),
+        if (!isDesktop)
+          const PreferredSize(
+            preferredSize: Size.fromHeight(56),
+            child: FilterBar(),
+          ),
+        if (isDesktop)
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: FilterBar(),
+          ),
         Expanded(
           child: collectionAsync.when(
             loading: () => const LoadingIndicator(),
@@ -135,27 +180,29 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
         return true;
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('My Collection'),
-          actions: [
-            if (isDesktop) const ViewModeToggle(),
-            IconButton(
-              icon: const Icon(Icons.download),
-              tooltip: 'Export collection',
-              onPressed: () => _showExportDialog(context, ref),
-            ),
-            IconButton(
-              icon: const Icon(Icons.bar_chart),
-              tooltip: 'Collection Statistics',
-              onPressed: () => context.go('/statistics'),
-            ),
-            const SortSelector(),
-          ],
-          bottom: const PreferredSize(
-            preferredSize: Size.fromHeight(56),
-            child: FilterBar(),
-          ),
-        ),
+        appBar: isDesktop
+            ? null
+            : AppBar(
+                title: const Text('Library'),
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.shelves),
+                    tooltip: 'Shelves',
+                    onPressed: () => context.go('/shelves'),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.download),
+                    tooltip: 'Export collection',
+                    onPressed: () => _showExportDialog(context, ref),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.bar_chart),
+                    tooltip: 'Statistics',
+                    onPressed: () => context.go('/collection/statistics'),
+                  ),
+                  const SortSelector(),
+                ],
+              ),
         body: MasterDetailLayout(
           master: masterContent,
           detail: selectedId != null
@@ -172,7 +219,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     MediaItem item,
   ) {
     return ContextMenuActions.forMediaItem(
-      onEdit: () => context.go('/item/${item.id}/edit'),
+      onEdit: () => context.go('/collection/item/${item.id}/edit'),
       onDelete: () => _confirmDeleteItem(context, ref, item.id),
       onAddToShelf: () => showDialog<void>(
         context: context,

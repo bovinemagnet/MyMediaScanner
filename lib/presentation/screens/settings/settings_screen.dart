@@ -6,68 +6,111 @@ import 'package:go_router/go_router.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
 import 'package:mymediascanner/presentation/screens/settings/widgets/api_key_form.dart';
+import 'package:mymediascanner/presentation/providers/settings_provider.dart';
 import 'package:mymediascanner/presentation/screens/settings/widgets/sync_status_tile.dart';
+import 'package:mymediascanner/presentation/widgets/screen_header.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final isDesktop = PlatformCapability.isDesktop;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: isDesktop
+          ? null
+          : AppBar(title: const Text('Settings')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          if (isDesktop)
+            ScreenHeader(
+              title: 'Settings',
+              subtitle:
+                  'Manage your API keys, sync configuration, and preferences.',
+              padding: const EdgeInsets.only(bottom: 16),
+            ),
+
           // Sync section
-          Text('Sync', style: Theme.of(context).textTheme.titleMedium),
-          const SyncStatusTile(),
-          ListTile(
-            leading: const Icon(Icons.storage),
-            title: const Text('PostgreSQL Configuration'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.go('/settings/postgres'),
+          _SectionCard(
+            title: 'Sync',
+            colors: colors,
+            theme: theme,
+            children: [
+              const SyncStatusTile(),
+              ListTile(
+                leading: const Icon(Icons.storage),
+                title: const Text('PostgreSQL Configuration'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.go('/settings/postgres'),
+              ),
+            ],
           ),
-          const Divider(height: 32),
+          const SizedBox(height: 16),
 
           // API Keys section
-          const ApiKeyForm(),
-          const Divider(height: 32),
+          _SectionCard(
+            title: 'API Integrations',
+            colors: colors,
+            theme: theme,
+            children: const [ApiKeyForm()],
+          ),
+          const SizedBox(height: 16),
 
           // FLAC Library section (desktop only)
-          if (PlatformCapability.isDesktop) ...[
-            Text('FLAC Library',
-                style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            const _FlacLibrarySection(),
-            const Divider(height: 32),
+          if (isDesktop) ...[
+            _SectionCard(
+              title: 'FLAC Library',
+              colors: colors,
+              theme: theme,
+              children: const [_FlacLibrarySection()],
+            ),
+            const SizedBox(height: 16),
           ],
 
           // Preferences section
-          Text('Preferences', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
-
-          // Theme — placeholder for full implementation
-          ListTile(
-            leading: const Icon(Icons.palette),
-            title: const Text('Theme'),
-            subtitle: const Text('System default'),
-            onTap: () {
-              // Theme picker — SET-07
-            },
+          _SectionCard(
+            title: 'Preferences',
+            colors: colors,
+            theme: theme,
+            children: [
+              _ThemeModeTile(),
+            ],
           ),
-
-          const Divider(height: 32),
+          const SizedBox(height: 16),
 
           // Danger zone
-          Text('Data', style: Theme.of(context).textTheme.titleMedium),
-          ListTile(
-            leading: Icon(Icons.warning,
-                color: Theme.of(context).colorScheme.error),
-            title: const Text('Reset & Re-sync'),
-            subtitle: const Text('Replace local data with remote'),
-            onTap: () => _confirmReset(context, ref),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: colors.errorContainer.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: colors.error.withValues(alpha: 0.2),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Danger Zone',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: colors.error,
+                    )),
+                const SizedBox(height: 8),
+                ListTile(
+                  leading: Icon(Icons.warning, color: colors.error),
+                  title: const Text('Reset & Re-sync'),
+                  subtitle:
+                      const Text('Replace local data with remote'),
+                  onTap: () => _confirmReset(context, ref),
+                ),
+              ],
+            ),
           ),
-          const Divider(height: 32),
+          const SizedBox(height: 16),
 
           // About
           ListTile(
@@ -103,6 +146,93 @@ class SettingsScreen extends ConsumerWidget {
             },
             child: const Text('Reset'),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ThemeModeTile extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentMode = ref.watch(themeModeProvider);
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    String label(ThemeMode mode) => switch (mode) {
+          ThemeMode.system => 'System default',
+          ThemeMode.light => 'Light',
+          ThemeMode.dark => 'Dark',
+        };
+
+    IconData icon(ThemeMode mode) => switch (mode) {
+          ThemeMode.system => Icons.brightness_auto,
+          ThemeMode.light => Icons.light_mode,
+          ThemeMode.dark => Icons.dark_mode,
+        };
+
+    return ListTile(
+      leading: Icon(icon(currentMode)),
+      title: const Text('Theme'),
+      subtitle: Text(label(currentMode)),
+      trailing: SegmentedButton<ThemeMode>(
+        segments: const [
+          ButtonSegment(
+            value: ThemeMode.system,
+            icon: Icon(Icons.brightness_auto, size: 18),
+          ),
+          ButtonSegment(
+            value: ThemeMode.light,
+            icon: Icon(Icons.light_mode, size: 18),
+          ),
+          ButtonSegment(
+            value: ThemeMode.dark,
+            icon: Icon(Icons.dark_mode, size: 18),
+          ),
+        ],
+        selected: {currentMode},
+        onSelectionChanged: (selection) {
+          ref.read(themeModeProvider.notifier).setMode(selection.first);
+        },
+        showSelectedIcon: false,
+      ),
+    );
+  }
+}
+
+class _SectionCard extends StatelessWidget {
+  const _SectionCard({
+    required this.title,
+    required this.colors,
+    required this.theme,
+    required this.children,
+  });
+
+  final String title;
+  final ColorScheme colors;
+  final ThemeData theme;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title.toUpperCase(),
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: colors.onSurfaceVariant,
+              letterSpacing: 0.8,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...children,
         ],
       ),
     );
@@ -172,7 +302,7 @@ class _FlacLibrarySectionState extends ConsumerState<_FlacLibrarySection> {
               tooltip: 'Browse\u2026',
               onPressed: () async {
                 final path =
-                    await FilePicker.platform.getDirectoryPath();
+                    await FilePicker.getDirectoryPath();
                 if (path != null) {
                   _pathController.text = path;
                   ref.read(ripLibraryPathProvider.notifier).setPath(path);
@@ -255,7 +385,7 @@ class _FlacLibrarySectionState extends ConsumerState<_FlacLibrarySection> {
               icon: const Icon(Icons.folder_open),
               tooltip: 'Browse\u2026',
               onPressed: () async {
-                final result = await FilePicker.platform.pickFiles(
+                final result = await FilePicker.pickFiles(
                   dialogTitle: 'Select flac binary',
                 );
                 if (result != null && result.files.single.path != null) {

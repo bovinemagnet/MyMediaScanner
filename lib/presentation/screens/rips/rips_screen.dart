@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/rip_coverage_view.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/rip_library_view.dart';
+import 'package:mymediascanner/presentation/widgets/screen_header.dart';
 
 /// Top-level screen for the Rips tab (desktop only).
 ///
@@ -21,13 +22,17 @@ class _RipsScreenState extends ConsumerState<RipsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Rips'),
-      ),
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const ScreenHeader(
+            title: 'Rip Library',
+            subtitle:
+                'Manage your FLAC rip collection and compare coverage '
+                'against physical media.',
+          ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: SegmentedButton<_RipsSegment>(
               segments: const [
                 ButtonSegment(
@@ -49,6 +54,7 @@ class _RipsScreenState extends ConsumerState<RipsScreen> {
               },
             ),
           ),
+          const SizedBox(height: 8),
           Expanded(
             child: _selected == _RipsSegment.library
                 ? const RipLibraryView()

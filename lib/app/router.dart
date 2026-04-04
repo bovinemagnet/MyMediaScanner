@@ -1,21 +1,58 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mymediascanner/presentation/screens/batch/batch_placeholder_screen.dart';
 import 'package:mymediascanner/presentation/screens/collection/collection_screen.dart';
+import 'package:mymediascanner/presentation/screens/collection/statistics_screen.dart';
+import 'package:mymediascanner/presentation/screens/dashboard/dashboard_screen.dart';
+import 'package:mymediascanner/presentation/screens/disambiguation/disambiguation_screen.dart';
 import 'package:mymediascanner/presentation/screens/item_detail/item_detail_screen.dart';
 import 'package:mymediascanner/presentation/screens/metadata_confirm/metadata_confirm_screen.dart';
-import 'package:mymediascanner/presentation/screens/scanner/scanner_screen.dart';
-import 'package:mymediascanner/presentation/screens/shelves/shelves_screen.dart';
-import 'package:mymediascanner/presentation/screens/shelves/shelf_detail_screen.dart';
-import 'package:mymediascanner/presentation/screens/settings/settings_screen.dart';
-import 'package:mymediascanner/presentation/screens/collection/statistics_screen.dart';
-import 'package:mymediascanner/presentation/screens/settings/widgets/postgres_config_form.dart';
-import 'package:mymediascanner/presentation/screens/disambiguation/disambiguation_screen.dart';
 import 'package:mymediascanner/presentation/screens/rips/rips_screen.dart';
+import 'package:mymediascanner/presentation/screens/scanner/scanner_screen.dart';
+import 'package:mymediascanner/presentation/screens/settings/settings_screen.dart';
+import 'package:mymediascanner/presentation/screens/settings/widgets/postgres_config_form.dart';
+import 'package:mymediascanner/presentation/screens/shelves/shelf_detail_screen.dart';
+import 'package:mymediascanner/presentation/screens/shelves/shelves_screen.dart';
 import 'package:mymediascanner/presentation/screens/about/about_screen.dart';
 import 'package:mymediascanner/presentation/widgets/app_scaffold.dart';
 
+/// Fade + slide up transition for detail/modal routes.
+CustomTransitionPage<void> _fadeSlideTransition(
+    GoRouterState state, Widget child) {
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    child: child,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final fadeIn = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOut,
+      );
+      final slideUp = Tween<Offset>(
+        begin: const Offset(0, 0.04),
+        end: Offset.zero,
+      ).animate(fadeIn);
+      return FadeTransition(
+        opacity: fadeIn,
+        child: SlideTransition(position: slideUp, child: child),
+      );
+    },
+    transitionDuration: const Duration(milliseconds: 250),
+  );
+}
+
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
+/// Route branches (indices must match sidebar/bottom-nav mapping in
+/// [AppScaffold]):
+///
+///   0 = Dashboard      (desktop sidebar + mobile bottom nav)
+///   1 = Collection     (desktop sidebar + mobile bottom nav as "Library")
+///   2 = Scanner        (mobile bottom nav only)
+///   3 = Shelves        (desktop sidebar only)
+///   4 = Batch Editor   (desktop sidebar only)
+///   5 = Insights       (desktop sidebar + mobile bottom nav)
+///   6 = Settings       (desktop sidebar only)
+///   7 = Rips           (desktop sidebar only)
 final router = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: '/',
@@ -24,16 +61,28 @@ final router = GoRouter(
       builder: (context, state, navigationShell) =>
           AppScaffold(navigationShell: navigationShell),
       branches: [
+        // 0 — Dashboard
         StatefulShellBranch(
           routes: [
             GoRoute(
               path: '/',
+              builder: (context, state) => const DashboardScreen(),
+            ),
+          ],
+        ),
+
+        // 1 — Collection / Library
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/collection',
               builder: (context, state) => const CollectionScreen(),
               routes: [
                 GoRoute(
                   path: 'statistics',
                   parentNavigatorKey: _rootNavigatorKey,
-                  builder: (context, state) => const StatisticsScreen(),
+                  pageBuilder: (context, state) =>
+                      _fadeSlideTransition(state, const StatisticsScreen()),
                 ),
                 GoRoute(
                   path: 'item/:id',
@@ -54,6 +103,8 @@ final router = GoRouter(
             ),
           ],
         ),
+
+        // 2 — Scanner
         StatefulShellBranch(
           routes: [
             GoRoute(
@@ -63,17 +114,21 @@ final router = GoRouter(
                 GoRoute(
                   path: 'confirm',
                   parentNavigatorKey: _rootNavigatorKey,
-                  builder: (context, state) => const MetadataConfirmScreen(),
+                  pageBuilder: (context, state) => _fadeSlideTransition(
+                      state, const MetadataConfirmScreen()),
                 ),
                 GoRoute(
                   path: 'disambiguate',
                   parentNavigatorKey: _rootNavigatorKey,
-                  builder: (context, state) => const DisambiguationScreen(),
+                  pageBuilder: (context, state) => _fadeSlideTransition(
+                      state, const DisambiguationScreen()),
                 ),
               ],
             ),
           ],
         ),
+
+        // 3 — Shelves
         StatefulShellBranch(
           routes: [
             GoRoute(
@@ -90,6 +145,29 @@ final router = GoRouter(
             ),
           ],
         ),
+
+        // 4 — Batch Editor
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/batch',
+              builder: (context, state) =>
+                  const BatchPlaceholderScreen(),
+            ),
+          ],
+        ),
+
+        // 5 — Insights (Statistics)
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/insights',
+              builder: (context, state) => const StatisticsScreen(),
+            ),
+          ],
+        ),
+
+        // 6 — Settings
         StatefulShellBranch(
           routes: [
             GoRoute(
@@ -99,18 +177,21 @@ final router = GoRouter(
                 GoRoute(
                   path: 'postgres',
                   parentNavigatorKey: _rootNavigatorKey,
-                  builder: (context, state) =>
-                      const PostgresConfigForm(),
+                  pageBuilder: (context, state) => _fadeSlideTransition(
+                      state, const PostgresConfigForm()),
                 ),
                 GoRoute(
                   path: 'about',
                   parentNavigatorKey: _rootNavigatorKey,
-                  builder: (context, state) => const AboutScreen(),
+                  pageBuilder: (context, state) =>
+                      _fadeSlideTransition(state, const AboutScreen()),
                 ),
               ],
             ),
           ],
         ),
+
+        // 7 — Rips
         StatefulShellBranch(
           routes: [
             GoRoute(

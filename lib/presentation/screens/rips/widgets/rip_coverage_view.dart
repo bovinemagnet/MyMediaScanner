@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mymediascanner/app/theme/app_colors.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
@@ -208,13 +209,13 @@ IconData _statusIcon(CoverageStatus status) {
 Color _statusColour(CoverageStatus status) {
   switch (status) {
     case CoverageStatus.notRipped:
-      return Colors.red;
+      return AppColors.filmColor;
     case CoverageStatus.partiallyRipped:
-      return Colors.amber;
+      return AppColors.tvColor;
     case CoverageStatus.fullyRipped:
-      return Colors.green;
+      return AppColors.bookColor;
     case CoverageStatus.qualityIssues:
-      return Colors.amber;
+      return AppColors.tvColor;
   }
 }
 
@@ -287,7 +288,7 @@ class _CoverageItemTile extends ConsumerWidget {
       trailing: entry.ripAlbum != null
           ? Text('${entry.ripAlbum!.trackCount} tracks')
           : null,
-      onTap: () => context.go('/item/${entry.item.id}'),
+      onTap: () => context.go('/collection/item/${entry.item.id}'),
     );
   }
 

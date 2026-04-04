@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mymediascanner/app/theme/app_colors.dart';
 import 'package:mymediascanner/core/constants/app_constants.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
@@ -246,12 +247,12 @@ class _RipAlbumCard extends ConsumerWidget {
               const Spacer(),
               Row(
                 children: [
-                  Icon(Icons.music_note, size: 14, color: theme.hintColor),
+                  Icon(Icons.music_note, size: 14, color: theme.colorScheme.onSurfaceVariant),
                   const SizedBox(width: 4),
                   Text('${album.trackCount} tracks',
                       style: theme.textTheme.bodySmall),
                   const SizedBox(width: 12),
-                  Icon(Icons.storage, size: 14, color: theme.hintColor),
+                  Icon(Icons.storage, size: 14, color: theme.colorScheme.onSurfaceVariant),
                   const SizedBox(width: 4),
                   Text(_formatSize(album.totalSizeBytes),
                       style: theme.textTheme.bodySmall),
@@ -265,10 +266,10 @@ class _RipAlbumCard extends ConsumerWidget {
                       Icons.verified,
                       size: 14,
                       color: arVerified == tracks.length
-                          ? Colors.green
+                          ? AppColors.bookColor
                           : arVerified > 0
-                              ? Colors.amber
-                              : theme.hintColor,
+                              ? AppColors.tvColor
+                              : theme.colorScheme.onSurfaceVariant,
                     ),
                     const SizedBox(width: 4),
                     Text(
@@ -277,8 +278,8 @@ class _RipAlbumCard extends ConsumerWidget {
                     ),
                     if (withClicks > 0) ...[
                       const SizedBox(width: 8),
-                      const Icon(Icons.warning_amber,
-                          size: 14, color: Colors.amber),
+                      Icon(Icons.warning_amber,
+                          size: 14, color: AppColors.tvColor),
                       const SizedBox(width: 4),
                       Text('$withClicks clicks',
                           style: theme.textTheme.bodySmall),
@@ -319,62 +320,72 @@ class _RipAlbumDetailPanel extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Toolbar
-        Material(
-          elevation: 1,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        album.artist ?? 'Unknown Artist',
-                        style: theme.textTheme.titleSmall,
-                        overflow: TextOverflow.ellipsis,
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          color: theme.colorScheme.surfaceContainerHigh,
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      album.artist ?? 'Unknown Artist',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
-                      Text(
-                        album.albumTitle ?? 'Unknown Album',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      album.albumTitle ?? 'Unknown Album',
+                      style: theme.textTheme.titleSmall,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
-                IconButton(
-                  icon: const Icon(Icons.close, size: 20),
-                  tooltip: 'Close panel',
-                  onPressed: () =>
-                      ref.read(selectedRipAlbumProvider.notifier).clear(),
-                ),
-              ],
-            ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close, size: 20),
+                tooltip: 'Close panel',
+                onPressed: () =>
+                    ref.read(selectedRipAlbumProvider.notifier).clear(),
+              ),
+            ],
           ),
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           child: Text(
             album.libraryPath,
-            style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor),
+            style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        const Divider(),
+        const SizedBox(height: 8),
         // Quality analysis
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 12),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHigh,
+            borderRadius: BorderRadius.circular(10),
+          ),
           child: QualityAnalysisSection(albumId: album.id),
         ),
-        const Divider(),
+        const SizedBox(height: 12),
         // Track listing
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Text('Tracks', style: theme.textTheme.titleSmall),
+          child: Text('TRACKS',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                letterSpacing: 1.0,
+                fontWeight: FontWeight.w700,
+              )),
         ),
+        const SizedBox(height: 4),
         Expanded(
           child: tracksAsync.when(
             loading: () => const LoadingIndicator(),

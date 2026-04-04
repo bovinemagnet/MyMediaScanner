@@ -9,21 +9,43 @@ class CoverArtHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
     return Hero(
       tag: tag,
-      child: imageUrl != null
-          ? CachedNetworkImage(
-              imageUrl: imageUrl!,
-              height: 300,
-              fit: BoxFit.contain,
-              errorWidget: (_, _, _) =>
-                  const Icon(Icons.broken_image, size: 100),
-            )
-          : Container(
-              height: 300,
-              color: Theme.of(context).colorScheme.surfaceContainerHighest,
-              child: const Icon(Icons.image_not_supported, size: 100),
-            ),
+      child: Container(
+        constraints: const BoxConstraints(maxHeight: 320),
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: colors.surfaceContainerHighest,
+        ),
+        child: imageUrl != null
+            ? CachedNetworkImage(
+                imageUrl: imageUrl!,
+                height: 320,
+                fit: BoxFit.contain,
+                placeholder: (_, _) => SizedBox(
+                  height: 320,
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: colors.primary,
+                    ),
+                  ),
+                ),
+                errorWidget: (_, _, _) => SizedBox(
+                  height: 320,
+                  child: Icon(Icons.broken_image,
+                      size: 64, color: colors.onSurfaceVariant),
+                ),
+              )
+            : SizedBox(
+                height: 320,
+                child: Icon(Icons.image_not_supported,
+                    size: 64, color: colors.onSurfaceVariant),
+              ),
+      ),
     );
   }
 }

@@ -25,5 +25,6 @@ abstract final class PlatformCapability {
   /// Only supported on Android and iOS.
   static bool get hasCoverOcr =>
       defaultTargetPlatform == TargetPlatform.android ||
-      defaultTargetPlatform == TargetPlatform.iOS;
+      defaultTargetPlatform == TargetPlatform.iOS ||
+      defaultTargetPlatform == TargetPlatform.macOS;
 }

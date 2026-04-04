@@ -120,13 +120,13 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
           controller: controller,
           autofocus: true,
           decoration: const InputDecoration(
-            hintText: 'Barcode / ISBN',
+            hintText: 'Barcode / ISBN / IMDb ID',
             border: OutlineInputBorder(),
             prefixIcon: Icon(Icons.qr_code),
           ),
-          keyboardType: TextInputType.number,
+          keyboardType: TextInputType.text,
           inputFormatters: [
-            FilteringTextInputFormatter.allow(RegExp(r'[\dXx]')),
+            FilteringTextInputFormatter.allow(RegExp(r'[\dXxTt]')),
           ],
           onSubmitted: (value) {
             Navigator.of(dialogContext).pop();
@@ -261,16 +261,16 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
 
     ref.listen(scannerProvider, (prev, next) {
       if (next.state == ScanState.found) {
-        if (next.batchMode) {
-          ref.read(scannerProvider.notifier).incrementBatchCount();
+        if (next.batchMode && next.result != null) {
+          ref.read(scannerProvider.notifier).queueToBatch(next.result!);
           _resumeScanning();
         } else {
           context.go('/scan/confirm');
         }
       }
       if (next.state == ScanState.notFound) {
-        if (next.batchMode) {
-          ref.read(scannerProvider.notifier).incrementBatchCount();
+        if (next.batchMode && next.result != null) {
+          ref.read(scannerProvider.notifier).queueToBatch(next.result!);
           _resumeScanning();
         } else if (PlatformCapability.hasCoverOcr) {
           _showNotFoundDialog(next.result);
@@ -279,10 +279,20 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
         }
       }
       if (next.state == ScanState.disambiguating) {
-        context.go('/scan/disambiguate');
+        if (next.batchMode && next.result != null) {
+          ref.read(scannerProvider.notifier).queueToBatch(next.result!);
+          _resumeScanning();
+        } else {
+          context.go('/scan/disambiguate');
+        }
       }
       if (next.state == ScanState.duplicate) {
-        _showDuplicateDialog();
+        if (next.batchMode && next.result != null) {
+          ref.read(scannerProvider.notifier).queueToBatch(next.result!);
+          _resumeScanning();
+        } else {
+          _showDuplicateDialog();
+        }
       }
       if (next.state == ScanState.error) {
         if (context.mounted) {
@@ -305,65 +315,28 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        scrolledUnderElevation: 0,
         foregroundColor: Colors.white,
-        title: const Text('Scan Barcode'),
+        title: const Text('MyMediaScanner'),
+        titleTextStyle: Theme.of(context).textTheme.titleMedium?.copyWith(
+          color: Theme.of(context).colorScheme.primary,
+          fontWeight: FontWeight.w800,
+        ),
         actions: [
           // Batch mode toggle
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (scannerState.batchMode && scannerState.batchCount > 0)
-                Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: BatchScanCounter(count: scannerState.batchCount),
-                ),
-              const Text(
-                'Batch',
-                style: TextStyle(color: Colors.white, fontSize: 12),
-              ),
-              Switch(
-                value: scannerState.batchMode,
-                onChanged: (_) =>
-                    ref.read(scannerProvider.notifier).toggleBatchMode(),
-              ),
-            ],
-          ),
-          // Flash toggle
-          ValueListenableBuilder(
-            valueListenable: _cameraController,
-            builder: (context, state, _) {
-              final torchState = state.torchState;
-              if (torchState == TorchState.unavailable) {
-                return const SizedBox.shrink();
-              }
-              return IconButton(
-                icon: Icon(
-                  torchState == TorchState.on
-                      ? Icons.flash_on
-                      : Icons.flash_off,
-                ),
-                onPressed: _cameraController.toggleTorch,
-                tooltip: 'Toggle flash',
-              );
-            },
-          ),
-          // External scanner mode toggle (Bluetooth/USB)
-          IconButton(
-            icon: Icon(
-              _externalScannerMode ? Icons.camera_alt : Icons.bluetooth,
+          if (scannerState.batchMode && scannerState.batchCount > 0)
+            Padding(
+              padding: const EdgeInsets.only(right: 4),
+              child: BatchScanCounter(count: scannerState.batchCount),
             ),
-            onPressed: _toggleExternalScannerMode,
-            tooltip: _externalScannerMode
-                ? 'Switch to camera'
-                : 'Bluetooth/USB scanner',
+          const Text('Batch',
+              style: TextStyle(color: Colors.white70, fontSize: 11)),
+          Switch(
+            value: scannerState.batchMode,
+            onChanged: (_) =>
+                ref.read(scannerProvider.notifier).toggleBatchMode(),
           ),
-          // Manual entry
-          if (!_externalScannerMode)
-            IconButton(
-              icon: const Icon(Icons.keyboard),
-              onPressed: _showManualEntryDialog,
-              tooltip: 'Enter barcode manually',
-            ),
+          const SizedBox(width: 4),
         ],
       ),
       body: _externalScannerMode
@@ -413,49 +386,95 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
           },
         ),
         const ScanOverlay(),
-        // Scan mode and media type toggles at the bottom
+
+        // Floating action buttons — right edge
         Positioned(
-          left: 16,
           right: 16,
-          bottom: 32,
+          top: MediaQuery.of(context).padding.top + 72,
+          child: Column(
+            children: [
+              // Flash toggle
+              ValueListenableBuilder(
+                valueListenable: _cameraController,
+                builder: (context, state, _) {
+                  final torchState = state.torchState;
+                  if (torchState == TorchState.unavailable) {
+                    return const SizedBox.shrink();
+                  }
+                  return _GlassActionButton(
+                    icon: torchState == TorchState.on
+                        ? Icons.flash_on
+                        : Icons.flash_off,
+                    onTap: _cameraController.toggleTorch,
+                  );
+                },
+              ),
+              const SizedBox(height: 10),
+              _GlassActionButton(
+                icon: Icons.cameraswitch,
+                onTap: _cameraController.switchCamera,
+              ),
+              const SizedBox(height: 10),
+              _GlassActionButton(
+                icon: _externalScannerMode
+                    ? Icons.camera_alt
+                    : Icons.bluetooth,
+                onTap: _toggleExternalScannerMode,
+              ),
+              const SizedBox(height: 10),
+              _GlassActionButton(
+                icon: Icons.keyboard,
+                onTap: _showManualEntryDialog,
+              ),
+            ],
+          ),
+        ),
+
+        // Bottom controls — scan mode + media type toggles + status
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
           child: Container(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.fromLTRB(
+                16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
             decoration: BoxDecoration(
-              color: Colors.black54,
-              borderRadius: BorderRadius.circular(12),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.transparent,
+                  Colors.black.withValues(alpha: 0.8),
+                ],
+              ),
             ),
-            child: const Column(
+            child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                ScanModeToggle(),
-                SizedBox(height: 8),
-                MediaTypeToggles(),
+                const ScanModeToggle(),
+                const SizedBox(height: 8),
+                const MediaTypeToggles(),
+                if (scannerState.state == ScanState.lookingUp) ...[
+                  const SizedBox(height: 12),
+                  _StatusStrip(
+                    label: 'SCANNING METADATA\u2026',
+                    color: Theme.of(context).colorScheme.primary,
+                    onCancel: () =>
+                        ref.read(scannerProvider.notifier).cancel(),
+                  ),
+                ] else if (scannerState.batchMode &&
+                    scannerState.batchCount > 0) ...[
+                  const SizedBox(height: 12),
+                  _StatusStrip(
+                    label:
+                        '${scannerState.batchCount} items queued to batch',
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ],
               ],
             ),
           ),
         ),
-        if (scannerState.state == ScanState.lookingUp)
-          Container(
-            color: Colors.black54,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const LoadingIndicator(message: 'Looking up metadata...'),
-                const SizedBox(height: 24),
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    side: const BorderSide(color: Colors.white54),
-                  ),
-                  onPressed: () {
-                    ref.read(scannerProvider.notifier).cancel();
-                  },
-                  icon: const Icon(Icons.close),
-                  label: const Text('Cancel'),
-                ),
-              ],
-            ),
-          ),
       ],
     );
   }
@@ -496,13 +515,13 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
               focusNode: _externalFocusNode,
               autofocus: true,
               decoration: const InputDecoration(
-                hintText: 'Barcode / ISBN',
+                hintText: 'Barcode / ISBN / IMDb ID',
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.qr_code),
               ),
               onSubmitted: _onExternalBarcodeSubmitted,
               inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[\dXx]')),
+                FilteringTextInputFormatter.allow(RegExp(r'[\dXxTt]')),
               ],
             ),
           ),
@@ -611,6 +630,94 @@ class _PermissionDeniedView extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Frosted-glass floating action button for the scanner screen.
+class _GlassActionButton extends StatelessWidget {
+  const _GlassActionButton({
+    required this.icon,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.black.withValues(alpha: 0.5),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.1),
+            ),
+          ),
+          child: Icon(icon, color: Colors.white, size: 20),
+        ),
+      ),
+    );
+  }
+}
+
+/// Status strip shown at the bottom of the scanner.
+class _StatusStrip extends StatelessWidget {
+  const _StatusStrip({
+    required this.label,
+    required this.color,
+    this.onCancel,
+  });
+
+  final String label;
+  final Color color;
+  final VoidCallback? onCancel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 14,
+            height: 14,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: color,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.0,
+              ),
+            ),
+          ),
+          if (onCancel != null)
+            GestureDetector(
+              onTap: onCancel,
+              child: Icon(Icons.close, color: color, size: 18),
+            ),
+        ],
       ),
     );
   }

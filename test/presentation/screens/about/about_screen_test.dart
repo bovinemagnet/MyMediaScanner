@@ -48,7 +48,7 @@ void main() {
     await tester.pumpWidget(buildTestWidget());
     await tester.pumpAndSettle();
 
-    expect(find.text('Features'), findsOneWidget);
+    expect(find.text('FEATURES'), findsOneWidget);
   });
 
   testWidgets('renders open-source licences tile', (tester) async {

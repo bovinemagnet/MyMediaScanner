@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:mymediascanner/core/utils/cover_ocr_helper.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
+import 'package:mymediascanner/domain/entities/scan_result.dart';
 import 'package:mymediascanner/presentation/providers/scanner_provider.dart';
 import 'package:mymediascanner/presentation/screens/scanner/widgets/batch_scan_counter.dart';
 import 'package:mymediascanner/presentation/screens/scanner/widgets/media_type_toggles.dart';
@@ -90,9 +92,9 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
     final scannerState = ref.watch(scannerProvider);
 
     ref.listen(scannerProvider, (prev, next) {
-      if (next.state == ScanState.found || next.state == ScanState.notFound) {
-        if (next.batchMode) {
-          ref.read(scannerProvider.notifier).incrementBatchCount();
+      if (next.state == ScanState.found) {
+        if (next.batchMode && next.result != null) {
+          ref.read(scannerProvider.notifier).queueToBatch(next.result!);
           if (_webcamMode) {
             _resumeWebcamScanning();
           } else {
@@ -102,8 +104,31 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
           context.go('/scan/confirm');
         }
       }
+      if (next.state == ScanState.notFound) {
+        if (next.batchMode && next.result != null) {
+          ref.read(scannerProvider.notifier).queueToBatch(next.result!);
+          if (_webcamMode) {
+            _resumeWebcamScanning();
+          } else {
+            ref.read(scannerProvider.notifier).reset();
+          }
+        } else if (PlatformCapability.hasCoverOcr) {
+          _showNotFoundDialog(next.result);
+        } else {
+          context.go('/scan/confirm');
+        }
+      }
       if (next.state == ScanState.disambiguating) {
-        context.go('/scan/disambiguate');
+        if (next.batchMode && next.result != null) {
+          ref.read(scannerProvider.notifier).queueToBatch(next.result!);
+          if (_webcamMode) {
+            _resumeWebcamScanning();
+          } else {
+            ref.read(scannerProvider.notifier).reset();
+          }
+        } else {
+          context.go('/scan/disambiguate');
+        }
       }
       if (next.state == ScanState.error) {
         if (context.mounted) {
@@ -327,13 +352,13 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
                 focusNode: _focusNode,
                 autofocus: true,
                 decoration: const InputDecoration(
-                  hintText: 'Barcode / ISBN',
+                  hintText: 'Barcode / ISBN / IMDb ID',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.qr_code),
                 ),
                 onSubmitted: _onSubmitted,
                 inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[\dXx]')),
+                  FilteringTextInputFormatter.allow(RegExp(r'[\dXxTt]')),
                 ],
               ),
             ),
@@ -391,5 +416,68 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
         ],
       ),
     );
+  }
+
+  void _showNotFoundDialog(ScanResult? result) {
+    final barcode = switch (result) {
+      NotFoundScanResult(:final barcode) => barcode,
+      _ => '',
+    };
+    final barcodeType = switch (result) {
+      NotFoundScanResult(:final barcodeType) => barcodeType,
+      _ => '',
+    };
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Barcode Not Found'),
+        content: Text(
+          'No metadata found for barcode $barcode. '
+          'You can scan the cover to search by title, or enter details manually.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              ref.read(scannerProvider.notifier).reset();
+            },
+            child: const Text('Try again'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              context.go('/scan/confirm');
+            },
+            child: const Text('Enter manually'),
+          ),
+          FilledButton.icon(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _scanCover(barcode, barcodeType);
+            },
+            icon: const Icon(Icons.image_search),
+            label: const Text('Scan cover'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _scanCover(String barcode, String barcodeType) async {
+    final ocr = CoverOcrHelper();
+    try {
+      // On macOS, use gallery picker since camera capture isn't standard
+      final title = await ocr.pickAndExtract();
+      if (title != null && mounted) {
+        ref
+            .read(scannerProvider.notifier)
+            .onCoverTextRecognised(title, barcode, barcodeType);
+      } else if (mounted) {
+        context.go('/scan/confirm');
+      }
+    } finally {
+      await ocr.dispose();
+    }
   }
 }
