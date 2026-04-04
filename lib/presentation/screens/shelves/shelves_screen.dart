@@ -11,8 +11,10 @@ import 'package:mymediascanner/presentation/providers/shelf_provider.dart';
 import 'package:mymediascanner/presentation/widgets/context_menu_actions.dart';
 import 'package:mymediascanner/presentation/widgets/desktop_context_menu.dart';
 import 'package:mymediascanner/presentation/widgets/empty_state.dart';
+import 'package:mymediascanner/presentation/widgets/gradient_button.dart';
 import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
 import 'package:mymediascanner/presentation/widgets/master_detail_layout.dart';
+import 'package:mymediascanner/presentation/widgets/screen_header.dart';
 
 class ShelvesScreen extends ConsumerWidget {
   const ShelvesScreen({super.key});
@@ -37,10 +39,15 @@ class ShelvesScreen extends ConsumerWidget {
       error: (e, _) => Center(child: Text(e.toString())),
       data: (shelves) {
         if (shelves.isEmpty) {
-          return const EmptyState(
+          return EmptyState(
             message:
                 'No shelves yet. Create one to organise your collection!',
             icon: Icons.shelves,
+            action: FilledButton.icon(
+              onPressed: () => _showCreateShelfDialog(context, ref),
+              icon: const Icon(Icons.add),
+              label: const Text('New Shelf'),
+            ),
           );
         }
         return ListView.builder(
@@ -72,17 +79,56 @@ class ShelvesScreen extends ConsumerWidget {
       },
     );
 
+    final isDesktop = PlatformCapability.isDesktop;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Shelves')),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showCreateShelfDialog(context, ref),
-        child: const Icon(Icons.add),
-      ),
-      body: MasterDetailLayout(
-        master: masterContent,
-        detail: selectedShelfId != null
-            ? _ShelfDetailPanel(shelfId: selectedShelfId)
-            : null,
+      appBar: isDesktop
+          ? null
+          : AppBar(
+              title: const Text('Shelves'),
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => context.go('/collection'),
+              ),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.add),
+                  tooltip: 'New Shelf',
+                  onPressed: () => _showCreateShelfDialog(context, ref),
+                ),
+              ],
+            ),
+      body: Column(
+        children: [
+          if (isDesktop)
+            ScreenHeader(
+              title: 'Shelves',
+              subtitle: 'Organise your collection into physical shelves.',
+              actions: [
+                GradientButton(
+                  onPressed: () => _showCreateShelfDialog(context, ref),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 8),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.add, size: 18),
+                      SizedBox(width: 6),
+                      Text('New Shelf'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          Expanded(
+            child: MasterDetailLayout(
+              master: masterContent,
+              detail: selectedShelfId != null
+                  ? _ShelfDetailPanel(shelfId: selectedShelfId)
+                  : null,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -259,7 +305,7 @@ class _ShelfDetailPanel extends ConsumerWidget {
                       error: (_, _) => const Text('Error'),
                       data: (item) => Text(item?.title ?? 'Unknown'),
                     ),
-                    onTap: () => context.go('/item/${itemIds[index]}'),
+                    onTap: () => context.go('/collection/item/${itemIds[index]}'),
                   );
                 },
               );

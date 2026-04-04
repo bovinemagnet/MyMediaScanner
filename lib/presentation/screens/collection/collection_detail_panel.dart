@@ -77,7 +77,7 @@ class CollectionDetailPanel extends ConsumerWidget {
                       icon: const Icon(Icons.edit, size: 20),
                       tooltip: 'Edit',
                       onPressed: () =>
-                          context.go('/item/${item.id}/edit'),
+                          context.go('/collection/item/${item.id}/edit'),
                     ),
                     IconButton(
                       icon: const Icon(Icons.delete_outline, size: 20),

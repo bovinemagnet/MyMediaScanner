@@ -53,7 +53,10 @@ void main() {
             detail: const Text('detail content'),
           ));
 
-          expect(find.byType(VerticalDivider), findsOneWidget);
+          // Ghost divider is a 1px Container (replacing VerticalDivider)
+          final dividers = find.byWidgetPredicate(
+              (w) => w is Container && w.constraints?.maxWidth == 1);
+          expect(dividers, findsOneWidget);
         },
         variant: TargetPlatformVariant.desktop(),
       );
@@ -136,7 +139,10 @@ void main() {
 
           expect(find.text('master content'), findsOneWidget);
           expect(find.text('detail content'), findsOneWidget);
-          expect(find.byType(VerticalDivider), findsOneWidget);
+          // Ghost divider is a 1px Container (replacing VerticalDivider)
+          final dividers = find.byWidgetPredicate(
+              (w) => w is Container && w.constraints?.maxWidth == 1);
+          expect(dividers, findsOneWidget);
         },
         variant: TargetPlatformVariant.desktop(),
       );

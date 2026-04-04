@@ -1,3 +1,6 @@
+# Superpowers brainstorm sessions
+.superpowers/
+
 # Miscellaneous
 *.class
 *.log
@@ -47,3 +50,8 @@ keys.txt
 .claude/
 devtools_options.yaml
 .worktrees/
+
+docs/fonts
+docs/stitch
+docs/stitch-light
+docs/ui2

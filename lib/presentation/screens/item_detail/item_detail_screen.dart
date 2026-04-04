@@ -14,6 +14,7 @@ import 'package:mymediascanner/presentation/providers/loan_provider.dart';
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
 import 'package:mymediascanner/presentation/providers/metadata_provider.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
+import 'package:mymediascanner/presentation/screens/collection/widgets/shelf_picker_dialog.dart';
 import 'package:mymediascanner/presentation/screens/item_detail/widgets/borrower_picker_dialog.dart';
 import 'package:mymediascanner/presentation/screens/item_detail/widgets/cover_art_hero.dart';
 import 'package:mymediascanner/presentation/screens/item_detail/widgets/metadata_section.dart';
@@ -43,13 +44,21 @@ class ItemDetailScreen extends ConsumerWidget {
             title: Text(item.title),
             actions: [
               IconButton(
+                icon: const Icon(Icons.shelves),
+                onPressed: () => showDialog<void>(
+                  context: context,
+                  builder: (_) => ShelfPickerDialog(mediaItemId: item.id),
+                ),
+                tooltip: 'Add to shelf',
+              ),
+              IconButton(
                 icon: const Icon(Icons.refresh),
                 onPressed: () => _refreshMetadata(context, ref, item),
                 tooltip: 'Refresh metadata',
               ),
               IconButton(
                 icon: const Icon(Icons.edit),
-                onPressed: () => context.go('/item/${item.id}/edit'),
+                onPressed: () => context.go('/collection/item/${item.id}/edit'),
                 tooltip: 'Edit',
               ),
               IconButton(
@@ -215,7 +224,7 @@ class ItemDetailScreen extends ConsumerWidget {
                   .execute(itemId);
               if (context.mounted) {
                 Navigator.pop(ctx);
-                context.go('/');
+                context.go('/collection');
               }
             },
             child: const Text('Delete'),
@@ -268,13 +277,15 @@ class _LendingSection extends ConsumerWidget {
             final lentDate = dateFormat.format(
                 DateTime.fromMillisecondsSinceEpoch(activeLoan.lentAt));
 
+            final loanColors = Theme.of(context).colorScheme;
             return Card(
-              color: Colors.orange.shade50,
+              color: loanColors.tertiaryContainer.withValues(alpha: 0.15),
               child: Padding(
                 padding: const EdgeInsets.all(12),
                 child: Row(
                   children: [
-                    const Icon(Icons.person_outline, color: Colors.orange),
+                    Icon(Icons.person_outline,
+                        color: loanColors.tertiary),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Column(

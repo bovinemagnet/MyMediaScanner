@@ -32,130 +32,144 @@ class MediaItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
     return DesktopContextMenu(
       actions: contextMenuActions,
       child: Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Stack(
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: item.coverUrl != null
-                      ? CachedNetworkImage(
-                          imageUrl: item.coverUrl!,
-                          fit: BoxFit.cover,
-                          placeholder: (_, _) => const Center(
-                              child:
-                                  CircularProgressIndicator(strokeWidth: 2)),
-                          errorWidget: (_, _, _) =>
-                              const Icon(Icons.broken_image, size: 48),
-                        )
-                      : Container(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .surfaceContainerHighest,
-                          child:
-                              const Icon(Icons.image_not_supported, size: 48),
-                        ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: _typeColour(item.mediaType),
-                              borderRadius: BorderRadius.circular(4),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Stack(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: item.coverUrl != null
+                        ? CachedNetworkImage(
+                            imageUrl: item.coverUrl!,
+                            fit: BoxFit.cover,
+                            placeholder: (_, _) => Center(
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: colors.primary,
+                              ),
                             ),
-                            child: Text(
-                              item.mediaType.label,
-                              style: const TextStyle(
-                                  color: Colors.white, fontSize: 10),
+                            errorWidget: (_, _, _) => Icon(
+                              Icons.broken_image,
+                              size: 48,
+                              color: colors.onSurfaceVariant,
+                            ),
+                          )
+                        : Container(
+                            color: colors.surfaceContainerHighest,
+                            child: Icon(
+                              Icons.image_not_supported,
+                              size: 48,
+                              color: colors.onSurfaceVariant,
                             ),
                           ),
-                          if (item.userRating != null) ...[
-                            const Spacer(),
-                            Icon(Icons.star,
-                                size: 14, color: Colors.amber.shade700),
-                            const SizedBox(width: 2),
-                            Text(item.userRating!.toStringAsFixed(1),
-                                style: const TextStyle(fontSize: 12)),
-                          ],
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        item.title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              fontWeight: FontWeight.w600,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: _typeColour(item.mediaType),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                item.mediaType.label,
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
                             ),
-                      ),
-                      if (item.year != null)
-                        Text(
-                          '${item.year}',
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Theme.of(context).colorScheme.outline,
-                                  ),
+                            if (item.userRating != null) ...[
+                              const Spacer(),
+                              Icon(Icons.star,
+                                  size: 14, color: Colors.amber.shade700),
+                              const SizedBox(width: 2),
+                              Text(
+                                item.userRating!.toStringAsFixed(1),
+                                style: theme.textTheme.labelSmall,
+                              ),
+                            ],
+                          ],
                         ),
-                    ],
+                        const SizedBox(height: 6),
+                        Text(
+                          item.title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        if (item.year != null)
+                          Text(
+                            '${item.year}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: colors.onSurfaceVariant,
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-            if (isLent)
-              Positioned(
-                top: 6,
-                right: 6,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.orange,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: const Text(
-                    'Lent',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
+                ],
+              ),
+              if (isLent)
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: colors.tertiary,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      'Lent',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: colors.onTertiary,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            if (isRipped)
-              Positioned(
-                top: 6,
-                left: 6,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha: 0.85),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: const Icon(
-                    Icons.album,
-                    color: Colors.white,
-                    size: 14,
+              if (isRipped)
+                Positioned(
+                  top: 6,
+                  left: 6,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: AppColors.bookColor.withValues(alpha: 0.85),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Icon(
+                      Icons.album,
+                      color: Colors.white,
+                      size: 14,
+                    ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 }

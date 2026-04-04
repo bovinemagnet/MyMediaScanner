@@ -1,6 +1,8 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/domain/entities/metadata_result.dart';
+import 'package:mymediascanner/presentation/widgets/gradient_button.dart';
 
 class EditableMetadataForm extends StatefulWidget {
   const EditableMetadataForm({
@@ -67,9 +69,11 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
             ? null
             : _descriptionController.text,
         year: int.tryParse(_yearController.text),
-        publisher:
-            _publisherController.text.isEmpty ? null : _publisherController.text,
-        format: _formatController.text.isEmpty ? null : _formatController.text,
+        publisher: _publisherController.text.isEmpty
+            ? null
+            : _publisherController.text,
+        format:
+            _formatController.text.isEmpty ? null : _formatController.text,
         mediaType: _mediaType,
       ));
     } catch (e) {
@@ -85,82 +89,187 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-          if (widget.initial.coverUrl != null)
-            Center(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  widget.initial.coverUrl!,
+        // Cover art preview
+        if (widget.initial.coverUrl != null) ...[
+          Center(
+            child: Container(
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: colors.surfaceContainerHighest,
+              ),
+              child: CachedNetworkImage(
+                imageUrl: widget.initial.coverUrl!,
+                height: 200,
+                fit: BoxFit.contain,
+                errorWidget: (_, _, _) => SizedBox(
                   height: 200,
-                  errorBuilder: (_, _, _) => const Icon(
-                    Icons.broken_image,
-                    size: 100,
-                  ),
+                  child: Icon(Icons.broken_image,
+                      size: 64, color: colors.onSurfaceVariant),
                 ),
               ),
             ),
-          const SizedBox(height: 16),
-          DropdownButtonFormField<MediaType>(
-            initialValue: _mediaType,
-            decoration: const InputDecoration(labelText: 'Media Type'),
-            items: MediaType.values
-                .map((t) =>
-                    DropdownMenuItem(value: t, child: Text(t.label)))
-                .toList(),
-            onChanged: (v) {
-              if (v != null) setState(() => _mediaType = v);
-            },
           ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _titleController,
-            decoration: const InputDecoration(labelText: 'Title'),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _subtitleController,
-            decoration: const InputDecoration(labelText: 'Subtitle'),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _yearController,
-            decoration: const InputDecoration(labelText: 'Year'),
-            keyboardType: TextInputType.number,
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _publisherController,
-            decoration:
-                const InputDecoration(labelText: 'Publisher / Studio / Label'),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _formatController,
-            decoration: const InputDecoration(
-                labelText: 'Format (e.g. Blu-ray, CD, Hardcover)'),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _descriptionController,
-            decoration: const InputDecoration(labelText: 'Description'),
-            maxLines: 4,
-          ),
-          const SizedBox(height: 24),
-          FilledButton.icon(
-            onPressed: _saving ? null : _save,
-            icon: _saving
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.save),
-            label: Text(_saving ? 'Saving\u2026' : 'Save to Collection'),
-          ),
+          const SizedBox(height: 20),
         ],
+
+        // Media type selector
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: colors.surfaceContainerHigh,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'TYPE',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                  letterSpacing: 1.0,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<MediaType>(
+                initialValue: _mediaType,
+                decoration: const InputDecoration(labelText: 'Media Type'),
+                items: MediaType.values
+                    .map((t) =>
+                        DropdownMenuItem(value: t, child: Text(t.label)))
+                    .toList(),
+                onChanged: (v) {
+                  if (v != null) setState(() => _mediaType = v);
+                },
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Core fields
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: colors.surfaceContainerHigh,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'METADATA',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                  letterSpacing: 1.0,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _titleController,
+                decoration: const InputDecoration(labelText: 'Title'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _subtitleController,
+                decoration: const InputDecoration(labelText: 'Subtitle'),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _yearController,
+                      decoration: const InputDecoration(labelText: 'Year'),
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      controller: _formatController,
+                      decoration: const InputDecoration(
+                          labelText: 'Format'),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _publisherController,
+                decoration: const InputDecoration(
+                    labelText: 'Publisher / Studio / Label'),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Description
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: colors.surfaceContainerHigh,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'DESCRIPTION',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                  letterSpacing: 1.0,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _descriptionController,
+                decoration: const InputDecoration(
+                  labelText: 'Description',
+                  alignLabelWithHint: true,
+                ),
+                maxLines: 4,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        // Save button
+        GradientButton(
+          onPressed: _saving ? null : _save,
+          padding:
+              const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (_saving)
+                const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              else
+                const Icon(Icons.save, size: 20),
+              const SizedBox(width: 8),
+              Text(_saving ? 'Saving\u2026' : 'Save to Collection'),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

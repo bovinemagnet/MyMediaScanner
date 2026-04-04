@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:retrofit/retrofit.dart';
+import 'package:mymediascanner/data/remote/api/tmdb/models/tmdb_find_result_dto.dart';
 import 'package:mymediascanner/data/remote/api/tmdb/models/tmdb_search_result_dto.dart';
 
 part 'tmdb_api.g.dart';
@@ -24,5 +25,11 @@ abstract class TmdbApi {
   Future<TmdbSearchResponseDto> searchTv(
     @Query('query') String query, {
     @Query('page') int page = 1,
+  });
+
+  @GET('/find/{externalId}')
+  Future<TmdbFindResponseDto> findByExternalId(
+    @Path('externalId') String externalId, {
+    @Query('external_source') String externalSource = 'imdb_id',
   });
 }

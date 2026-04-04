@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/domain/entities/metadata_result.dart';
 import 'package:mymediascanner/domain/usecases/scan_barcode_usecase.dart';
+import 'package:mymediascanner/presentation/providers/batch_editor_provider.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/settings_provider.dart';
 
@@ -331,6 +332,12 @@ class ScannerNotifier extends Notifier<ScannerState> {
       state: ScanState.idle,
       batchCount: state.batchCount + 1,
     );
+  }
+
+  /// Queue the current scan result to the batch editor.
+  void queueToBatch(ScanResult result) {
+    ref.read(batchEditorProvider.notifier).addScanResult(result);
+    incrementBatchCount();
   }
 }
 

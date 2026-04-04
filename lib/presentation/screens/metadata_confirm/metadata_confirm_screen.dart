@@ -15,6 +15,8 @@ class MetadataConfirmScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final scannerState = ref.watch(scannerProvider);
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
     final isNotFound = scannerState.result is NotFoundScanResult;
     final metadata = switch (scannerState.result) {
       SingleScanResult(:final metadata) => metadata,
@@ -55,47 +57,54 @@ class MetadataConfirmScreen extends ConsumerWidget {
         }
       },
       child: Scaffold(
-      appBar: AppBar(
-        title: Text(isNotFound ? 'Barcode Not Found' : 'Confirm Metadata'),
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () {
-            context.go('/scan');
-            ref.read(scannerProvider.notifier).reset();
-          },
+        appBar: AppBar(
+          title: Text(isNotFound ? 'Barcode Not Found' : 'Confirm Metadata'),
+          leading: IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: () {
+              context.go('/scan');
+              ref.read(scannerProvider.notifier).reset();
+            },
+          ),
         ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (isNotFound) ...[
-              Card(
-                child: Padding(
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (isNotFound) ...[
+                // Not-found info card
+                Container(
                   padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: colors.surfaceContainerHigh,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
                           Icon(Icons.info_outline,
-                              color:
-                                  Theme.of(context).colorScheme.primary),
+                              color: colors.primary, size: 20),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'No metadata found for barcode ${metadata.barcode}',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleSmall,
+                              'No metadata found for barcode '
+                              '${metadata.barcode}',
+                              style: theme.textTheme.titleSmall,
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 12),
-                      const Text(
-                          'Search by title below, or fill in the details manually.'),
+                      Text(
+                        'Search by title below, or fill in the details '
+                        'manually.',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colors.onSurfaceVariant,
+                        ),
+                      ),
                       const SizedBox(height: 12),
                       TitleSearchField(
                         isLoading:
@@ -115,50 +124,53 @@ class MetadataConfirmScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Or enter details manually:',
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
-              const SizedBox(height: 8),
-            ],
-            EditableMetadataForm(
-              initial: metadata,
-              onSave: (edited) async {
-                final useCase = SaveMediaItemUseCase(
-                  repository: ref.read(mediaItemRepositoryProvider),
-                );
-                await useCase.execute(edited);
+                const SizedBox(height: 16),
+                Text(
+                  'OR ENTER DETAILS MANUALLY',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                    letterSpacing: 1.0,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+              EditableMetadataForm(
+                initial: metadata,
+                onSave: (edited) async {
+                  final useCase = SaveMediaItemUseCase(
+                    repository: ref.read(mediaItemRepositoryProvider),
+                  );
+                  await useCase.execute(edited);
 
-                final scanner = ref.read(scannerProvider.notifier);
-                if (ref.read(scannerProvider).batchMode) {
-                  scanner.incrementBatchCount();
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                          content:
-                              Text('${edited.title ?? "Item"} saved')),
-                    );
-                    context.go('/scan');
+                  final scanner = ref.read(scannerProvider.notifier);
+                  if (ref.read(scannerProvider).batchMode) {
+                    scanner.incrementBatchCount();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            content:
+                                Text('${edited.title ?? "Item"} saved')),
+                      );
+                      context.go('/scan');
+                    }
+                  } else {
+                    scanner.reset();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            content:
+                                Text('${edited.title ?? "Item"} saved')),
+                      );
+                      context.go('/');
+                    }
                   }
-                } else {
-                  scanner.reset();
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                          content:
-                              Text('${edited.title ?? "Item"} saved')),
-                    );
-                    context.go('/');
-                  }
-                }
-              },
-            ),
-          ],
+                },
+              ),
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 }

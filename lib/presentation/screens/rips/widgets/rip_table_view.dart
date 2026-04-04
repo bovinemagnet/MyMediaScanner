@@ -72,7 +72,7 @@ class _RipTableViewState extends ConsumerState<RipTableView> {
       sortColumnIndex: _sortColumnIndex,
       sortAscending: _sortAscending,
       headingRowDecoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
       ),
       columns: [
         DataColumn2(
@@ -133,7 +133,7 @@ class _RipTableViewState extends ConsumerState<RipTableView> {
               size: 16,
               color: album.mediaItemId != null
                   ? Theme.of(context).colorScheme.primary
-                  : Theme.of(context).hintColor,
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
             )),
           ],
         );

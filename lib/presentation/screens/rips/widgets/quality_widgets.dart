@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mymediascanner/app/theme/app_colors.dart';
 import 'package:mymediascanner/domain/entities/rip_track.dart';
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
 
@@ -24,7 +25,7 @@ class QualityIcon extends StatelessWidget {
       message: _tooltipText(),
       child: Icon(
         _icon(),
-        color: _colour(),
+        color: _colour(context),
         size: 20,
       ),
     );
@@ -42,16 +43,17 @@ class QualityIcon extends StatelessWidget {
     return Icons.help_outline;
   }
 
-  Color _colour() {
-    if (track.qualityCheckedAt == null) return Colors.grey;
+  Color _colour(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    if (track.qualityCheckedAt == null) return colors.outline;
     if (track.accurateRipStatus == 'verified' &&
         (track.clickCount ?? 0) > 0) {
-      return Colors.amber;
+      return AppColors.tvColor; // amber-like warning
     }
-    if (track.accurateRipStatus == 'verified') return Colors.green;
-    if (track.accurateRipStatus == 'mismatch') return Colors.red;
-    if ((track.clickCount ?? 0) > 0) return Colors.amber;
-    return Colors.grey;
+    if (track.accurateRipStatus == 'verified') return AppColors.bookColor;
+    if (track.accurateRipStatus == 'mismatch') return colors.error;
+    if ((track.clickCount ?? 0) > 0) return AppColors.tvColor;
+    return colors.outline;
   }
 
   String _tooltipText() {
@@ -91,6 +93,7 @@ class QualityAnalysisSection extends ConsumerWidget {
     final analysisState = ref.watch(qualityAnalysisNotifierProvider);
     final tracksAsync = ref.watch(ripTracksProvider(albumId));
     final theme = Theme.of(context);
+    final colors = theme.colorScheme;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -119,7 +122,9 @@ class QualityAnalysisSection extends ConsumerWidget {
             padding: const EdgeInsets.only(bottom: 8),
             child: Text(
               analysisState.error!,
-              style: theme.textTheme.bodySmall?.copyWith(color: Colors.red),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colors.error,
+              ),
             ),
           ),
 
