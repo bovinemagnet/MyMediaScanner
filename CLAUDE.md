@@ -12,21 +12,27 @@ Cross-platform Flutter/Dart application for scanning barcodes on physical media 
 - Critic scores from TMDB, Discogs, and Google Books
 - FLAC rip library scanner with coverage comparison against physical collection
 - Audio quality analysis (AccurateRip verification + click/pop detection)
-- Statistics dashboard with CSV/JSON export
-- Camera + Bluetooth/USB scanner support on mobile
+- Insights & analytics dashboard with CSV/JSON export
+- Camera + Bluetooth/USB scanner support on mobile; webcam scanning on macOS
 - Media type filter on scan screen
+- Batch scanning mode with queue-based review and bulk save
+- IMDb ID lookup (tt1234567) via TMDB find endpoint
+- Cover OCR text recognition (ML Kit on Android/iOS, Vision framework on macOS)
+- Theme mode selector (system/light/dark) persisted to SharedPreferences
 
 ## Technology Stack
 
-- **UI:** Flutter (all platforms), Material 3 adaptive layout
+- **UI:** Flutter (all platforms), custom "Obsidian Lens" (dark) / "Precision Editorial" (light) design system built on Material 3 with hand-crafted colour schemes, Manrope + Inter typography, glassmorphism, and tonal container architecture
 - **State:** Riverpod 3.x with hand-written providers (Notifier and AsyncNotifier); `riverpod_generator` is not used due to incompatibility with `drift_dev`
 - **Local DB:** Drift (SQLite) with type-safe DAOs
 - **Remote DB:** PostgreSQL via `postgres` Dart package (direct connection, no intermediary API)
 - **HTTP:** Dio + Retrofit for metadata API clients (TMDB, Discogs, Google Books, Open Library, UPCitemdb)
-- **Navigation:** GoRouter with declarative routes
+- **Navigation:** GoRouter with StatefulShellRoute; desktop sidebar + glassmorphism mobile bottom nav
 - **Models:** Freezed for immutable entities and sealed classes
-- **Scanning:** mobile_scanner (ML Kit) on Android/iOS; keyboard-wedge USB scanner on desktop
+- **Scanning:** mobile_scanner (ML Kit) on Android/iOS/macOS; keyboard-wedge USB scanner on desktop
+- **OCR:** Google ML Kit text recognition (Android/iOS); macOS Vision framework via method channel (`com.mymediascanner/vision_ocr`)
 - **Secrets:** flutter_secure_storage for Postgres credentials and API keys
+- **Fonts:** Manrope and Inter bundled in `assets/fonts/` (no google_fonts runtime dependency)
 
 ## Build & Development Commands
 
@@ -49,16 +55,22 @@ flutter run
 # Analyse code
 flutter analyze
 
-# Build Android APK (debug)
-flutter build apk --debug
+# Build Android APK (debug, dev flavour)
+flutter build apk --debug --flavor dev
+
+# Build Android APK (release, prod flavour)
+flutter build apk --release --flavor prod
 
 # Build iOS (without codesigning)
 flutter build ios --no-codesign
+
+# Build macOS
+flutter build macos --debug
 ```
 
 ## Testing
 
-The project has ~94 tests covering domain logic, data layer, and presentation. Run `flutter test` to execute the full suite.
+The project has ~472 tests covering domain logic, data layer, presentation providers, and widget tests. Run `flutter test` to execute the full suite. Tests use `mocktail` for mocking and `ProviderContainer` with overrides for provider testing.
 
 ## Architecture
 
@@ -66,8 +78,13 @@ Clean architecture with strict dependency rules: `domain/` has zero dependencies
 
 ```
 lib/
-  app/          → MaterialApp.router, GoRouter routes, theme
-  core/         → Constants, error types, extensions, utilities
+  app/
+    theme/      → Custom design system (app_colors, app_typography, app_theme, app_theme_extensions)
+    app.dart    → MaterialApp.router with theme mode provider
+    router.dart → GoRouter with 8 StatefulShellBranch routes
+  core/
+    constants/  → App constants, breakpoints
+    utils/      → Platform utils, barcode utils, cover OCR helper, Vision OCR channel
   data/
     local/      → Drift database, tables, DAOs
     remote/
@@ -80,10 +97,47 @@ lib/
     repositories/ → Abstract interfaces (prefixed with I)
     usecases/   → Business logic orchestrators
   presentation/
-    providers/  → Riverpod providers (hand-written)
-    screens/    → Feature screens with controllers and widgets
-    widgets/    → Shared widgets (app_scaffold, empty/error/loading states)
+    providers/  → Riverpod providers (hand-written), including batch_editor_provider
+    screens/
+      dashboard/      → Landing page with hero text, quick scan CTA, recent additions
+      collection/     → Library grid/table view with master-detail, statistics/insights
+      scanner/        → Mobile camera scanner + desktop keyboard/webcam scanner
+      shelves/        → Shelf management with drag-reorder
+      batch/          → Batch editor with queue review, conflict resolution, bulk save
+      item_detail/    → Item detail with cover art hero, metadata sections, lending, rip status
+      metadata_confirm/ → Post-scan metadata review and editing
+      disambiguation/   → Multi-match candidate selection
+      settings/       → API keys, sync config, theme mode toggle, FLAC library config
+      rips/           → Rip library browser with coverage and quality analysis
+      about/          → App info, features list, licences
+    widgets/    → Shared widgets (app_scaffold with sidebar/glassmorphism nav, glass_container, gradient_button, screen_header, master_detail_layout, empty/error/loading states)
 ```
+
+## Navigation Structure
+
+Routes are organised as 8 `StatefulShellBranch` entries:
+
+| Branch | Route | Screen | Desktop Sidebar | Mobile Bottom Nav |
+|--------|-------|--------|-----------------|-------------------|
+| 0 | `/` | Dashboard | Yes | Yes (Home) |
+| 1 | `/collection` | Collection/Library | Yes | Yes (Library) |
+| 2 | `/scan` | Scanner | No | Yes |
+| 3 | `/shelves` | Shelves | Yes | No (accessible from Library AppBar) |
+| 4 | `/batch` | Batch Editor | Yes | No |
+| 5 | `/insights` | Insights/Statistics | Yes | Yes |
+| 6 | `/settings` | Settings | Yes | No |
+| 7 | `/rips` | Rips (desktop only) | Yes | No |
+
+Item detail routes are nested under collection: `/collection/item/:id`
+
+## Design System
+
+The app uses a custom design system with two themes:
+
+- **Dark ("Obsidian Lens"):** Deep obsidian surfaces (#0e0e0e), electric cyan primary (#6dddff), Inter body text
+- **Light ("Precision Editorial"):** Off-white surfaces (#f5f6f7), deep teal primary (#00647a), Manrope throughout
+
+Design principles: "no-line" rule (tonal shifts instead of borders), glassmorphism for navigation, gradient CTAs, ghost borders (outline-variant at 15% opacity), ambient shadows. Theme extension (`AppDesignExtension`) carries glassmorphism, gradient, and shadow tokens.
 
 ## Key Conventions
 
@@ -95,6 +149,8 @@ lib/
 - Sync uses last-write-wins per-field conflict resolution based on `updated_at` timestamps
 - Database schema changes require a new migration in `AppDatabase`
 - Current schema version is 5 with 11 tables: `media_items`, `tags`, `media_item_tags`, `shelves`, `shelf_items`, `barcode_cache`, `sync_log`, `borrowers`, `loans`, `rip_albums`, `rip_tracks`
+- Desktop screens use inline `ScreenHeader` widget instead of AppBar; mobile screens keep AppBar for back navigation
+- Sections use tonal containers (`surfaceContainerHigh`) with uppercase label headers, not dividers
 
 ## External APIs
 
@@ -103,7 +159,17 @@ Users supply their own API keys (stored in secure storage) for TMDB, Discogs, an
 ## Metadata Lookup Order
 
 1. Check `barcode_cache` (SQLite) — return if < 7 days old
-2. Detect barcode type (EAN-13, UPC-A, ISBN-10/13)
-3. Route by type: ISBN → Google Books → Open Library; EAN/UPC → specialist API by type hint (TMDB for film/TV, Discogs for music)
+2. Detect barcode type (EAN-13, UPC-A, ISBN-10/13, IMDb ID)
+3. Route by type:
+   - IMDb ID (tt*) → TMDB `/find/{external_id}` endpoint
+   - ISBN → Google Books → Open Library
+   - EAN/UPC → specialist API by type hint (TMDB for film/TV, Discogs for music)
 4. Fallback to UPCitemdb if specialist returns nothing
 5. Cache raw response, map to `MetadataResult` domain entity
+
+## Known Constraints
+
+- `file_picker` pinned to `>=10.3.10 <11.0.0` — v11 has a broken Android Gradle config (missing kotlin-android plugin)
+- iOS deployment target is 15.5 (required by google_mlkit_commons)
+- Google ML Kit text recognition not available on desktop — macOS uses Vision framework via method channel instead
+- Cover OCR on macOS uses gallery file picker (not camera capture) since `ImagePicker.camera` is unreliable on desktop

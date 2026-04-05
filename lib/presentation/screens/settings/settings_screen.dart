@@ -302,7 +302,7 @@ class _FlacLibrarySectionState extends ConsumerState<_FlacLibrarySection> {
               tooltip: 'Browse\u2026',
               onPressed: () async {
                 final path =
-                    await FilePicker.getDirectoryPath();
+                    await FilePicker.platform.getDirectoryPath();
                 if (path != null) {
                   _pathController.text = path;
                   ref.read(ripLibraryPathProvider.notifier).setPath(path);
@@ -385,7 +385,7 @@ class _FlacLibrarySectionState extends ConsumerState<_FlacLibrarySection> {
               icon: const Icon(Icons.folder_open),
               tooltip: 'Browse\u2026',
               onPressed: () async {
-                final result = await FilePicker.pickFiles(
+                final result = await FilePicker.platform.pickFiles(
                   dialogTitle: 'Select flac binary',
                 );
                 if (result != null && result.files.single.path != null) {
