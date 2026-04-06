@@ -1,6 +1,6 @@
 # MyMediaScanner Slice 2: Scan + Metadata Lookup
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Implement barcode scanning (camera on Android, keyboard-wedge on macOS), API clients for all five metadata sources, tiered metadata lookup, confirm screen, and barcode cache.
 
@@ -90,7 +90,7 @@ test/
 **Files:**
 - Create: `lib/data/remote/api/dio_factory.dart`
 
-- [ ] **Step 1: Create dio_factory.dart**
+- [x] **Step 1: Create dio_factory.dart**
 
 ```dart
 import 'package:dio/dio.dart';
@@ -155,7 +155,7 @@ class DioFactory {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add lib/data/remote/api/dio_factory.dart
@@ -170,7 +170,7 @@ git commit -m "feat: add Dio factory for API client configuration"
 - Create: `lib/data/remote/api/tmdb/models/tmdb_search_result_dto.dart`
 - Create: `lib/data/remote/api/tmdb/tmdb_api.dart`
 
-- [ ] **Step 1: Create tmdb_search_result_dto.dart**
+- [x] **Step 1: Create tmdb_search_result_dto.dart**
 
 ```dart
 import 'package:json_annotation/json_annotation.dart';
@@ -241,7 +241,7 @@ class TmdbSearchResponseDto {
 }
 ```
 
-- [ ] **Step 2: Create tmdb_api.dart**
+- [x] **Step 2: Create tmdb_api.dart**
 
 ```dart
 import 'package:dio/dio.dart';
@@ -274,13 +274,13 @@ abstract class TmdbApi {
 }
 ```
 
-- [ ] **Step 3: Run code generation**
+- [x] **Step 3: Run code generation**
 
 ```bash
 dart run build_runner build --delete-conflicting-outputs
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add lib/data/remote/api/tmdb/
@@ -295,7 +295,7 @@ git commit -m "feat: add TMDB API client with DTOs"
 - Create: `lib/data/remote/api/discogs/models/discogs_release_dto.dart`
 - Create: `lib/data/remote/api/discogs/discogs_api.dart`
 
-- [ ] **Step 1: Create discogs_release_dto.dart**
+- [x] **Step 1: Create discogs_release_dto.dart**
 
 ```dart
 import 'package:json_annotation/json_annotation.dart';
@@ -406,7 +406,7 @@ class DiscogsSearchResultDto {
 }
 ```
 
-- [ ] **Step 2: Create discogs_api.dart**
+- [x] **Step 2: Create discogs_api.dart**
 
 ```dart
 import 'package:dio/dio.dart';
@@ -430,7 +430,7 @@ abstract class DiscogsApi {
 }
 ```
 
-- [ ] **Step 3: Run code generation and commit**
+- [x] **Step 3: Run code generation and commit**
 
 ```bash
 dart run build_runner build --delete-conflicting-outputs
@@ -446,7 +446,7 @@ git commit -m "feat: add Discogs API client with DTOs"
 - Create: `lib/data/remote/api/google_books/models/google_books_volume_dto.dart`
 - Create: `lib/data/remote/api/google_books/google_books_api.dart`
 
-- [ ] **Step 1: Create google_books_volume_dto.dart**
+- [x] **Step 1: Create google_books_volume_dto.dart**
 
 ```dart
 import 'package:json_annotation/json_annotation.dart';
@@ -541,7 +541,7 @@ class GoogleBooksSearchResponseDto {
 }
 ```
 
-- [ ] **Step 2: Create google_books_api.dart**
+- [x] **Step 2: Create google_books_api.dart**
 
 ```dart
 import 'package:dio/dio.dart';
@@ -561,7 +561,7 @@ abstract class GoogleBooksApi {
 }
 ```
 
-- [ ] **Step 3: Run code generation and commit**
+- [x] **Step 3: Run code generation and commit**
 
 ```bash
 dart run build_runner build --delete-conflicting-outputs
@@ -577,7 +577,7 @@ git commit -m "feat: add Google Books API client with DTOs"
 - Create: `lib/data/remote/api/open_library/models/open_library_work_dto.dart`
 - Create: `lib/data/remote/api/open_library/open_library_api.dart`
 
-- [ ] **Step 1: Create open_library_work_dto.dart**
+- [x] **Step 1: Create open_library_work_dto.dart**
 
 ```dart
 import 'package:json_annotation/json_annotation.dart';
@@ -663,7 +663,7 @@ class OpenLibraryCoverDto {
 }
 ```
 
-- [ ] **Step 2: Create open_library_api.dart (hand-written Dio client)**
+- [x] **Step 2: Create open_library_api.dart (hand-written Dio client)**
 
 ```dart
 import 'package:dio/dio.dart';
@@ -689,7 +689,7 @@ class OpenLibraryApi {
 }
 ```
 
-- [ ] **Step 3: Run code generation and commit**
+- [x] **Step 3: Run code generation and commit**
 
 ```bash
 dart run build_runner build --delete-conflicting-outputs
@@ -705,7 +705,7 @@ git commit -m "feat: add Open Library API client with DTOs"
 - Create: `lib/data/remote/api/upc/models/upc_item_dto.dart`
 - Create: `lib/data/remote/api/upc/upcitemdb_api.dart`
 
-- [ ] **Step 1: Create upc_item_dto.dart**
+- [x] **Step 1: Create upc_item_dto.dart**
 
 ```dart
 import 'package:json_annotation/json_annotation.dart';
@@ -754,7 +754,7 @@ class UpcSearchResponseDto {
 }
 ```
 
-- [ ] **Step 2: Create upcitemdb_api.dart**
+- [x] **Step 2: Create upcitemdb_api.dart**
 
 ```dart
 import 'package:dio/dio.dart';
@@ -772,7 +772,7 @@ abstract class UpcitemdbApi {
 }
 ```
 
-- [ ] **Step 3: Run code generation and commit**
+- [x] **Step 3: Run code generation and commit**
 
 ```bash
 dart run build_runner build --delete-conflicting-outputs
@@ -791,7 +791,7 @@ git commit -m "feat: add UPCitemdb API client with DTOs"
 - Create: `lib/data/mappers/open_library_mapper.dart`
 - Create: `lib/data/mappers/upc_mapper.dart`
 
-- [ ] **Step 1: Create tmdb_mapper.dart**
+- [x] **Step 1: Create tmdb_mapper.dart**
 
 ```dart
 import 'package:mymediascanner/data/remote/api/tmdb/models/tmdb_search_result_dto.dart';
@@ -823,7 +823,7 @@ abstract final class TmdbMapper {
 }
 ```
 
-- [ ] **Step 2: Create discogs_mapper.dart**
+- [x] **Step 2: Create discogs_mapper.dart**
 
 ```dart
 import 'package:mymediascanner/data/remote/api/discogs/models/discogs_release_dto.dart';
@@ -865,7 +865,7 @@ abstract final class DiscogsMapper {
 }
 ```
 
-- [ ] **Step 3: Create google_books_mapper.dart**
+- [x] **Step 3: Create google_books_mapper.dart**
 
 ```dart
 import 'package:mymediascanner/data/remote/api/google_books/models/google_books_volume_dto.dart';
@@ -903,7 +903,7 @@ abstract final class GoogleBooksMapper {
 }
 ```
 
-- [ ] **Step 4: Create open_library_mapper.dart**
+- [x] **Step 4: Create open_library_mapper.dart**
 
 ```dart
 import 'package:mymediascanner/data/remote/api/open_library/models/open_library_work_dto.dart';
@@ -937,7 +937,7 @@ abstract final class OpenLibraryMapper {
 }
 ```
 
-- [ ] **Step 5: Create upc_mapper.dart**
+- [x] **Step 5: Create upc_mapper.dart**
 
 ```dart
 import 'package:mymediascanner/data/remote/api/upc/models/upc_item_dto.dart';
@@ -979,7 +979,7 @@ abstract final class UpcMapper {
 }
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add lib/data/mappers/
@@ -994,7 +994,7 @@ git commit -m "feat: add all five DTO-to-domain mappers"
 - Create: `test/unit/data/mappers/tmdb_mapper_test.dart`
 - Create: `test/unit/data/mappers/google_books_mapper_test.dart`
 
-- [ ] **Step 1: Write tmdb_mapper_test.dart**
+- [x] **Step 1: Write tmdb_mapper_test.dart**
 
 ```dart
 import 'package:flutter_test/flutter_test.dart';
@@ -1042,7 +1042,7 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Write google_books_mapper_test.dart**
+- [x] **Step 2: Write google_books_mapper_test.dart**
 
 ```dart
 import 'package:flutter_test/flutter_test.dart';
@@ -1087,7 +1087,7 @@ void main() {
 }
 ```
 
-- [ ] **Step 3: Run tests**
+- [x] **Step 3: Run tests**
 
 ```bash
 flutter test test/unit/data/mappers/
@@ -1095,7 +1095,7 @@ flutter test test/unit/data/mappers/
 
 Expected: All PASS.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add test/unit/data/mappers/
@@ -1109,7 +1109,7 @@ git commit -m "test: add mapper unit tests for TMDB and Google Books"
 **Files:**
 - Create: `lib/data/repositories/media_item_repository_impl.dart`
 
-- [ ] **Step 1: Create media_item_repository_impl.dart**
+- [x] **Step 1: Create media_item_repository_impl.dart**
 
 ```dart
 import 'dart:convert';
@@ -1274,7 +1274,7 @@ class MediaItemRepositoryImpl implements IMediaItemRepository {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add lib/data/repositories/media_item_repository_impl.dart
@@ -1288,7 +1288,7 @@ git commit -m "feat: add MediaItemRepositoryImpl with sync logging"
 **Files:**
 - Create: `lib/data/repositories/metadata_repository_impl.dart`
 
-- [ ] **Step 1: Create metadata_repository_impl.dart**
+- [x] **Step 1: Create metadata_repository_impl.dart**
 
 ```dart
 import 'dart:convert';
@@ -1530,7 +1530,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add lib/data/repositories/metadata_repository_impl.dart
@@ -1547,7 +1547,7 @@ git commit -m "feat: add MetadataRepositoryImpl with tiered lookup"
 - Create: `test/unit/domain/scan_barcode_usecase_test.dart`
 - Create: `test/unit/domain/save_media_item_usecase_test.dart`
 
-- [ ] **Step 1: Write scan_barcode_usecase_test.dart**
+- [x] **Step 1: Write scan_barcode_usecase_test.dart**
 
 ```dart
 import 'package:flutter_test/flutter_test.dart';
@@ -1615,7 +1615,7 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Create scan_barcode_usecase.dart**
+- [x] **Step 2: Create scan_barcode_usecase.dart**
 
 ```dart
 import 'package:mymediascanner/domain/entities/media_type.dart';
@@ -1660,7 +1660,7 @@ class ScanBarcodeUseCase {
 }
 ```
 
-- [ ] **Step 3: Run scan barcode test**
+- [x] **Step 3: Run scan barcode test**
 
 ```bash
 flutter test test/unit/domain/scan_barcode_usecase_test.dart
@@ -1668,7 +1668,7 @@ flutter test test/unit/domain/scan_barcode_usecase_test.dart
 
 Expected: All PASS.
 
-- [ ] **Step 4: Write save_media_item_usecase_test.dart**
+- [x] **Step 4: Write save_media_item_usecase_test.dart**
 
 ```dart
 import 'package:flutter_test/flutter_test.dart';
@@ -1727,7 +1727,7 @@ void main() {
 }
 ```
 
-- [ ] **Step 5: Create save_media_item_usecase.dart**
+- [x] **Step 5: Create save_media_item_usecase.dart**
 
 ```dart
 import 'package:mymediascanner/domain/entities/media_item.dart';
@@ -1771,7 +1771,7 @@ class SaveMediaItemUseCase {
 }
 ```
 
-- [ ] **Step 6: Run all tests**
+- [x] **Step 6: Run all tests**
 
 ```bash
 flutter test test/unit/domain/
@@ -1779,7 +1779,7 @@ flutter test test/unit/domain/
 
 Expected: All PASS.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add lib/domain/usecases/ test/unit/domain/
@@ -1793,7 +1793,7 @@ git commit -m "feat: add ScanBarcode and SaveMediaItem use cases with tests"
 **Files:**
 - Create: `lib/presentation/providers/settings_provider.dart`
 
-- [ ] **Step 1: Create settings_provider.dart**
+- [x] **Step 1: Create settings_provider.dart**
 
 ```dart
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -1839,7 +1839,7 @@ class ApiKeys extends _$ApiKeys {
 }
 ```
 
-- [ ] **Step 2: Run code generation and commit**
+- [x] **Step 2: Run code generation and commit**
 
 ```bash
 dart run build_runner build --delete-conflicting-outputs
@@ -1854,7 +1854,7 @@ git commit -m "feat: add settings provider for API key management"
 **Files:**
 - Modify: `lib/presentation/providers/repository_providers.dart`
 
-- [ ] **Step 1: Populate repository_providers.dart**
+- [x] **Step 1: Populate repository_providers.dart**
 
 ```dart
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -1920,7 +1920,7 @@ IMetadataRepository metadataRepository(Ref ref) {
 }
 ```
 
-- [ ] **Step 2: Run code generation and commit**
+- [x] **Step 2: Run code generation and commit**
 
 ```bash
 dart run build_runner build --delete-conflicting-outputs
@@ -1935,7 +1935,7 @@ git commit -m "feat: add repository providers binding interfaces to implementati
 **Files:**
 - Create: `lib/presentation/providers/scanner_provider.dart`
 
-- [ ] **Step 1: Create scanner_provider.dart**
+- [x] **Step 1: Create scanner_provider.dart**
 
 ```dart
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -2006,7 +2006,7 @@ class Scanner extends _$Scanner {
 }
 ```
 
-- [ ] **Step 2: Run code generation and commit**
+- [x] **Step 2: Run code generation and commit**
 
 ```bash
 dart run build_runner build --delete-conflicting-outputs
@@ -2021,7 +2021,7 @@ git commit -m "feat: add scanner state provider"
 **Files:**
 - Create: `lib/presentation/screens/scanner/desktop_scan_screen.dart`
 
-- [ ] **Step 1: Create desktop_scan_screen.dart**
+- [x] **Step 1: Create desktop_scan_screen.dart**
 
 ```dart
 import 'package:flutter/material.dart';
@@ -2153,7 +2153,7 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add lib/presentation/screens/scanner/desktop_scan_screen.dart
@@ -2167,7 +2167,7 @@ git commit -m "feat: add desktop barcode scan screen with keyboard-wedge input"
 **Files:**
 - Modify: `lib/presentation/screens/scanner/scanner_screen.dart`
 
-- [ ] **Step 1: Replace scanner_screen.dart placeholder**
+- [x] **Step 1: Replace scanner_screen.dart placeholder**
 
 ```dart
 import 'package:flutter/material.dart';
@@ -2206,7 +2206,7 @@ class _MobileScannerPlaceholder extends StatelessWidget {
 
 Note: The actual mobile_scanner camera implementation will be added when Android builds are available. The platform check ensures desktop builds don't fail.
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add lib/presentation/screens/scanner/scanner_screen.dart
@@ -2221,7 +2221,7 @@ git commit -m "feat: make scanner screen platform-adaptive"
 - Create: `lib/presentation/screens/metadata_confirm/widgets/editable_metadata_form.dart`
 - Create: `lib/presentation/screens/metadata_confirm/metadata_confirm_screen.dart`
 
-- [ ] **Step 1: Create editable_metadata_form.dart**
+- [x] **Step 1: Create editable_metadata_form.dart**
 
 ```dart
 import 'package:flutter/material.dart';
@@ -2373,7 +2373,7 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
 }
 ```
 
-- [ ] **Step 2: Create metadata_confirm_screen.dart**
+- [x] **Step 2: Create metadata_confirm_screen.dart**
 
 ```dart
 import 'package:flutter/material.dart';
@@ -2434,7 +2434,7 @@ class MetadataConfirmScreen extends ConsumerWidget {
 }
 ```
 
-- [ ] **Step 3: Update router.dart to use MetadataConfirmScreen**
+- [x] **Step 3: Update router.dart to use MetadataConfirmScreen**
 
 Replace the placeholder `/scan/confirm` route builder with:
 
@@ -2445,7 +2445,7 @@ import 'package:mymediascanner/presentation/screens/metadata_confirm/metadata_co
 builder: (context, state) => const MetadataConfirmScreen(),
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add lib/presentation/screens/metadata_confirm/ lib/app/router.dart
@@ -2459,7 +2459,7 @@ git commit -m "feat: add MetadataConfirmScreen with editable form"
 **Files:**
 - Create: `lib/presentation/screens/scanner/widgets/batch_scan_counter.dart`
 
-- [ ] **Step 1: Create batch_scan_counter.dart**
+- [x] **Step 1: Create batch_scan_counter.dart**
 
 ```dart
 import 'package:flutter/material.dart';
@@ -2497,7 +2497,7 @@ class BatchScanCounter extends StatelessWidget {
 }
 ```
 
-- [ ] **Step 2: Add batch mode toggle to ScannerState**
+- [x] **Step 2: Add batch mode toggle to ScannerState**
 
 In `scanner_provider.dart`, add `batchMode` and `batchCount` fields to `ScannerState`:
 
@@ -2548,7 +2548,7 @@ void incrementBatchCount() {
 }
 ```
 
-- [ ] **Step 3: Update MetadataConfirmScreen to support batch mode**
+- [x] **Step 3: Update MetadataConfirmScreen to support batch mode**
 
 In `metadata_confirm_screen.dart`, after saving, check batch mode:
 
@@ -2580,7 +2580,7 @@ onSave: (edited) async {
 },
 ```
 
-- [ ] **Step 4: Add batch toggle and counter to DesktopScanScreen**
+- [x] **Step 4: Add batch toggle and counter to DesktopScanScreen**
 
 Add to the desktop scan screen UI (in the Column children, before the text field):
 
@@ -2599,7 +2599,7 @@ Row(
 ),
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/presentation/screens/scanner/widgets/ lib/presentation/providers/scanner_provider.dart lib/presentation/screens/metadata_confirm/ lib/presentation/screens/scanner/desktop_scan_screen.dart
@@ -2610,19 +2610,19 @@ git commit -m "feat: add batch scan mode with counter (SCAN-07)"
 
 ## Task 19: Verify Slice 2
 
-- [ ] **Step 1: Run full code generation**
+- [x] **Step 1: Run full code generation**
 
 ```bash
 dart run build_runner build --delete-conflicting-outputs
 ```
 
-- [ ] **Step 2: Run analysis**
+- [x] **Step 2: Run analysis**
 
 ```bash
 flutter analyze
 ```
 
-- [ ] **Step 3: Run all tests**
+- [x] **Step 3: Run all tests**
 
 ```bash
 flutter test
@@ -2630,7 +2630,7 @@ flutter test
 
 Expected: All tests pass (barcode_utils, DAO, mappers, use cases).
 
-- [ ] **Step 4: Run app on macOS**
+- [x] **Step 4: Run app on macOS**
 
 ```bash
 flutter run -d macos
@@ -2638,7 +2638,7 @@ flutter run -d macos
 
 Expected: App launches, Scan tab shows desktop barcode input. Typing a barcode + Enter triggers metadata lookup (will fail without API keys configured, but UI flow works).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add -A

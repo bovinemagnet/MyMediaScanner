@@ -1,6 +1,6 @@
 # MyMediaScanner Slice 1: Scaffold + Core Infrastructure
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Create the Flutter project scaffold with full directory structure, database, domain entities, core utilities, theme, navigation, and adaptive layout — a runnable app shell on macOS.
 
@@ -104,7 +104,7 @@ test/
 **Files:**
 - Create: entire project scaffold via `flutter create`
 
-- [ ] **Step 1: Create Flutter project**
+- [x] **Step 1: Create Flutter project**
 
 ```bash
 cd /Users/paul/gitHub
@@ -130,7 +130,7 @@ cp -r /tmp/mymediascanner_tmp/.metadata /Users/paul/gitHub/MyMediaScanner/
 rm -rf /tmp/mymediascanner_tmp
 ```
 
-- [ ] **Step 2: Verify project runs on macOS**
+- [x] **Step 2: Verify project runs on macOS**
 
 ```bash
 cd /Users/paul/gitHub/MyMediaScanner
@@ -139,7 +139,7 @@ flutter run -d macos --debug
 
 Expected: Default Flutter counter app launches on macOS.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add -A
@@ -153,7 +153,7 @@ git commit -m "feat: scaffold Flutter project for Android and macOS"
 **Files:**
 - Modify: `pubspec.yaml`
 
-- [ ] **Step 1: Add all dependencies**
+- [x] **Step 1: Add all dependencies**
 
 ```bash
 cd /Users/paul/gitHub/MyMediaScanner
@@ -172,7 +172,7 @@ flutter pub add --dev build_runner drift_dev riverpod_generator \
   freezed json_serializable retrofit_generator mocktail
 ```
 
-- [ ] **Step 2: Verify resolution**
+- [x] **Step 2: Verify resolution**
 
 ```bash
 flutter pub get
@@ -180,7 +180,7 @@ flutter pub get
 
 Expected: No version conflicts.
 
-- [ ] **Step 3: Update analysis_options.yaml**
+- [x] **Step 3: Update analysis_options.yaml**
 
 Replace contents of `analysis_options.yaml`:
 
@@ -204,7 +204,7 @@ linter:
     unawaited_futures: true
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add pubspec.yaml pubspec.lock analysis_options.yaml
@@ -219,7 +219,7 @@ git commit -m "feat: add all project dependencies"
 - Create: `lib/core/errors/app_exception.dart`
 - Create: `lib/core/errors/failure.dart`
 
-- [ ] **Step 1: Create app_exception.dart**
+- [x] **Step 1: Create app_exception.dart**
 
 ```dart
 /// Sealed exception hierarchy for the data layer.
@@ -257,7 +257,7 @@ class CacheException extends AppException {
 }
 ```
 
-- [ ] **Step 2: Create failure.dart**
+- [x] **Step 2: Create failure.dart**
 
 ```dart
 /// Domain-layer failure types surfaced via Riverpod AsyncError.
@@ -297,7 +297,7 @@ class ValidationFailure extends Failure {
 }
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add lib/core/errors/
@@ -312,7 +312,7 @@ git commit -m "feat: add sealed exception and failure hierarchies"
 - Create: `lib/core/constants/api_constants.dart`
 - Create: `lib/core/constants/app_constants.dart`
 
-- [ ] **Step 1: Create api_constants.dart**
+- [x] **Step 1: Create api_constants.dart**
 
 ```dart
 abstract final class ApiConstants {
@@ -338,7 +338,7 @@ abstract final class ApiConstants {
 }
 ```
 
-- [ ] **Step 2: Create app_constants.dart**
+- [x] **Step 2: Create app_constants.dart**
 
 ```dart
 abstract final class AppConstants {
@@ -358,7 +358,7 @@ abstract final class AppConstants {
 }
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add lib/core/constants/
@@ -372,7 +372,7 @@ git commit -m "feat: add API and app constants"
 **Files:**
 - Create: `lib/core/utils/platform_utils.dart`
 
-- [ ] **Step 1: Create platform_utils.dart**
+- [x] **Step 1: Create platform_utils.dart**
 
 ```dart
 import 'package:flutter/foundation.dart';
@@ -397,7 +397,7 @@ abstract final class PlatformCapability {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add lib/core/utils/platform_utils.dart
@@ -412,7 +412,7 @@ git commit -m "feat: add platform capability detection utility"
 - Create: `lib/core/utils/barcode_utils.dart`
 - Create: `test/unit/core/barcode_utils_test.dart`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```dart
 import 'package:flutter_test/flutter_test.dart';
@@ -481,7 +481,7 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 ```bash
 flutter test test/unit/core/barcode_utils_test.dart
@@ -489,7 +489,7 @@ flutter test test/unit/core/barcode_utils_test.dart
 
 Expected: FAIL — `barcode_utils.dart` does not exist yet.
 
-- [ ] **Step 3: Write implementation**
+- [x] **Step 3: Write implementation**
 
 ```dart
 /// Barcode type detection and classification utilities.
@@ -526,7 +526,7 @@ abstract final class BarcodeUtils {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 ```bash
 flutter test test/unit/core/barcode_utils_test.dart
@@ -534,7 +534,7 @@ flutter test test/unit/core/barcode_utils_test.dart
 
 Expected: All tests PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/core/utils/barcode_utils.dart test/unit/core/barcode_utils_test.dart
@@ -549,7 +549,7 @@ git commit -m "feat: add barcode type detection with tests"
 - Create: `lib/core/extensions/string_extensions.dart`
 - Create: `lib/core/extensions/datetime_extensions.dart`
 
-- [ ] **Step 1: Create string_extensions.dart**
+- [x] **Step 1: Create string_extensions.dart**
 
 ```dart
 extension StringExtensions on String {
@@ -563,7 +563,7 @@ extension StringExtensions on String {
 }
 ```
 
-- [ ] **Step 2: Create datetime_extensions.dart**
+- [x] **Step 2: Create datetime_extensions.dart**
 
 ```dart
 extension DateTimeExtensions on DateTime {
@@ -576,7 +576,7 @@ extension DateTimeExtensions on DateTime {
 }
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add lib/core/extensions/
@@ -590,7 +590,7 @@ git commit -m "feat: add string and datetime extensions"
 **Files:**
 - Create: `lib/domain/entities/media_type.dart`
 
-- [ ] **Step 1: Create media_type.dart**
+- [x] **Step 1: Create media_type.dart**
 
 ```dart
 /// Media type classification.
@@ -616,7 +616,7 @@ enum MediaType {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add lib/domain/entities/media_type.dart
@@ -633,7 +633,7 @@ git commit -m "feat: add MediaType enum"
 - Create: `lib/domain/entities/tag.dart`
 - Create: `lib/domain/entities/shelf.dart`
 
-- [ ] **Step 1: Create media_item.dart**
+- [x] **Step 1: Create media_item.dart**
 
 ```dart
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -669,7 +669,7 @@ sealed class MediaItem with _$MediaItem {
 }
 ```
 
-- [ ] **Step 2: Create metadata_result.dart**
+- [x] **Step 2: Create metadata_result.dart**
 
 ```dart
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -697,7 +697,7 @@ sealed class MetadataResult with _$MetadataResult {
 }
 ```
 
-- [ ] **Step 3: Create tag.dart**
+- [x] **Step 3: Create tag.dart**
 
 ```dart
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -716,7 +716,7 @@ sealed class Tag with _$Tag {
 }
 ```
 
-- [ ] **Step 4: Create shelf.dart**
+- [x] **Step 4: Create shelf.dart**
 
 ```dart
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -736,7 +736,7 @@ sealed class Shelf with _$Shelf {
 }
 ```
 
-- [ ] **Step 5: Run code generation**
+- [x] **Step 5: Run code generation**
 
 ```bash
 dart run build_runner build --delete-conflicting-outputs
@@ -744,7 +744,7 @@ dart run build_runner build --delete-conflicting-outputs
 
 Expected: Generates `.freezed.dart` files for all four entities.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add lib/domain/entities/
@@ -762,7 +762,7 @@ git commit -m "feat: add Freezed domain entities"
 - Create: `lib/domain/repositories/i_shelf_repository.dart`
 - Create: `lib/domain/repositories/i_sync_repository.dart`
 
-- [ ] **Step 1: Create i_media_item_repository.dart**
+- [x] **Step 1: Create i_media_item_repository.dart**
 
 ```dart
 import 'package:mymediascanner/domain/entities/media_item.dart';
@@ -787,7 +787,7 @@ abstract interface class IMediaItemRepository {
 }
 ```
 
-- [ ] **Step 2: Create i_metadata_repository.dart**
+- [x] **Step 2: Create i_metadata_repository.dart**
 
 ```dart
 import 'package:mymediascanner/domain/entities/media_type.dart';
@@ -801,7 +801,7 @@ abstract interface class IMetadataRepository {
 }
 ```
 
-- [ ] **Step 3: Create i_tag_repository.dart**
+- [x] **Step 3: Create i_tag_repository.dart**
 
 ```dart
 import 'package:mymediascanner/domain/entities/tag.dart';
@@ -817,7 +817,7 @@ abstract interface class ITagRepository {
 }
 ```
 
-- [ ] **Step 4: Create i_shelf_repository.dart**
+- [x] **Step 4: Create i_shelf_repository.dart**
 
 ```dart
 import 'package:mymediascanner/domain/entities/shelf.dart';
@@ -834,7 +834,7 @@ abstract interface class IShelfRepository {
 }
 ```
 
-- [ ] **Step 5: Create i_sync_repository.dart**
+- [x] **Step 5: Create i_sync_repository.dart**
 
 ```dart
 abstract interface class ISyncRepository {
@@ -860,7 +860,7 @@ class SyncStatus {
 }
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add lib/domain/repositories/
@@ -880,7 +880,7 @@ git commit -m "feat: add domain repository interfaces"
 - Create: `lib/data/local/database/tables/barcode_cache_table.dart`
 - Create: `lib/data/local/database/tables/sync_log_table.dart`
 
-- [ ] **Step 1: Create media_items_table.dart**
+- [x] **Step 1: Create media_items_table.dart**
 
 ```dart
 import 'package:drift/drift.dart';
@@ -916,7 +916,7 @@ class MediaItemsTable extends Table {
 }
 ```
 
-- [ ] **Step 2: Create tags_table.dart**
+- [x] **Step 2: Create tags_table.dart**
 
 ```dart
 import 'package:drift/drift.dart';
@@ -936,7 +936,7 @@ class TagsTable extends Table {
 }
 ```
 
-- [ ] **Step 3: Create media_item_tags_table.dart**
+- [x] **Step 3: Create media_item_tags_table.dart**
 
 ```dart
 import 'package:drift/drift.dart';
@@ -957,7 +957,7 @@ class MediaItemTagsTable extends Table {
 }
 ```
 
-- [ ] **Step 4: Create shelves_table.dart**
+- [x] **Step 4: Create shelves_table.dart**
 
 ```dart
 import 'package:drift/drift.dart';
@@ -978,7 +978,7 @@ class ShelvesTable extends Table {
 }
 ```
 
-- [ ] **Step 5: Create shelf_items_table.dart**
+- [x] **Step 5: Create shelf_items_table.dart**
 
 ```dart
 import 'package:drift/drift.dart';
@@ -1000,7 +1000,7 @@ class ShelfItemsTable extends Table {
 }
 ```
 
-- [ ] **Step 6: Create barcode_cache_table.dart**
+- [x] **Step 6: Create barcode_cache_table.dart**
 
 ```dart
 import 'package:drift/drift.dart';
@@ -1020,7 +1020,7 @@ class BarcodeCacheTable extends Table {
 }
 ```
 
-- [ ] **Step 7: Create sync_log_table.dart**
+- [x] **Step 7: Create sync_log_table.dart**
 
 ```dart
 import 'package:drift/drift.dart';
@@ -1043,7 +1043,7 @@ class SyncLogTable extends Table {
 }
 ```
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add lib/data/local/database/tables/
@@ -1061,7 +1061,7 @@ git commit -m "feat: add all Drift table definitions"
 - Create: `lib/data/local/dao/barcode_cache_dao.dart`
 - Create: `lib/data/local/dao/sync_log_dao.dart`
 
-- [ ] **Step 1: Create media_items_dao.dart**
+- [x] **Step 1: Create media_items_dao.dart**
 
 ```dart
 import 'package:drift/drift.dart';
@@ -1131,7 +1131,7 @@ class MediaItemsDao extends DatabaseAccessor<AppDatabase>
 }
 ```
 
-- [ ] **Step 2: Create tags_dao.dart**
+- [x] **Step 2: Create tags_dao.dart**
 
 ```dart
 import 'package:drift/drift.dart';
@@ -1198,7 +1198,7 @@ class TagsDao extends DatabaseAccessor<AppDatabase> with _$TagsDaoMixin {
 }
 ```
 
-- [ ] **Step 3: Create shelves_dao.dart**
+- [x] **Step 3: Create shelves_dao.dart**
 
 ```dart
 import 'package:drift/drift.dart';
@@ -1272,7 +1272,7 @@ class ShelvesDao extends DatabaseAccessor<AppDatabase>
 }
 ```
 
-- [ ] **Step 4: Create barcode_cache_dao.dart**
+- [x] **Step 4: Create barcode_cache_dao.dart**
 
 ```dart
 import 'package:drift/drift.dart';
@@ -1305,7 +1305,7 @@ class BarcodeCacheDao extends DatabaseAccessor<AppDatabase>
 }
 ```
 
-- [ ] **Step 5: Create sync_log_dao.dart**
+- [x] **Step 5: Create sync_log_dao.dart**
 
 ```dart
 import 'package:drift/drift.dart';
@@ -1350,7 +1350,7 @@ class SyncLogDao extends DatabaseAccessor<AppDatabase>
 }
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add lib/data/local/dao/
@@ -1364,7 +1364,7 @@ git commit -m "feat: add all Drift DAOs"
 **Files:**
 - Create: `lib/data/local/database/app_database.dart`
 
-- [ ] **Step 1: Create app_database.dart**
+- [x] **Step 1: Create app_database.dart**
 
 ```dart
 import 'package:drift/drift.dart';
@@ -1423,7 +1423,7 @@ class AppDatabase extends _$AppDatabase {
 }
 ```
 
-- [ ] **Step 2: Run code generation**
+- [x] **Step 2: Run code generation**
 
 ```bash
 dart run build_runner build --delete-conflicting-outputs
@@ -1431,7 +1431,7 @@ dart run build_runner build --delete-conflicting-outputs
 
 Expected: Generates `app_database.g.dart` and all DAO `.g.dart` files.
 
-- [ ] **Step 3: Verify compilation**
+- [x] **Step 3: Verify compilation**
 
 ```bash
 flutter analyze
@@ -1439,7 +1439,7 @@ flutter analyze
 
 Expected: No errors.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add lib/data/local/
@@ -1453,7 +1453,7 @@ git commit -m "feat: add AppDatabase with all tables and DAOs"
 **Files:**
 - Create: `test/unit/data/dao/media_items_dao_test.dart`
 
-- [ ] **Step 1: Write DAO test**
+- [x] **Step 1: Write DAO test**
 
 ```dart
 import 'package:drift/drift.dart';
@@ -1536,7 +1536,7 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Run tests**
+- [x] **Step 2: Run tests**
 
 ```bash
 flutter test test/unit/data/dao/media_items_dao_test.dart
@@ -1544,7 +1544,7 @@ flutter test test/unit/data/dao/media_items_dao_test.dart
 
 Expected: All tests PASS.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add test/unit/data/dao/
@@ -1559,7 +1559,7 @@ git commit -m "test: add MediaItemsDao unit tests with in-memory database"
 - Create: `lib/app/theme/app_colors.dart`
 - Create: `lib/app/theme/app_theme.dart`
 
-- [ ] **Step 1: Create app_colors.dart**
+- [x] **Step 1: Create app_colors.dart**
 
 ```dart
 import 'package:flutter/material.dart';
@@ -1577,7 +1577,7 @@ abstract final class AppColors {
 }
 ```
 
-- [ ] **Step 2: Create app_theme.dart**
+- [x] **Step 2: Create app_theme.dart**
 
 ```dart
 import 'package:flutter/material.dart';
@@ -1618,7 +1618,7 @@ abstract final class AppTheme {
 }
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add lib/app/theme/
@@ -1634,7 +1634,7 @@ git commit -m "feat: add Material 3 theme with light and dark variants"
 - Create: `lib/presentation/widgets/error_state.dart`
 - Create: `lib/presentation/widgets/loading_indicator.dart`
 
-- [ ] **Step 1: Create empty_state.dart**
+- [x] **Step 1: Create empty_state.dart**
 
 ```dart
 import 'package:flutter/material.dart';
@@ -1671,7 +1671,7 @@ class EmptyState extends StatelessWidget {
 }
 ```
 
-- [ ] **Step 2: Create error_state.dart**
+- [x] **Step 2: Create error_state.dart**
 
 ```dart
 import 'package:flutter/material.dart';
@@ -1712,7 +1712,7 @@ class ErrorState extends StatelessWidget {
 }
 ```
 
-- [ ] **Step 3: Create loading_indicator.dart**
+- [x] **Step 3: Create loading_indicator.dart**
 
 ```dart
 import 'package:flutter/material.dart';
@@ -1740,7 +1740,7 @@ class LoadingIndicator extends StatelessWidget {
 }
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add lib/presentation/widgets/
@@ -1757,7 +1757,7 @@ git commit -m "feat: add shared empty, error, and loading widgets"
 - Create: `lib/presentation/screens/shelves/shelves_screen.dart`
 - Create: `lib/presentation/screens/settings/settings_screen.dart`
 
-- [ ] **Step 1: Create all four placeholder screens**
+- [x] **Step 1: Create all four placeholder screens**
 
 Each follows this pattern (example for collection):
 
@@ -1778,7 +1778,7 @@ class CollectionScreen extends StatelessWidget {
 
 Create `scanner_screen.dart`, `shelves_screen.dart`, `settings_screen.dart` with the same pattern, adjusting the text.
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add lib/presentation/screens/
@@ -1792,7 +1792,7 @@ git commit -m "feat: add placeholder screens for all routes"
 **Files:**
 - Create: `lib/presentation/widgets/app_scaffold.dart`
 
-- [ ] **Step 1: Create app_scaffold.dart**
+- [x] **Step 1: Create app_scaffold.dart**
 
 ```dart
 import 'package:flutter/material.dart';
@@ -1896,7 +1896,7 @@ class AppScaffold extends StatelessWidget {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add lib/presentation/widgets/app_scaffold.dart
@@ -1910,7 +1910,7 @@ git commit -m "feat: add adaptive AppScaffold with nav rail and bottom nav"
 **Files:**
 - Create: `lib/app/router.dart`
 
-- [ ] **Step 1: Create router.dart**
+- [x] **Step 1: Create router.dart**
 
 ```dart
 import 'package:flutter/material.dart';
@@ -2011,7 +2011,7 @@ final router = GoRouter(
 );
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add lib/app/router.dart
@@ -2026,7 +2026,7 @@ git commit -m "feat: add GoRouter with all routes and adaptive shell"
 - Create: `lib/presentation/providers/database_provider.dart`
 - Create: `lib/presentation/providers/repository_providers.dart`
 
-- [ ] **Step 1: Create database_provider.dart**
+- [x] **Step 1: Create database_provider.dart**
 
 ```dart
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -2067,7 +2067,7 @@ SyncLogDao syncLogDao(Ref ref) {
 }
 ```
 
-- [ ] **Step 2: Create repository_providers.dart (stub)**
+- [x] **Step 2: Create repository_providers.dart (stub)**
 
 This file will be populated as repository implementations are built in later slices. For now, create it empty:
 
@@ -2075,13 +2075,13 @@ This file will be populated as repository implementations are built in later sli
 // Repository provider bindings — populated in Slice 2+.
 ```
 
-- [ ] **Step 3: Run code generation**
+- [x] **Step 3: Run code generation**
 
 ```bash
 dart run build_runner build --delete-conflicting-outputs
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add lib/presentation/providers/
@@ -2096,7 +2096,7 @@ git commit -m "feat: add Riverpod database and DAO providers"
 - Create: `lib/app/app.dart`
 - Modify: `lib/main.dart`
 
-- [ ] **Step 1: Create app.dart**
+- [x] **Step 1: Create app.dart**
 
 ```dart
 import 'package:flutter/material.dart';
@@ -2121,7 +2121,7 @@ class App extends StatelessWidget {
 }
 ```
 
-- [ ] **Step 2: Update main.dart**
+- [x] **Step 2: Update main.dart**
 
 ```dart
 import 'package:flutter/material.dart';
@@ -2138,7 +2138,7 @@ void main() {
 }
 ```
 
-- [ ] **Step 3: Run app on macOS**
+- [x] **Step 3: Run app on macOS**
 
 ```bash
 flutter run -d macos --debug
@@ -2146,7 +2146,7 @@ flutter run -d macos --debug
 
 Expected: App launches with adaptive navigation (nav rail on macOS), four tabs with placeholder content.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add lib/app/app.dart lib/main.dart
@@ -2157,13 +2157,13 @@ git commit -m "feat: add App widget and main entry point with Riverpod"
 
 ## Task 22: Verify Full Build
 
-- [ ] **Step 1: Run all code generation**
+- [x] **Step 1: Run all code generation**
 
 ```bash
 dart run build_runner build --delete-conflicting-outputs
 ```
 
-- [ ] **Step 2: Run analysis**
+- [x] **Step 2: Run analysis**
 
 ```bash
 flutter analyze
@@ -2171,7 +2171,7 @@ flutter analyze
 
 Expected: No errors.
 
-- [ ] **Step 3: Run all tests**
+- [x] **Step 3: Run all tests**
 
 ```bash
 flutter test
@@ -2179,7 +2179,7 @@ flutter test
 
 Expected: All tests pass (barcode_utils_test, media_items_dao_test).
 
-- [ ] **Step 4: Run app on macOS**
+- [x] **Step 4: Run app on macOS**
 
 ```bash
 flutter run -d macos
@@ -2187,7 +2187,7 @@ flutter run -d macos
 
 Expected: App launches with nav rail, four placeholder tabs.
 
-- [ ] **Step 5: Final commit**
+- [x] **Step 5: Final commit**
 
 ```bash
 git add -A

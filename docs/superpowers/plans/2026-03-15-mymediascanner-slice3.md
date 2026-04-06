@@ -1,6 +1,6 @@
 # MyMediaScanner Slice 3: Collection CRUD
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Implement the collection browsing screen with search, filter, sort, item detail screen with ratings and reviews, and edit metadata flow.
 
@@ -64,7 +64,7 @@ test/
 - Create: `test/unit/domain/delete_media_item_usecase_test.dart`
 - Create: `test/unit/domain/update_rating_usecase_test.dart`
 
-- [ ] **Step 1: Write delete_media_item_usecase_test.dart**
+- [x] **Step 1: Write delete_media_item_usecase_test.dart**
 
 ```dart
 import 'package:flutter_test/flutter_test.dart';
@@ -93,7 +93,7 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Create delete_media_item_usecase.dart**
+- [x] **Step 2: Create delete_media_item_usecase.dart**
 
 ```dart
 import 'package:mymediascanner/domain/repositories/i_media_item_repository.dart';
@@ -108,7 +108,7 @@ class DeleteMediaItemUseCase {
 }
 ```
 
-- [ ] **Step 3: Write update_rating_usecase_test.dart**
+- [x] **Step 3: Write update_rating_usecase_test.dart**
 
 ```dart
 import 'package:flutter_test/flutter_test.dart';
@@ -156,7 +156,7 @@ void main() {
 }
 ```
 
-- [ ] **Step 4: Create update_rating_usecase.dart**
+- [x] **Step 4: Create update_rating_usecase.dart**
 
 ```dart
 import 'package:mymediascanner/core/errors/app_exception.dart';
@@ -186,7 +186,7 @@ class UpdateRatingUseCase {
 }
 ```
 
-- [ ] **Step 5: Create get_collection_usecase.dart**
+- [x] **Step 5: Create get_collection_usecase.dart**
 
 ```dart
 import 'package:mymediascanner/domain/entities/media_item.dart';
@@ -217,7 +217,7 @@ class GetCollectionUseCase {
 }
 ```
 
-- [ ] **Step 6: Create search_collection_usecase.dart**
+- [x] **Step 6: Create search_collection_usecase.dart**
 
 ```dart
 import 'package:mymediascanner/domain/entities/media_item.dart';
@@ -235,7 +235,7 @@ class SearchCollectionUseCase {
 }
 ```
 
-- [ ] **Step 7: Run tests and commit**
+- [x] **Step 7: Run tests and commit**
 
 ```bash
 flutter test test/unit/domain/
@@ -250,7 +250,7 @@ git commit -m "feat: add collection use cases with tests"
 **Files:**
 - Create: `lib/presentation/providers/collection_provider.dart`
 
-- [ ] **Step 1: Create collection_provider.dart**
+- [x] **Step 1: Create collection_provider.dart**
 
 ```dart
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -311,7 +311,7 @@ Stream<List<MediaItem>> collection(Ref ref) {
 }
 ```
 
-- [ ] **Step 2: Run code generation and commit**
+- [x] **Step 2: Run code generation and commit**
 
 ```bash
 dart run build_runner build --delete-conflicting-outputs
@@ -328,7 +328,7 @@ git commit -m "feat: add collection filter and stream provider"
 - Create: `lib/presentation/screens/collection/widgets/filter_bar.dart`
 - Create: `lib/presentation/screens/collection/widgets/sort_selector.dart`
 
-- [ ] **Step 1: Create media_item_card.dart**
+- [x] **Step 1: Create media_item_card.dart**
 
 ```dart
 import 'package:cached_network_image/cached_network_image.dart';
@@ -439,7 +439,7 @@ class MediaItemCard extends StatelessWidget {
 }
 ```
 
-- [ ] **Step 2: Create filter_bar.dart**
+- [x] **Step 2: Create filter_bar.dart**
 
 ```dart
 import 'package:flutter/material.dart';
@@ -486,7 +486,7 @@ class FilterBar extends ConsumerWidget {
 }
 ```
 
-- [ ] **Step 3: Create sort_selector.dart**
+- [x] **Step 3: Create sort_selector.dart**
 
 ```dart
 import 'package:flutter/material.dart';
@@ -539,7 +539,7 @@ class SortSelector extends ConsumerWidget {
 }
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add lib/presentation/screens/collection/widgets/
@@ -553,7 +553,7 @@ git commit -m "feat: add collection widgets — card, filter bar, sort selector"
 **Files:**
 - Modify: `lib/presentation/screens/collection/collection_screen.dart`
 
-- [ ] **Step 1: Replace collection_screen.dart placeholder**
+- [x] **Step 1: Replace collection_screen.dart placeholder**
 
 ```dart
 import 'package:flutter/material.dart';
@@ -633,7 +633,7 @@ class CollectionScreen extends ConsumerWidget {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add lib/presentation/screens/collection/collection_screen.dart
@@ -650,7 +650,7 @@ git commit -m "feat: implement collection screen with search, filter, sort"
 - Create: `lib/presentation/screens/item_detail/widgets/metadata_section.dart`
 - Create: `test/widget/presentation/star_rating_widget_test.dart`
 
-- [ ] **Step 1: Create cover_art_hero.dart**
+- [x] **Step 1: Create cover_art_hero.dart**
 
 ```dart
 import 'package:cached_network_image/cached_network_image.dart';
@@ -684,7 +684,7 @@ class CoverArtHero extends StatelessWidget {
 }
 ```
 
-- [ ] **Step 2: Write star_rating_widget_test.dart**
+- [x] **Step 2: Write star_rating_widget_test.dart**
 
 ```dart
 import 'package:flutter/material.dart';
@@ -718,7 +718,7 @@ void main() {
 }
 ```
 
-- [ ] **Step 3: Create star_rating_widget.dart**
+- [x] **Step 3: Create star_rating_widget.dart**
 
 ```dart
 import 'package:flutter/material.dart';
@@ -756,7 +756,7 @@ class StarRatingWidget extends StatelessWidget {
 }
 ```
 
-- [ ] **Step 4: Run widget test**
+- [x] **Step 4: Run widget test**
 
 ```bash
 flutter test test/widget/presentation/star_rating_widget_test.dart
@@ -764,7 +764,7 @@ flutter test test/widget/presentation/star_rating_widget_test.dart
 
 Expected: All PASS.
 
-- [ ] **Step 5: Create metadata_section.dart**
+- [x] **Step 5: Create metadata_section.dart**
 
 ```dart
 import 'package:flutter/material.dart';
@@ -838,7 +838,7 @@ class MetadataSection extends StatelessWidget {
 }
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add lib/presentation/screens/item_detail/widgets/ test/widget/
@@ -853,7 +853,7 @@ git commit -m "feat: add item detail widgets with star rating test"
 - Create: `lib/presentation/screens/item_detail/item_detail_screen.dart`
 - Create: `lib/presentation/providers/metadata_provider.dart`
 
-- [ ] **Step 1: Create metadata_provider.dart (item detail provider)**
+- [x] **Step 1: Create metadata_provider.dart (item detail provider)**
 
 ```dart
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -868,7 +868,7 @@ Future<MediaItem?> mediaItem(Ref ref, String id) async {
 }
 ```
 
-- [ ] **Step 2: Create item_detail_screen.dart**
+- [x] **Step 2: Create item_detail_screen.dart**
 
 ```dart
 import 'package:flutter/material.dart';
@@ -997,7 +997,7 @@ class ItemDetailScreen extends ConsumerWidget {
 }
 ```
 
-- [ ] **Step 3: Update router.dart — replace item detail placeholder**
+- [x] **Step 3: Update router.dart — replace item detail placeholder**
 
 Update the `/item/:id` route builder to:
 
@@ -1009,7 +1009,7 @@ builder: (context, state) => ItemDetailScreen(
 
 And the `/item/:id/edit` route to use EditableMetadataForm (reusing from Slice 2, pre-populated with existing data — full edit screen implementation in a later task).
 
-- [ ] **Step 4: Run code generation and commit**
+- [x] **Step 4: Run code generation and commit**
 
 ```bash
 dart run build_runner build --delete-conflicting-outputs
@@ -1021,25 +1021,25 @@ git commit -m "feat: add item detail screen with rating, metadata, delete"
 
 ## Task 7: Verify Slice 3
 
-- [ ] **Step 1: Run code generation**
+- [x] **Step 1: Run code generation**
 
 ```bash
 dart run build_runner build --delete-conflicting-outputs
 ```
 
-- [ ] **Step 2: Run analysis**
+- [x] **Step 2: Run analysis**
 
 ```bash
 flutter analyze
 ```
 
-- [ ] **Step 3: Run all tests**
+- [x] **Step 3: Run all tests**
 
 ```bash
 flutter test
 ```
 
-- [ ] **Step 4: Run app on macOS**
+- [x] **Step 4: Run app on macOS**
 
 ```bash
 flutter run -d macos
@@ -1047,7 +1047,7 @@ flutter run -d macos
 
 Expected: Collection tab shows grid with filter/sort. Scanning a barcode → confirming → saving shows the item in the collection. Tapping an item opens detail with cover, metadata, star rating.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add -A

@@ -1,6 +1,6 @@
 # MyMediaScanner Slice 4: Tags & Shelves
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Implement tag creation, assignment to items, filtering by tag, shelf CRUD, ordered shelf items, and the shelves UI.
 
@@ -50,7 +50,7 @@ test/
 **Files:**
 - Create: `lib/data/repositories/tag_repository_impl.dart`
 
-- [ ] **Step 1: Create tag_repository_impl.dart**
+- [x] **Step 1: Create tag_repository_impl.dart**
 
 ```dart
 import 'package:drift/drift.dart';
@@ -123,7 +123,7 @@ class TagRepositoryImpl implements ITagRepository {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add lib/data/repositories/tag_repository_impl.dart
@@ -137,7 +137,7 @@ git commit -m "feat: add TagRepositoryImpl"
 **Files:**
 - Create: `lib/data/repositories/shelf_repository_impl.dart`
 
-- [ ] **Step 1: Create shelf_repository_impl.dart**
+- [x] **Step 1: Create shelf_repository_impl.dart**
 
 ```dart
 import 'package:drift/drift.dart';
@@ -209,7 +209,7 @@ class ShelfRepositoryImpl implements IShelfRepository {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add lib/data/repositories/shelf_repository_impl.dart
@@ -225,7 +225,7 @@ git commit -m "feat: add ShelfRepositoryImpl"
 - Create: `lib/domain/usecases/manage_shelves_usecase.dart`
 - Create: `test/unit/domain/manage_tags_usecase_test.dart`
 
-- [ ] **Step 1: Write manage_tags_usecase_test.dart**
+- [x] **Step 1: Write manage_tags_usecase_test.dart**
 
 ```dart
 import 'package:flutter_test/flutter_test.dart';
@@ -271,7 +271,7 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Create manage_tags_usecase.dart**
+- [x] **Step 2: Create manage_tags_usecase.dart**
 
 ```dart
 import 'package:mymediascanner/domain/entities/tag.dart';
@@ -315,7 +315,7 @@ class ManageTagsUseCase {
 }
 ```
 
-- [ ] **Step 3: Create manage_shelves_usecase.dart**
+- [x] **Step 3: Create manage_shelves_usecase.dart**
 
 ```dart
 import 'package:mymediascanner/domain/entities/shelf.dart';
@@ -363,7 +363,7 @@ class ManageShelvesUseCase {
 }
 ```
 
-- [ ] **Step 4: Run tests and commit**
+- [x] **Step 4: Run tests and commit**
 
 ```bash
 flutter test test/unit/domain/manage_tags_usecase_test.dart
@@ -380,7 +380,7 @@ git commit -m "feat: add tag and shelf management use cases with tests"
 - Create: `lib/presentation/providers/shelf_provider.dart`
 - Modify: `lib/presentation/providers/repository_providers.dart`
 
-- [ ] **Step 1: Create tag_provider.dart**
+- [x] **Step 1: Create tag_provider.dart**
 
 ```dart
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -400,7 +400,7 @@ Future<List<String>> tagIdsForItem(Ref ref, String mediaItemId) {
 }
 ```
 
-- [ ] **Step 2: Create shelf_provider.dart**
+- [x] **Step 2: Create shelf_provider.dart**
 
 ```dart
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -420,7 +420,7 @@ Future<List<String>> shelfItemIds(Ref ref, String shelfId) {
 }
 ```
 
-- [ ] **Step 3: Add repository bindings to repository_providers.dart**
+- [x] **Step 3: Add repository bindings to repository_providers.dart**
 
 Add these providers to the existing file:
 
@@ -446,7 +446,7 @@ IShelfRepository shelfRepository(Ref ref) {
 }
 ```
 
-- [ ] **Step 4: Run code generation and commit**
+- [x] **Step 4: Run code generation and commit**
 
 ```bash
 dart run build_runner build --delete-conflicting-outputs
@@ -461,7 +461,7 @@ git commit -m "feat: add tag and shelf providers with repository bindings"
 **Files:**
 - Create: `lib/presentation/screens/item_detail/widgets/tag_chips.dart`
 
-- [ ] **Step 1: Create tag_chips.dart**
+- [x] **Step 1: Create tag_chips.dart**
 
 ```dart
 import 'package:flutter/material.dart';
@@ -563,7 +563,7 @@ class TagChips extends ConsumerWidget {
 }
 ```
 
-- [ ] **Step 2: Add TagChips to ItemDetailScreen**
+- [x] **Step 2: Add TagChips to ItemDetailScreen**
 
 In `item_detail_screen.dart`, add after the star rating section:
 
@@ -572,7 +572,7 @@ const SizedBox(height: 16),
 TagChips(mediaItemId: item.id),
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add lib/presentation/screens/item_detail/
@@ -587,7 +587,7 @@ git commit -m "feat: add TagChips widget with create and assign"
 - Modify: `lib/presentation/screens/shelves/shelves_screen.dart`
 - Create: `lib/presentation/screens/shelves/shelf_detail_screen.dart`
 
-- [ ] **Step 1: Replace shelves_screen.dart placeholder**
+- [x] **Step 1: Replace shelves_screen.dart placeholder**
 
 ```dart
 import 'package:flutter/material.dart';
@@ -693,7 +693,7 @@ class ShelvesScreen extends ConsumerWidget {
 }
 ```
 
-- [ ] **Step 2: Create shelf_detail_screen.dart**
+- [x] **Step 2: Create shelf_detail_screen.dart**
 
 ```dart
 import 'package:flutter/material.dart';
@@ -748,11 +748,11 @@ class ShelfDetailScreen extends ConsumerWidget {
 }
 ```
 
-- [ ] **Step 3: Update router.dart — replace shelves placeholders**
+- [x] **Step 3: Update router.dart — replace shelves placeholders**
 
 Update `/shelves/:id` route to use `ShelfDetailScreen(shelfId: state.pathParameters['id']!)`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add lib/presentation/screens/shelves/ lib/app/router.dart
@@ -763,7 +763,7 @@ git commit -m "feat: add shelves screen and shelf detail with reorderable list"
 
 ## Task 7: Verify Slice 4
 
-- [ ] **Step 1: Run code generation, analysis, tests**
+- [x] **Step 1: Run code generation, analysis, tests**
 
 ```bash
 dart run build_runner build --delete-conflicting-outputs
@@ -771,7 +771,7 @@ flutter analyze
 flutter test
 ```
 
-- [ ] **Step 2: Run app on macOS**
+- [x] **Step 2: Run app on macOS**
 
 ```bash
 flutter run -d macos
@@ -779,7 +779,7 @@ flutter run -d macos
 
 Expected: Shelves tab shows shelf list with create FAB. Tags visible on item detail. Filter bar works with tags.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add -A

@@ -1,6 +1,6 @@
 # MyMediaScanner Slice 5: Settings + Sync
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Implement the settings screen (Postgres config, API keys, preferences), secure storage integration, PostgreSQL sync client with TLS, sync status UI, and full re-sync capability.
 
@@ -55,7 +55,7 @@ test/
 **Files:**
 - Create: `lib/data/remote/sync/sync_models/sync_record.dart`
 
-- [ ] **Step 1: Create sync_record.dart**
+- [x] **Step 1: Create sync_record.dart**
 
 ```dart
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -78,7 +78,7 @@ sealed class SyncRecord with _$SyncRecord {
 }
 ```
 
-- [ ] **Step 2: Run code generation and commit**
+- [x] **Step 2: Run code generation and commit**
 
 ```bash
 dart run build_runner build --delete-conflicting-outputs
@@ -94,7 +94,7 @@ git commit -m "feat: add SyncRecord model"
 - Create: `lib/data/remote/sync/sync_strategy.dart`
 - Create: `test/unit/data/sync/sync_strategy_test.dart`
 
-- [ ] **Step 1: Write sync_strategy_test.dart**
+- [x] **Step 1: Write sync_strategy_test.dart**
 
 ```dart
 import 'package:flutter_test/flutter_test.dart';
@@ -132,7 +132,7 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Create sync_strategy.dart**
+- [x] **Step 2: Create sync_strategy.dart**
 
 ```dart
 /// Last-write-wins per-field conflict resolution.
@@ -157,7 +157,7 @@ abstract final class SyncStrategy {
 }
 ```
 
-- [ ] **Step 3: Run test and commit**
+- [x] **Step 3: Run test and commit**
 
 ```bash
 flutter test test/unit/data/sync/sync_strategy_test.dart
@@ -172,7 +172,7 @@ git commit -m "feat: add last-write-wins sync strategy with tests"
 **Files:**
 - Create: `lib/data/remote/sync/postgres_sync_client.dart`
 
-- [ ] **Step 1: Create postgres_sync_client.dart**
+- [x] **Step 1: Create postgres_sync_client.dart**
 
 ```dart
 import 'package:postgres/postgres.dart';
@@ -293,7 +293,7 @@ class PostgresSyncClient {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add lib/data/remote/sync/postgres_sync_client.dart
@@ -307,7 +307,7 @@ git commit -m "feat: add PostgreSQL sync client with TLS support"
 **Files:**
 - Create: `lib/data/repositories/sync_repository_impl.dart`
 
-- [ ] **Step 1: Create sync_repository_impl.dart**
+- [x] **Step 1: Create sync_repository_impl.dart**
 
 ```dart
 import 'dart:async';
@@ -419,7 +419,7 @@ class SyncRepositoryImpl implements ISyncRepository {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add lib/data/repositories/sync_repository_impl.dart
@@ -433,7 +433,7 @@ git commit -m "feat: add SyncRepositoryImpl with push/pull and conflict resoluti
 **Files:**
 - Create: `lib/domain/usecases/sync_collection_usecase.dart`
 
-- [ ] **Step 1: Create sync_collection_usecase.dart**
+- [x] **Step 1: Create sync_collection_usecase.dart**
 
 ```dart
 import 'package:mymediascanner/domain/repositories/i_sync_repository.dart';
@@ -455,7 +455,7 @@ class SyncCollectionUseCase {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add lib/domain/usecases/sync_collection_usecase.dart
@@ -471,7 +471,7 @@ git commit -m "feat: add SyncCollectionUseCase"
 - Modify: `lib/presentation/providers/settings_provider.dart`
 - Modify: `lib/presentation/providers/repository_providers.dart`
 
-- [ ] **Step 1: Add Postgres config to settings_provider.dart**
+- [x] **Step 1: Add Postgres config to settings_provider.dart**
 
 Append to existing file:
 
@@ -516,7 +516,7 @@ class PostgresConfigNotifier extends _$PostgresConfigNotifier {
 
 (Add the required import for `PostgresConfig` from `postgres_sync_client.dart`.)
 
-- [ ] **Step 2: Create sync_provider.dart**
+- [x] **Step 2: Create sync_provider.dart**
 
 ```dart
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -533,7 +533,7 @@ Stream<SyncStatus> syncStatus(Ref ref) {
 }
 ```
 
-- [ ] **Step 3: Add sync repository binding to repository_providers.dart**
+- [x] **Step 3: Add sync repository binding to repository_providers.dart**
 
 ```dart
 import 'package:mymediascanner/data/repositories/sync_repository_impl.dart';
@@ -552,7 +552,7 @@ ISyncRepository? syncRepository(Ref ref) {
 }
 ```
 
-- [ ] **Step 4: Run code generation and commit**
+- [x] **Step 4: Run code generation and commit**
 
 ```bash
 dart run build_runner build --delete-conflicting-outputs
@@ -569,7 +569,7 @@ git commit -m "feat: add sync and postgres config providers"
 - Create: `lib/presentation/screens/settings/widgets/api_key_form.dart`
 - Create: `lib/presentation/screens/settings/widgets/sync_status_tile.dart`
 
-- [ ] **Step 1: Create postgres_config_form.dart**
+- [x] **Step 1: Create postgres_config_form.dart**
 
 ```dart
 import 'package:flutter/material.dart';
@@ -748,7 +748,7 @@ class _PostgresConfigFormState extends ConsumerState<PostgresConfigForm> {
 }
 ```
 
-- [ ] **Step 2: Create api_key_form.dart**
+- [x] **Step 2: Create api_key_form.dart**
 
 ```dart
 import 'package:flutter/material.dart';
@@ -834,7 +834,7 @@ class _ApiKeyFormState extends ConsumerState<ApiKeyForm> {
 }
 ```
 
-- [ ] **Step 3: Create sync_status_tile.dart**
+- [x] **Step 3: Create sync_status_tile.dart**
 
 ```dart
 import 'package:flutter/material.dart';
@@ -897,7 +897,7 @@ class SyncStatusTile extends ConsumerWidget {
 }
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add lib/presentation/screens/settings/widgets/
@@ -911,7 +911,7 @@ git commit -m "feat: add settings widgets — Postgres config, API keys, sync st
 **Files:**
 - Modify: `lib/presentation/screens/settings/settings_screen.dart`
 
-- [ ] **Step 1: Replace settings_screen.dart placeholder**
+- [x] **Step 1: Replace settings_screen.dart placeholder**
 
 ```dart
 import 'package:flutter/material.dart';
@@ -1003,11 +1003,11 @@ class SettingsScreen extends ConsumerWidget {
 }
 ```
 
-- [ ] **Step 2: Update router.dart — replace settings/postgres placeholder**
+- [x] **Step 2: Update router.dart — replace settings/postgres placeholder**
 
 Update the `/settings/postgres` route to use `PostgresConfigForm()`.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add lib/presentation/screens/settings/ lib/app/router.dart
@@ -1018,7 +1018,7 @@ git commit -m "feat: implement settings screen with Postgres config, API keys, s
 
 ## Task 9: Verify Slice 5
 
-- [ ] **Step 1: Run code generation, analysis, tests**
+- [x] **Step 1: Run code generation, analysis, tests**
 
 ```bash
 dart run build_runner build --delete-conflicting-outputs
@@ -1026,7 +1026,7 @@ flutter analyze
 flutter test
 ```
 
-- [ ] **Step 2: Run app on macOS**
+- [x] **Step 2: Run app on macOS**
 
 ```bash
 flutter run -d macos
@@ -1034,7 +1034,7 @@ flutter run -d macos
 
 Expected: Settings tab shows Postgres config link, API key fields, sync status, theme option, and reset. Saving API keys enables metadata lookup. Postgres config form with test connection button.
 
-- [ ] **Step 3: Final commit**
+- [x] **Step 3: Final commit**
 
 ```bash
 git add -A
@@ -1045,7 +1045,7 @@ git commit -m "feat: complete Slice 5 — settings and sync"
 
 ## Task 10: Final Full Verification
 
-- [ ] **Step 1: Full build and test**
+- [x] **Step 1: Full build and test**
 
 ```bash
 dart run build_runner build --delete-conflicting-outputs
@@ -1053,7 +1053,7 @@ flutter analyze
 flutter test
 ```
 
-- [ ] **Step 2: Run app and verify all flows**
+- [x] **Step 2: Run app and verify all flows**
 
 ```bash
 flutter run -d macos
@@ -1066,7 +1066,7 @@ Verify:
 4. Shelves — create shelf, view items
 5. Settings — API keys, Postgres config, test connection, sync status
 
-- [ ] **Step 3: Final commit**
+- [x] **Step 3: Final commit**
 
 ```bash
 git add -A
