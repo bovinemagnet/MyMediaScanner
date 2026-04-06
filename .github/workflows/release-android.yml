@@ -1,0 +1,123 @@
+name: Release Android APK
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+      - 'v*.*.*-SNAPSHOT-*'
+  workflow_dispatch:
+    inputs:
+      flavor:
+        description: 'Build flavor (dev or prod)'
+        required: true
+        default: 'prod'
+        type: choice
+        options:
+          - prod
+          - dev
+      prerelease:
+        description: 'Mark as pre-release / snapshot'
+        required: true
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+env:
+  FLUTTER_CHANNEL: stable
+  JAVA_VERSION: '17'
+
+jobs:
+  build-android-apk:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: ${{ env.FLUTTER_CHANNEL }}
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run code generation
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Analyse code
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test
+
+      - name: Determine build flavor
+        id: flavor
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "flavor=${{ github.event.inputs.flavor }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "flavor=prod" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build release APK
+        run: flutter build apk --release --flavor ${{ steps.flavor.outputs.flavor }}
+
+      - name: Locate and rename APK
+        id: rename_apk
+        run: |
+          FLAVOR="${{ steps.flavor.outputs.flavor }}"
+          VERSION=$(grep '^\s*version:' pubspec.yaml | sed 's/.*version:[[:space:]]*//' | sed 's/+.*//' | tr -d ' ')
+          APK_DIR="build/app/outputs/flutter-apk"
+          APK_SRC=$(find "$APK_DIR" -maxdepth 1 -name "app-${FLAVOR}-release.apk" | head -n 1)
+          if [ -z "$APK_SRC" ]; then
+            echo "ERROR: Release APK not found in $APK_DIR" >&2
+            ls -la "$APK_DIR" >&2
+            exit 1
+          fi
+          APK_NAME="MyMediaScanner-${VERSION}-${FLAVOR}-release.apk"
+          mv "$APK_SRC" "${APK_DIR}/${APK_NAME}"
+          echo "apk_name=${APK_NAME}" >> "$GITHUB_OUTPUT"
+          echo "apk_path=${APK_DIR}/${APK_NAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.rename_apk.outputs.apk_name }}
+          path: ${{ steps.rename_apk.outputs.apk_path }}
+          retention-days: 30
+
+      - name: Determine release metadata
+        id: release_meta
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          TAG="${{ github.ref_name }}"
+          if echo "$TAG" | grep -qE '\-SNAPSHOT\-'; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+            echo "release_name=Snapshot ${TAG}" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+            echo "release_name=Release ${TAG}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ steps.release_meta.outputs.release_name }}
+          draft: false
+          prerelease: ${{ steps.release_meta.outputs.prerelease }}
+          files: ${{ steps.rename_apk.outputs.apk_path }}
+          generate_release_notes: true
