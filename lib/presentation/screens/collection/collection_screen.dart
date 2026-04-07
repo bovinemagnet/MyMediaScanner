@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/usecases/delete_media_item_usecase.dart';
 import 'package:mymediascanner/domain/usecases/export_collection_usecase.dart';
 import 'package:mymediascanner/domain/usecases/refresh_metadata_usecase.dart';
 import 'package:mymediascanner/presentation/providers/collection_provider.dart';
+import 'package:mymediascanner/presentation/providers/insights_export_provider.dart';
 import 'package:mymediascanner/presentation/providers/loan_provider.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
@@ -321,28 +321,22 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     ExportFormat format,
   ) async {
     final messenger = ScaffoldMessenger.of(context);
+    final filePath =
+        await ref.read(insightsExportProvider.notifier).export(format);
 
-    try {
-      final useCase = ExportCollectionUseCase(
-        repository: ref.read(mediaItemRepositoryProvider),
-      );
-
-      final directory = await getApplicationDocumentsDirectory();
-      final filePath = await useCase.execute(
-        format: format,
-        outputDirectory: directory.path,
-      );
-
+    if (filePath != null) {
       messenger.showSnackBar(
         SnackBar(
           content: Text('Collection exported to $filePath'),
           duration: const Duration(seconds: 5),
         ),
       );
-    } catch (e) {
+    } else {
+      final error =
+          ref.read(insightsExportProvider).error ?? 'Unknown error';
       messenger.showSnackBar(
         SnackBar(
-          content: Text('Export failed: $e'),
+          content: Text('Export failed: $error'),
           backgroundColor: Colors.red,
         ),
       );

@@ -8,6 +8,13 @@ part 'loans_dao.g.dart';
 class LoansDao extends DatabaseAccessor<AppDatabase> with _$LoansDaoMixin {
   LoansDao(super.db);
 
+  Stream<List<LoansTableData>> watchAll() {
+    return (select(loansTable)
+          ..where((t) => t.deleted.equals(0))
+          ..orderBy([(t) => OrderingTerm.desc(t.lentAt)]))
+        .watch();
+  }
+
   Stream<List<LoansTableData>> watchActiveLoans() {
     return (select(loansTable)
           ..where(

@@ -12,6 +12,10 @@ final activeLoanForItemProvider =
   return ref.watch(loanRepositoryProvider).watchActiveLoanForItem(mediaItemId);
 });
 
+final allLoansProvider = StreamProvider<List<Loan>>((ref) {
+  return ref.watch(loanRepositoryProvider).watchAll();
+});
+
 final activeLoansProvider = StreamProvider<List<Loan>>((ref) {
   return ref.watch(loanRepositoryProvider).watchActiveLoans();
 });

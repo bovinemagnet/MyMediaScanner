@@ -11,9 +11,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mymediascanner/app/theme/app_colors.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
+import 'package:mymediascanner/domain/entities/insights_data.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/presentation/providers/collection_provider.dart';
 import 'package:mymediascanner/presentation/providers/statistics_provider.dart';
+import 'package:mymediascanner/presentation/screens/collection/widgets/export_action_bar.dart';
+import 'package:mymediascanner/presentation/screens/collection/widgets/growth_chart.dart';
+import 'package:mymediascanner/presentation/screens/collection/widgets/lending_stats_card.dart';
+import 'package:mymediascanner/presentation/screens/collection/widgets/media_type_pie_chart.dart';
+import 'package:mymediascanner/presentation/screens/collection/widgets/rip_coverage_card.dart';
+import 'package:mymediascanner/presentation/screens/collection/widgets/time_period_selector.dart';
 import 'package:mymediascanner/presentation/widgets/error_state.dart';
 import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
 import 'package:mymediascanner/presentation/widgets/screen_header.dart';
@@ -23,7 +30,7 @@ class StatisticsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final statsAsync = ref.watch(statisticsProvider);
+    final insightsAsync = ref.watch(insightsProvider);
     final collectionAsync = ref.watch(collectionProvider);
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
@@ -33,13 +40,13 @@ class StatisticsScreen extends ConsumerWidget {
       appBar: isDesktop
           ? null
           : AppBar(title: const Text('Insights & Analytics')),
-      body: statsAsync.when(
+      body: insightsAsync.when(
         loading: () => const LoadingIndicator(),
         error: (e, _) => ErrorState(
           message: e.toString(),
-          onRetry: () => ref.invalidate(statisticsProvider),
+          onRetry: () => ref.invalidate(insightsProvider),
         ),
-        data: (stats) => ListView(
+        data: (insights) => ListView(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
           children: [
             // ── Header ───────────────────────────────────────────
@@ -54,12 +61,22 @@ class StatisticsScreen extends ConsumerWidget {
 
             const SizedBox(height: 16),
 
-            // ── Hero stat bento grid ─────────────────────────────
-            _HeroBentoGrid(stats: stats, theme: theme, colors: colors),
+            // ── Time period selector ─────────────────────────────
+            const TimePeriodSelector(),
 
             const SizedBox(height: 16),
 
-            // ── Middle row: Genre bars + Media type breakdown ────
+            // ── Hero stat bento grid ─────────────────────────────
+            _HeroBentoGrid(insights: insights, theme: theme, colors: colors),
+
+            const SizedBox(height: 16),
+
+            // ── Collection growth chart ──────────────────────────
+            GrowthChart(monthlyGrowth: insights.monthlyGrowth),
+
+            const SizedBox(height: 16),
+
+            // ── Middle row: Genre bars + Media type pie chart ────
             LayoutBuilder(
               builder: (context, constraints) {
                 final isWide = constraints.maxWidth > 700;
@@ -70,17 +87,16 @@ class StatisticsScreen extends ConsumerWidget {
                       Expanded(
                         flex: 2,
                         child: _GenreBarChart(
-                          byGenre: stats.byGenre,
+                          byGenre: insights.byGenre,
                           theme: theme,
                           colors: colors,
                         ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
-                        child: _CollectionHealthCard(
-                          stats: stats,
-                          theme: theme,
-                          colors: colors,
+                        child: MediaTypePieChart(
+                          byMediaType: insights.byMediaType,
+                          totalItems: insights.totalItems,
                         ),
                       ),
                     ],
@@ -89,15 +105,14 @@ class StatisticsScreen extends ConsumerWidget {
                 return Column(
                   children: [
                     _GenreBarChart(
-                      byGenre: stats.byGenre,
+                      byGenre: insights.byGenre,
                       theme: theme,
                       colors: colors,
                     ),
                     const SizedBox(height: 16),
-                    _CollectionHealthCard(
-                      stats: stats,
-                      theme: theme,
-                      colors: colors,
+                    MediaTypePieChart(
+                      byMediaType: insights.byMediaType,
+                      totalItems: insights.totalItems,
                     ),
                   ],
                 );
@@ -107,7 +122,70 @@ class StatisticsScreen extends ConsumerWidget {
             const SizedBox(height: 16),
 
             // ── By year chart ────────────────────────────────────
-            _ByYearCard(byYear: stats.byYear),
+            _ByYearCard(byYear: insights.byYear),
+
+            const SizedBox(height: 16),
+
+            // ── Lending + Rip coverage cards ─────────────────────
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final hasLending = insights.activeLoansCount > 0 ||
+                    insights.totalLoansAllTime > 0;
+                final hasRips = insights.totalRipAlbums > 0 ||
+                    insights.totalMusicItems > 0;
+                final isWide = constraints.maxWidth > 900;
+
+                if (!hasLending && !hasRips) {
+                  return const SizedBox.shrink();
+                }
+
+                final lendingCard = hasLending
+                    ? LendingStatsCard(
+                        activeLoansCount: insights.activeLoansCount,
+                        overdueCount: insights.overdueCount,
+                        totalLoansAllTime: insights.totalLoansAllTime,
+                        topBorrowers: insights.topBorrowers,
+                        mostBorrowedItems: insights.mostBorrowedItems,
+                      )
+                    : null;
+
+                final ripCard = hasRips
+                    ? RipCoverageCard(
+                        totalRipAlbums: insights.totalRipAlbums,
+                        matchedRipAlbums: insights.matchedRipAlbums,
+                        unmatchedRipAlbums: insights.unmatchedRipAlbums,
+                        totalRipSizeBytes: insights.totalRipSizeBytes,
+                        musicItemsWithRips: insights.musicItemsWithRips,
+                        totalMusicItems: insights.totalMusicItems,
+                      )
+                    : null;
+
+                if (isWide && lendingCard != null && ripCard != null) {
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: lendingCard),
+                      const SizedBox(width: 16),
+                      Expanded(child: ripCard),
+                    ],
+                  );
+                }
+
+                return Column(
+                  children: [
+                    if (lendingCard != null) lendingCard,
+                    if (lendingCard != null && ripCard != null)
+                      const SizedBox(height: 16),
+                    if (ripCard != null) ripCard,
+                  ],
+                );
+              },
+            ),
+
+            const SizedBox(height: 16),
+
+            // ── Export action bar ─────────────────────────────────
+            const ExportActionBar(),
 
             const SizedBox(height: 32),
 
@@ -126,12 +204,12 @@ class StatisticsScreen extends ConsumerWidget {
 
 class _HeroBentoGrid extends StatelessWidget {
   const _HeroBentoGrid({
-    required this.stats,
+    required this.insights,
     required this.theme,
     required this.colors,
   });
 
-  final CollectionStatistics stats;
+  final InsightsData insights;
   final ThemeData theme;
   final ColorScheme colors;
 
@@ -140,7 +218,7 @@ class _HeroBentoGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth > 600;
-        final mediaTypeCount = stats.byMediaType.length;
+        final mediaTypeCount = insights.byMediaType.length;
 
         if (isWide) {
           // Bento layout: large card left (2 cols), two stacked right
@@ -153,7 +231,7 @@ class _HeroBentoGrid extends StatelessWidget {
                   flex: 2,
                   child: _LargeStatCard(
                     label: 'Items Catalogued',
-                    value: '${stats.totalItems}',
+                    value: '${insights.totalItems}',
                     subtitle: '$mediaTypeCount media types tracked',
                     icon: Icons.inventory_2,
                     colors: colors,
@@ -167,7 +245,7 @@ class _HeroBentoGrid extends StatelessWidget {
                     children: [
                       Expanded(
                         child: _RatingGaugeCard(
-                          rating: stats.averageRating,
+                          rating: insights.averageRating,
                           colors: colors,
                           theme: theme,
                         ),
@@ -176,7 +254,7 @@ class _HeroBentoGrid extends StatelessWidget {
                       Expanded(
                         child: _CompactStatCard(
                           label: 'Rated',
-                          value: '${stats.ratedCount}',
+                          value: '${insights.ratedCount}',
                           icon: Icons.star,
                           colors: colors,
                           theme: theme,
@@ -190,7 +268,7 @@ class _HeroBentoGrid extends StatelessWidget {
                 Expanded(
                   child: _CompactStatCard(
                     label: 'Genres',
-                    value: '${stats.byGenre.length}',
+                    value: '${insights.byGenre.length}',
                     icon: Icons.category,
                     colors: colors,
                     theme: theme,
@@ -206,7 +284,7 @@ class _HeroBentoGrid extends StatelessWidget {
           children: [
             _LargeStatCard(
               label: 'Items Catalogued',
-              value: '${stats.totalItems}',
+              value: '${insights.totalItems}',
               subtitle: '$mediaTypeCount media types tracked',
               icon: Icons.inventory_2,
               colors: colors,
@@ -217,7 +295,7 @@ class _HeroBentoGrid extends StatelessWidget {
               children: [
                 Expanded(
                   child: _RatingGaugeCard(
-                    rating: stats.averageRating,
+                    rating: insights.averageRating,
                     colors: colors,
                     theme: theme,
                   ),
@@ -226,7 +304,7 @@ class _HeroBentoGrid extends StatelessWidget {
                 Expanded(
                   child: _CompactStatCard(
                     label: 'Rated',
-                    value: '${stats.ratedCount}',
+                    value: '${insights.ratedCount}',
                     icon: Icons.star,
                     colors: colors,
                     theme: theme,
@@ -630,146 +708,6 @@ class _VerticalBarChart extends StatelessWidget {
         );
       }).toList(),
     );
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-// Collection health card — progress bars for media type coverage
-// ═══════════════════════════════════════════════════════════════════════
-
-class _CollectionHealthCard extends StatelessWidget {
-  const _CollectionHealthCard({
-    required this.stats,
-    required this.theme,
-    required this.colors,
-  });
-
-  final CollectionStatistics stats;
-  final ThemeData theme;
-  final ColorScheme colors;
-
-  @override
-  Widget build(BuildContext context) {
-    final totalItems = stats.totalItems;
-
-    // Build progress bars from media type distribution
-    final entries = stats.byMediaType.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Collection Health',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.3,
-            ),
-          ),
-          const SizedBox(height: 20),
-          if (entries.isEmpty)
-            Text(
-              'No data yet',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colors.onSurfaceVariant,
-              ),
-            )
-          else
-            ...entries.map((entry) {
-              final fraction =
-                  totalItems > 0 ? entry.value / totalItems : 0.0;
-              final percentage = (fraction * 100).toStringAsFixed(0);
-              final typeColor = _colourForType(entry.key);
-
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          entry.key.label.toUpperCase(),
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: colors.onSurfaceVariant,
-                            letterSpacing: 1.0,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        Text(
-                          '$percentage%',
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
-                      child: LinearProgressIndicator(
-                        value: fraction,
-                        minHeight: 6,
-                        backgroundColor: colors.surfaceContainerHighest,
-                        valueColor:
-                            AlwaysStoppedAnimation<Color>(typeColor),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }),
-          const SizedBox(height: 8),
-          // Average rating row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'AVG RATING',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: colors.onSurfaceVariant,
-                  letterSpacing: 1.0,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.star, size: 14, color: Colors.amber),
-                  const SizedBox(width: 4),
-                  Text(
-                    stats.averageRating != null
-                        ? stats.averageRating!.toStringAsFixed(1)
-                        : '—',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: colors.primary,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Color _colourForType(MediaType type) {
-    return switch (type) {
-      MediaType.film => AppColors.filmColor,
-      MediaType.tv => AppColors.tvColor,
-      MediaType.music => AppColors.musicColor,
-      MediaType.book => AppColors.bookColor,
-      MediaType.game => AppColors.gameColor,
-      MediaType.unknown => AppColors.unknownColor,
-    };
   }
 }
 
