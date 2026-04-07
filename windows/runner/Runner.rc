@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.paulsnow" "\0"
-            VALUE "FileDescription", "mymediascanner" "\0"
+            VALUE "CompanyName", "Paul Snow" "\0"
+            VALUE "FileDescription", "MyMediaScanner" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "mymediascanner" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.paulsnow. All rights reserved." "\0"
-            VALUE "OriginalFilename", "mymediascanner.exe" "\0"
-            VALUE "ProductName", "mymediascanner" "\0"
+            VALUE "InternalName", "MyMediaScanner" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 Paul Snow. All rights reserved." "\0"
+            VALUE "OriginalFilename", "MyMediaScanner.exe" "\0"
+            VALUE "ProductName", "MyMediaScanner" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

@@ -78,6 +78,7 @@ dev_dependencies:
   mocktail: ^1.0.4
   flutter_launcher_icons: ^0.14.4
   flutter_native_splash: ^2.4.6
+  msix: ^3.16.8
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -153,3 +154,12 @@ flutter_native_splash:
     color: "#0e0e0e"
     icon_background_color: "#0e0e0e"
     image: assets/icon/app_icon_foreground.png
+
+msix_config:
+  display_name: MyMediaScanner
+  publisher_display_name: Paul Snow
+  identity_name: com.paulsnow.mymediascanner
+  msix_version: 1.0.0.0
+  logo_path: assets/icon/app_icon.png
+  capabilities: internetClient
+  languages: en-gb
