@@ -1,0 +1,1 @@
+Initial release — barcode scanning, metadata lookup, collection management, lending tracker, and insights dashboard.
