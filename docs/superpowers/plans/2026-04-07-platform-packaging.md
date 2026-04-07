@@ -500,7 +500,7 @@ feat: add iOS App Store listing metadata via Fastlane
 **Files:**
 - Create: `.github/workflows/release-ios.yml`
 
-- [ ] **Step 1: Create iOS release workflow**
+- [x] **Step 1: Create iOS release workflow**
 
 Create `.github/workflows/release-ios.yml`:
 
@@ -509,7 +509,7 @@ Create `.github/workflows/release-ios.yml`:
 - Steps: checkout → setup Flutter → pub get → build_runner → analyse → test → `flutter build ios --release --no-codesign` → upload IPA artefact
 - Note: actual App Store deployment requires code signing secrets (certificates, provisioning profiles) — add as environment secrets with documentation in a follow-up
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```
 feat: add iOS release CI workflow
@@ -522,7 +522,7 @@ feat: add iOS release CI workflow
 **Files:**
 - Create: `.github/workflows/release-all.yml`
 
-- [ ] **Step 1: Create orchestrator workflow**
+- [x] **Step 1: Create orchestrator workflow**
 
 Create `.github/workflows/release-all.yml` that triggers the platform-specific workflows via `workflow_call` or `workflow_dispatch`:
 
@@ -549,11 +549,11 @@ jobs:
 
 This keeps each platform workflow independently runnable whilst also allowing a single-tag release of all platforms.
 
-- [ ] **Step 2: Update existing `release-android.yml` to support `workflow_call`**
+- [x] **Step 2: Update existing `release-android.yml` to support `workflow_call`**
 
 Add `workflow_call` trigger alongside the existing `push` and `workflow_dispatch` triggers so the orchestrator can invoke it.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```
 feat: add unified cross-platform release orchestrator workflow
