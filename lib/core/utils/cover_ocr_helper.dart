@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mymediascanner/core/utils/platform_utils.dart';
+import 'package:mymediascanner/core/utils/tesseract_ocr_service.dart';
 import 'package:mymediascanner/core/utils/vision_ocr_channel.dart';
 import 'package:mymediascanner/domain/entities/ocr_result.dart';
 
@@ -11,12 +13,17 @@ import 'package:mymediascanner/domain/entities/ocr_result.dart';
 /// cover and the most prominent text (likely the title) is extracted and
 /// used as a search query.
 class CoverOcrHelper {
-  CoverOcrHelper({TextRecognizer? recognizer, ImagePicker? picker})
-      : _recognizer = recognizer ?? TextRecognizer(),
-        _picker = picker ?? ImagePicker();
+  CoverOcrHelper({
+    TextRecognizer? recognizer,
+    ImagePicker? picker,
+    TesseractOcrService? tesseractService,
+  })  : _recognizer = recognizer ?? TextRecognizer(),
+        _picker = picker ?? ImagePicker(),
+        _tesseractService = tesseractService ?? TesseractOcrService();
 
   final TextRecognizer _recognizer;
   final ImagePicker _picker;
+  final TesseractOcrService _tesseractService;
 
   /// Captures a photo using the camera and extracts structured OCR output.
   Future<OcrResult> captureAndExtractStructured() async {
@@ -45,11 +52,17 @@ class CoverOcrHelper {
   ///
   /// On macOS, uses the Vision framework via a method channel.
   /// On Android/iOS, uses Google ML Kit text recognition.
+  /// On Windows/Linux, uses Tesseract.
   /// Returns an empty [OcrResult] if no text is recognised.
   Future<OcrResult> extractStructuredFromFile(String path) async {
     // macOS: use Vision framework
     if (VisionOcrChannel.isAvailable) {
       return _extractStructuredWithVision(path);
+    }
+
+    // Windows/Linux: use Tesseract
+    if (PlatformCapability.canUseNativeCamera) {
+      return _tesseractService.extractStructuredFromFile(path);
     }
 
     // Android/iOS: use ML Kit
@@ -192,7 +205,6 @@ class CoverOcrHelper {
   }
 
   /// Removes common noise from OCR-extracted text.
-  @visibleForTesting
   static String cleanTitle(String raw) {
     return raw
         .replaceAll(RegExp(r'\n+'), ' ') // Collapse newlines
