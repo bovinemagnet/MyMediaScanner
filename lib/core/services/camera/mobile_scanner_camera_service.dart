@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/widgets.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import 'package:mymediascanner/core/services/camera/camera_service.dart';
@@ -25,6 +26,18 @@ class MobileScannerCameraService implements CameraService {
 
   @override
   Stream<BarcodeResult> get onBarcodeDetected => _barcodeController.stream;
+
+  @override
+  Widget buildPreview({Widget Function(String message)? errorBuilder}) {
+    return MobileScanner(
+      controller: _controller,
+      onDetect: (_) {}, // Detection handled via onBarcodeDetected stream
+      errorBuilder: errorBuilder != null
+          ? (context, error) =>
+              errorBuilder('Camera error: ${error.errorCode.message}')
+          : null,
+    );
+  }
 
   @override
   Future<void> start() async {

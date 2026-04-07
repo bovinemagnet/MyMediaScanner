@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:camera/camera.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 
 import 'package:mymediascanner/core/services/camera/barcode_detector.dart';
 import 'package:mymediascanner/core/services/camera/camera_service.dart';
@@ -30,6 +30,15 @@ class NativeCameraService implements CameraService {
 
   @override
   Stream<BarcodeResult> get onBarcodeDetected => _barcodeController.stream;
+
+  @override
+  Widget buildPreview({Widget Function(String message)? errorBuilder}) {
+    final ctrl = _controller;
+    if (ctrl != null && ctrl.value.isInitialized) {
+      return CameraPreview(ctrl);
+    }
+    return const Center(child: SizedBox.shrink());
+  }
 
   @override
   Future<void> start() async {

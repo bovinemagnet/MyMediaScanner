@@ -1,14 +1,11 @@
 import 'dart:async';
 
-import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:mymediascanner/core/services/camera/camera_service.dart';
-import 'package:mymediascanner/core/services/camera/mobile_scanner_camera_service.dart';
-import 'package:mymediascanner/core/services/camera/native_camera_service.dart';
+import 'package:mymediascanner/core/services/camera/camera_service_provider.dart';
 import 'package:mymediascanner/core/utils/cover_ocr_helper.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
 import 'package:mymediascanner/domain/entities/scan_result.dart';
@@ -76,17 +73,12 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
     });
 
     try {
-      if (PlatformCapability.canUseMobileScanner) {
-        _cameraService = MobileScannerCameraService();
-      } else if (PlatformCapability.canUseNativeCamera) {
-        final service = NativeCameraService();
-        _cameraService = service;
-        await service.start();
-        setState(() {}); // Rebuild to show preview
-      }
+      _cameraService = ref.read(cameraServiceProvider);
+      await _cameraService!.start();
+      setState(() {}); // Rebuild to show preview
 
       // Listen for barcode detections from the service.
-      _barcodeSubscription = _cameraService?.onBarcodeDetected.listen(
+      _barcodeSubscription = _cameraService!.onBarcodeDetected.listen(
         (result) => _onServiceBarcodeDetected(result.rawValue),
       );
     } on Exception catch (e) {
@@ -100,27 +92,6 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
 
     _hasScanned = true;
     _cameraService?.stop();
-
-    ref.read(scannerProvider.notifier).onBarcodeScanned(barcodeValue.trim());
-  }
-
-  /// Legacy callback for the MobileScanner widget (macOS).
-  void _onMobileScannerDetected(BarcodeCapture capture) {
-    if (_hasScanned) return;
-
-    final barcodes = capture.barcodes;
-    if (barcodes.isEmpty) return;
-
-    final barcodeValue =
-        barcodes.first.rawValue ?? barcodes.first.displayValue;
-    if (barcodeValue == null || barcodeValue.trim().isEmpty) return;
-
-    _hasScanned = true;
-    // Stop the MobileScanner controller directly.
-    final service = _cameraService;
-    if (service is MobileScannerCameraService) {
-      service.controller.stop();
-    }
 
     ref.read(scannerProvider.notifier).onBarcodeScanned(barcodeValue.trim());
   }
@@ -306,34 +277,20 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
     );
   }
 
-  /// Builds the appropriate camera preview widget for the current platform.
+  /// Builds the camera preview widget via the service abstraction.
   Widget _buildCameraPreview() {
     if (_cameraError != null) {
       return _buildCameraError(_cameraError!);
     }
 
     final service = _cameraService;
-
-    // macOS/Android/iOS: use MobileScanner widget (handles both preview + detection).
-    if (service is MobileScannerCameraService) {
-      return MobileScanner(
-        controller: service.controller,
-        onDetect: _onMobileScannerDetected,
-        errorBuilder: (context, error) =>
-            _buildCameraError('Camera error: ${error.errorCode.message}'),
-      );
-    }
-
-    // Windows/Linux: use CameraPreview from the camera package.
-    if (service is NativeCameraService) {
-      final controller = service.controller;
-      if (controller != null && controller.value.isInitialized) {
-        return CameraPreview(controller);
-      }
+    if (service == null) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    return const Center(child: CircularProgressIndicator());
+    return service.buildPreview(
+      errorBuilder: _buildCameraError,
+    );
   }
 
   Widget _buildCameraError(String message) {
