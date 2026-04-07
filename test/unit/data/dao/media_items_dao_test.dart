@@ -19,6 +19,9 @@ void main() {
     MediaItemsTableCompanion createTestItem({
       String id = 'test-id',
       String barcode = '9780141036144',
+      String title = 'Test Book',
+      String mediaType = 'book',
+      int? dateAdded,
       int deleted = 0,
     }) {
       final now = DateTime.now().millisecondsSinceEpoch;
@@ -26,9 +29,9 @@ void main() {
         id: Value(id),
         barcode: Value(barcode),
         barcodeType: const Value('isbn13'),
-        mediaType: const Value('book'),
-        title: const Value('Test Book'),
-        dateAdded: Value(now),
+        mediaType: Value(mediaType),
+        title: Value(title),
+        dateAdded: Value(dateAdded ?? now),
         dateScanned: Value(now),
         updatedAt: Value(now),
         deleted: Value(deleted),
@@ -74,6 +77,81 @@ void main() {
 
       final items = await dao.watchAll(includeDeleted: true).first;
       expect(items.length, 2);
+    });
+
+    test('watchAll returns items sorted by title ascending', () async {
+      await dao.insertItem(createTestItem(
+        id: 'z',
+        barcode: '1111111111111',
+        title: 'Zebra',
+      ));
+      await dao.insertItem(createTestItem(
+        id: 'a',
+        barcode: '2222222222222',
+        title: 'Apple',
+      ));
+      await dao.insertItem(createTestItem(
+        id: 'm',
+        barcode: '3333333333333',
+        title: 'Mango',
+      ));
+
+      final items = await dao
+          .watchAll(sortBy: 'title', ascending: true)
+          .first;
+      expect(items.map((e) => e.title).toList(), ['Apple', 'Mango', 'Zebra']);
+    });
+
+    test('watchAll returns items sorted by dateAdded descending', () async {
+      final baseTime = DateTime(2026, 1, 1).millisecondsSinceEpoch;
+      await dao.insertItem(createTestItem(
+        id: 'old',
+        barcode: '1111111111111',
+        title: 'Old Item',
+        dateAdded: baseTime,
+      ));
+      await dao.insertItem(createTestItem(
+        id: 'mid',
+        barcode: '2222222222222',
+        title: 'Mid Item',
+        dateAdded: baseTime + 1000,
+      ));
+      await dao.insertItem(createTestItem(
+        id: 'new',
+        barcode: '3333333333333',
+        title: 'New Item',
+        dateAdded: baseTime + 2000,
+      ));
+
+      final items = await dao
+          .watchAll(sortBy: 'dateAdded', ascending: false)
+          .first;
+      expect(items.map((e) => e.id).toList(), ['new', 'mid', 'old']);
+    });
+
+    test('watchAll filters by mediaType', () async {
+      await dao.insertItem(createTestItem(
+        id: 'book1',
+        barcode: '1111111111111',
+        title: 'A Book',
+        mediaType: 'book',
+      ));
+      await dao.insertItem(createTestItem(
+        id: 'dvd1',
+        barcode: '2222222222222',
+        title: 'A DVD',
+        mediaType: 'dvd',
+      ));
+      await dao.insertItem(createTestItem(
+        id: 'book2',
+        barcode: '3333333333333',
+        title: 'Another Book',
+        mediaType: 'book',
+      ));
+
+      final items = await dao.watchAll(mediaType: 'book').first;
+      expect(items.length, 2);
+      expect(items.every((e) => e.mediaType == 'book'), isTrue);
     });
   });
 }

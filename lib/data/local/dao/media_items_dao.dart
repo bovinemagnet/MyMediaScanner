@@ -9,11 +9,36 @@ class MediaItemsDao extends DatabaseAccessor<AppDatabase>
     with _$MediaItemsDaoMixin {
   MediaItemsDao(super.db);
 
-  Stream<List<MediaItemsTableData>> watchAll({bool includeDeleted = false}) {
+  Stream<List<MediaItemsTableData>> watchAll({
+    bool includeDeleted = false,
+    String? mediaType,
+    String? sortBy,
+    bool ascending = false,
+  }) {
     final query = select(mediaItemsTable);
     if (!includeDeleted) {
       query.where((t) => t.deleted.equals(0));
     }
+    if (mediaType != null) {
+      query.where((t) => t.mediaType.equals(mediaType));
+    }
+
+    final orderColumn = switch (sortBy) {
+      'title' => mediaItemsTable.title,
+      'year' => mediaItemsTable.year,
+      'userRating' => mediaItemsTable.userRating,
+      'mediaType' => mediaItemsTable.mediaType,
+      'dateAdded' => mediaItemsTable.dateAdded,
+      _ => mediaItemsTable.dateAdded,
+    };
+
+    query.orderBy([
+      (t) => OrderingTerm(
+            expression: orderColumn,
+            mode: ascending ? OrderingMode.asc : OrderingMode.desc,
+          ),
+    ]);
+
     return query.watch();
   }
 
