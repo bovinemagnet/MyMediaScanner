@@ -77,6 +77,7 @@ dev_dependencies:
   retrofit_generator: ^10.2.3
   mocktail: ^1.0.4
   flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.6
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -140,3 +141,15 @@ flutter_launcher_icons:
   web:
     generate: true
     image_path: "assets/icon/app_icon.png"
+
+flutter_native_splash:
+  color: "#0e0e0e"
+  color_dark: "#0e0e0e"
+  image: assets/icon/app_icon.png
+  android: true
+  ios: true
+  web: false
+  android_12:
+    color: "#0e0e0e"
+    icon_background_color: "#0e0e0e"
+    image: assets/icon/app_icon_foreground.png
