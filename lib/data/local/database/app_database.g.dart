@@ -6265,6 +6265,953 @@ class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
   }
 }
 
+class $BatchSessionsTableTable extends BatchSessionsTable
+    with TableInfo<$BatchSessionsTableTable, BatchSessionsTableData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $BatchSessionsTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<int> createdAt = GeneratedColumn<int>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _completedAtMeta = const VerificationMeta(
+    'completedAt',
+  );
+  @override
+  late final GeneratedColumn<int> completedAt = GeneratedColumn<int>(
+    'completed_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('active'),
+  );
+  static const VerificationMeta _itemCountMeta = const VerificationMeta(
+    'itemCount',
+  );
+  @override
+  late final GeneratedColumn<int> itemCount = GeneratedColumn<int>(
+    'item_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    createdAt,
+    completedAt,
+    status,
+    itemCount,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'batch_sessions';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<BatchSessionsTableData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('completed_at')) {
+      context.handle(
+        _completedAtMeta,
+        completedAt.isAcceptableOrUnknown(
+          data['completed_at']!,
+          _completedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    }
+    if (data.containsKey('item_count')) {
+      context.handle(
+        _itemCountMeta,
+        itemCount.isAcceptableOrUnknown(data['item_count']!, _itemCountMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  BatchSessionsTableData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return BatchSessionsTableData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_at'],
+      )!,
+      completedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}completed_at'],
+      ),
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      itemCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}item_count'],
+      )!,
+    );
+  }
+
+  @override
+  $BatchSessionsTableTable createAlias(String alias) {
+    return $BatchSessionsTableTable(attachedDatabase, alias);
+  }
+}
+
+class BatchSessionsTableData extends DataClass
+    implements Insertable<BatchSessionsTableData> {
+  final String id;
+  final int createdAt;
+  final int? completedAt;
+  final String status;
+  final int itemCount;
+  const BatchSessionsTableData({
+    required this.id,
+    required this.createdAt,
+    this.completedAt,
+    required this.status,
+    required this.itemCount,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['created_at'] = Variable<int>(createdAt);
+    if (!nullToAbsent || completedAt != null) {
+      map['completed_at'] = Variable<int>(completedAt);
+    }
+    map['status'] = Variable<String>(status);
+    map['item_count'] = Variable<int>(itemCount);
+    return map;
+  }
+
+  BatchSessionsTableCompanion toCompanion(bool nullToAbsent) {
+    return BatchSessionsTableCompanion(
+      id: Value(id),
+      createdAt: Value(createdAt),
+      completedAt: completedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(completedAt),
+      status: Value(status),
+      itemCount: Value(itemCount),
+    );
+  }
+
+  factory BatchSessionsTableData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return BatchSessionsTableData(
+      id: serializer.fromJson<String>(json['id']),
+      createdAt: serializer.fromJson<int>(json['createdAt']),
+      completedAt: serializer.fromJson<int?>(json['completedAt']),
+      status: serializer.fromJson<String>(json['status']),
+      itemCount: serializer.fromJson<int>(json['itemCount']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'createdAt': serializer.toJson<int>(createdAt),
+      'completedAt': serializer.toJson<int?>(completedAt),
+      'status': serializer.toJson<String>(status),
+      'itemCount': serializer.toJson<int>(itemCount),
+    };
+  }
+
+  BatchSessionsTableData copyWith({
+    String? id,
+    int? createdAt,
+    Value<int?> completedAt = const Value.absent(),
+    String? status,
+    int? itemCount,
+  }) => BatchSessionsTableData(
+    id: id ?? this.id,
+    createdAt: createdAt ?? this.createdAt,
+    completedAt: completedAt.present ? completedAt.value : this.completedAt,
+    status: status ?? this.status,
+    itemCount: itemCount ?? this.itemCount,
+  );
+  BatchSessionsTableData copyWithCompanion(BatchSessionsTableCompanion data) {
+    return BatchSessionsTableData(
+      id: data.id.present ? data.id.value : this.id,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      completedAt: data.completedAt.present
+          ? data.completedAt.value
+          : this.completedAt,
+      status: data.status.present ? data.status.value : this.status,
+      itemCount: data.itemCount.present ? data.itemCount.value : this.itemCount,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BatchSessionsTableData(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('completedAt: $completedAt, ')
+          ..write('status: $status, ')
+          ..write('itemCount: $itemCount')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, createdAt, completedAt, status, itemCount);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BatchSessionsTableData &&
+          other.id == this.id &&
+          other.createdAt == this.createdAt &&
+          other.completedAt == this.completedAt &&
+          other.status == this.status &&
+          other.itemCount == this.itemCount);
+}
+
+class BatchSessionsTableCompanion
+    extends UpdateCompanion<BatchSessionsTableData> {
+  final Value<String> id;
+  final Value<int> createdAt;
+  final Value<int?> completedAt;
+  final Value<String> status;
+  final Value<int> itemCount;
+  final Value<int> rowid;
+  const BatchSessionsTableCompanion({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.completedAt = const Value.absent(),
+    this.status = const Value.absent(),
+    this.itemCount = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  BatchSessionsTableCompanion.insert({
+    required String id,
+    required int createdAt,
+    this.completedAt = const Value.absent(),
+    this.status = const Value.absent(),
+    this.itemCount = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       createdAt = Value(createdAt);
+  static Insertable<BatchSessionsTableData> custom({
+    Expression<String>? id,
+    Expression<int>? createdAt,
+    Expression<int>? completedAt,
+    Expression<String>? status,
+    Expression<int>? itemCount,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (createdAt != null) 'created_at': createdAt,
+      if (completedAt != null) 'completed_at': completedAt,
+      if (status != null) 'status': status,
+      if (itemCount != null) 'item_count': itemCount,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  BatchSessionsTableCompanion copyWith({
+    Value<String>? id,
+    Value<int>? createdAt,
+    Value<int?>? completedAt,
+    Value<String>? status,
+    Value<int>? itemCount,
+    Value<int>? rowid,
+  }) {
+    return BatchSessionsTableCompanion(
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      completedAt: completedAt ?? this.completedAt,
+      status: status ?? this.status,
+      itemCount: itemCount ?? this.itemCount,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<int>(createdAt.value);
+    }
+    if (completedAt.present) {
+      map['completed_at'] = Variable<int>(completedAt.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (itemCount.present) {
+      map['item_count'] = Variable<int>(itemCount.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BatchSessionsTableCompanion(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('completedAt: $completedAt, ')
+          ..write('status: $status, ')
+          ..write('itemCount: $itemCount, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $BatchQueueItemsTableTable extends BatchQueueItemsTable
+    with TableInfo<$BatchQueueItemsTableTable, BatchQueueItemsTableData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $BatchQueueItemsTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sessionIdMeta = const VerificationMeta(
+    'sessionId',
+  );
+  @override
+  late final GeneratedColumn<String> sessionId = GeneratedColumn<String>(
+    'session_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _barcodeMeta = const VerificationMeta(
+    'barcode',
+  );
+  @override
+  late final GeneratedColumn<String> barcode = GeneratedColumn<String>(
+    'barcode',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _barcodeTypeMeta = const VerificationMeta(
+    'barcodeType',
+  );
+  @override
+  late final GeneratedColumn<String> barcodeType = GeneratedColumn<String>(
+    'barcode_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _scannedAtMeta = const VerificationMeta(
+    'scannedAt',
+  );
+  @override
+  late final GeneratedColumn<int> scannedAt = GeneratedColumn<int>(
+    'scanned_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _metadataJsonMeta = const VerificationMeta(
+    'metadataJson',
+  );
+  @override
+  late final GeneratedColumn<String> metadataJson = GeneratedColumn<String>(
+    'metadata_json',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _scanResultJsonMeta = const VerificationMeta(
+    'scanResultJson',
+  );
+  @override
+  late final GeneratedColumn<String> scanResultJson = GeneratedColumn<String>(
+    'scan_result_json',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    sessionId,
+    barcode,
+    barcodeType,
+    status,
+    scannedAt,
+    metadataJson,
+    scanResultJson,
+    sortOrder,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'batch_queue_items';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<BatchQueueItemsTableData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('session_id')) {
+      context.handle(
+        _sessionIdMeta,
+        sessionId.isAcceptableOrUnknown(data['session_id']!, _sessionIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sessionIdMeta);
+    }
+    if (data.containsKey('barcode')) {
+      context.handle(
+        _barcodeMeta,
+        barcode.isAcceptableOrUnknown(data['barcode']!, _barcodeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_barcodeMeta);
+    }
+    if (data.containsKey('barcode_type')) {
+      context.handle(
+        _barcodeTypeMeta,
+        barcodeType.isAcceptableOrUnknown(
+          data['barcode_type']!,
+          _barcodeTypeMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_barcodeTypeMeta);
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_statusMeta);
+    }
+    if (data.containsKey('scanned_at')) {
+      context.handle(
+        _scannedAtMeta,
+        scannedAt.isAcceptableOrUnknown(data['scanned_at']!, _scannedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_scannedAtMeta);
+    }
+    if (data.containsKey('metadata_json')) {
+      context.handle(
+        _metadataJsonMeta,
+        metadataJson.isAcceptableOrUnknown(
+          data['metadata_json']!,
+          _metadataJsonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('scan_result_json')) {
+      context.handle(
+        _scanResultJsonMeta,
+        scanResultJson.isAcceptableOrUnknown(
+          data['scan_result_json']!,
+          _scanResultJsonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('sort_order')) {
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  BatchQueueItemsTableData map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return BatchQueueItemsTableData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      sessionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}session_id'],
+      )!,
+      barcode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}barcode'],
+      )!,
+      barcodeType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}barcode_type'],
+      )!,
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      scannedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}scanned_at'],
+      )!,
+      metadataJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}metadata_json'],
+      ),
+      scanResultJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}scan_result_json'],
+      ),
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
+      )!,
+    );
+  }
+
+  @override
+  $BatchQueueItemsTableTable createAlias(String alias) {
+    return $BatchQueueItemsTableTable(attachedDatabase, alias);
+  }
+}
+
+class BatchQueueItemsTableData extends DataClass
+    implements Insertable<BatchQueueItemsTableData> {
+  final String id;
+  final String sessionId;
+  final String barcode;
+  final String barcodeType;
+  final String status;
+  final int scannedAt;
+  final String? metadataJson;
+  final String? scanResultJson;
+  final int sortOrder;
+  const BatchQueueItemsTableData({
+    required this.id,
+    required this.sessionId,
+    required this.barcode,
+    required this.barcodeType,
+    required this.status,
+    required this.scannedAt,
+    this.metadataJson,
+    this.scanResultJson,
+    required this.sortOrder,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['session_id'] = Variable<String>(sessionId);
+    map['barcode'] = Variable<String>(barcode);
+    map['barcode_type'] = Variable<String>(barcodeType);
+    map['status'] = Variable<String>(status);
+    map['scanned_at'] = Variable<int>(scannedAt);
+    if (!nullToAbsent || metadataJson != null) {
+      map['metadata_json'] = Variable<String>(metadataJson);
+    }
+    if (!nullToAbsent || scanResultJson != null) {
+      map['scan_result_json'] = Variable<String>(scanResultJson);
+    }
+    map['sort_order'] = Variable<int>(sortOrder);
+    return map;
+  }
+
+  BatchQueueItemsTableCompanion toCompanion(bool nullToAbsent) {
+    return BatchQueueItemsTableCompanion(
+      id: Value(id),
+      sessionId: Value(sessionId),
+      barcode: Value(barcode),
+      barcodeType: Value(barcodeType),
+      status: Value(status),
+      scannedAt: Value(scannedAt),
+      metadataJson: metadataJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(metadataJson),
+      scanResultJson: scanResultJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(scanResultJson),
+      sortOrder: Value(sortOrder),
+    );
+  }
+
+  factory BatchQueueItemsTableData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return BatchQueueItemsTableData(
+      id: serializer.fromJson<String>(json['id']),
+      sessionId: serializer.fromJson<String>(json['sessionId']),
+      barcode: serializer.fromJson<String>(json['barcode']),
+      barcodeType: serializer.fromJson<String>(json['barcodeType']),
+      status: serializer.fromJson<String>(json['status']),
+      scannedAt: serializer.fromJson<int>(json['scannedAt']),
+      metadataJson: serializer.fromJson<String?>(json['metadataJson']),
+      scanResultJson: serializer.fromJson<String?>(json['scanResultJson']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'sessionId': serializer.toJson<String>(sessionId),
+      'barcode': serializer.toJson<String>(barcode),
+      'barcodeType': serializer.toJson<String>(barcodeType),
+      'status': serializer.toJson<String>(status),
+      'scannedAt': serializer.toJson<int>(scannedAt),
+      'metadataJson': serializer.toJson<String?>(metadataJson),
+      'scanResultJson': serializer.toJson<String?>(scanResultJson),
+      'sortOrder': serializer.toJson<int>(sortOrder),
+    };
+  }
+
+  BatchQueueItemsTableData copyWith({
+    String? id,
+    String? sessionId,
+    String? barcode,
+    String? barcodeType,
+    String? status,
+    int? scannedAt,
+    Value<String?> metadataJson = const Value.absent(),
+    Value<String?> scanResultJson = const Value.absent(),
+    int? sortOrder,
+  }) => BatchQueueItemsTableData(
+    id: id ?? this.id,
+    sessionId: sessionId ?? this.sessionId,
+    barcode: barcode ?? this.barcode,
+    barcodeType: barcodeType ?? this.barcodeType,
+    status: status ?? this.status,
+    scannedAt: scannedAt ?? this.scannedAt,
+    metadataJson: metadataJson.present ? metadataJson.value : this.metadataJson,
+    scanResultJson: scanResultJson.present
+        ? scanResultJson.value
+        : this.scanResultJson,
+    sortOrder: sortOrder ?? this.sortOrder,
+  );
+  BatchQueueItemsTableData copyWithCompanion(
+    BatchQueueItemsTableCompanion data,
+  ) {
+    return BatchQueueItemsTableData(
+      id: data.id.present ? data.id.value : this.id,
+      sessionId: data.sessionId.present ? data.sessionId.value : this.sessionId,
+      barcode: data.barcode.present ? data.barcode.value : this.barcode,
+      barcodeType: data.barcodeType.present
+          ? data.barcodeType.value
+          : this.barcodeType,
+      status: data.status.present ? data.status.value : this.status,
+      scannedAt: data.scannedAt.present ? data.scannedAt.value : this.scannedAt,
+      metadataJson: data.metadataJson.present
+          ? data.metadataJson.value
+          : this.metadataJson,
+      scanResultJson: data.scanResultJson.present
+          ? data.scanResultJson.value
+          : this.scanResultJson,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BatchQueueItemsTableData(')
+          ..write('id: $id, ')
+          ..write('sessionId: $sessionId, ')
+          ..write('barcode: $barcode, ')
+          ..write('barcodeType: $barcodeType, ')
+          ..write('status: $status, ')
+          ..write('scannedAt: $scannedAt, ')
+          ..write('metadataJson: $metadataJson, ')
+          ..write('scanResultJson: $scanResultJson, ')
+          ..write('sortOrder: $sortOrder')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    sessionId,
+    barcode,
+    barcodeType,
+    status,
+    scannedAt,
+    metadataJson,
+    scanResultJson,
+    sortOrder,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BatchQueueItemsTableData &&
+          other.id == this.id &&
+          other.sessionId == this.sessionId &&
+          other.barcode == this.barcode &&
+          other.barcodeType == this.barcodeType &&
+          other.status == this.status &&
+          other.scannedAt == this.scannedAt &&
+          other.metadataJson == this.metadataJson &&
+          other.scanResultJson == this.scanResultJson &&
+          other.sortOrder == this.sortOrder);
+}
+
+class BatchQueueItemsTableCompanion
+    extends UpdateCompanion<BatchQueueItemsTableData> {
+  final Value<String> id;
+  final Value<String> sessionId;
+  final Value<String> barcode;
+  final Value<String> barcodeType;
+  final Value<String> status;
+  final Value<int> scannedAt;
+  final Value<String?> metadataJson;
+  final Value<String?> scanResultJson;
+  final Value<int> sortOrder;
+  final Value<int> rowid;
+  const BatchQueueItemsTableCompanion({
+    this.id = const Value.absent(),
+    this.sessionId = const Value.absent(),
+    this.barcode = const Value.absent(),
+    this.barcodeType = const Value.absent(),
+    this.status = const Value.absent(),
+    this.scannedAt = const Value.absent(),
+    this.metadataJson = const Value.absent(),
+    this.scanResultJson = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  BatchQueueItemsTableCompanion.insert({
+    required String id,
+    required String sessionId,
+    required String barcode,
+    required String barcodeType,
+    required String status,
+    required int scannedAt,
+    this.metadataJson = const Value.absent(),
+    this.scanResultJson = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       sessionId = Value(sessionId),
+       barcode = Value(barcode),
+       barcodeType = Value(barcodeType),
+       status = Value(status),
+       scannedAt = Value(scannedAt);
+  static Insertable<BatchQueueItemsTableData> custom({
+    Expression<String>? id,
+    Expression<String>? sessionId,
+    Expression<String>? barcode,
+    Expression<String>? barcodeType,
+    Expression<String>? status,
+    Expression<int>? scannedAt,
+    Expression<String>? metadataJson,
+    Expression<String>? scanResultJson,
+    Expression<int>? sortOrder,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (sessionId != null) 'session_id': sessionId,
+      if (barcode != null) 'barcode': barcode,
+      if (barcodeType != null) 'barcode_type': barcodeType,
+      if (status != null) 'status': status,
+      if (scannedAt != null) 'scanned_at': scannedAt,
+      if (metadataJson != null) 'metadata_json': metadataJson,
+      if (scanResultJson != null) 'scan_result_json': scanResultJson,
+      if (sortOrder != null) 'sort_order': sortOrder,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  BatchQueueItemsTableCompanion copyWith({
+    Value<String>? id,
+    Value<String>? sessionId,
+    Value<String>? barcode,
+    Value<String>? barcodeType,
+    Value<String>? status,
+    Value<int>? scannedAt,
+    Value<String?>? metadataJson,
+    Value<String?>? scanResultJson,
+    Value<int>? sortOrder,
+    Value<int>? rowid,
+  }) {
+    return BatchQueueItemsTableCompanion(
+      id: id ?? this.id,
+      sessionId: sessionId ?? this.sessionId,
+      barcode: barcode ?? this.barcode,
+      barcodeType: barcodeType ?? this.barcodeType,
+      status: status ?? this.status,
+      scannedAt: scannedAt ?? this.scannedAt,
+      metadataJson: metadataJson ?? this.metadataJson,
+      scanResultJson: scanResultJson ?? this.scanResultJson,
+      sortOrder: sortOrder ?? this.sortOrder,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (sessionId.present) {
+      map['session_id'] = Variable<String>(sessionId.value);
+    }
+    if (barcode.present) {
+      map['barcode'] = Variable<String>(barcode.value);
+    }
+    if (barcodeType.present) {
+      map['barcode_type'] = Variable<String>(barcodeType.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (scannedAt.present) {
+      map['scanned_at'] = Variable<int>(scannedAt.value);
+    }
+    if (metadataJson.present) {
+      map['metadata_json'] = Variable<String>(metadataJson.value);
+    }
+    if (scanResultJson.present) {
+      map['scan_result_json'] = Variable<String>(scanResultJson.value);
+    }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BatchQueueItemsTableCompanion(')
+          ..write('id: $id, ')
+          ..write('sessionId: $sessionId, ')
+          ..write('barcode: $barcode, ')
+          ..write('barcodeType: $barcodeType, ')
+          ..write('status: $status, ')
+          ..write('scannedAt: $scannedAt, ')
+          ..write('metadataJson: $metadataJson, ')
+          ..write('scanResultJson: $scanResultJson, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -6285,6 +7232,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $LoansTableTable loansTable = $LoansTableTable(this);
   late final $RipAlbumsTableTable ripAlbumsTable = $RipAlbumsTableTable(this);
   late final $RipTracksTableTable ripTracksTable = $RipTracksTableTable(this);
+  late final $BatchSessionsTableTable batchSessionsTable =
+      $BatchSessionsTableTable(this);
+  late final $BatchQueueItemsTableTable batchQueueItemsTable =
+      $BatchQueueItemsTableTable(this);
   late final MediaItemsDao mediaItemsDao = MediaItemsDao(this as AppDatabase);
   late final TagsDao tagsDao = TagsDao(this as AppDatabase);
   late final ShelvesDao shelvesDao = ShelvesDao(this as AppDatabase);
@@ -6295,6 +7246,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final BorrowersDao borrowersDao = BorrowersDao(this as AppDatabase);
   late final LoansDao loansDao = LoansDao(this as AppDatabase);
   late final RipLibraryDao ripLibraryDao = RipLibraryDao(this as AppDatabase);
+  late final BatchSessionDao batchSessionDao = BatchSessionDao(
+    this as AppDatabase,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -6311,6 +7265,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     loansTable,
     ripAlbumsTable,
     ripTracksTable,
+    batchSessionsTable,
+    batchQueueItemsTable,
   ];
 }
 
@@ -11193,6 +12149,519 @@ typedef $$RipTracksTableTableProcessedTableManager =
       RipTracksTableData,
       PrefetchHooks Function({bool ripAlbumId})
     >;
+typedef $$BatchSessionsTableTableCreateCompanionBuilder =
+    BatchSessionsTableCompanion Function({
+      required String id,
+      required int createdAt,
+      Value<int?> completedAt,
+      Value<String> status,
+      Value<int> itemCount,
+      Value<int> rowid,
+    });
+typedef $$BatchSessionsTableTableUpdateCompanionBuilder =
+    BatchSessionsTableCompanion Function({
+      Value<String> id,
+      Value<int> createdAt,
+      Value<int?> completedAt,
+      Value<String> status,
+      Value<int> itemCount,
+      Value<int> rowid,
+    });
+
+class $$BatchSessionsTableTableFilterComposer
+    extends Composer<_$AppDatabase, $BatchSessionsTableTable> {
+  $$BatchSessionsTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get completedAt => $composableBuilder(
+    column: $table.completedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get itemCount => $composableBuilder(
+    column: $table.itemCount,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$BatchSessionsTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $BatchSessionsTableTable> {
+  $$BatchSessionsTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get completedAt => $composableBuilder(
+    column: $table.completedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get itemCount => $composableBuilder(
+    column: $table.itemCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$BatchSessionsTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $BatchSessionsTableTable> {
+  $$BatchSessionsTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<int> get completedAt => $composableBuilder(
+    column: $table.completedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<int> get itemCount =>
+      $composableBuilder(column: $table.itemCount, builder: (column) => column);
+}
+
+class $$BatchSessionsTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $BatchSessionsTableTable,
+          BatchSessionsTableData,
+          $$BatchSessionsTableTableFilterComposer,
+          $$BatchSessionsTableTableOrderingComposer,
+          $$BatchSessionsTableTableAnnotationComposer,
+          $$BatchSessionsTableTableCreateCompanionBuilder,
+          $$BatchSessionsTableTableUpdateCompanionBuilder,
+          (
+            BatchSessionsTableData,
+            BaseReferences<
+              _$AppDatabase,
+              $BatchSessionsTableTable,
+              BatchSessionsTableData
+            >,
+          ),
+          BatchSessionsTableData,
+          PrefetchHooks Function()
+        > {
+  $$BatchSessionsTableTableTableManager(
+    _$AppDatabase db,
+    $BatchSessionsTableTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$BatchSessionsTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$BatchSessionsTableTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$BatchSessionsTableTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<int> createdAt = const Value.absent(),
+                Value<int?> completedAt = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<int> itemCount = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => BatchSessionsTableCompanion(
+                id: id,
+                createdAt: createdAt,
+                completedAt: completedAt,
+                status: status,
+                itemCount: itemCount,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required int createdAt,
+                Value<int?> completedAt = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<int> itemCount = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => BatchSessionsTableCompanion.insert(
+                id: id,
+                createdAt: createdAt,
+                completedAt: completedAt,
+                status: status,
+                itemCount: itemCount,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$BatchSessionsTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $BatchSessionsTableTable,
+      BatchSessionsTableData,
+      $$BatchSessionsTableTableFilterComposer,
+      $$BatchSessionsTableTableOrderingComposer,
+      $$BatchSessionsTableTableAnnotationComposer,
+      $$BatchSessionsTableTableCreateCompanionBuilder,
+      $$BatchSessionsTableTableUpdateCompanionBuilder,
+      (
+        BatchSessionsTableData,
+        BaseReferences<
+          _$AppDatabase,
+          $BatchSessionsTableTable,
+          BatchSessionsTableData
+        >,
+      ),
+      BatchSessionsTableData,
+      PrefetchHooks Function()
+    >;
+typedef $$BatchQueueItemsTableTableCreateCompanionBuilder =
+    BatchQueueItemsTableCompanion Function({
+      required String id,
+      required String sessionId,
+      required String barcode,
+      required String barcodeType,
+      required String status,
+      required int scannedAt,
+      Value<String?> metadataJson,
+      Value<String?> scanResultJson,
+      Value<int> sortOrder,
+      Value<int> rowid,
+    });
+typedef $$BatchQueueItemsTableTableUpdateCompanionBuilder =
+    BatchQueueItemsTableCompanion Function({
+      Value<String> id,
+      Value<String> sessionId,
+      Value<String> barcode,
+      Value<String> barcodeType,
+      Value<String> status,
+      Value<int> scannedAt,
+      Value<String?> metadataJson,
+      Value<String?> scanResultJson,
+      Value<int> sortOrder,
+      Value<int> rowid,
+    });
+
+class $$BatchQueueItemsTableTableFilterComposer
+    extends Composer<_$AppDatabase, $BatchQueueItemsTableTable> {
+  $$BatchQueueItemsTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sessionId => $composableBuilder(
+    column: $table.sessionId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get barcode => $composableBuilder(
+    column: $table.barcode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get barcodeType => $composableBuilder(
+    column: $table.barcodeType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get scannedAt => $composableBuilder(
+    column: $table.scannedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get metadataJson => $composableBuilder(
+    column: $table.metadataJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get scanResultJson => $composableBuilder(
+    column: $table.scanResultJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$BatchQueueItemsTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $BatchQueueItemsTableTable> {
+  $$BatchQueueItemsTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sessionId => $composableBuilder(
+    column: $table.sessionId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get barcode => $composableBuilder(
+    column: $table.barcode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get barcodeType => $composableBuilder(
+    column: $table.barcodeType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get scannedAt => $composableBuilder(
+    column: $table.scannedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get metadataJson => $composableBuilder(
+    column: $table.metadataJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get scanResultJson => $composableBuilder(
+    column: $table.scanResultJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$BatchQueueItemsTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $BatchQueueItemsTableTable> {
+  $$BatchQueueItemsTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get sessionId =>
+      $composableBuilder(column: $table.sessionId, builder: (column) => column);
+
+  GeneratedColumn<String> get barcode =>
+      $composableBuilder(column: $table.barcode, builder: (column) => column);
+
+  GeneratedColumn<String> get barcodeType => $composableBuilder(
+    column: $table.barcodeType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<int> get scannedAt =>
+      $composableBuilder(column: $table.scannedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get metadataJson => $composableBuilder(
+    column: $table.metadataJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get scanResultJson => $composableBuilder(
+    column: $table.scanResultJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+}
+
+class $$BatchQueueItemsTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $BatchQueueItemsTableTable,
+          BatchQueueItemsTableData,
+          $$BatchQueueItemsTableTableFilterComposer,
+          $$BatchQueueItemsTableTableOrderingComposer,
+          $$BatchQueueItemsTableTableAnnotationComposer,
+          $$BatchQueueItemsTableTableCreateCompanionBuilder,
+          $$BatchQueueItemsTableTableUpdateCompanionBuilder,
+          (
+            BatchQueueItemsTableData,
+            BaseReferences<
+              _$AppDatabase,
+              $BatchQueueItemsTableTable,
+              BatchQueueItemsTableData
+            >,
+          ),
+          BatchQueueItemsTableData,
+          PrefetchHooks Function()
+        > {
+  $$BatchQueueItemsTableTableTableManager(
+    _$AppDatabase db,
+    $BatchQueueItemsTableTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$BatchQueueItemsTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$BatchQueueItemsTableTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$BatchQueueItemsTableTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> sessionId = const Value.absent(),
+                Value<String> barcode = const Value.absent(),
+                Value<String> barcodeType = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<int> scannedAt = const Value.absent(),
+                Value<String?> metadataJson = const Value.absent(),
+                Value<String?> scanResultJson = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => BatchQueueItemsTableCompanion(
+                id: id,
+                sessionId: sessionId,
+                barcode: barcode,
+                barcodeType: barcodeType,
+                status: status,
+                scannedAt: scannedAt,
+                metadataJson: metadataJson,
+                scanResultJson: scanResultJson,
+                sortOrder: sortOrder,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String sessionId,
+                required String barcode,
+                required String barcodeType,
+                required String status,
+                required int scannedAt,
+                Value<String?> metadataJson = const Value.absent(),
+                Value<String?> scanResultJson = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => BatchQueueItemsTableCompanion.insert(
+                id: id,
+                sessionId: sessionId,
+                barcode: barcode,
+                barcodeType: barcodeType,
+                status: status,
+                scannedAt: scannedAt,
+                metadataJson: metadataJson,
+                scanResultJson: scanResultJson,
+                sortOrder: sortOrder,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$BatchQueueItemsTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $BatchQueueItemsTableTable,
+      BatchQueueItemsTableData,
+      $$BatchQueueItemsTableTableFilterComposer,
+      $$BatchQueueItemsTableTableOrderingComposer,
+      $$BatchQueueItemsTableTableAnnotationComposer,
+      $$BatchQueueItemsTableTableCreateCompanionBuilder,
+      $$BatchQueueItemsTableTableUpdateCompanionBuilder,
+      (
+        BatchQueueItemsTableData,
+        BaseReferences<
+          _$AppDatabase,
+          $BatchQueueItemsTableTable,
+          BatchQueueItemsTableData
+        >,
+      ),
+      BatchQueueItemsTableData,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -11219,4 +12688,8 @@ class $AppDatabaseManager {
       $$RipAlbumsTableTableTableManager(_db, _db.ripAlbumsTable);
   $$RipTracksTableTableTableManager get ripTracksTable =>
       $$RipTracksTableTableTableManager(_db, _db.ripTracksTable);
+  $$BatchSessionsTableTableTableManager get batchSessionsTable =>
+      $$BatchSessionsTableTableTableManager(_db, _db.batchSessionsTable);
+  $$BatchQueueItemsTableTableTableManager get batchQueueItemsTable =>
+      $$BatchQueueItemsTableTableTableManager(_db, _db.batchQueueItemsTable);
 }

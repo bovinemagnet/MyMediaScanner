@@ -8,6 +8,7 @@ import 'package:mymediascanner/data/local/dao/sync_log_dao.dart';
 import 'package:mymediascanner/data/local/dao/borrowers_dao.dart';
 import 'package:mymediascanner/data/local/dao/loans_dao.dart';
 import 'package:mymediascanner/data/local/dao/rip_library_dao.dart';
+import 'package:mymediascanner/data/local/dao/batch_session_dao.dart';
 
 final databaseProvider = Provider<AppDatabase>((ref) {
   final db = AppDatabase();
@@ -45,4 +46,8 @@ final loansDaoProvider = Provider<LoansDao>((ref) {
 
 final ripLibraryDaoProvider = Provider<RipLibraryDao>((ref) {
   return ref.watch(databaseProvider).ripLibraryDao;
+});
+
+final batchSessionDaoProvider = Provider<BatchSessionDao>((ref) {
+  return ref.watch(databaseProvider).batchSessionDao;
 });

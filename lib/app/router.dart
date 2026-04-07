@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mymediascanner/presentation/screens/batch/batch_placeholder_screen.dart';
+import 'package:mymediascanner/presentation/screens/batch/batch_history_screen.dart';
 import 'package:mymediascanner/presentation/screens/collection/collection_screen.dart';
 import 'package:mymediascanner/presentation/screens/collection/statistics_screen.dart';
 import 'package:mymediascanner/presentation/screens/dashboard/dashboard_screen.dart';
@@ -155,6 +156,14 @@ final router = GoRouter(
               path: '/batch',
               builder: (context, state) =>
                   const BatchPlaceholderScreen(),
+              routes: [
+                GoRoute(
+                  path: 'history',
+                  parentNavigatorKey: _rootNavigatorKey,
+                  pageBuilder: (context, state) => _fadeSlideTransition(
+                      state, const BatchHistoryScreen()),
+                ),
+              ],
             ),
           ],
         ),
