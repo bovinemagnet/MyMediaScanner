@@ -9,17 +9,27 @@ class TitleSearchField extends StatefulWidget {
     super.key,
     required this.onSearch,
     this.isLoading = false,
+    this.initialText,
   });
 
   final void Function(String title) onSearch;
   final bool isLoading;
+
+  /// Optional initial text to pre-populate (e.g. from OCR).
+  final String? initialText;
 
   @override
   State<TitleSearchField> createState() => _TitleSearchFieldState();
 }
 
 class _TitleSearchFieldState extends State<TitleSearchField> {
-  final _controller = TextEditingController();
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialText);
+  }
 
   @override
   void dispose() {

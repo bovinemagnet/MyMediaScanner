@@ -8,6 +8,7 @@ import 'package:mymediascanner/domain/entities/metadata_result.dart';
 import 'package:mymediascanner/domain/entities/scan_result.dart';
 import 'package:mymediascanner/presentation/screens/metadata_confirm/widgets/editable_metadata_form.dart';
 import 'package:mymediascanner/presentation/screens/metadata_confirm/widgets/title_search_field.dart';
+import 'package:mymediascanner/presentation/widgets/ocr_confidence_indicator.dart';
 
 class MetadataConfirmScreen extends ConsumerWidget {
   const MetadataConfirmScreen({super.key});
@@ -18,12 +19,22 @@ class MetadataConfirmScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final isNotFound = scannerState.result is NotFoundScanResult;
+    final ocrContext = scannerState.ocrSearchResult;
     final metadata = switch (scannerState.result) {
       SingleScanResult(:final metadata) => metadata,
       NotFoundScanResult(:final barcode, :final barcodeType) =>
         MetadataResult(barcode: barcode, barcodeType: barcodeType),
       _ => null,
     };
+
+    // Pre-fill metadata from OCR inferred values when fields are empty
+    final effectiveMetadata = metadata != null && ocrContext != null
+        ? metadata.copyWith(
+            title: metadata.title ?? ocrContext.ocrResult.inferredTitle,
+            subtitle: metadata.subtitle ?? ocrContext.inferredArtist,
+            year: metadata.year ?? ocrContext.inferredYear,
+          )
+        : metadata;
 
     // Navigate to disambiguate if title search returned multi-match
     ref.listen(scannerProvider, (prev, next) {
@@ -72,6 +83,14 @@ class MetadataConfirmScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // OCR confidence banner
+              if (ocrContext != null) ...[
+                OcrConfidenceIndicator(
+                  confidence: ocrContext.confidence,
+                  searchTermUsed: ocrContext.searchTermUsed,
+                ),
+                const SizedBox(height: 12),
+              ],
               if (isNotFound) ...[
                 // Not-found info card
                 Container(
@@ -107,6 +126,7 @@ class MetadataConfirmScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 12),
                       TitleSearchField(
+                        initialText: ocrContext?.ocrResult.inferredTitle,
                         isLoading:
                             scannerState.state == ScanState.lookingUp,
                         onSearch: (title) {
@@ -136,7 +156,7 @@ class MetadataConfirmScreen extends ConsumerWidget {
                 const SizedBox(height: 12),
               ],
               EditableMetadataForm(
-                initial: metadata,
+                initial: effectiveMetadata!,
                 onSave: (edited) async {
                   final useCase = SaveMediaItemUseCase(
                     repository: ref.read(mediaItemRepositoryProvider),
