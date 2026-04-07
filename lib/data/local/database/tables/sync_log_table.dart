@@ -13,6 +13,12 @@ class SyncLogTable extends Table {
   IntColumn get attemptedAt => integer().nullable()();
   IntColumn get synced => integer().withDefault(const Constant(0))();
 
+  // New columns added in schema version 7
+  TextColumn get errorMessage => text().nullable()();
+  IntColumn get durationMs => integer().nullable()();
+  TextColumn get direction => text().nullable()(); // 'push' or 'pull'
+  TextColumn get resolvedBy => text().nullable()(); // 'auto' or 'user'
+
   @override
   Set<Column> get primaryKey => {id};
 }
