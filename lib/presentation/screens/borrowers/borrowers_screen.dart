@@ -31,7 +31,7 @@ class _BorrowersScreenState extends ConsumerState<BorrowersScreen> {
     final borrowersAsync = ref.watch(allBorrowersProvider);
     final overdueLoansAsync = ref.watch(overdueLoansProvider);
     final activeLoansAsync = ref.watch(activeLoansProvider);
-    final isDesktop = PlatformUtils.isDesktop;
+    final isDesktop = PlatformCapability.isDesktop;
     final colors = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -115,8 +115,8 @@ class _BorrowersScreenState extends ConsumerState<BorrowersScreen> {
                   );
                 }
 
-                final activeLoans = activeLoansAsync.valueOrNull ?? [];
-                final overdueLoans = overdueLoansAsync.valueOrNull ?? [];
+                final activeLoans = activeLoansAsync.value ?? [];
+                final overdueLoans = overdueLoansAsync.value ?? [];
 
                 return ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 16),

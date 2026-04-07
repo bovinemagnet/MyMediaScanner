@@ -20,10 +20,10 @@ class BorrowerDetailScreen extends ConsumerWidget {
     final borrowersAsync = ref.watch(allBorrowersProvider);
     final loansAsync = ref.watch(loansForBorrowerProvider(borrowerId));
     final dateFormat = DateFormat.yMMMd();
-    final isDesktop = PlatformUtils.isDesktop;
+    final isDesktop = PlatformCapability.isDesktop;
     final colors = Theme.of(context).colorScheme;
 
-    final borrower = borrowersAsync.valueOrNull
+    final borrower = borrowersAsync.value
         ?.where((b) => b.id == borrowerId)
         .firstOrNull;
 
