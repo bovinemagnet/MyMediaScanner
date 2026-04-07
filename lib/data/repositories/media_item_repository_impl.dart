@@ -33,11 +33,18 @@ class MediaItemRepositoryImpl implements IMediaItemRepository {
 
     final Stream<List<MediaItemsTableData>> baseStream = useFts
         ? _mediaItemsDao.watchSearch(searchQuery)
-        : _mediaItemsDao.watchAll();
+        : _mediaItemsDao.watchAll(
+            mediaType: mediaType?.name,
+            sortBy: sortBy,
+            ascending: ascending,
+          );
 
     return baseStream.map(
       (rows) => rows
-          .where((r) => mediaType == null || r.mediaType == mediaType.name)
+          .where((r) =>
+              useFts ||
+              mediaType == null ||
+              r.mediaType == mediaType.name)
           .where((r) =>
               // For very short queries (< 2 chars), fall back to in-memory filter
               useFts ||
