@@ -27,6 +27,10 @@ class ManageBorrowersUseCase {
     return borrower;
   }
 
+  Future<void> updateBorrower(Borrower borrower) => _repo.update(borrower);
+
+  Future<Borrower?> getById(String id) => _repo.getById(id);
+
   Future<void> deleteBorrower(String id) => _repo.softDelete(id);
 
   Stream<List<Borrower>> watchAll() => _repo.watchAll();
