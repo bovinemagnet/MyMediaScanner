@@ -1,0 +1,35 @@
+app-id: com.paulsnow.mymediascanner
+runtime: org.freedesktop.Platform
+runtime-version: '24.08'
+sdk: org.freedesktop.Sdk
+command: mymediascanner
+
+finish-args:
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --device=dri
+  - --share=network
+
+modules:
+  - name: mymediascanner
+    buildsystem: simple
+    build-commands:
+      - cp -r bundle /app/mymediascanner
+      - chmod +x /app/mymediascanner/mymediascanner
+      - mkdir -p /app/bin
+      - ln -s /app/mymediascanner/mymediascanner /app/bin/mymediascanner
+      - install -Dm644 com.paulsnow.mymediascanner.desktop /app/share/applications/com.paulsnow.mymediascanner.desktop
+      - install -Dm644 com.paulsnow.mymediascanner.png /app/share/icons/hicolor/256x256/apps/com.paulsnow.mymediascanner.png
+      - install -Dm644 com.paulsnow.mymediascanner.metainfo.xml /app/share/metainfo/com.paulsnow.mymediascanner.metainfo.xml
+    sources:
+      - type: dir
+        path: ../../build/linux/x64/release/bundle
+        dest: bundle
+      - type: file
+        path: ../../linux/com.paulsnow.mymediascanner.desktop
+      - type: file
+        path: ../../assets/icon/app_icon.png
+        dest-filename: com.paulsnow.mymediascanner.png
+      - type: file
+        path: com.paulsnow.mymediascanner.metainfo.xml
