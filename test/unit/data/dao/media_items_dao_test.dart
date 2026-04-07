@@ -23,6 +23,8 @@ void main() {
       String mediaType = 'book',
       int? dateAdded,
       int deleted = 0,
+      int? year,
+      double? userRating,
     }) {
       final now = DateTime.now().millisecondsSinceEpoch;
       return MediaItemsTableCompanion(
@@ -35,6 +37,9 @@ void main() {
         dateScanned: Value(now),
         updatedAt: Value(now),
         deleted: Value(deleted),
+        year: year != null ? Value(year) : const Value.absent(),
+        userRating:
+            userRating != null ? Value(userRating) : const Value.absent(),
       );
     }
 
@@ -152,6 +157,126 @@ void main() {
       final items = await dao.watchAll(mediaType: 'book').first;
       expect(items.length, 2);
       expect(items.every((e) => e.mediaType == 'book'), isTrue);
+    });
+
+    test('watchAll returns items sorted by year ascending', () async {
+      await dao.insertItem(createTestItem(
+        id: 'y2020',
+        barcode: '1111111111111',
+        title: 'Film 2020',
+        year: 2020,
+      ));
+      await dao.insertItem(createTestItem(
+        id: 'y1999',
+        barcode: '2222222222222',
+        title: 'Film 1999',
+        year: 1999,
+      ));
+      await dao.insertItem(createTestItem(
+        id: 'y2010',
+        barcode: '3333333333333',
+        title: 'Film 2010',
+        year: 2010,
+      ));
+
+      final items = await dao
+          .watchAll(sortBy: 'year', ascending: true)
+          .first;
+      expect(items.map((e) => e.year).toList(), [1999, 2010, 2020]);
+    });
+
+    test('watchAll returns items sorted by userRating descending', () async {
+      await dao.insertItem(createTestItem(
+        id: 'r5',
+        barcode: '1111111111111',
+        title: 'Great Film',
+        userRating: 5.0,
+      ));
+      await dao.insertItem(createTestItem(
+        id: 'rnull',
+        barcode: '2222222222222',
+        title: 'Unrated Film',
+        // no userRating — remains null
+      ));
+      await dao.insertItem(createTestItem(
+        id: 'r3',
+        barcode: '3333333333333',
+        title: 'OK Film',
+        userRating: 3.0,
+      ));
+
+      final items = await dao
+          .watchAll(sortBy: 'userRating', ascending: false)
+          .first;
+      // Rated items should appear sorted descending; SQLite sorts NULLs
+      // last for DESC ordering
+      expect(items.map((e) => e.id).toList(), ['r5', 'r3', 'rnull']);
+    });
+
+    test('watchAll combines mediaType filter with sortBy', () async {
+      await dao.insertItem(createTestItem(
+        id: 'music-z',
+        barcode: '1111111111111',
+        title: 'Ziggy Stardust',
+        mediaType: 'music',
+      ));
+      await dao.insertItem(createTestItem(
+        id: 'film-a',
+        barcode: '2222222222222',
+        title: 'Alien',
+        mediaType: 'film',
+      ));
+      await dao.insertItem(createTestItem(
+        id: 'music-a',
+        barcode: '3333333333333',
+        title: 'Abbey Road',
+        mediaType: 'music',
+      ));
+      await dao.insertItem(createTestItem(
+        id: 'film-b',
+        barcode: '4444444444444',
+        title: 'Blade Runner',
+        mediaType: 'film',
+      ));
+
+      final items = await dao
+          .watchAll(mediaType: 'music', sortBy: 'title', ascending: true)
+          .first;
+      expect(items.length, 2);
+      expect(
+        items.map((e) => e.title).toList(),
+        ['Abbey Road', 'Ziggy Stardust'],
+      );
+    });
+
+    test('watchAll defaults to dateAdded descending when no sortBy', () async {
+      final baseTime = DateTime(2026, 1, 1).millisecondsSinceEpoch;
+      await dao.insertItem(createTestItem(
+        id: 'first',
+        barcode: '1111111111111',
+        title: 'First Added',
+        dateAdded: baseTime,
+      ));
+      await dao.insertItem(createTestItem(
+        id: 'second',
+        barcode: '2222222222222',
+        title: 'Second Added',
+        dateAdded: baseTime + 5000,
+      ));
+      await dao.insertItem(createTestItem(
+        id: 'third',
+        barcode: '3333333333333',
+        title: 'Third Added',
+        dateAdded: baseTime + 10000,
+      ));
+
+      // Call watchAll with NO sortBy parameter
+      final items = await dao.watchAll().first;
+      // Default should be dateAdded descending (newest first)
+      expect(
+        items.map((e) => e.id).toList(),
+        ['third', 'second', 'first'],
+      );
     });
   });
 }

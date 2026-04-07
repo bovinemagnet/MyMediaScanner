@@ -81,5 +81,72 @@ void main() {
         '2', 'Second', 200,
       ]);
     });
+
+    test('buildBatchUpsertSql throws on empty records list', () {
+      // records.first is called immediately, so an empty list should throw
+      expect(
+        () => PostgresSyncClient.buildBatchUpsertSql('media_items', []),
+        throwsA(isA<StateError>()),
+      );
+    });
+
+    test('buildBatchUpsertSql produces single statement for exactly 50 records',
+        () {
+      final records = List.generate(
+        50,
+        (i) => {'id': '$i', 'title': 'Item $i', 'updated_at': i * 100},
+      );
+
+      final result = PostgresSyncClient.buildBatchUpsertSql(
+        'media_items',
+        records,
+      );
+
+      // Should contain 50 value rows (one per record)
+      final valueMatches = RegExp(r'\(\$\d+, \$\d+, \$\d+\)').allMatches(result.sql);
+      expect(valueMatches.length, 50);
+      // Total params: 50 records × 3 columns
+      expect(result.params.length, 150);
+    });
+
+    test('buildBatchUpsertSql produces correct param count for 51 records', () {
+      final records = List.generate(
+        51,
+        (i) => {'id': '$i', 'title': 'Item $i', 'updated_at': i * 100},
+      );
+
+      final result = PostgresSyncClient.buildBatchUpsertSql(
+        'media_items',
+        records,
+      );
+
+      // buildBatchUpsertSql does not split — that is upsertRecords' job.
+      // So we expect all 51 records in one statement.
+      final valueMatches = RegExp(r'\(\$\d+, \$\d+, \$\d+\)').allMatches(result.sql);
+      expect(valueMatches.length, 51);
+      // Total params: 51 records × 3 columns
+      expect(result.params.length, 153);
+    });
+
+    test('buildBatchUpsertSql with single column record (only id)', () {
+      final records = [
+        {'id': '1'},
+      ];
+
+      final result = PostgresSyncClient.buildBatchUpsertSql(
+        'test_table',
+        records,
+      );
+
+      // The UPDATE SET clause excludes 'id', leaving it empty.
+      // This produces invalid SQL: "ON CONFLICT (id) DO UPDATE SET "
+      // but buildBatchUpsertSql does not validate — it simply builds the string.
+      expect(result.sql, contains('INSERT INTO test_table (id)'));
+      expect(result.sql, contains(r'($1)'));
+      expect(result.params, ['1']);
+      // The SET clause should be empty (only 'id' was present, and it is excluded)
+      expect(result.sql, contains('DO UPDATE SET '));
+      expect(result.sql, isNot(contains('id = EXCLUDED.id')));
+    });
   });
 }
