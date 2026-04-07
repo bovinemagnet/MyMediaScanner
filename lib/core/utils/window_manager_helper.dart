@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 
+import 'package:mymediascanner/core/constants/app_constants.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
 
 /// Manages desktop window size, position, and minimum size enforcement.
@@ -18,8 +19,6 @@ class WindowManagerHelper with WindowListener {
   static const _keyWidth = 'window_width';
   static const _keyHeight = 'window_height';
 
-  static const _minWidth = 800.0;
-  static const _minHeight = 600.0;
   static const _defaultWidth = 1200.0;
   static const _defaultHeight = 800.0;
 
@@ -45,7 +44,7 @@ class WindowManagerHelper with WindowListener {
 
     final options = WindowOptions(
       size: Size(width, height),
-      minimumSize: const Size(_minWidth, _minHeight),
+      minimumSize: const Size(AppConstants.minWindowWidth, AppConstants.minWindowHeight),
       center: x == null || y == null,
     );
 
@@ -79,7 +78,23 @@ class WindowManagerHelper with WindowListener {
   }
 
   @override
-  void onWindowResized() => _debouncedPersist();
+  void onWindowResized() {
+    _enforceMinimumSize();
+    _debouncedPersist();
+  }
+
+  void _enforceMinimumSize() async {
+    final size = await windowManager.getSize();
+    final clampedWidth = size.width < AppConstants.minWindowWidth
+        ? AppConstants.minWindowWidth
+        : size.width;
+    final clampedHeight = size.height < AppConstants.minWindowHeight
+        ? AppConstants.minWindowHeight
+        : size.height;
+    if (clampedWidth != size.width || clampedHeight != size.height) {
+      await windowManager.setSize(Size(clampedWidth, clampedHeight));
+    }
+  }
 
   @override
   void onWindowMoved() => _debouncedPersist();

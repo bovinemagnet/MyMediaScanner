@@ -15,6 +15,10 @@ abstract final class AppConstants {
   // Sync
   static const defaultPostgresPort = 5432;
 
+  // Desktop window
+  static const minWindowWidth = 800.0;
+  static const minWindowHeight = 600.0;
+
   // Disambiguation
   static const maxCandidates = 5;
 }
