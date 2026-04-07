@@ -3013,6 +3013,50 @@ class $SyncLogTableTable extends SyncLogTable
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _errorMessageMeta = const VerificationMeta(
+    'errorMessage',
+  );
+  @override
+  late final GeneratedColumn<String> errorMessage = GeneratedColumn<String>(
+    'error_message',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _durationMsMeta = const VerificationMeta(
+    'durationMs',
+  );
+  @override
+  late final GeneratedColumn<int> durationMs = GeneratedColumn<int>(
+    'duration_ms',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _directionMeta = const VerificationMeta(
+    'direction',
+  );
+  @override
+  late final GeneratedColumn<String> direction = GeneratedColumn<String>(
+    'direction',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _resolvedByMeta = const VerificationMeta(
+    'resolvedBy',
+  );
+  @override
+  late final GeneratedColumn<String> resolvedBy = GeneratedColumn<String>(
+    'resolved_by',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -3023,6 +3067,10 @@ class $SyncLogTableTable extends SyncLogTable
     createdAt,
     attemptedAt,
     synced,
+    errorMessage,
+    durationMs,
+    direction,
+    resolvedBy,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -3099,6 +3147,33 @@ class $SyncLogTableTable extends SyncLogTable
         synced.isAcceptableOrUnknown(data['synced']!, _syncedMeta),
       );
     }
+    if (data.containsKey('error_message')) {
+      context.handle(
+        _errorMessageMeta,
+        errorMessage.isAcceptableOrUnknown(
+          data['error_message']!,
+          _errorMessageMeta,
+        ),
+      );
+    }
+    if (data.containsKey('duration_ms')) {
+      context.handle(
+        _durationMsMeta,
+        durationMs.isAcceptableOrUnknown(data['duration_ms']!, _durationMsMeta),
+      );
+    }
+    if (data.containsKey('direction')) {
+      context.handle(
+        _directionMeta,
+        direction.isAcceptableOrUnknown(data['direction']!, _directionMeta),
+      );
+    }
+    if (data.containsKey('resolved_by')) {
+      context.handle(
+        _resolvedByMeta,
+        resolvedBy.isAcceptableOrUnknown(data['resolved_by']!, _resolvedByMeta),
+      );
+    }
     return context;
   }
 
@@ -3140,6 +3215,22 @@ class $SyncLogTableTable extends SyncLogTable
         DriftSqlType.int,
         data['${effectivePrefix}synced'],
       )!,
+      errorMessage: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}error_message'],
+      ),
+      durationMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}duration_ms'],
+      ),
+      direction: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}direction'],
+      ),
+      resolvedBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}resolved_by'],
+      ),
     );
   }
 
@@ -3159,6 +3250,10 @@ class SyncLogTableData extends DataClass
   final int createdAt;
   final int? attemptedAt;
   final int synced;
+  final String? errorMessage;
+  final int? durationMs;
+  final String? direction;
+  final String? resolvedBy;
   const SyncLogTableData({
     required this.id,
     required this.entityType,
@@ -3168,6 +3263,10 @@ class SyncLogTableData extends DataClass
     required this.createdAt,
     this.attemptedAt,
     required this.synced,
+    this.errorMessage,
+    this.durationMs,
+    this.direction,
+    this.resolvedBy,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -3182,6 +3281,18 @@ class SyncLogTableData extends DataClass
       map['attempted_at'] = Variable<int>(attemptedAt);
     }
     map['synced'] = Variable<int>(synced);
+    if (!nullToAbsent || errorMessage != null) {
+      map['error_message'] = Variable<String>(errorMessage);
+    }
+    if (!nullToAbsent || durationMs != null) {
+      map['duration_ms'] = Variable<int>(durationMs);
+    }
+    if (!nullToAbsent || direction != null) {
+      map['direction'] = Variable<String>(direction);
+    }
+    if (!nullToAbsent || resolvedBy != null) {
+      map['resolved_by'] = Variable<String>(resolvedBy);
+    }
     return map;
   }
 
@@ -3197,6 +3308,18 @@ class SyncLogTableData extends DataClass
           ? const Value.absent()
           : Value(attemptedAt),
       synced: Value(synced),
+      errorMessage: errorMessage == null && nullToAbsent
+          ? const Value.absent()
+          : Value(errorMessage),
+      durationMs: durationMs == null && nullToAbsent
+          ? const Value.absent()
+          : Value(durationMs),
+      direction: direction == null && nullToAbsent
+          ? const Value.absent()
+          : Value(direction),
+      resolvedBy: resolvedBy == null && nullToAbsent
+          ? const Value.absent()
+          : Value(resolvedBy),
     );
   }
 
@@ -3214,6 +3337,10 @@ class SyncLogTableData extends DataClass
       createdAt: serializer.fromJson<int>(json['createdAt']),
       attemptedAt: serializer.fromJson<int?>(json['attemptedAt']),
       synced: serializer.fromJson<int>(json['synced']),
+      errorMessage: serializer.fromJson<String?>(json['errorMessage']),
+      durationMs: serializer.fromJson<int?>(json['durationMs']),
+      direction: serializer.fromJson<String?>(json['direction']),
+      resolvedBy: serializer.fromJson<String?>(json['resolvedBy']),
     );
   }
   @override
@@ -3228,6 +3355,10 @@ class SyncLogTableData extends DataClass
       'createdAt': serializer.toJson<int>(createdAt),
       'attemptedAt': serializer.toJson<int?>(attemptedAt),
       'synced': serializer.toJson<int>(synced),
+      'errorMessage': serializer.toJson<String?>(errorMessage),
+      'durationMs': serializer.toJson<int?>(durationMs),
+      'direction': serializer.toJson<String?>(direction),
+      'resolvedBy': serializer.toJson<String?>(resolvedBy),
     };
   }
 
@@ -3240,6 +3371,10 @@ class SyncLogTableData extends DataClass
     int? createdAt,
     Value<int?> attemptedAt = const Value.absent(),
     int? synced,
+    Value<String?> errorMessage = const Value.absent(),
+    Value<int?> durationMs = const Value.absent(),
+    Value<String?> direction = const Value.absent(),
+    Value<String?> resolvedBy = const Value.absent(),
   }) => SyncLogTableData(
     id: id ?? this.id,
     entityType: entityType ?? this.entityType,
@@ -3249,6 +3384,10 @@ class SyncLogTableData extends DataClass
     createdAt: createdAt ?? this.createdAt,
     attemptedAt: attemptedAt.present ? attemptedAt.value : this.attemptedAt,
     synced: synced ?? this.synced,
+    errorMessage: errorMessage.present ? errorMessage.value : this.errorMessage,
+    durationMs: durationMs.present ? durationMs.value : this.durationMs,
+    direction: direction.present ? direction.value : this.direction,
+    resolvedBy: resolvedBy.present ? resolvedBy.value : this.resolvedBy,
   );
   SyncLogTableData copyWithCompanion(SyncLogTableCompanion data) {
     return SyncLogTableData(
@@ -3266,6 +3405,16 @@ class SyncLogTableData extends DataClass
           ? data.attemptedAt.value
           : this.attemptedAt,
       synced: data.synced.present ? data.synced.value : this.synced,
+      errorMessage: data.errorMessage.present
+          ? data.errorMessage.value
+          : this.errorMessage,
+      durationMs: data.durationMs.present
+          ? data.durationMs.value
+          : this.durationMs,
+      direction: data.direction.present ? data.direction.value : this.direction,
+      resolvedBy: data.resolvedBy.present
+          ? data.resolvedBy.value
+          : this.resolvedBy,
     );
   }
 
@@ -3279,7 +3428,11 @@ class SyncLogTableData extends DataClass
           ..write('payloadJson: $payloadJson, ')
           ..write('createdAt: $createdAt, ')
           ..write('attemptedAt: $attemptedAt, ')
-          ..write('synced: $synced')
+          ..write('synced: $synced, ')
+          ..write('errorMessage: $errorMessage, ')
+          ..write('durationMs: $durationMs, ')
+          ..write('direction: $direction, ')
+          ..write('resolvedBy: $resolvedBy')
           ..write(')'))
         .toString();
   }
@@ -3294,6 +3447,10 @@ class SyncLogTableData extends DataClass
     createdAt,
     attemptedAt,
     synced,
+    errorMessage,
+    durationMs,
+    direction,
+    resolvedBy,
   );
   @override
   bool operator ==(Object other) =>
@@ -3306,7 +3463,11 @@ class SyncLogTableData extends DataClass
           other.payloadJson == this.payloadJson &&
           other.createdAt == this.createdAt &&
           other.attemptedAt == this.attemptedAt &&
-          other.synced == this.synced);
+          other.synced == this.synced &&
+          other.errorMessage == this.errorMessage &&
+          other.durationMs == this.durationMs &&
+          other.direction == this.direction &&
+          other.resolvedBy == this.resolvedBy);
 }
 
 class SyncLogTableCompanion extends UpdateCompanion<SyncLogTableData> {
@@ -3318,6 +3479,10 @@ class SyncLogTableCompanion extends UpdateCompanion<SyncLogTableData> {
   final Value<int> createdAt;
   final Value<int?> attemptedAt;
   final Value<int> synced;
+  final Value<String?> errorMessage;
+  final Value<int?> durationMs;
+  final Value<String?> direction;
+  final Value<String?> resolvedBy;
   final Value<int> rowid;
   const SyncLogTableCompanion({
     this.id = const Value.absent(),
@@ -3328,6 +3493,10 @@ class SyncLogTableCompanion extends UpdateCompanion<SyncLogTableData> {
     this.createdAt = const Value.absent(),
     this.attemptedAt = const Value.absent(),
     this.synced = const Value.absent(),
+    this.errorMessage = const Value.absent(),
+    this.durationMs = const Value.absent(),
+    this.direction = const Value.absent(),
+    this.resolvedBy = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   SyncLogTableCompanion.insert({
@@ -3339,6 +3508,10 @@ class SyncLogTableCompanion extends UpdateCompanion<SyncLogTableData> {
     required int createdAt,
     this.attemptedAt = const Value.absent(),
     this.synced = const Value.absent(),
+    this.errorMessage = const Value.absent(),
+    this.durationMs = const Value.absent(),
+    this.direction = const Value.absent(),
+    this.resolvedBy = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        entityType = Value(entityType),
@@ -3355,6 +3528,10 @@ class SyncLogTableCompanion extends UpdateCompanion<SyncLogTableData> {
     Expression<int>? createdAt,
     Expression<int>? attemptedAt,
     Expression<int>? synced,
+    Expression<String>? errorMessage,
+    Expression<int>? durationMs,
+    Expression<String>? direction,
+    Expression<String>? resolvedBy,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -3366,6 +3543,10 @@ class SyncLogTableCompanion extends UpdateCompanion<SyncLogTableData> {
       if (createdAt != null) 'created_at': createdAt,
       if (attemptedAt != null) 'attempted_at': attemptedAt,
       if (synced != null) 'synced': synced,
+      if (errorMessage != null) 'error_message': errorMessage,
+      if (durationMs != null) 'duration_ms': durationMs,
+      if (direction != null) 'direction': direction,
+      if (resolvedBy != null) 'resolved_by': resolvedBy,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -3379,6 +3560,10 @@ class SyncLogTableCompanion extends UpdateCompanion<SyncLogTableData> {
     Value<int>? createdAt,
     Value<int?>? attemptedAt,
     Value<int>? synced,
+    Value<String?>? errorMessage,
+    Value<int?>? durationMs,
+    Value<String?>? direction,
+    Value<String?>? resolvedBy,
     Value<int>? rowid,
   }) {
     return SyncLogTableCompanion(
@@ -3390,6 +3575,10 @@ class SyncLogTableCompanion extends UpdateCompanion<SyncLogTableData> {
       createdAt: createdAt ?? this.createdAt,
       attemptedAt: attemptedAt ?? this.attemptedAt,
       synced: synced ?? this.synced,
+      errorMessage: errorMessage ?? this.errorMessage,
+      durationMs: durationMs ?? this.durationMs,
+      direction: direction ?? this.direction,
+      resolvedBy: resolvedBy ?? this.resolvedBy,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -3421,6 +3610,18 @@ class SyncLogTableCompanion extends UpdateCompanion<SyncLogTableData> {
     if (synced.present) {
       map['synced'] = Variable<int>(synced.value);
     }
+    if (errorMessage.present) {
+      map['error_message'] = Variable<String>(errorMessage.value);
+    }
+    if (durationMs.present) {
+      map['duration_ms'] = Variable<int>(durationMs.value);
+    }
+    if (direction.present) {
+      map['direction'] = Variable<String>(direction.value);
+    }
+    if (resolvedBy.present) {
+      map['resolved_by'] = Variable<String>(resolvedBy.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -3438,6 +3639,10 @@ class SyncLogTableCompanion extends UpdateCompanion<SyncLogTableData> {
           ..write('createdAt: $createdAt, ')
           ..write('attemptedAt: $attemptedAt, ')
           ..write('synced: $synced, ')
+          ..write('errorMessage: $errorMessage, ')
+          ..write('durationMs: $durationMs, ')
+          ..write('direction: $direction, ')
+          ..write('resolvedBy: $resolvedBy, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -9881,6 +10086,10 @@ typedef $$SyncLogTableTableCreateCompanionBuilder =
       required int createdAt,
       Value<int?> attemptedAt,
       Value<int> synced,
+      Value<String?> errorMessage,
+      Value<int?> durationMs,
+      Value<String?> direction,
+      Value<String?> resolvedBy,
       Value<int> rowid,
     });
 typedef $$SyncLogTableTableUpdateCompanionBuilder =
@@ -9893,6 +10102,10 @@ typedef $$SyncLogTableTableUpdateCompanionBuilder =
       Value<int> createdAt,
       Value<int?> attemptedAt,
       Value<int> synced,
+      Value<String?> errorMessage,
+      Value<int?> durationMs,
+      Value<String?> direction,
+      Value<String?> resolvedBy,
       Value<int> rowid,
     });
 
@@ -9942,6 +10155,26 @@ class $$SyncLogTableTableFilterComposer
 
   ColumnFilters<int> get synced => $composableBuilder(
     column: $table.synced,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get errorMessage => $composableBuilder(
+    column: $table.errorMessage,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get durationMs => $composableBuilder(
+    column: $table.durationMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get direction => $composableBuilder(
+    column: $table.direction,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get resolvedBy => $composableBuilder(
+    column: $table.resolvedBy,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -9994,6 +10227,26 @@ class $$SyncLogTableTableOrderingComposer
     column: $table.synced,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get errorMessage => $composableBuilder(
+    column: $table.errorMessage,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get durationMs => $composableBuilder(
+    column: $table.durationMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get direction => $composableBuilder(
+    column: $table.direction,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get resolvedBy => $composableBuilder(
+    column: $table.resolvedBy,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$SyncLogTableTableAnnotationComposer
@@ -10034,6 +10287,24 @@ class $$SyncLogTableTableAnnotationComposer
 
   GeneratedColumn<int> get synced =>
       $composableBuilder(column: $table.synced, builder: (column) => column);
+
+  GeneratedColumn<String> get errorMessage => $composableBuilder(
+    column: $table.errorMessage,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get durationMs => $composableBuilder(
+    column: $table.durationMs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get direction =>
+      $composableBuilder(column: $table.direction, builder: (column) => column);
+
+  GeneratedColumn<String> get resolvedBy => $composableBuilder(
+    column: $table.resolvedBy,
+    builder: (column) => column,
+  );
 }
 
 class $$SyncLogTableTableTableManager
@@ -10075,6 +10346,10 @@ class $$SyncLogTableTableTableManager
                 Value<int> createdAt = const Value.absent(),
                 Value<int?> attemptedAt = const Value.absent(),
                 Value<int> synced = const Value.absent(),
+                Value<String?> errorMessage = const Value.absent(),
+                Value<int?> durationMs = const Value.absent(),
+                Value<String?> direction = const Value.absent(),
+                Value<String?> resolvedBy = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => SyncLogTableCompanion(
                 id: id,
@@ -10085,6 +10360,10 @@ class $$SyncLogTableTableTableManager
                 createdAt: createdAt,
                 attemptedAt: attemptedAt,
                 synced: synced,
+                errorMessage: errorMessage,
+                durationMs: durationMs,
+                direction: direction,
+                resolvedBy: resolvedBy,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -10097,6 +10376,10 @@ class $$SyncLogTableTableTableManager
                 required int createdAt,
                 Value<int?> attemptedAt = const Value.absent(),
                 Value<int> synced = const Value.absent(),
+                Value<String?> errorMessage = const Value.absent(),
+                Value<int?> durationMs = const Value.absent(),
+                Value<String?> direction = const Value.absent(),
+                Value<String?> resolvedBy = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => SyncLogTableCompanion.insert(
                 id: id,
@@ -10107,6 +10390,10 @@ class $$SyncLogTableTableTableManager
                 createdAt: createdAt,
                 attemptedAt: attemptedAt,
                 synced: synced,
+                errorMessage: errorMessage,
+                durationMs: durationMs,
+                direction: direction,
+                resolvedBy: resolvedBy,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

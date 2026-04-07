@@ -6,6 +6,7 @@ import 'package:mymediascanner/app/theme/app_theme_extensions.dart';
 import 'package:mymediascanner/core/constants/app_constants.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
 import 'package:mymediascanner/presentation/widgets/desktop_shortcuts.dart';
+import 'package:mymediascanner/presentation/widgets/sync_badge.dart';
 
 class AppScaffold extends StatelessWidget {
   const AppScaffold({
@@ -272,6 +273,30 @@ class _DesktopSidebar extends StatelessWidget {
                         onDestinationSelected(sidebarToShellIndex(index)),
                   );
                 },
+              ),
+            ),
+            // Sync badge in sidebar footer
+            Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: isExpanded ? 20 : 0,
+                vertical: 12,
+              ),
+              child: Row(
+                mainAxisAlignment: isExpanded
+                    ? MainAxisAlignment.start
+                    : MainAxisAlignment.center,
+                children: [
+                  const SyncBadge(),
+                  if (isExpanded) ...[
+                    const SizedBox(width: 8),
+                    Text(
+                      'Sync',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colors.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
           ],

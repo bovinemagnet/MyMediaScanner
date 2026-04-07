@@ -37,4 +37,60 @@ class SyncLogDao extends DatabaseAccessor<AppDatabase>
   Future<void> deleteAll() {
     return delete(syncLogTable).go();
   }
+
+  /// Watch all sync log entries, ordered by creation time descending.
+  Stream<List<SyncLogTableData>> watchAll() {
+    return (select(syncLogTable)
+          ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
+        .watch();
+  }
+
+  /// Get paginated sync history.
+  Future<List<SyncLogTableData>> getHistory({
+    int limit = 50,
+    int offset = 0,
+  }) {
+    return (select(syncLogTable)
+          ..orderBy([(t) => OrderingTerm.desc(t.createdAt)])
+          ..limit(limit, offset: offset))
+        .get();
+  }
+
+  /// Purge log entries older than the given epoch timestamp (milliseconds).
+  Future<int> purgeOlderThan(int epochMs) {
+    return (delete(syncLogTable)
+          ..where((t) => t.createdAt.isSmallerThanValue(epochMs)))
+        .go();
+  }
+
+  /// Get all failed (error) entries that have not been synced.
+  Future<List<SyncLogTableData>> getFailedEntries() {
+    return (select(syncLogTable)
+          ..where((t) => t.synced.equals(0))
+          ..where((t) => t.errorMessage.isNotNull())
+          ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
+        .get();
+  }
+
+  /// Update a log entry with sync result details.
+  Future<void> updateLogResult(
+    String id, {
+    int? durationMs,
+    String? errorMessage,
+    String? direction,
+    String? resolvedBy,
+  }) {
+    return (update(syncLogTable)..where((t) => t.id.equals(id))).write(
+      SyncLogTableCompanion(
+        durationMs: durationMs != null ? Value(durationMs) : const Value.absent(),
+        errorMessage:
+            errorMessage != null ? Value(errorMessage) : const Value.absent(),
+        direction:
+            direction != null ? Value(direction) : const Value.absent(),
+        resolvedBy:
+            resolvedBy != null ? Value(resolvedBy) : const Value.absent(),
+        attemptedAt: Value(DateTime.now().millisecondsSinceEpoch),
+      ),
+    );
+  }
 }

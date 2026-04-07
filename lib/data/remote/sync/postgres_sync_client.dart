@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:postgres/postgres.dart';
 
 /// Configuration for PostgreSQL connection.
@@ -108,9 +110,40 @@ class PostgresSyncClient {
     return result.map((row) => row.toColumnMap()).toList();
   }
 
+  /// Lightweight connectivity check using `SELECT 1` with a 5-second timeout.
+  /// Returns a [ConnectionHealth] status.
+  Future<ConnectionHealth> ping() async {
+    try {
+      final conn = await _getConnection().timeout(
+        const Duration(seconds: 5),
+        onTimeout: () => throw TimeoutException('Connection timed out'),
+      );
+      final result = await conn
+          .execute('SELECT 1')
+          .timeout(const Duration(seconds: 5));
+      return result.isNotEmpty
+          ? ConnectionHealth.connected
+          : ConnectionHealth.disconnected;
+    } on TimeoutException {
+      return ConnectionHealth.timeout;
+    } on Exception {
+      // Reset connection so next attempt creates a fresh one
+      _connection = null;
+      return ConnectionHealth.disconnected;
+    }
+  }
+
   /// Close the connection.
   Future<void> close() async {
     await _connection?.close();
     _connection = null;
   }
+}
+
+/// The health status of the PostgreSQL connection.
+enum ConnectionHealth {
+  connected,
+  disconnected,
+  timeout,
+  unconfigured,
 }

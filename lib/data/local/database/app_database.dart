@@ -117,6 +117,10 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(loansTable, loansTable.dueAt);
             await m.createTable(batchSessionsTable);
             await m.createTable(batchQueueItemsTable);
+            await m.addColumn(syncLogTable, syncLogTable.errorMessage);
+            await m.addColumn(syncLogTable, syncLogTable.durationMs);
+            await m.addColumn(syncLogTable, syncLogTable.direction);
+            await m.addColumn(syncLogTable, syncLogTable.resolvedBy);
           }
         },
       );
