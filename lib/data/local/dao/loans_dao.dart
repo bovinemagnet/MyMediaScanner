@@ -40,6 +40,17 @@ class LoansDao extends DatabaseAccessor<AppDatabase> with _$LoansDaoMixin {
         .watch();
   }
 
+  Stream<List<LoansTableData>> watchOverdueLoans() {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return (select(loansTable)
+          ..where((t) =>
+              t.returnedAt.isNull() &
+              t.deleted.equals(0) &
+              t.dueAt.isSmallerThanValue(now) &
+              t.dueAt.isNotNull()))
+        .watch();
+  }
+
   Future<void> insertLoan(LoansTableCompanion companion) {
     return into(loansTable).insert(companion);
   }

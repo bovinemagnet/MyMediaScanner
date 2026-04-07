@@ -24,6 +24,13 @@ class LoanRepositoryImpl implements ILoanRepository {
   }
 
   @override
+  Stream<List<Loan>> watchOverdueLoans() {
+    return _loansDao.watchOverdueLoans().map(
+          (rows) => rows.map(_fromRow).toList(),
+        );
+  }
+
+  @override
   Stream<List<Loan>> watchLoansForItem(String mediaItemId) {
     return _loansDao.watchLoansForItem(mediaItemId).map(
           (rows) => rows.map(_fromRow).toList(),
@@ -40,6 +47,19 @@ class LoanRepositoryImpl implements ILoanRepository {
   @override
   Future<void> createLoan(Loan loan) async {
     await _loansDao.insertLoan(LoansTableCompanion(
+      id: Value(loan.id),
+      mediaItemId: Value(loan.mediaItemId),
+      borrowerId: Value(loan.borrowerId),
+      lentAt: Value(loan.lentAt),
+      dueAt: Value(loan.dueAt),
+      notes: Value(loan.notes),
+      updatedAt: Value(loan.updatedAt),
+    ));
+  }
+
+  @override
+  Future<void> updateLoan(Loan loan) async {
+    await _loansDao.updateLoan(LoansTableCompanion(
       id: Value(loan.id),
       mediaItemId: Value(loan.mediaItemId),
       borrowerId: Value(loan.borrowerId),
