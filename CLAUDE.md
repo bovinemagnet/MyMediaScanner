@@ -13,12 +13,15 @@ Cross-platform Flutter/Dart application for scanning barcodes on physical media 
 - FLAC rip library scanner with coverage comparison against physical collection
 - Audio quality analysis (AccurateRip verification + click/pop detection)
 - Insights & analytics dashboard with CSV/JSON export
-- Camera + Bluetooth/USB scanner support on mobile; webcam scanning on macOS
+- Camera + Bluetooth/USB scanner support on mobile; webcam scanning on all desktop platforms
 - Media type filter on scan screen
 - Batch scanning mode with queue-based review and bulk save
 - IMDb ID lookup (tt1234567) via TMDB find endpoint
-- Cover OCR text recognition (ML Kit on Android/iOS, Vision framework on macOS)
+- Cover OCR text recognition (ML Kit on Android/iOS, Vision framework on macOS, Tesseract on Windows/Linux)
 - Theme mode selector (system/light/dark) persisted to SharedPreferences
+- Resizable master-detail split with drag divider (persisted to SharedPreferences)
+- Keyboard navigation in collection and rips tables (arrow keys, Enter, Delete, Escape)
+- Auto-collapse sidebar to drawer on narrow desktop windows
 
 ## Technology Stack
 
@@ -29,8 +32,8 @@ Cross-platform Flutter/Dart application for scanning barcodes on physical media 
 - **HTTP:** Dio + Retrofit for metadata API clients (TMDB, Discogs, Google Books, Open Library, UPCitemdb)
 - **Navigation:** GoRouter with StatefulShellRoute; desktop sidebar + glassmorphism mobile bottom nav
 - **Models:** Freezed for immutable entities and sealed classes
-- **Scanning:** mobile_scanner (ML Kit) on Android/iOS/macOS; keyboard-wedge USB scanner on desktop
-- **OCR:** Google ML Kit text recognition (Android/iOS); macOS Vision framework via method channel (`com.mymediascanner/vision_ocr`)
+- **Scanning:** mobile_scanner (ML Kit) on Android/iOS/macOS; camera_desktop + flutter_zxing on Windows/Linux; keyboard-wedge USB scanner on all desktop platforms
+- **OCR:** Google ML Kit text recognition (Android/iOS); macOS Vision framework via method channel (`com.mymediascanner/vision_ocr`); Tesseract via flutter_tesseract_ocr on Windows/Linux
 - **Secrets:** flutter_secure_storage for Postgres credentials and API keys
 - **Fonts:** Manrope and Inter bundled in `assets/fonts/` (no google_fonts runtime dependency)
 
@@ -70,7 +73,7 @@ flutter build macos --debug
 
 ## Testing
 
-The project has ~610 tests covering domain logic, data layer, presentation providers, and widget tests. Run `flutter test` to execute the full suite. Tests use `mocktail` for mocking and `ProviderContainer` with overrides for provider testing.
+The project has ~667 tests covering domain logic, data layer, presentation providers, and widget tests. Run `flutter test` to execute the full suite. Tests use `mocktail` for mocking and `ProviderContainer` with overrides for provider testing.
 
 ## Architecture
 
@@ -83,8 +86,10 @@ lib/
     app.dart    → MaterialApp.router with theme mode provider
     router.dart → GoRouter with 8 StatefulShellBranch routes
   core/
-    constants/  → App constants, breakpoints
-    utils/      → Platform utils, barcode utils, cover OCR helper, Vision OCR channel
+    constants/  → App constants, breakpoints, window dimensions
+    services/
+      camera/   → CameraService abstraction, MobileScannerCameraService, NativeCameraService, BarcodeDetector
+    utils/      → Platform utils, barcode utils, cover OCR helper, Vision OCR channel, Tesseract OCR service
   data/
     local/      → Drift database, tables, DAOs
     remote/
@@ -97,7 +102,7 @@ lib/
     repositories/ → Abstract interfaces (prefixed with I)
     usecases/   → Business logic orchestrators
   presentation/
-    providers/  → Riverpod providers (hand-written), including batch_editor_provider
+    providers/  → Riverpod providers (hand-written), including batch_editor_provider, split_ratio_provider
     screens/
       dashboard/      → Landing page with hero text, quick scan CTA, recent additions
       collection/     → Library grid/table view with master-detail, statistics/insights
@@ -110,7 +115,7 @@ lib/
       settings/       → API keys, sync config, theme mode toggle, FLAC library config
       rips/           → Rip library browser with coverage and quality analysis
       about/          → App info, features list, licences
-    widgets/    → Shared widgets (app_scaffold with sidebar/glassmorphism nav, glass_container, gradient_button, screen_header, master_detail_layout, empty/error/loading states)
+    widgets/    → Shared widgets (app_scaffold with sidebar/drawer/glassmorphism nav, glass_container, gradient_button, screen_header, master_detail_layout with resizable split, table_keyboard_navigation, empty/error/loading states)
 ```
 
 ## Navigation Structure
@@ -121,7 +126,7 @@ Routes are organised as 8 `StatefulShellBranch` entries:
 |--------|-------|--------|-----------------|-------------------|
 | 0 | `/` | Dashboard | Yes | Yes (Home) |
 | 1 | `/collection` | Collection/Library | Yes | Yes (Library) |
-| 2 | `/scan` | Scanner | No | Yes |
+| 2 | `/scan` | Scanner | Yes | Yes |
 | 3 | `/shelves` | Shelves | Yes | No (accessible from Library AppBar) |
 | 4 | `/batch` | Batch Editor | Yes | No |
 | 5 | `/insights` | Insights/Statistics | Yes | Yes |
@@ -171,5 +176,7 @@ Users supply their own API keys (stored in secure storage) for TMDB, Discogs, an
 
 - `file_picker` pinned to `>=10.3.10 <11.0.0` — v11 has a broken Android Gradle config (missing kotlin-android plugin)
 - iOS deployment target is 15.5 (required by google_mlkit_commons)
-- Google ML Kit text recognition not available on desktop — macOS uses Vision framework via method channel instead
-- Cover OCR on macOS uses gallery file picker (not camera capture) since `ImagePicker.camera` is unreliable on desktop
+- Google ML Kit text recognition not available on desktop — macOS uses Vision framework via method channel; Windows/Linux use Tesseract
+- Cover OCR on desktop uses gallery file picker (not camera capture) since `ImagePicker.camera` is unreliable on desktop
+- `flutter_zxing` uses native FFI — its barcode detection cannot be unit-tested; requires integration tests
+- `camera_desktop` image streaming not available on Windows — uses periodic still-frame capture for barcode detection instead
