@@ -112,6 +112,17 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
 
+          // Borrowers
+          ListTile(
+            leading: const Icon(Icons.people_outline),
+            title: const Text('Borrowers'),
+            subtitle: const Text('Manage people you lend items to'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.go('/settings/borrowers'),
+          ),
+
+          const SizedBox(height: 16),
+
           // About
           ListTile(
             leading: const Icon(Icons.info_outline),

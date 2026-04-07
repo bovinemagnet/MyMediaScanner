@@ -8,6 +8,8 @@ import 'package:mymediascanner/domain/usecases/delete_media_item_usecase.dart';
 import 'package:mymediascanner/domain/usecases/manage_rips_usecase.dart';
 import 'package:mymediascanner/domain/usecases/refresh_metadata_usecase.dart';
 import 'package:mymediascanner/domain/usecases/return_item_usecase.dart';
+import 'package:mymediascanner/presentation/providers/notification_provider.dart';
+import 'package:mymediascanner/presentation/widgets/overdue_badge.dart';
 import 'package:mymediascanner/domain/usecases/update_rating_usecase.dart';
 import 'package:mymediascanner/domain/entities/rip_track.dart';
 import 'package:mymediascanner/presentation/providers/loan_provider.dart';
@@ -296,24 +298,77 @@ class _LendingSection extends ConsumerWidget {
                                   fontWeight: FontWeight.w600)),
                           Text('Since $lentDate',
                               style: Theme.of(context).textTheme.bodySmall),
+                          if (activeLoan.dueAt != null) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              'Due: ${dateFormat.format(DateTime.fromMillisecondsSinceEpoch(activeLoan.dueAt!))}',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ],
+                          if (activeLoan.isOverdue)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: OverdueBadge(
+                                  daysOverdue: activeLoan.daysOverdue),
+                            ),
                         ],
                       ),
                     ),
-                    FilledButton.tonal(
-                      onPressed: () async {
-                        try {
-                          await ReturnItemUseCase(
-                                  repository: ref.read(loanRepositoryProvider))
-                              .execute(activeLoan.id);
-                        } catch (e) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Failed to return item: $e')),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        FilledButton.tonal(
+                          onPressed: () async {
+                            try {
+                              await ReturnItemUseCase(
+                                repository: ref.read(loanRepositoryProvider),
+                                notificationService:
+                                    ref.read(notificationServiceProvider),
+                              ).execute(activeLoan.id);
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content:
+                                          Text('Failed to return item: $e')),
+                                );
+                              }
+                            }
+                          },
+                          child: const Text('Return'),
+                        ),
+                        const SizedBox(height: 4),
+                        TextButton(
+                          onPressed: () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: activeLoan.dueAt != null
+                                  ? DateTime.fromMillisecondsSinceEpoch(
+                                      activeLoan.dueAt!)
+                                  : DateTime.now()
+                                      .add(const Duration(days: 14)),
+                              firstDate: DateTime.now(),
+                              lastDate: DateTime.now()
+                                  .add(const Duration(days: 365)),
+                              helpText: 'Extend due date',
                             );
-                          }
-                        }
-                      },
-                      child: const Text('Return'),
+                            if (picked != null) {
+                              await ref
+                                  .read(loanRepositoryProvider)
+                                  .updateDueDate(
+                                    activeLoan.id,
+                                    picked.millisecondsSinceEpoch,
+                                  );
+                            }
+                          },
+                          child: Text(
+                            activeLoan.dueAt != null
+                                ? 'Extend'
+                                : 'Set due date',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
