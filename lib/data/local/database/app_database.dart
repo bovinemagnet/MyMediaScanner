@@ -20,6 +20,9 @@ import 'package:mymediascanner/data/local/dao/sync_log_dao.dart';
 import 'package:mymediascanner/data/local/dao/borrowers_dao.dart';
 import 'package:mymediascanner/data/local/dao/loans_dao.dart';
 import 'package:mymediascanner/data/local/dao/rip_library_dao.dart';
+import 'package:mymediascanner/data/local/dao/batch_session_dao.dart';
+import 'package:mymediascanner/data/local/database/tables/batch_sessions_table.dart';
+import 'package:mymediascanner/data/local/database/tables/batch_queue_items_table.dart';
 
 part 'app_database.g.dart';
 
@@ -36,6 +39,8 @@ part 'app_database.g.dart';
     LoansTable,
     RipAlbumsTable,
     RipTracksTable,
+    BatchSessionsTable,
+    BatchQueueItemsTable,
   ],
   daos: [
     MediaItemsDao,
@@ -46,6 +51,7 @@ part 'app_database.g.dart';
     BorrowersDao,
     LoansDao,
     RipLibraryDao,
+    BatchSessionDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -64,7 +70,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -106,6 +112,10 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 6) {
             await _createFts5Table(m);
+          }
+          if (from < 7) {
+            await m.createTable(batchSessionsTable);
+            await m.createTable(batchQueueItemsTable);
           }
         },
       );

@@ -5,6 +5,7 @@
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mymediascanner/app/theme/app_colors.dart';
@@ -50,164 +51,337 @@ class _BatchPlaceholderScreenState
 
   @override
   Widget build(BuildContext context) {
-    final batchState = ref.watch(batchEditorProvider);
+    final asyncBatchState = ref.watch(batchEditorProvider);
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final isDesktop = PlatformCapability.isDesktop;
+
+    return asyncBatchState.when(
+      loading: () => Scaffold(
+        appBar: isDesktop ? null : AppBar(title: const Text('Batch Editor')),
+        body: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stack) => Scaffold(
+        appBar: isDesktop ? null : AppBar(title: const Text('Batch Editor')),
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.error_outline, size: 48, color: colors.error),
+              const SizedBox(height: 16),
+              Text('Failed to load batch data',
+                  style: theme.textTheme.bodyLarge),
+              const SizedBox(height: 8),
+              Text(error.toString(), style: theme.textTheme.bodySmall),
+            ],
+          ),
+        ),
+      ),
+      data: (batchState) => _buildContent(
+        context,
+        batchState,
+        theme,
+        colors,
+        isDesktop,
+      ),
+    );
+  }
+
+  Widget _buildContent(
+    BuildContext context,
+    BatchEditorState batchState,
+    ThemeData theme,
+    ColorScheme colors,
+    bool isDesktop,
+  ) {
     final filteredItems = _filterItems(batchState.items);
+
+    // Keyboard shortcuts for undo/redo (desktop only).
+    Widget body = _buildBody(
+      context,
+      batchState,
+      filteredItems,
+      theme,
+      colors,
+      isDesktop,
+    );
+
+    if (isDesktop) {
+      body = Shortcuts(
+        shortcuts: {
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyZ):
+              const _UndoIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift,
+                  LogicalKeyboardKey.keyZ):
+              const _RedoIntent(),
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyY):
+              const _RedoIntent(),
+        },
+        child: Actions(
+          actions: {
+            _UndoIntent: CallbackAction<_UndoIntent>(
+              onInvoke: (_) {
+                ref.read(batchEditorProvider.notifier).undo();
+                return null;
+              },
+            ),
+            _RedoIntent: CallbackAction<_RedoIntent>(
+              onInvoke: (_) {
+                ref.read(batchEditorProvider.notifier).redo();
+                return null;
+              },
+            ),
+          },
+          child: Focus(autofocus: true, child: body),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: isDesktop
           ? null
-          : AppBar(title: const Text('Batch Editor')),
-      body: batchState.items.isEmpty
-          ? _EmptyBatchView(theme: theme, colors: colors)
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header + actions
-                if (isDesktop)
-                  ScreenHeader(
-                    title: 'Batch Editor',
-                    subtitle:
-                        'Process and validate bulk scans. Review metadata '
-                        'matches across ${batchState.totalCount} pending '
-                        'items in current session.',
-                    actions: [
-                      OutlinedButton(
-                        onPressed: batchState.items.isEmpty
-                            ? null
-                            : () => _confirmDiscard(context, ref),
-                        child: const Text('Discard Batch'),
-                      ),
-                      const SizedBox(width: 8),
-                      GradientButton(
-                        onPressed: batchState.confirmedCount > 0
-                            ? () => _syncAll(context, ref)
-                            : null,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.sync, size: 18),
-                            const SizedBox(width: 6),
-                            Text(
-                                'Sync All (${batchState.confirmedCount})'),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-
-                if (!isDesktop)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 8),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: GradientButton(
-                            onPressed: batchState.confirmedCount > 0
-                                ? () => _syncAll(context, ref)
-                                : null,
-                            child: Text(
-                                'Sync All (${batchState.confirmedCount})'),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        IconButton(
-                          icon: const Icon(Icons.delete_outline),
-                          tooltip: 'Discard batch',
-                          onPressed: batchState.items.isEmpty
-                              ? null
-                              : () => _confirmDiscard(context, ref),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                // Stats cards
-                _StatsRow(state: batchState, theme: theme, colors: colors),
-                const SizedBox(height: 8),
-
-                // Filter tabs
-                _FilterTabs(
-                  selected: _filter,
-                  onSelected: (f) => setState(() => _filter = f),
-                  state: batchState,
-                  theme: theme,
-                  colors: colors,
+          : AppBar(
+              title: const Text('Batch Editor'),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.undo),
+                  tooltip: 'Undo',
+                  onPressed:
+                      batchState.canUndo
+                          ? () => ref
+                              .read(batchEditorProvider.notifier)
+                              .undo()
+                          : null,
                 ),
-
-                // Items list/table
-                Expanded(
-                  child: batchState.isSaving
-                      ? Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              CircularProgressIndicator(
-                                  color: colors.primary),
-                              const SizedBox(height: 16),
-                              Text('Saving items\u2026',
-                                  style: theme.textTheme.bodyMedium),
-                            ],
-                          ),
-                        )
-                      : filteredItems.isEmpty
-                          ? Center(
-                              child: Text(
-                                'No items match this filter.',
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: colors.onSurfaceVariant,
-                                ),
-                              ),
-                            )
-                          : isDesktop
-                              ? _BatchTable(
-                                  items: filteredItems,
-                                  theme: theme,
-                                  colors: colors,
-                                  onSave: (id) => _saveItem(context, ref, id),
-                                  onRemove: (id) => ref
-                                      .read(batchEditorProvider.notifier)
-                                      .removeItem(id),
-                                  onResolve: (item) =>
-                                      _resolveConflict(context, ref, item),
-                                )
-                              : _BatchList(
-                                  items: filteredItems,
-                                  theme: theme,
-                                  colors: colors,
-                                  onSave: (id) => _saveItem(context, ref, id),
-                                  onRemove: (id) => ref
-                                      .read(batchEditorProvider.notifier)
-                                      .removeItem(id),
-                                  onResolve: (item) =>
-                                      _resolveConflict(context, ref, item),
-                                ),
+                IconButton(
+                  icon: const Icon(Icons.redo),
+                  tooltip: 'Redo',
+                  onPressed:
+                      batchState.canRedo
+                          ? () => ref
+                              .read(batchEditorProvider.notifier)
+                              .redo()
+                          : null,
                 ),
-
-                // Footer
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(
-                    'Showing ${filteredItems.length} of '
-                    '${batchState.totalCount} items',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colors.onSurfaceVariant,
-                    ),
-                  ),
+                IconButton(
+                  icon: const Icon(Icons.history),
+                  tooltip: 'Batch history',
+                  onPressed: () => context.go('/batch/history'),
                 ),
               ],
             ),
+      body: body,
+    );
+  }
+
+  Widget _buildBody(
+    BuildContext context,
+    BatchEditorState batchState,
+    List<BatchItem> filteredItems,
+    ThemeData theme,
+    ColorScheme colors,
+    bool isDesktop,
+  ) {
+    if (batchState.items.isEmpty) {
+      return _EmptyBatchView(theme: theme, colors: colors);
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header + actions
+        if (isDesktop)
+          ScreenHeader(
+            title: 'Batch Editor',
+            subtitle: 'Process and validate bulk scans. Review metadata '
+                'matches across ${batchState.totalCount} pending '
+                'items in current session.',
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.undo),
+                tooltip: 'Undo (Ctrl+Z)',
+                onPressed: batchState.canUndo
+                    ? () => ref.read(batchEditorProvider.notifier).undo()
+                    : null,
+              ),
+              IconButton(
+                icon: const Icon(Icons.redo),
+                tooltip: 'Redo (Ctrl+Shift+Z)',
+                onPressed: batchState.canRedo
+                    ? () => ref.read(batchEditorProvider.notifier).redo()
+                    : null,
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                icon: const Icon(Icons.history, size: 18),
+                label: const Text('History'),
+                onPressed: () => context.go('/batch/history'),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton(
+                onPressed: batchState.items.isEmpty
+                    ? null
+                    : () => _confirmDiscard(context, ref),
+                child: const Text('Discard Batch'),
+              ),
+              const SizedBox(width: 8),
+              GradientButton(
+                onPressed: batchState.confirmedCount > 0
+                    ? () => _syncAll(context, ref)
+                    : null,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.sync, size: 18),
+                    const SizedBox(width: 6),
+                    Text('Sync All (${batchState.confirmedCount})'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+        if (!isDesktop)
+          Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: GradientButton(
+                    onPressed: batchState.confirmedCount > 0
+                        ? () => _syncAll(context, ref)
+                        : null,
+                    child:
+                        Text('Sync All (${batchState.confirmedCount})'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline),
+                  tooltip: 'Discard batch',
+                  onPressed: batchState.items.isEmpty
+                      ? null
+                      : () => _confirmDiscard(context, ref),
+                ),
+              ],
+            ),
+          ),
+
+        // Save progress indicator
+        if (batchState.saveProgress != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                LinearProgressIndicator(
+                  value: batchState.saveProgress!.fraction,
+                  color: colors.primary,
+                  backgroundColor: colors.surfaceContainerHighest,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Saving item ${batchState.saveProgress!.current} of '
+                  '${batchState.saveProgress!.total}\u2026',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+
+        // Stats cards
+        _StatsRow(state: batchState, theme: theme, colors: colors),
+        const SizedBox(height: 8),
+
+        // Filter tabs
+        _FilterTabs(
+          selected: _filter,
+          onSelected: (f) => setState(() => _filter = f),
+          state: batchState,
+          theme: theme,
+          colors: colors,
+        ),
+
+        // Items list/table
+        Expanded(
+          child: batchState.isSaving
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(color: colors.primary),
+                      const SizedBox(height: 16),
+                      Text('Saving items\u2026',
+                          style: theme.textTheme.bodyMedium),
+                    ],
+                  ),
+                )
+              : filteredItems.isEmpty
+                  ? Center(
+                      child: Text(
+                        'No items match this filter.',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colors.onSurfaceVariant,
+                        ),
+                      ),
+                    )
+                  : isDesktop
+                      ? _BatchTable(
+                          items: filteredItems,
+                          theme: theme,
+                          colors: colors,
+                          onSave: (id) => _saveItem(context, ref, id),
+                          onRemove: (id) => ref
+                              .read(batchEditorProvider.notifier)
+                              .removeItem(id),
+                          onResolve: (item) =>
+                              _resolveConflict(context, ref, item),
+                          onForceKeep: (id) => ref
+                              .read(batchEditorProvider.notifier)
+                              .forceKeepDuplicate(id),
+                        )
+                      : _BatchList(
+                          items: filteredItems,
+                          theme: theme,
+                          colors: colors,
+                          onSave: (id) => _saveItem(context, ref, id),
+                          onRemove: (id) => ref
+                              .read(batchEditorProvider.notifier)
+                              .removeItem(id),
+                          onResolve: (item) =>
+                              _resolveConflict(context, ref, item),
+                          onForceKeep: (id) => ref
+                              .read(batchEditorProvider.notifier)
+                              .forceKeepDuplicate(id),
+                        ),
+        ),
+
+        // Footer
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(
+            'Showing ${filteredItems.length} of '
+            '${batchState.totalCount} items',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: colors.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
   Future<void> _syncAll(BuildContext context, WidgetRef ref) async {
     await ref.read(batchEditorProvider.notifier).saveAllConfirmed();
     if (context.mounted) {
+      final savedCount =
+          ref.read(batchEditorProvider).requireValue.savedCount;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('All confirmed items saved')),
+        SnackBar(content: Text('Saved $savedCount items to collection.')),
       );
     }
   }
@@ -252,8 +426,6 @@ class _BatchPlaceholderScreenState
   void _resolveConflict(
       BuildContext context, WidgetRef ref, BatchItem item) {
     if (item.scanResult is MultiMatchScanResult) {
-      // Navigate to disambiguation for this item
-      // Store the batch item ID so we can resolve it on return
       final multi = item.scanResult as MultiMatchScanResult;
       showDialog(
         context: context,
@@ -270,6 +442,16 @@ class _BatchPlaceholderScreenState
       );
     }
   }
+}
+
+// ── Keyboard shortcut intents ───────────────────────────────────────
+
+class _UndoIntent extends Intent {
+  const _UndoIntent();
+}
+
+class _RedoIntent extends Intent {
+  const _RedoIntent();
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -550,6 +732,7 @@ class _BatchTable extends StatelessWidget {
     required this.onSave,
     required this.onRemove,
     required this.onResolve,
+    required this.onForceKeep,
   });
 
   final List<BatchItem> items;
@@ -558,6 +741,7 @@ class _BatchTable extends StatelessWidget {
   final ValueChanged<String> onSave;
   final ValueChanged<String> onRemove;
   final ValueChanged<BatchItem> onResolve;
+  final ValueChanged<String> onForceKeep;
 
   @override
   Widget build(BuildContext context) {
@@ -603,6 +787,7 @@ class _BatchTable extends StatelessWidget {
                   onSave: () => onSave(item.id),
                   onRemove: () => onRemove(item.id),
                   onResolve: () => onResolve(item),
+                  onForceKeep: () => onForceKeep(item.id),
                 );
               },
             ),
@@ -651,6 +836,7 @@ class _BatchTableRow extends StatelessWidget {
     required this.onSave,
     required this.onRemove,
     required this.onResolve,
+    required this.onForceKeep,
   });
 
   final BatchItem item;
@@ -659,6 +845,7 @@ class _BatchTableRow extends StatelessWidget {
   final VoidCallback onSave;
   final VoidCallback onRemove;
   final VoidCallback onResolve;
+  final VoidCallback onForceKeep;
 
   @override
   Widget build(BuildContext context) {
@@ -764,7 +951,10 @@ class _BatchTableRow extends StatelessWidget {
             // Status badge
             Expanded(
               child: _StatusBadge(
-                  status: item.status, theme: theme, colors: colors),
+                  status: item.status,
+                  duplicateSource: item.duplicateSource,
+                  theme: theme,
+                  colors: colors),
             ),
             // Actions
             SizedBox(
@@ -783,6 +973,12 @@ class _BatchTableRow extends StatelessWidget {
                       label: 'Save',
                       color: colors.primary,
                       onTap: onSave,
+                    )
+                  else if (item.status == BatchItemStatus.duplicate)
+                    _ActionButton(
+                      label: 'Keep',
+                      color: colors.tertiary,
+                      onTap: onForceKeep,
                     ),
                   if (!isSaved) ...[
                     const SizedBox(width: 4),
@@ -816,6 +1012,7 @@ class _BatchList extends StatelessWidget {
     required this.onSave,
     required this.onRemove,
     required this.onResolve,
+    required this.onForceKeep,
   });
 
   final List<BatchItem> items;
@@ -824,6 +1021,7 @@ class _BatchList extends StatelessWidget {
   final ValueChanged<String> onSave;
   final ValueChanged<String> onRemove;
   final ValueChanged<BatchItem> onResolve;
+  final ValueChanged<String> onForceKeep;
 
   @override
   Widget build(BuildContext context) {
@@ -875,6 +1073,7 @@ class _BatchList extends StatelessWidget {
                       const SizedBox(height: 6),
                       _StatusBadge(
                         status: item.status,
+                        duplicateSource: item.duplicateSource,
                         theme: theme,
                         colors: colors,
                       ),
@@ -892,6 +1091,13 @@ class _BatchList extends StatelessWidget {
                     icon: Icon(Icons.check, color: colors.primary, size: 20),
                     tooltip: 'Save',
                     onPressed: () => onSave(item.id),
+                  )
+                else if (item.status == BatchItemStatus.duplicate)
+                  IconButton(
+                    icon: Icon(Icons.check_circle_outline,
+                        color: colors.tertiary, size: 20),
+                    tooltip: 'Keep Anyway',
+                    onPressed: () => onForceKeep(item.id),
                   ),
                 if (!isSaved)
                   IconButton(
@@ -977,11 +1183,13 @@ class _CoverThumbnail extends StatelessWidget {
 class _StatusBadge extends StatelessWidget {
   const _StatusBadge({
     required this.status,
+    this.duplicateSource,
     required this.theme,
     required this.colors,
   });
 
   final BatchItemStatus status;
+  final DuplicateSource? duplicateSource;
   final ThemeData theme;
   final ColorScheme colors;
 
@@ -1004,7 +1212,9 @@ class _StatusBadge extends StatelessWidget {
           colors.outline,
         ),
       BatchItemStatus.duplicate => (
-          'Duplicate',
+          duplicateSource == DuplicateSource.batch
+              ? 'Batch Dup'
+              : 'Duplicate',
           colors.tertiary.withValues(alpha: 0.15),
           colors.tertiary,
         ),
@@ -1143,7 +1353,6 @@ class _ConflictResolutionDialog extends ConsumerWidget {
                     style: theme.textTheme.bodySmall,
                   ),
                   onTap: () async {
-                    // Fetch full metadata for this candidate
                     final repo = ref.read(metadataRepositoryProvider);
                     final detail = await repo.fetchCandidateDetail(
                       candidate,

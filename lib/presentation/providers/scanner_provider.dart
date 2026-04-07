@@ -335,8 +335,8 @@ class ScannerNotifier extends Notifier<ScannerState> {
   }
 
   /// Queue the current scan result to the batch editor.
-  void queueToBatch(ScanResult result) {
-    ref.read(batchEditorProvider.notifier).addScanResult(result);
+  Future<void> queueToBatch(ScanResult result) async {
+    await ref.read(batchEditorProvider.notifier).addScanResult(result);
     incrementBatchCount();
   }
 }
