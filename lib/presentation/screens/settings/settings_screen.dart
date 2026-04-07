@@ -47,6 +47,13 @@ class SettingsScreen extends ConsumerWidget {
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.go('/settings/postgres'),
               ),
+              ListTile(
+                leading: const Icon(Icons.history),
+                title: const Text('Sync History'),
+                subtitle: const Text('View past sync operations'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.go('/settings/sync-log'),
+              ),
             ],
           ),
           const SizedBox(height: 16),

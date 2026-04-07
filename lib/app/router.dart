@@ -11,6 +11,7 @@ import 'package:mymediascanner/presentation/screens/rips/rips_screen.dart';
 import 'package:mymediascanner/presentation/screens/scanner/scanner_screen.dart';
 import 'package:mymediascanner/presentation/screens/settings/settings_screen.dart';
 import 'package:mymediascanner/presentation/screens/settings/widgets/postgres_config_form.dart';
+import 'package:mymediascanner/presentation/screens/settings/widgets/sync_log_viewer.dart';
 import 'package:mymediascanner/presentation/screens/shelves/shelf_detail_screen.dart';
 import 'package:mymediascanner/presentation/screens/shelves/shelves_screen.dart';
 import 'package:mymediascanner/presentation/screens/about/about_screen.dart';
@@ -179,6 +180,12 @@ final router = GoRouter(
                   parentNavigatorKey: _rootNavigatorKey,
                   pageBuilder: (context, state) => _fadeSlideTransition(
                       state, const PostgresConfigForm()),
+                ),
+                GoRoute(
+                  path: 'sync-log',
+                  parentNavigatorKey: _rootNavigatorKey,
+                  pageBuilder: (context, state) =>
+                      _fadeSlideTransition(state, const SyncLogViewer()),
                 ),
                 GoRoute(
                   path: 'about',
