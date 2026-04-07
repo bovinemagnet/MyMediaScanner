@@ -193,32 +193,41 @@ InsightsData computeInsightsData({
   );
 }
 
-/// Provides full insights data by combining collection, loan, borrower,
-/// and rip streams. Used by the Insights & Analytics screen.
-final insightsProvider = StreamProvider<InsightsData>((ref) {
-  final itemRepo = ref.watch(mediaItemRepositoryProvider);
+/// Debounced insights provider that caches results and only recomputes
+/// after 500ms of no upstream changes.
+class DebouncedInsightsNotifier extends AsyncNotifier<InsightsData> {
+  Timer? _debounce;
 
-  // Combine all upstream streams
-  return itemRepo.watchAll().asyncExpand((items) {
-    final activeLoansAsync = ref.watch(activeLoansProvider);
-    final allLoansAsync = ref.watch(allLoansProvider);
-    final borrowersAsync = ref.watch(allBorrowersProvider);
-    final ripAlbumsAsync = ref.watch(allRipAlbumsProvider);
-    final rippedIdsAsync = ref.watch(rippedItemIdsProvider);
+  @override
+  Future<InsightsData> build() async {
+    // Watch all upstream providers
+    final itemRepo = ref.watch(mediaItemRepositoryProvider);
+    final items = await itemRepo.watchAll().first;
+    final activeLoans = ref.watch(activeLoansProvider).value ?? [];
+    final allLoans = ref.watch(allLoansProvider).value ?? [];
+    final borrowers = ref.watch(allBorrowersProvider).value ?? [];
+    final ripAlbums = ref.watch(allRipAlbumsProvider).value ?? [];
+    final rippedIds = ref.watch(rippedItemIdsProvider).value ?? {};
 
-    final activeLoans = activeLoansAsync.value ?? [];
-    final allLoans = allLoansAsync.value ?? [];
-    final borrowers = borrowersAsync.value ?? [];
-    final ripAlbums = ripAlbumsAsync.value ?? [];
-    final rippedIds = rippedIdsAsync.value ?? {};
-
-    return Stream.value(computeInsightsData(
+    return computeInsightsData(
       items: items,
       activeLoans: activeLoans,
       allLoans: allLoans,
       borrowers: borrowers,
       ripAlbums: ripAlbums,
       rippedItemIds: rippedIds,
-    ));
-  });
-});
+    );
+  }
+
+  /// Trigger a debounced refresh.
+  void scheduleRefresh() {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      ref.invalidateSelf();
+    });
+  }
+}
+
+final insightsProvider =
+    AsyncNotifierProvider<DebouncedInsightsNotifier, InsightsData>(
+        () => DebouncedInsightsNotifier());

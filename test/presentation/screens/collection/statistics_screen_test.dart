@@ -48,11 +48,19 @@ final _sampleItems = <MediaItem>[
   ),
 ];
 
+class _FakeInsightsNotifier extends DebouncedInsightsNotifier {
+  _FakeInsightsNotifier(this._data);
+  final InsightsData _data;
+
+  @override
+  Future<InsightsData> build() async => _data;
+}
+
 Widget _buildTestScreen({InsightsData? insights, bool withLoans = true}) {
   final data = insights ?? _sampleInsights;
   return ProviderScope(
     overrides: [
-      insightsProvider.overrideWith((ref) => Stream.value(data)),
+      insightsProvider.overrideWith(() => _FakeInsightsNotifier(data)),
       collectionProvider.overrideWith((ref) => Stream.value(_sampleItems)),
     ],
     child: MaterialApp(
