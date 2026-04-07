@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Loan {
 
- String get id; String get mediaItemId; String get borrowerId; int get lentAt; int? get returnedAt; String? get notes; int get updatedAt; bool get deleted;
+ String get id; String get mediaItemId; String get borrowerId; int get lentAt; int? get returnedAt; int? get dueAt; String? get notes; int get updatedAt; bool get deleted;
 /// Create a copy of Loan
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $LoanCopyWith<Loan> get copyWith => _$LoanCopyWithImpl<Loan>(this as Loan, _$ide
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Loan&&(identical(other.id, id) || other.id == id)&&(identical(other.mediaItemId, mediaItemId) || other.mediaItemId == mediaItemId)&&(identical(other.borrowerId, borrowerId) || other.borrowerId == borrowerId)&&(identical(other.lentAt, lentAt) || other.lentAt == lentAt)&&(identical(other.returnedAt, returnedAt) || other.returnedAt == returnedAt)&&(identical(other.notes, notes) || other.notes == notes)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.deleted, deleted) || other.deleted == deleted));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Loan&&(identical(other.id, id) || other.id == id)&&(identical(other.mediaItemId, mediaItemId) || other.mediaItemId == mediaItemId)&&(identical(other.borrowerId, borrowerId) || other.borrowerId == borrowerId)&&(identical(other.lentAt, lentAt) || other.lentAt == lentAt)&&(identical(other.returnedAt, returnedAt) || other.returnedAt == returnedAt)&&(identical(other.dueAt, dueAt) || other.dueAt == dueAt)&&(identical(other.notes, notes) || other.notes == notes)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.deleted, deleted) || other.deleted == deleted));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,mediaItemId,borrowerId,lentAt,returnedAt,notes,updatedAt,deleted);
+int get hashCode => Object.hash(runtimeType,id,mediaItemId,borrowerId,lentAt,returnedAt,dueAt,notes,updatedAt,deleted);
 
 @override
 String toString() {
-  return 'Loan(id: $id, mediaItemId: $mediaItemId, borrowerId: $borrowerId, lentAt: $lentAt, returnedAt: $returnedAt, notes: $notes, updatedAt: $updatedAt, deleted: $deleted)';
+  return 'Loan(id: $id, mediaItemId: $mediaItemId, borrowerId: $borrowerId, lentAt: $lentAt, returnedAt: $returnedAt, dueAt: $dueAt, notes: $notes, updatedAt: $updatedAt, deleted: $deleted)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $LoanCopyWith<$Res>  {
   factory $LoanCopyWith(Loan value, $Res Function(Loan) _then) = _$LoanCopyWithImpl;
 @useResult
 $Res call({
- String id, String mediaItemId, String borrowerId, int lentAt, int? returnedAt, String? notes, int updatedAt, bool deleted
+ String id, String mediaItemId, String borrowerId, int lentAt, int? returnedAt, int? dueAt, String? notes, int updatedAt, bool deleted
 });
 
 
@@ -62,13 +62,14 @@ class _$LoanCopyWithImpl<$Res>
 
 /// Create a copy of Loan
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? mediaItemId = null,Object? borrowerId = null,Object? lentAt = null,Object? returnedAt = freezed,Object? notes = freezed,Object? updatedAt = null,Object? deleted = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? mediaItemId = null,Object? borrowerId = null,Object? lentAt = null,Object? returnedAt = freezed,Object? dueAt = freezed,Object? notes = freezed,Object? updatedAt = null,Object? deleted = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,mediaItemId: null == mediaItemId ? _self.mediaItemId : mediaItemId // ignore: cast_nullable_to_non_nullable
 as String,borrowerId: null == borrowerId ? _self.borrowerId : borrowerId // ignore: cast_nullable_to_non_nullable
 as String,lentAt: null == lentAt ? _self.lentAt : lentAt // ignore: cast_nullable_to_non_nullable
 as int,returnedAt: freezed == returnedAt ? _self.returnedAt : returnedAt // ignore: cast_nullable_to_non_nullable
+as int?,dueAt: freezed == dueAt ? _self.dueAt : dueAt // ignore: cast_nullable_to_non_nullable
 as int?,notes: freezed == notes ? _self.notes : notes // ignore: cast_nullable_to_non_nullable
 as String?,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as int,deleted: null == deleted ? _self.deleted : deleted // ignore: cast_nullable_to_non_nullable
@@ -154,10 +155,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String mediaItemId,  String borrowerId,  int lentAt,  int? returnedAt,  String? notes,  int updatedAt,  bool deleted)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String mediaItemId,  String borrowerId,  int lentAt,  int? returnedAt,  int? dueAt,  String? notes,  int updatedAt,  bool deleted)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Loan() when $default != null:
-return $default(_that.id,_that.mediaItemId,_that.borrowerId,_that.lentAt,_that.returnedAt,_that.notes,_that.updatedAt,_that.deleted);case _:
+return $default(_that.id,_that.mediaItemId,_that.borrowerId,_that.lentAt,_that.returnedAt,_that.dueAt,_that.notes,_that.updatedAt,_that.deleted);case _:
   return orElse();
 
 }
@@ -175,10 +176,10 @@ return $default(_that.id,_that.mediaItemId,_that.borrowerId,_that.lentAt,_that.r
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String mediaItemId,  String borrowerId,  int lentAt,  int? returnedAt,  String? notes,  int updatedAt,  bool deleted)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String mediaItemId,  String borrowerId,  int lentAt,  int? returnedAt,  int? dueAt,  String? notes,  int updatedAt,  bool deleted)  $default,) {final _that = this;
 switch (_that) {
 case _Loan():
-return $default(_that.id,_that.mediaItemId,_that.borrowerId,_that.lentAt,_that.returnedAt,_that.notes,_that.updatedAt,_that.deleted);}
+return $default(_that.id,_that.mediaItemId,_that.borrowerId,_that.lentAt,_that.returnedAt,_that.dueAt,_that.notes,_that.updatedAt,_that.deleted);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -192,10 +193,10 @@ return $default(_that.id,_that.mediaItemId,_that.borrowerId,_that.lentAt,_that.r
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String mediaItemId,  String borrowerId,  int lentAt,  int? returnedAt,  String? notes,  int updatedAt,  bool deleted)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String mediaItemId,  String borrowerId,  int lentAt,  int? returnedAt,  int? dueAt,  String? notes,  int updatedAt,  bool deleted)?  $default,) {final _that = this;
 switch (_that) {
 case _Loan() when $default != null:
-return $default(_that.id,_that.mediaItemId,_that.borrowerId,_that.lentAt,_that.returnedAt,_that.notes,_that.updatedAt,_that.deleted);case _:
+return $default(_that.id,_that.mediaItemId,_that.borrowerId,_that.lentAt,_that.returnedAt,_that.dueAt,_that.notes,_that.updatedAt,_that.deleted);case _:
   return null;
 
 }
@@ -207,7 +208,7 @@ return $default(_that.id,_that.mediaItemId,_that.borrowerId,_that.lentAt,_that.r
 
 
 class _Loan extends Loan {
-  const _Loan({required this.id, required this.mediaItemId, required this.borrowerId, required this.lentAt, this.returnedAt, this.notes, required this.updatedAt, this.deleted = false}): super._();
+  const _Loan({required this.id, required this.mediaItemId, required this.borrowerId, required this.lentAt, this.returnedAt, this.dueAt, this.notes, required this.updatedAt, this.deleted = false}): super._();
   
 
 @override final  String id;
@@ -215,6 +216,7 @@ class _Loan extends Loan {
 @override final  String borrowerId;
 @override final  int lentAt;
 @override final  int? returnedAt;
+@override final  int? dueAt;
 @override final  String? notes;
 @override final  int updatedAt;
 @override@JsonKey() final  bool deleted;
@@ -229,16 +231,16 @@ _$LoanCopyWith<_Loan> get copyWith => __$LoanCopyWithImpl<_Loan>(this, _$identit
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Loan&&(identical(other.id, id) || other.id == id)&&(identical(other.mediaItemId, mediaItemId) || other.mediaItemId == mediaItemId)&&(identical(other.borrowerId, borrowerId) || other.borrowerId == borrowerId)&&(identical(other.lentAt, lentAt) || other.lentAt == lentAt)&&(identical(other.returnedAt, returnedAt) || other.returnedAt == returnedAt)&&(identical(other.notes, notes) || other.notes == notes)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.deleted, deleted) || other.deleted == deleted));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Loan&&(identical(other.id, id) || other.id == id)&&(identical(other.mediaItemId, mediaItemId) || other.mediaItemId == mediaItemId)&&(identical(other.borrowerId, borrowerId) || other.borrowerId == borrowerId)&&(identical(other.lentAt, lentAt) || other.lentAt == lentAt)&&(identical(other.returnedAt, returnedAt) || other.returnedAt == returnedAt)&&(identical(other.dueAt, dueAt) || other.dueAt == dueAt)&&(identical(other.notes, notes) || other.notes == notes)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.deleted, deleted) || other.deleted == deleted));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,mediaItemId,borrowerId,lentAt,returnedAt,notes,updatedAt,deleted);
+int get hashCode => Object.hash(runtimeType,id,mediaItemId,borrowerId,lentAt,returnedAt,dueAt,notes,updatedAt,deleted);
 
 @override
 String toString() {
-  return 'Loan(id: $id, mediaItemId: $mediaItemId, borrowerId: $borrowerId, lentAt: $lentAt, returnedAt: $returnedAt, notes: $notes, updatedAt: $updatedAt, deleted: $deleted)';
+  return 'Loan(id: $id, mediaItemId: $mediaItemId, borrowerId: $borrowerId, lentAt: $lentAt, returnedAt: $returnedAt, dueAt: $dueAt, notes: $notes, updatedAt: $updatedAt, deleted: $deleted)';
 }
 
 
@@ -249,7 +251,7 @@ abstract mixin class _$LoanCopyWith<$Res> implements $LoanCopyWith<$Res> {
   factory _$LoanCopyWith(_Loan value, $Res Function(_Loan) _then) = __$LoanCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String mediaItemId, String borrowerId, int lentAt, int? returnedAt, String? notes, int updatedAt, bool deleted
+ String id, String mediaItemId, String borrowerId, int lentAt, int? returnedAt, int? dueAt, String? notes, int updatedAt, bool deleted
 });
 
 
@@ -266,13 +268,14 @@ class __$LoanCopyWithImpl<$Res>
 
 /// Create a copy of Loan
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? mediaItemId = null,Object? borrowerId = null,Object? lentAt = null,Object? returnedAt = freezed,Object? notes = freezed,Object? updatedAt = null,Object? deleted = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? mediaItemId = null,Object? borrowerId = null,Object? lentAt = null,Object? returnedAt = freezed,Object? dueAt = freezed,Object? notes = freezed,Object? updatedAt = null,Object? deleted = null,}) {
   return _then(_Loan(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,mediaItemId: null == mediaItemId ? _self.mediaItemId : mediaItemId // ignore: cast_nullable_to_non_nullable
 as String,borrowerId: null == borrowerId ? _self.borrowerId : borrowerId // ignore: cast_nullable_to_non_nullable
 as String,lentAt: null == lentAt ? _self.lentAt : lentAt // ignore: cast_nullable_to_non_nullable
 as int,returnedAt: freezed == returnedAt ? _self.returnedAt : returnedAt // ignore: cast_nullable_to_non_nullable
+as int?,dueAt: freezed == dueAt ? _self.dueAt : dueAt // ignore: cast_nullable_to_non_nullable
 as int?,notes: freezed == notes ? _self.notes : notes // ignore: cast_nullable_to_non_nullable
 as String?,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as int,deleted: null == deleted ? _self.deleted : deleted // ignore: cast_nullable_to_non_nullable

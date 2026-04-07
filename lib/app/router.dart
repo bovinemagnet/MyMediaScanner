@@ -14,6 +14,8 @@ import 'package:mymediascanner/presentation/screens/settings/widgets/postgres_co
 import 'package:mymediascanner/presentation/screens/shelves/shelf_detail_screen.dart';
 import 'package:mymediascanner/presentation/screens/shelves/shelves_screen.dart';
 import 'package:mymediascanner/presentation/screens/about/about_screen.dart';
+import 'package:mymediascanner/presentation/screens/borrowers/borrowers_screen.dart';
+import 'package:mymediascanner/presentation/screens/borrowers/borrower_detail_screen.dart';
 import 'package:mymediascanner/presentation/widgets/app_scaffold.dart';
 
 /// Fade + slide up transition for detail/modal routes.
@@ -186,6 +188,12 @@ final router = GoRouter(
                   pageBuilder: (context, state) =>
                       _fadeSlideTransition(state, const AboutScreen()),
                 ),
+                GoRoute(
+                  path: 'borrowers',
+                  parentNavigatorKey: _rootNavigatorKey,
+                  pageBuilder: (context, state) =>
+                      _fadeSlideTransition(state, const BorrowersScreen()),
+                ),
               ],
             ),
           ],
@@ -201,6 +209,16 @@ final router = GoRouter(
           ],
         ),
       ],
+    ),
+    GoRoute(
+      path: '/borrowers/:id',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _fadeSlideTransition(
+        state,
+        BorrowerDetailScreen(
+          borrowerId: state.pathParameters['id']!,
+        ),
+      ),
     ),
   ],
 );

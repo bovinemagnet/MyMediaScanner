@@ -24,6 +24,13 @@ class LoanRepositoryImpl implements ILoanRepository {
   }
 
   @override
+  Stream<List<Loan>> watchOverdueLoans() {
+    return _loansDao.watchOverdueLoans().map(
+          (rows) => rows.map(_fromRow).toList(),
+        );
+  }
+
+  @override
   Stream<List<Loan>> watchLoansForItem(String mediaItemId) {
     return _loansDao.watchLoansForItem(mediaItemId).map(
           (rows) => rows.map(_fromRow).toList(),
@@ -44,9 +51,29 @@ class LoanRepositoryImpl implements ILoanRepository {
       mediaItemId: Value(loan.mediaItemId),
       borrowerId: Value(loan.borrowerId),
       lentAt: Value(loan.lentAt),
+      dueAt: Value(loan.dueAt),
       notes: Value(loan.notes),
       updatedAt: Value(loan.updatedAt),
     ));
+  }
+
+  @override
+  Future<void> updateLoan(Loan loan) async {
+    await _loansDao.updateLoan(LoansTableCompanion(
+      id: Value(loan.id),
+      mediaItemId: Value(loan.mediaItemId),
+      borrowerId: Value(loan.borrowerId),
+      lentAt: Value(loan.lentAt),
+      dueAt: Value(loan.dueAt),
+      notes: Value(loan.notes),
+      updatedAt: Value(loan.updatedAt),
+    ));
+  }
+
+  @override
+  Future<void> updateDueDate(String loanId, int? dueAt) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await _loansDao.updateDueDate(loanId, dueAt, now);
   }
 
   @override
@@ -61,6 +88,7 @@ class LoanRepositoryImpl implements ILoanRepository {
         borrowerId: row.borrowerId,
         lentAt: row.lentAt,
         returnedAt: row.returnedAt,
+        dueAt: row.dueAt,
         notes: row.notes,
         updatedAt: row.updatedAt,
         deleted: row.deleted == 1,

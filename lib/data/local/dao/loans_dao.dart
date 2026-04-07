@@ -40,6 +40,17 @@ class LoansDao extends DatabaseAccessor<AppDatabase> with _$LoansDaoMixin {
         .watch();
   }
 
+  Stream<List<LoansTableData>> watchOverdueLoans() {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return (select(loansTable)
+          ..where((t) =>
+              t.returnedAt.isNull() &
+              t.deleted.equals(0) &
+              t.dueAt.isSmallerThanValue(now) &
+              t.dueAt.isNotNull()))
+        .watch();
+  }
+
   Future<void> insertLoan(LoansTableCompanion companion) {
     return into(loansTable).insert(companion);
   }
@@ -48,6 +59,15 @@ class LoansDao extends DatabaseAccessor<AppDatabase> with _$LoansDaoMixin {
     return (update(loansTable)
           ..where((t) => t.id.equals(companion.id.value)))
         .write(companion);
+  }
+
+  Future<void> updateDueDate(String loanId, int? dueAt, int updatedAt) {
+    return (update(loansTable)..where((t) => t.id.equals(loanId))).write(
+      LoansTableCompanion(
+        dueAt: Value(dueAt),
+        updatedAt: Value(updatedAt),
+      ),
+    );
   }
 
   Future<void> returnItem(String loanId, int returnedAt, int updatedAt) {

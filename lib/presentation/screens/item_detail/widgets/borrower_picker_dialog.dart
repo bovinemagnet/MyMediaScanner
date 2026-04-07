@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:mymediascanner/domain/usecases/lend_item_usecase.dart';
 import 'package:mymediascanner/domain/usecases/manage_borrowers_usecase.dart';
 import 'package:mymediascanner/presentation/providers/loan_provider.dart';
+import 'package:mymediascanner/presentation/providers/notification_provider.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 
 class BorrowerPickerDialog extends ConsumerStatefulWidget {
@@ -23,6 +25,7 @@ class _BorrowerPickerDialogState extends ConsumerState<BorrowerPickerDialog> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
+  DateTime? _dueDate;
 
   @override
   void dispose() {
@@ -142,6 +145,30 @@ class _BorrowerPickerDialogState extends ConsumerState<BorrowerPickerDialog> {
         ),
       ),
       actions: [
+        // Due date picker
+        TextButton.icon(
+          onPressed: () async {
+            final picked = await showDatePicker(
+              context: context,
+              initialDate:
+                  _dueDate ?? DateTime.now().add(const Duration(days: 14)),
+              firstDate: DateTime.now(),
+              lastDate: DateTime.now().add(const Duration(days: 365)),
+              helpText: 'Set return due date',
+            );
+            if (picked != null) {
+              setState(() => _dueDate = picked);
+            }
+          },
+          icon: const Icon(Icons.event, size: 18),
+          label: Text(
+            _dueDate != null
+                ? 'Due: ${DateFormat.yMMMd().format(_dueDate!)}'
+                : 'Set due date',
+            style: const TextStyle(fontSize: 12),
+          ),
+        ),
+        const Spacer(),
         TextButton(
           onPressed: () => Navigator.pop(context),
           child: const Text('Cancel'),
@@ -153,10 +180,12 @@ class _BorrowerPickerDialogState extends ConsumerState<BorrowerPickerDialog> {
   Future<void> _lendTo(String borrowerId) async {
     final lendUseCase = LendItemUseCase(
       repository: ref.read(loanRepositoryProvider),
+      notificationService: ref.read(notificationServiceProvider),
     );
     await lendUseCase.execute(
       mediaItemId: widget.mediaItemId,
       borrowerId: borrowerId,
+      dueAt: _dueDate?.millisecondsSinceEpoch,
     );
     if (mounted) Navigator.pop(context);
   }

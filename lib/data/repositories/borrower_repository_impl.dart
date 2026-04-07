@@ -42,6 +42,19 @@ class BorrowerRepositoryImpl implements IBorrowerRepository {
   }
 
   @override
+  Future<void> update(Borrower borrower) async {
+    final companion = BorrowersTableCompanion(
+      id: Value(borrower.id),
+      name: Value(borrower.name),
+      email: Value(borrower.email),
+      phone: Value(borrower.phone),
+      notes: Value(borrower.notes),
+      updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+    );
+    await _borrowersDao.updateBorrower(companion);
+  }
+
+  @override
   Future<void> softDelete(String id) async {
     final now = DateTime.now().millisecondsSinceEpoch;
     await _borrowersDao.softDelete(id, now);
