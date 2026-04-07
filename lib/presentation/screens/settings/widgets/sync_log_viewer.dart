@@ -46,11 +46,11 @@ class _SyncLogViewerState extends ConsumerState<SyncLogViewer> {
             if (isDesktop) ...[
               Row(
                 children: [
-                  Expanded(
+                  const Expanded(
                     child: ScreenHeader(
                       title: 'Sync History',
                       subtitle: 'View past sync operations and their results.',
-                      padding: const EdgeInsets.only(bottom: 16),
+                      padding: EdgeInsets.only(bottom: 16),
                     ),
                   ),
                   IconButton(
@@ -93,7 +93,7 @@ class _SyncLogViewerState extends ConsumerState<SyncLogViewer> {
 
                   return ListView.separated(
                     itemCount: entries.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    separatorBuilder: (_, _) => const Divider(height: 1),
                     itemBuilder: (context, index) {
                       return _SyncLogEntryTile(entry: entries[index]);
                     },

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mymediascanner/domain/entities/sync_conflict.dart';
-import 'package:mymediascanner/presentation/providers/sync_provider.dart';
 import 'package:mymediascanner/presentation/screens/settings/widgets/sync_conflict_dialog.dart';
 
 void main() {

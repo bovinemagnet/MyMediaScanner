@@ -124,7 +124,7 @@ class _SyncConflictDialogState extends ConsumerState<SyncConflictDialog> {
               child: ListView.separated(
                 shrinkWrap: true,
                 itemCount: _resolutions.length,
-                separatorBuilder: (_, __) => const Divider(height: 1),
+                separatorBuilder: (_, _) => const Divider(height: 1),
                 itemBuilder: (context, index) {
                   final conflict = _resolutions[index];
                   return _ConflictRow(
