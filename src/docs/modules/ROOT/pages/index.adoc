@@ -1,0 +1,92 @@
+= MyMediaScanner
+Paul Snow <paul@snow.dev>
+0.0.0
+include::_attributes.adoc[]
+
+MyMediaScanner is a cross-platform Flutter/Dart application for scanning barcodes on physical media — CDs, DVDs, Blu-rays, books, and video games — and building a personal collection catalogue.
+It runs on Android, iOS, macOS, Windows, and Linux.
+Data is stored locally in SQLite with optional sync to a self-hosted PostgreSQL instance.
+
+== Key Features
+
+[cols="1,3", options="header"]
+|===
+| Feature | Description
+
+| Barcode Scanning
+| Camera-based scanning on Android and iOS via ML Kit; USB keyboard-wedge and webcam scanning on all desktop platforms (macOS, Windows, Linux)
+
+| Tiered Metadata Lookup
+| Automatic lookup through TMDB, Discogs, Google Books, Open Library, and UPCitemdb, with a local cache to minimise API calls
+
+| Batch Scanning
+| Queue-based review mode for scanning multiple items in sequence, with conflict resolution and bulk save
+
+| Lending Tracker
+| Track borrowers and loans against items in your collection
+
+| FLAC Rip Library Scanner
+| Scan a local FLAC library, compare coverage against the physical collection, and perform audio quality analysis including AccurateRip verification and click/pop detection
+
+| Insights & Analytics
+| Dashboard with statistics and charts; export your data as CSV or JSON
+
+| Cover OCR
+| Text recognition from cover art using Google ML Kit on Android/iOS, the macOS Vision framework via a native method channel, and Tesseract OCR on Windows and Linux
+
+| Theme Mode
+| System, light, and dark theme modes persisted to SharedPreferences, with two hand-crafted Material 3 design systems
+|===
+
+== Technology Stack
+
+[cols="1,3", options="header"]
+|===
+| Technology | Role
+
+| Flutter (all platforms)
+| UI framework; custom "Obsidian Lens" dark and "Precision Editorial" light design systems built on Material 3
+
+| Riverpod 3.x
+| State management using hand-written `Notifier` and `AsyncNotifier` providers
+
+| Drift (SQLite)
+| Local database with type-safe DAOs; schema version {schema-version} with 13 tables
+
+| PostgreSQL
+| Optional remote sync via the `postgres` Dart package (direct connection)
+
+| Dio + Retrofit
+| HTTP client and generated API clients for TMDB, Discogs, Google Books, Open Library, and UPCitemdb
+
+| GoRouter
+| Declarative navigation with `StatefulShellRoute`; desktop sidebar and glassmorphism mobile bottom nav
+
+| Freezed
+| Immutable domain entities and sealed classes via code generation
+
+| mobile_scanner
+| Barcode scanning on Android, iOS, and macOS using ML Kit
+|===
+
+== Database Schema
+
+The local SQLite database is at schema version *{schema-version}* and contains 13 tables:
+
+`media_items`, `tags`, `media_item_tags`, `shelves`, `shelf_items`, `barcode_cache`, `sync_log`, `borrowers`, `loans`, `rip_albums`, `rip_tracks`, `batch_sessions`, `batch_queue_items`
+
+NOTE: Schema changes require a new Drift migration in `AppDatabase`. Soft deletes are used throughout — rows are never hard-deleted; the `deleted` flag is set to `1` instead.
+
+== Test Coverage
+
+The project has approximately *683 tests* covering domain logic, the data layer, presentation providers, and widgets.
+Tests use `mocktail` for mocking and `ProviderContainer` with overrides for provider testing.
+
+== Quick Links
+
+* xref:getting-started.adoc[Getting Started] — prerequisites, build commands, and project structure
+* xref:architecture.adoc[Clean Architecture] — dependency rules and module layout
+* xref:data-model.adoc[Data Model] — schema tables and entity design
+* xref:metadata-lookup.adoc[Metadata Lookup] — tiered lookup strategy and caching
+* xref:scanning.adoc[Barcode Scanning] — camera, USB, and webcam scanning details
+* xref:testing.adoc[Testing] — test structure and how to run the suite

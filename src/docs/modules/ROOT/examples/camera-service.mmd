@@ -1,0 +1,37 @@
+classDiagram
+    class CameraService {
+        <<abstract>>
+        +Stream~BarcodeResult~ onBarcodeDetected
+        +bool isActive
+        +start() Future~void~
+        +stop() Future~void~
+        +captureImage() Future~String?~
+        +dispose() Future~void~
+    }
+
+    class MobileScannerCameraService {
+        +MobileScannerController controller
+        +start() Future~void~
+        +stop() Future~void~
+        +captureImage() Future~String?~
+    }
+
+    class NativeCameraService {
+        +CameraController controller
+        +int captureIntervalMs
+        +start() Future~void~
+        +stop() Future~void~
+        +captureImage() Future~String?~
+    }
+
+    class BarcodeDetector {
+        +detectFromBytes(Uint8List) Future~BarcodeResult?~$
+        +detectFromFile(String) Future~BarcodeResult?~$
+    }
+
+    CameraService <|.. MobileScannerCameraService : implements
+    CameraService <|.. NativeCameraService : implements
+    NativeCameraService --> BarcodeDetector : uses
+
+    note for MobileScannerCameraService "Android, iOS, macOS\nmobile_scanner + ML Kit"
+    note for NativeCameraService "Windows, Linux\ncamera_desktop + flutter_zxing"

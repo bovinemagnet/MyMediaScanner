@@ -1,0 +1,212 @@
+= Rip Library
+include::_attributes.adoc[]
+:description: Scan a local FLAC library, analyse audio quality, and compare ripped albums against your physical collection.
+
+The rip library feature is a *desktop-only* capability that scans a directory of FLAC files on your local filesystem, links ripped albums to your physical collection, and performs audio quality analysis including AccurateRip verification and click/pop detection.
+
+NOTE: The rip library screen is accessible from the `/rips` route and appears in the desktop sidebar only. It is not available on Android or iOS.
+
+== Overview
+
+The feature answers two key questions:
+
+. *Coverage* — which albums in your physical collection have you ripped, and which are still unripped?
+. *Quality* — are your rips bit-perfect, and do they contain audible defects?
+
+== Configuring the FLAC Library Path
+
+Before scanning, set the path to your FLAC library root in *Settings > Rip Library*.
+The path is stored in `flutter_secure_storage` alongside your other credentials.
+
+The scanner expects a standard directory layout:
+
+[source]
+----
+/path/to/flac-library/
+  Artist Name/
+    Album Title (Year)/
+      01 - Track Title.flac
+      02 - Track Title.flac
+----
+
+Other layouts are supported; the scanner reads tags from FLAC metadata rather than relying solely on directory names.
+
+== Scanning the Library
+
+Tap *Scan Library* on the rip library screen to start a full rescan.
+The scanner traverses the configured directory recursively, reads FLAC tags and stream info, and upserts records into the `rip_albums` and `rip_tracks` tables.
+
+A progress indicator shows the current file being processed.
+Large libraries (10,000+ tracks) may take several minutes on first scan; subsequent scans are incremental based on file modification timestamps.
+
+== Database Schema
+
+=== rip_albums Table
+
+Each discovered album is stored as a single row in `rip_albums`.
+
+[cols="1,1,3", options="header"]
+|===
+| Column | Type | Description
+
+| `id`
+| UUID
+| Primary key.
+
+| `media_item_id`
+| UUID? (FK)
+| Nullable foreign key to `media_items.id`. `NULL` when the ripped album has no matching physical item in the collection.
+
+| `album_title`
+| String
+| Album title from FLAC tags or directory name.
+
+| `artist`
+| String
+| Album artist from FLAC tags.
+
+| `year`
+| Integer?
+| Release year from FLAC tags.
+
+| `directory_path`
+| String
+| Absolute path to the album directory on disk.
+
+| `track_count`
+| Integer
+| Number of tracks discovered in this album directory.
+
+| `matched_at`
+| DateTime?
+| When the album was last matched to a `media_items` record.
+
+| `updated_at`
+| DateTime
+| Last scan timestamp.
+|===
+
+The nullable `media_item_id` foreign key is intentional: ripped albums that cannot be automatically matched to a physical collection entry still appear in the rip library with `media_item_id = NULL`.
+Manual matching is performed from the rip library screen by searching and selecting the correct collection item.
+
+=== rip_tracks Table
+
+Each individual FLAC file within an album is stored as a row in `rip_tracks`.
+
+[cols="1,1,3", options="header"]
+|===
+| Column | Type | Description
+
+| `id`
+| UUID
+| Primary key.
+
+| `rip_album_id`
+| UUID (FK)
+| Parent album. References `rip_albums.id`.
+
+| `disc_number`
+| Integer
+| Disc number from FLAC tags. Defaults to `1`.
+
+| `track_number`
+| Integer
+| Track number from FLAC tags.
+
+| `title`
+| String
+| Track title from FLAC tags.
+
+| `file_path`
+| String
+| Absolute path to the `.flac` file.
+
+| `duration_ms`
+| Integer
+| Track duration in milliseconds, read from the FLAC stream info block.
+
+| `codec`
+| String
+| Always `FLAC` for this feature; reserved for future codec support.
+
+| `sample_rate_hz`
+| Integer
+| Sample rate in Hz (e.g. `44100`, `96000`).
+
+| `bit_depth`
+| Integer
+| Bit depth (e.g. `16`, `24`).
+
+| `accuraterip_status`
+| String
+| AccurateRip verification result: `verified`, `mismatch`, or `unknown`.
+
+| `click_pop_detected`
+| Boolean
+| Whether click/pop detection flagged this track.
+
+| `quality_checked_at`
+| DateTime?
+| When quality analysis was last run for this track. `NULL` if not yet analysed.
+|===
+
+== Coverage Analysis
+
+The coverage view on the rip library screen compares your physical collection against your ripped albums.
+
+.Coverage states
+[cols="1,3", options="header"]
+|===
+| State | Meaning
+
+| Ripped & matched
+| The album exists in both `rip_albums` (with a non-null `media_item_id`) and `media_items`.
+
+| Ripped, unmatched
+| The album is in `rip_albums` but `media_item_id` is `NULL`. Use the *Match* action to link it.
+
+| Physical only (not ripped)
+| The item exists in `media_items` but has no corresponding `rip_albums` row.
+|===
+
+The summary card at the top of the rips screen shows overall coverage as a percentage and a breakdown by state.
+
+== Audio Quality Analysis
+
+Quality analysis runs on demand per album or across the full library via *Analyse All*.
+Analysis is compute-intensive and runs on a background isolate to keep the UI responsive.
+
+=== AccurateRip Verification
+
+AccurateRip is a community database of CRC checksums for CD track rips.
+The scanner computes the AccurateRip CRC for each track and queries the AccurateRip database.
+
+.AccurateRip status values
+[cols="1,3", options="header"]
+|===
+| Status | Meaning
+
+| `verified`
+| The computed CRC matches one or more database entries. The rip is considered bit-perfect.
+
+| `mismatch`
+| The CRC was found in the database but does not match. The rip likely contains errors.
+
+| `unknown`
+| The disc is not present in the AccurateRip database, or the network query failed. The status cannot be determined.
+|===
+
+NOTE: AccurateRip queries require internet access. Results are cached in `rip_tracks.accuraterip_status` so subsequent opens do not re-query.
+
+=== Click/Pop Detection
+
+Click and pop detection analyses the audio waveform for impulsive noise artefacts caused by disc surface damage or ripping errors.
+When artefacts above the detection threshold are found, `click_pop_detected` is set to `true` and the track is flagged in the UI.
+
+The detection threshold is not currently user-configurable; a future release will expose this as a settings option.
+
+=== quality_checked_at Timestamp
+
+`quality_checked_at` records when analysis was last run for a given track.
+Tracks with a `NULL` value have never been analysed.
+Tracks with a stale timestamp (older than 30 days by default) are highlighted as candidates for re-analysis if their file modification time has changed since the last check.

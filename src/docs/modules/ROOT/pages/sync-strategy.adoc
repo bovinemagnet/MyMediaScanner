@@ -1,0 +1,132 @@
+= Sync Strategy
+include::_attributes.adoc[]
+:description: Architecture and behaviour of the optional sync feature that replicates local SQLite data to a self-hosted PostgreSQL instance.
+
+MyMediaScanner can optionally sync collection data to a self-hosted PostgreSQL database.
+The sync engine connects directly from the Dart client using the `postgres` package — there is no intermediary API or proxy service.
+All sync operations are performed over TLS by default.
+
+NOTE: Sync is entirely optional.
+The application works fully offline without any PostgreSQL configuration.
+
+== Architecture Overview
+
+[{MERMAID}]
+----
+include::example$sync-flow.mmd[]
+----
+
+=== Connection Model
+
+The client opens a direct TCP connection to the PostgreSQL server using credentials stored in `flutter_secure_storage`.
+Connection settings — host, port, database name, username, and password — are configured by the user on the Settings screen.
+
+TLS is required by default.
+Users may disable TLS verification in Settings if their server uses a self-signed certificate, but this is not recommended for production deployments.
+
+The connection is opened on demand (at the start of a sync run) and closed immediately afterwards.
+No persistent connection is maintained between syncs.
+
+== Last-Write-Wins Conflict Resolution
+
+The sync engine uses a per-field, last-write-wins strategy based on `updated_at` timestamps.
+The full sync cycle is as follows:
+
+=== Push Phase
+
+1. The client queries local SQLite for all rows where `synced_at IS NULL OR updated_at > synced_at`.
+   These are rows that have been created or modified since the last successful sync.
+2. For each changed row, the client fetches the current version of that row from PostgreSQL.
+3. A field-by-field comparison is performed:
+   * If `local.updated_at > remote.updated_at` for a given field, the local value wins.
+   * If `remote.updated_at >= local.updated_at`, the remote value is retained.
+4. The resolved rows are upserted into PostgreSQL in batches of up to 50 using multi-row `INSERT … ON CONFLICT (id) DO UPDATE` statements, reducing network round-trips.
+5. On success, `synced_at` is updated to the current timestamp in the local SQLite row.
+
+=== Pull Phase
+
+After pushing, the client pulls any rows that have changed in PostgreSQL since the last known `synced_at`:
+
+1. The client queries PostgreSQL for rows where `updated_at > :last_synced_at`, parameterised per table.
+2. Each remote row is merged into the local SQLite database using the same last-write-wins field comparison.
+3. Rows present remotely but absent locally are inserted (this handles additions from other devices).
+4. Soft-deleted rows pulled from PostgreSQL set `deleted = 1` locally — the record is never hard-deleted.
+
+=== Concurrent Edit Threshold
+
+When the `updated_at` difference between the local and remote version of a row falls within a configurable threshold (default: 60 seconds), the conflict is flagged for user review rather than resolved automatically.
+
+The conflict resolution UI presents both versions side-by-side and allows the user to choose the winning value on a per-field basis.
+The outcome is recorded in the `sync_log` table as `resolved_by = 'user'`.
+
+== Sync Log
+
+Every push and pull operation is recorded in the `sync_log` table.
+This provides a full audit trail and supports diagnostics.
+
+[cols="1,3", options="header"]
+|===
+| Field | Purpose
+
+| `direction`
+| `push` for local → PostgreSQL operations; `pull` for PostgreSQL → local
+
+| `operation`
+| `insert`, `update`, or `delete`
+
+| `duration_ms`
+| Round-trip time for the individual operation, useful for identifying slow queries
+
+| `synced`
+| `1` if the operation completed successfully; `0` if it failed
+
+| `error_message`
+| Error detail captured from the last failed attempt; NULL on success
+
+| `resolved_by`
+| `auto` for last-write-wins resolution; `user` for manual conflict resolution
+|===
+
+Failed operations are retried on the next sync run.
+The `attempted_at` column records when the most recent attempt occurred.
+
+== Soft Deletes and Sync
+
+Soft deletes are a first-class concern in the sync strategy.
+
+Rows are never hard-deleted from either SQLite or PostgreSQL.
+Setting `deleted = 1` and updating `updated_at` ensures that:
+
+* The deletion is treated as a regular field update and propagates through the last-write-wins mechanism.
+* Remote devices that pull after the deletion receive `deleted = 1` and suppress the record from their UI.
+* PostgreSQL retains the full history of the collection indefinitely.
+
+IMPORTANT: Any direct `DELETE` statement against PostgreSQL will break sync consistency.
+Deletions must always go through the application's soft-delete path.
+
+== Security Considerations
+
+[cols="1,3", options="header"]
+|===
+| Concern | Behaviour
+
+| Transport encryption
+| TLS required by default; connection is rejected if the server certificate cannot be verified unless the user has explicitly opted out
+
+| Credential storage
+| Host, port, database, username, and password are stored in `flutter_secure_storage` using the platform keychain (Keychain on iOS/macOS, Keystore on Android, libsecret on Linux, Credential Manager on Windows)
+
+| API keys
+| TMDB, Discogs, and UPCitemdb API keys are also stored in `flutter_secure_storage` and are never written to SQLite or transmitted to PostgreSQL
+|===
+
+== Future Considerations
+
+The current architecture assumes a single user with multiple personal devices.
+For multi-user or shared-collection scenarios the following changes would be required:
+
+* *Lightweight intermediary sync service* — a small HTTP service sitting in front of PostgreSQL would enable fine-grained access control, user authentication (e.g. OAuth 2.0), and audit logging without exposing the database port directly.
+* *Row-level security* — PostgreSQL row-level security policies to partition data by user.
+* *Operational transforms or CRDTs* — for high-concurrency collaborative editing, last-write-wins becomes insufficient and a CRDT-based approach would reduce the volume of user-facing conflicts.
+
+These are not planned for the current release but the schema and sync log are intentionally designed to remain compatible with such an evolution.

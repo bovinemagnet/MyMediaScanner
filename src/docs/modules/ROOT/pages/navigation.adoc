@@ -1,0 +1,180 @@
+= Navigation & Routing
+include::_attributes.adoc[]
+:author: Paul Snow
+:version: 0.0.0
+:description: GoRouter configuration, StatefulShellRoute branches, additional routes, and platform-adaptive navigation behaviour in MyMediaScanner.
+
+MyMediaScanner uses *GoRouter* with a `StatefulShellRoute` to provide a persistent navigation shell across all platforms.
+The shell adapts its chrome to the host platform: a glassmorphism bottom navigation bar on mobile and a desktop sidebar rail on macOS, Windows, and Linux.
+
+== Route Structure
+
+The following diagram shows the full route tree, including nested routes and platform-specific navigation chrome.
+
+[{MERMAID}]
+....
+include::example$navigation-flow.mmd[]
+....
+
+== Shell Branches
+
+The `StatefulShellRoute` contains 8 `StatefulShellBranch` entries.
+Each branch preserves its own navigation stack independently.
+
+[cols="^1,2,3,^2,^3",options="header"]
+|===
+|Branch
+|Route
+|Screen
+|Desktop Sidebar
+|Mobile Bottom Nav
+
+|0
+|`/`
+|Dashboard
+|Yes
+|Yes (Home)
+
+|1
+|`/collection`
+|Collection / Library
+|Yes
+|Yes (Library)
+
+|2
+|`/scan`
+|Scanner
+|Yes
+|Yes
+
+|3
+|`/shelves`
+|Shelves
+|Yes
+|No (accessible from Library AppBar)
+
+|4
+|`/batch`
+|Batch Editor
+|Yes
+|No
+
+|5
+|`/insights`
+|Insights / Statistics
+|Yes
+|Yes
+
+|6
+|`/settings`
+|Settings
+|Yes
+|No
+
+|7
+|`/rips`
+|Rips (desktop only)
+|Yes
+|No
+|===
+
+NOTE: The Scanner branch (branch 2) appears in the desktop sidebar.
+On desktop, the scanner screen hosts a focused text field for keyboard-wedge and USB scanner input, as well as a toggle to activate webcam-based scanning on all desktop platforms.
+
+== Additional Routes
+
+The following routes are nested under their parent branch but are not themselves shell branches.
+They push onto the branch's own navigator stack.
+
+[cols="2,3,3",options="header"]
+|===
+|Route
+|Screen
+|Parent Branch
+
+|`/collection/item/:id`
+|Item Detail
+|Collection (1)
+
+|`/scan/confirm`
+|Metadata Confirm
+|Scanner (2)
+
+|`/scan/disambiguate`
+|Disambiguation
+|Scanner (2)
+
+|`/batch/history`
+|Batch History
+|Batch Editor (4)
+
+|`/settings/postgres`
+|PostgreSQL Configuration
+|Settings (6)
+
+|`/settings/about`
+|About
+|Settings (6)
+
+|`/settings/borrowers`
+|Borrowers
+|Settings (6)
+
+|`/settings/sync-log`
+|Sync Log
+|Settings (6)
+
+|`/borrowers/:id`
+|Borrower Detail
+|Settings (6)
+|===
+
+== Platform-Adaptive UI
+
+GoRouter's shell route renders through `AppScaffold`, which inspects the current platform at build time via `core/utils/platform_utils.dart` and selects the appropriate navigation chrome.
+
+=== Android and iOS
+
+* *Bottom navigation bar* with four visible destinations: Home, Library, Scan, and Insights.
+* A floating action button (FAB) provides a quick-scan shortcut from the Dashboard.
+* The scanner screen renders a full-screen camera overlay using `mobile_scanner` (ML Kit).
+* Shelves, Batch Editor, Settings, and Rips are accessible via AppBar actions or secondary navigation, not the bottom bar.
+
+=== macOS, Windows, and Linux
+
+* *Navigation rail / sidebar* shows all 8 branches, including the Scanner entry.
+Desktop-only branches (Rips) are hidden on mobile builds.
+At window widths below 600 pixels the sidebar collapses into a drawer accessible via a hamburger menu button.
+* The Scanner screen hosts a focused text field accepting keyboard-wedge and USB barcode scanner input, plus a toggle to switch to webcam-based scanning.
+Webcam scanning is available on all desktop platforms — macOS via `mobile_scanner`, Windows and Linux via `camera_desktop` with `flutter_zxing`.
+* The Collection and Shelves screens use `MasterDetailLayout` with a draggable divider between the master and detail panes.
+The split ratio is persisted to SharedPreferences.
+* `TableKeyboardNavigation` provides arrow-key, Home/End, Enter, and Delete navigation for the collection and rips table views.
+* Desktop screens use `ScreenHeader` instead of `AppBar`.
+`AppBar` is reserved for mobile screens that require back-navigation affordance.
+
+=== Material 3 Breakpoints
+
+The layout system respects the following Material 3 window size class breakpoints.
+
+[cols="2,1,3",options="header"]
+|===
+|Class
+|Width
+|Layout Behaviour
+
+|Compact
+|< 600 px
+|Single-column; bottom navigation bar; no sidebar.
+
+|Medium
+|600 – 1 199 px
+|Two-column where applicable; navigation rail (collapsed).
+
+|Expanded
+|≥ 1 200 px
+|Full sidebar with labels; master–detail layout for Collection.
+|===
+
+TIP: The `MasterDetailLayout` widget used on Collection and Item Detail screens switches automatically between single-pane and dual-pane modes based on the current breakpoint.
+See xref:architecture.adoc#state-management[State Management] for the provider that drives the selection state.

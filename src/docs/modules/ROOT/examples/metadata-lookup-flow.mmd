@@ -1,0 +1,72 @@
+%% Tiered metadata lookup strategy
+%% Entry point: ScanBarcodeUseCase → MetadataRepository.lookupBarcode
+flowchart TD
+    Start(["ScanBarcodeUseCase\nlookupBarcode(barcode)"])
+    CheckCache{"barcode_cache\nhit?"}
+    CacheAge{"cached_at\n< 7 days?"}
+    ReturnCached(["Return cached\nMetadataResult"])
+    DetectType["Detect barcode type\n(EAN-13 / UPC-A / ISBN-10/13\n/ IMDb ID)"]
+
+    IsImdb{"IMDb ID?\n(tt*)"}
+    TmdbFind["TMDB\n/find/{external_id}\nendpoint"]
+
+    IsIsbn{"ISBN-10\nor ISBN-13?"}
+    GoogleBooks["Google Books API"]
+    GBResult{"result\nfound?"}
+    OpenLibrary["Open Library API"]
+
+    IsEanUpc{"EAN / UPC\nwith type hint?"}
+    TypeHint{"type hint?"}
+    TmdbDisc["TMDB API\n(film / TV)"]
+    Discogs["Discogs API\n(music)"]
+
+    Fallback["UPCitemdb\n(fallback)"]
+
+    GotResult{"result\nfound?"}
+    NoResult(["Return\nMetadataResult.notFound"])
+
+    CacheResponse["Cache raw response\nin barcode_cache"]
+    MapResult["Map DTO to\nMetadataResult entity\n(via Mappers)"]
+    Return(["Return\nMetadataResult"])
+
+    Start --> CheckCache
+    CheckCache -- "miss" --> DetectType
+    CheckCache -- "hit" --> CacheAge
+    CacheAge -- "fresh" --> ReturnCached
+    CacheAge -- "stale" --> DetectType
+
+    DetectType --> IsImdb
+    IsImdb -- "yes" --> TmdbFind
+    IsImdb -- "no" --> IsIsbn
+
+    IsIsbn -- "yes" --> GoogleBooks
+    GoogleBooks --> GBResult
+    GBResult -- "found" --> GotResult
+    GBResult -- "not found" --> OpenLibrary
+    OpenLibrary --> GotResult
+
+    IsIsbn -- "no" --> IsEanUpc
+    IsEanUpc -- "yes" --> TypeHint
+    TypeHint -- "film/TV" --> TmdbDisc
+    TypeHint -- "music" --> Discogs
+    TmdbDisc --> GotResult
+    Discogs --> GotResult
+
+    IsEanUpc -- "no / unknown" --> Fallback
+    Fallback --> GotResult
+
+    TmdbFind --> GotResult
+
+    GotResult -- "found" --> CacheResponse
+    GotResult -- "not found" --> NoResult
+
+    CacheResponse --> MapResult
+    MapResult --> Return
+
+    style Start fill:#00647a,color:#fff,stroke:#004d5c
+    style ReturnCached fill:#00647a,color:#fff,stroke:#004d5c
+    style Return fill:#00647a,color:#fff,stroke:#004d5c
+    style NoResult fill:#7a3030,color:#fff,stroke:#5c2020
+    style CacheResponse fill:#1a4a3a,color:#aaffcc,stroke:#44aa88
+    style MapResult fill:#1a4a3a,color:#aaffcc,stroke:#44aa88
+    style Fallback fill:#4a4a1a,color:#ffeeaa,stroke:#888822

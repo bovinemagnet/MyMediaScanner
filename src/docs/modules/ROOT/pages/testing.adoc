@@ -1,0 +1,200 @@
+= Testing Guide
+include::_attributes.adoc[]
+:description: Run, structure, and extend the MyMediaScanner test suite.
+
+MyMediaScanner maintains approximately 683 tests covering domain logic, the data layer, presentation providers, and widgets.
+The project follows a test-driven development approach, particularly for changes to existing functionality.
+
+== Running Tests
+
+=== Full Test Suite
+
+[source,bash]
+----
+flutter test
+----
+
+Runs all tests under the `test/` directory.
+Expect a full run to take 60–120 seconds depending on machine speed.
+
+=== Single Test File
+
+[source,bash]
+----
+flutter test test/unit/domain/scan_barcode_usecase_test.dart
+----
+
+Useful when working on a specific use case or class.
+
+=== Pattern Match
+
+[source,bash]
+----
+flutter test --name "should return metadata"
+----
+
+Runs only tests whose names contain the given string.
+Supports Dart regular expressions.
+
+=== Verbose Output
+
+[source,bash]
+----
+flutter test --reporter expanded
+----
+
+Prints each test name as it runs rather than a single progress dot per file.
+Helpful when diagnosing intermittent failures.
+
+== Test Structure
+
+Tests are organised under `test/` to mirror the `lib/` source tree.
+
+[source]
+----
+test/
+  unit/
+    domain/          <1>
+    data/            <2>
+    presentation/    <3>
+  widget/            <4>
+  integration/       <5>
+----
+<1> Pure Dart tests for use cases and domain entities. No Flutter framework dependency.
+<2> Tests for DAOs, repository implementations, mappers, and API clients.
+<3> Tests for Riverpod providers using `ProviderContainer`.
+<4> Widget tests using `flutter_test` and `WidgetTester`.
+<5> End-to-end scenarios combining multiple layers (database, providers, widgets).
+
+== Mocking with Mocktail
+
+The project uses https://pub.dev/packages/mocktail[mocktail] for creating test doubles.
+Mocktail requires no code generation and works well alongside `drift_dev`.
+
+=== Creating a Mock
+
+[source,dart]
+----
+import 'package:mocktail/mocktail.dart';
+import 'package:my_media_scanner/domain/repositories/i_media_item_repository.dart';
+
+class MockMediaItemRepository extends Mock
+    implements IMediaItemRepository {}
+----
+
+=== Stubbing Return Values
+
+[source,dart]
+----
+final repository = MockMediaItemRepository();
+
+when(() => repository.getById(any()))
+    .thenAnswer((_) async => fakeMediaItem);
+----
+
+=== Verifying Interactions
+
+[source,dart]
+----
+verify(() => repository.save(any())).called(1);
+----
+
+== Provider Testing with ProviderContainer
+
+Riverpod providers are tested using `ProviderContainer` with dependency overrides.
+This avoids spinning up a full Flutter widget tree for logic-only tests.
+
+[source,dart]
+----
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  test('collection provider loads items on init', () async {
+    final mockRepository = MockMediaItemRepository();
+
+    when(() => mockRepository.getAll())
+        .thenAnswer((_) async => [fakeMediaItem]);
+
+    final container = ProviderContainer(
+      overrides: [
+        mediaItemRepositoryProvider.overrideWithValue(mockRepository),
+      ],
+    );
+
+    addTearDown(container.dispose);
+
+    final state = await container.read(
+      collectionProvider.future,
+    );
+
+    expect(state, hasLength(1));
+  });
+}
+----
+
+Key points:
+
+* Always call `addTearDown(container.dispose)` to release resources after each test.
+* Override only the providers that matter for the test; others resolve normally.
+* Use `.future` to await `AsyncNotifier` state for initial load tests.
+
+== Widget Testing
+
+Widget tests use `WidgetTester` and `pumpWidget` with a `ProviderScope` to inject overrides into the widget tree.
+
+[source,dart]
+----
+testWidgets('shows empty state when collection is empty', (tester) async {
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        collectionProvider.overrideWith(
+          () => AsyncValue.data(const []),
+        ),
+      ],
+      child: const MaterialApp(home: CollectionScreen()),
+    ),
+  );
+
+  await tester.pumpAndSettle();
+
+  expect(find.text('No items in your collection'), findsOneWidget);
+});
+----
+
+== TDD Approach
+
+Test-driven development is strongly recommended, particularly when modifying existing functionality.
+
+The recommended cycle is:
+
+. *Write a failing test* that describes the desired behaviour.
+. *Run the test* to confirm it fails for the right reason.
+. *Write the minimum implementation* to make the test pass.
+. *Refactor* with confidence, keeping all tests green.
+
+When adding a new feature to an existing use case or repository method, start by extending the existing test file rather than creating a new one.
+This keeps related behaviour in one place and makes regression detection easier.
+
+TIP: Use `flutter test --name` to run only the new failing test during the red phase, avoiding the noise of the full suite.
+
+== Code Generation
+
+Several layers depend on generated code (Drift DAOs, Freezed models, Retrofit clients).
+If tests fail with "missing concrete implementation" or similar errors after a schema or model change, regenerate before running tests:
+
+[source,bash]
+----
+dart run build_runner build --delete-conflicting-outputs
+----
+
+== Continuous Integration
+
+The full test suite should remain green on every commit.
+Run `flutter analyze` in addition to `flutter test` to catch static analysis warnings:
+
+[source,bash]
+----
+flutter analyze && flutter test
+----

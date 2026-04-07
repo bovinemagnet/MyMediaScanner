@@ -1,0 +1,38 @@
+:project-name: MyMediaScanner
+:project-version: 0.0.0
+:schema-version: 8
+:dart-version: 3
+:flutter-version: 3
+:author: Paul Snow
+:icons: font
+:source-highlighter: highlight.js
+:toc: left
+:toclevels: 3
+
+// Mermaid diagram attribute
+ifdef::env-github[]
+:MERMAID: source, mermaid, svg
+endif::[]
+ifndef::env-github[]
+:MERMAID: mermaid, svg
+endif::[]
+
+ifndef::site-gen-antora[]
+
+ifndef::attachmentsdir[:attachmentsdir: {moduledir}/attachments/]
+ifndef::examplesdir[:examplesdir: {moduledir}/examples/]
+ifndef::imagesdir[:imagesdir: {moduledir}/images/]
+ifndef::partialsdir[:partialsdir: {moduledir}/partials/]
+ifndef::pagesdir[:pagesdir: {moduledir}/pages/]
+
+endif::[]
+
+ifdef::site-gen-antora[]
+
+ifndef::attachmentsdir[:attachmentsdir: attachment$]
+ifndef::examplesdir[:examplesdir: example$]
+ifndef::imagesdir[:imagesdir: image$]
+ifndef::partialsdir[:partialsdir: partial$]
+ifndef::pagesdir[:pagesdir: page$]
+
+endif::[]

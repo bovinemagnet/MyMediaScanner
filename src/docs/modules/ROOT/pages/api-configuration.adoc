@@ -1,0 +1,175 @@
+= API Configuration
+include::_attributes.adoc[]
+:description: Configure API keys and remote service credentials for MyMediaScanner.
+
+MyMediaScanner uses several external APIs for metadata lookup and optional cloud sync.
+Users supply their own API keys, which are stored securely on-device using platform-native credential storage.
+No keys are hard-coded or bundled with the application.
+
+== Metadata API Keys
+
+=== Required and Optional Keys
+
+[cols="1,2,1,1", options="header"]
+|===
+| Service | Purpose | Free Tier | Key Required
+
+| https://www.themoviedb.org/[TMDB]
+| Film and TV metadata, cover art, cast information
+| Yes (generous rate limits)
+| Yes
+
+| https://www.discogs.com/developers/[Discogs]
+| Music metadata, release details, cover art
+| Yes (rate-limited)
+| Yes
+
+| https://www.upcitemdb.com/[UPCitemdb]
+| General UPC/EAN fallback when specialist APIs return no result
+| Yes (limited monthly lookups)
+| Yes
+
+| https://developers.google.com/books[Google Books]
+| Book metadata lookup by ISBN
+| Yes (no key required)
+| No
+
+| https://openlibrary.org/developers[Open Library]
+| Book metadata fallback when Google Books returns no result
+| Yes (no key required)
+| No
+|===
+
+Google Books and Open Library are queried without authentication.
+TMDB, Discogs, and UPCitemdb all require a personal API key that you register directly with each service.
+
+=== Obtaining API Keys
+
+TMDB:: Create a free account at https://www.themoviedb.org/, then go to *Settings > API* and request a Developer API key. The v3 auth token is used.
+
+Discogs:: Register at https://www.discogs.com/settings/developers and generate a personal access token. OAuth is not required.
+
+UPCitemdb:: Sign up at https://www.upcitemdb.com/ and copy the trial or paid API key from your dashboard.
+
+=== Entering Keys in the App
+
+. Open *Settings* from the desktop sidebar or the mobile navigation bar.
+. Scroll to the *API Keys* section.
+. Tap the field for the service you wish to configure.
+. Paste your key and tap *Save*.
+
+Keys are written to secure storage immediately on save.
+A masked preview (e.g. `••••••••ab3f`) is displayed after saving so you can confirm a key is set without revealing the full value.
+
+== Secure Storage
+
+API keys and database credentials are stored using `flutter_secure_storage`, which delegates to the platform-native credential vault.
+
+[cols="1,3", options="header"]
+|===
+| Platform | Storage Backend
+
+| iOS
+| iOS Keychain (accessible only to the app, hardware-backed on devices with Secure Enclave)
+
+| macOS
+| macOS Keychain (sandboxed to the app bundle)
+
+| Android
+| Android Keystore (hardware-backed on API 28+; software-backed on older devices)
+
+| Linux
+| Secret Service API via libsecret (typically backed by GNOME Keyring or KWallet)
+
+| Windows
+| Windows Credential Manager (Data Protection API)
+|===
+
+IMPORTANT: On Linux, the Secret Service daemon (GNOME Keyring or KWallet) must be running.
+If no compatible daemon is available, `flutter_secure_storage` falls back to an encrypted local file; in this case, ensure the device's home directory is itself encrypted.
+
+== PostgreSQL Sync Configuration
+
+Optional sync to a self-hosted PostgreSQL database is configured in *Settings > Sync*.
+
+=== Connection Fields
+
+[cols="1,1,3", options="header"]
+|===
+| Field | Default | Description
+
+| Host
+| —
+| Hostname or IP address of the PostgreSQL server.
+
+| Port
+| `5432`
+| TCP port the server listens on.
+
+| Database
+| —
+| Name of the target database.
+
+| Username
+| —
+| PostgreSQL role used to connect.
+
+| Password
+| —
+| Password for the above role. Stored in secure storage; never logged.
+
+| TLS
+| Enabled
+| Whether to require TLS for the connection. See xref:<<tls-requirements>>.
+|===
+
+All PostgreSQL credentials are stored in the same secure storage vault as API keys.
+
+=== Test Connection
+
+After entering credentials, tap *Test Connection* to verify connectivity before enabling sync.
+
+The button performs a lightweight connection check (opening a session and running `SELECT 1`) and displays one of three outcomes:
+
+[cols="1,3", options="header"]
+|===
+| Outcome | Displayed Message
+
+| Success
+| "Connected successfully" in green. Sync can be enabled.
+
+| Authentication failure
+| "Authentication failed — check username and password." in red.
+
+| Network error
+| "Could not reach the server — check host and port." in red.
+|===
+
+Tapping *Test Connection* does not enable sync; you must toggle *Enable Sync* separately after a successful test.
+
+[#tls-requirements]
+=== TLS Requirements
+
+TLS is required by default and is strongly recommended in all deployments.
+Disabling TLS transmits your database password and all collection data in plaintext over the network.
+
+To disable TLS (not recommended, for local-network testing only):
+
+. Toggle *Require TLS* off in *Settings > Sync*.
+. Tap *Test Connection* to confirm the unencrypted connection succeeds.
+
+WARNING: Never disable TLS when connecting over the internet or an untrusted network. Your PostgreSQL password and collection data will be visible to anyone who can intercept the connection.
+
+For a production deployment, configure the PostgreSQL server with a valid TLS certificate (a self-signed certificate is acceptable for home use) and ensure the server `postgresql.conf` has `ssl = on`.
+
+=== Sync Scope
+
+Once enabled, sync covers all tables that carry an `updated_at` column:
+
+* `media_items`
+* `tags` and `media_item_tags`
+* `shelves` and `shelf_items`
+* `borrowers` and `loans`
+* `barcode_cache`
+
+See xref:sync-strategy.adoc[] for full details of the conflict resolution strategy.

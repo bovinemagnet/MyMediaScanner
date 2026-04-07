@@ -1,0 +1,229 @@
+= Metadata Lookup
+Paul Snow
+0.0.0
+include::_attributes.adoc[]
+
+MyMediaScanner uses a tiered metadata lookup strategy to resolve a scanned barcode into rich item metadata.
+The strategy prioritises cached results, falls back through specialist APIs by media type, and ultimately defers to UPCitemdb if no specialist source can satisfy the request.
+
+== Lookup Flow
+
+[{MERMAID}]
+....
+include::example$metadata-lookup-flow.mmd[]
+....
+
+== Lookup Order
+
+The lookup follows five ordered steps:
+
+=== 1. Barcode Cache Check
+
+Before making any network request, the use case queries the `barcode_cache` SQLite table.
+If a record exists and its `cached_at` timestamp is fewer than seven days old, the cached raw response is returned immediately and mapped to a `MetadataResult` domain entity.
+This avoids redundant API calls for recently scanned items and works fully offline for repeat scans.
+
+=== 2. Barcode Type Detection
+
+When no usable cache entry exists, the barcode string is analysed to determine its type:
+
+[cols="1,2", options="header"]
+|===
+| Detected Type
+| Pattern / Rule
+
+| IMDb ID
+| Begins with `tt` followed by digits (e.g. `tt0111161`)
+
+| ISBN-13
+| 13-digit EAN beginning with `978` or `979`
+
+| ISBN-10
+| 10-character string with optional `X` check digit
+
+| EAN-13
+| 13-digit code not matching ISBN prefix
+
+| UPC-A
+| 12-digit code
+|===
+
+Detection logic lives in `core/utils/barcode_utils.dart`.
+
+=== 3. Type-Routed API Lookup
+
+The detected type, combined with any media type hint supplied by the user on the scan screen, determines which specialist API client is called first.
+
+[cols="2,2,2", options="header"]
+|===
+| Media Type
+| Barcode Standard
+| Primary Source
+
+| Film / TV
+| EAN-13, UPC-A
+| TMDB
+
+| Music
+| EAN-13, UPC-A
+| Discogs
+
+| Books
+| ISBN-10, ISBN-13
+| Google Books → Open Library
+
+| Video Games
+| EAN-13, UPC-A
+| UPCitemdb (IGDB planned for v2)
+|===
+
+Routing rules:
+
+* An **IMDb ID** (`tt*`) bypasses the type hint and calls the TMDB `/find/\{external_id}` endpoint directly.
+* An **ISBN** is sent to Google Books first; if no result is returned, Open Library is tried as a fallback.
+* An **EAN-13 or UPC-A** with a film or TV hint is routed to TMDB search.
+* An **EAN-13 or UPC-A** with a music hint is routed to Discogs search.
+* An **EAN-13 or UPC-A** with a game hint is sent directly to UPCitemdb.
+
+=== 4. UPCitemdb Fallback
+
+If the specialist API returns no results, the use case falls back to UPCitemdb.
+UPCitemdb is a general-purpose product database and can resolve many retail barcodes even when specialist sources lack coverage.
+It is also the primary source for video games until IGDB integration is added in a later release.
+
+=== 5. Cache and Map
+
+Once a raw API response is obtained, it is:
+
+. Persisted to the `barcode_cache` table with the current timestamp.
+. Passed through the appropriate mapper (e.g. `TmdbMapper`, `DiscogsMapper`, `GoogleBooksMapper`) to produce a `MetadataResult` domain entity.
+. Returned to the calling use case for presentation.
+
+== API Clients
+
+Each external API is represented by a dedicated Retrofit class backed by its own Dio instance:
+
+[cols="2,3", options="header"]
+|===
+| Client Class
+| Endpoint Base URL
+
+| `TmdbApiClient`
+| `https://api.themoviedb.org/3`
+
+| `DiscogsApiClient`
+| `https://api.discogs.com`
+
+| `GoogleBooksApiClient`
+| `https://www.googleapis.com/books/v1`
+
+| `OpenLibraryApiClient`
+| `https://openlibrary.org`
+
+| `UpcItemDbApiClient`
+| `https://api.upcitemdb.com/prod/trial`
+|===
+
+API keys for TMDB, Discogs, and UPCitemdb are read at runtime from `SecureStorageService` via a Riverpod provider.
+Google Books and Open Library require no key.
+Users configure their own keys in the Settings screen; keys are never bundled with the application.
+
+== Metadata Fields
+
+=== Common Fields
+
+All media types expose the following fields on `MetadataResult`:
+
+* `title` — primary title string
+* `subtitle` — optional secondary title or edition label
+* `coverImageUrl` — URL of the primary cover or artwork image
+* `year` — release or publication year
+* `genres` — list of genre strings
+* `description` — synopsis or back-cover text
+* `publisher` / `label` / `studio` — releasing organisation (field name is type-specific)
+* `format` — physical format (e.g. Blu-ray, CD, Paperback)
+* `barcode` — the original barcode string
+
+=== Film and TV
+
+[cols="2,3", options="header"]
+|===
+| Field
+| Description
+
+| `director`
+| Primary director name(s)
+
+| `cast`
+| Lead cast members list
+
+| `runtime`
+| Runtime in minutes
+
+| `rating`
+| Age / content rating (e.g. PG-13, 12A)
+
+| `tmdbId`
+| TMDB numeric identifier
+|===
+
+=== Music
+
+[cols="2,3", options="header"]
+|===
+| Field
+| Description
+
+| `artists`
+| Artist or band name(s)
+
+| `trackListing`
+| Ordered list of track titles with durations
+
+| `label`
+| Record label name
+
+| `catalogueNumber`
+| Label catalogue reference
+
+| `discogsReleaseId`
+| Discogs release numeric identifier
+|===
+
+=== Books
+
+[cols="2,3", options="header"]
+|===
+| Field
+| Description
+
+| `authors`
+| Author name(s)
+
+| `isbn10`
+| ISBN-10 string
+
+| `isbn13`
+| ISBN-13 string
+
+| `pageCount`
+| Number of pages
+
+| `publisher`
+| Publisher name
+
+| `googleBooksId`
+| Google Books volume identifier
+|===
+
+== Disambiguation
+
+When an API returns multiple candidate matches for a single barcode (common with EAN codes shared across regional releases), the use case emits a list of `MetadataCandidate` objects.
+The router navigates to the disambiguation screen (`/disambiguation`), where the user selects the correct release.
+The chosen candidate is then passed back through step 5 (cache and map) as if it were a single result.
+
+== Related Pages
+
+* xref:scanning.adoc[Barcode Scanning] — scan screen behaviour and scanner input sources
+* xref:data-model.adoc[Data Model] — `barcode_cache`, `media_items`, and related tables
+* xref:api-configuration.adoc[API Configuration] — how users supply and store API keys

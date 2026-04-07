@@ -1,0 +1,199 @@
+= Getting Started
+Paul Snow <paul@snow.dev>
+0.0.0
+include::_attributes.adoc[]
+
+This guide walks you through setting up a development environment for MyMediaScanner, running the test suite, and building for each supported platform.
+
+== Prerequisites
+
+You will need the following tools installed before working with this project:
+
+* *Flutter SDK* — version {flutter-version}.x or later
+* *Dart SDK* — version {dart-version}.x or later (bundled with Flutter)
+* *Android SDK* — required for Android builds (install via Android Studio or `sdkmanager`)
+* *Xcode* — required for iOS and macOS builds (macOS only)
+* A connected device or emulator for `flutter run`
+
+TIP: Run `flutter doctor` after installation to verify your environment is configured correctly for each target platform.
+
+== Clone and Setup
+
+[source,bash]
+----
+git clone https://github.com/yourorg/mymediascanner.git
+cd mymediascanner
+flutter pub get
+----
+
+After fetching dependencies, run code generation to produce the Drift database layer, Freezed models, and Retrofit clients:
+
+[source,bash]
+----
+dart run build_runner build --delete-conflicting-outputs
+----
+
+NOTE: You must re-run code generation whenever you change a Drift table definition, a Freezed model annotation, or a Retrofit API interface.
+
+== Running Tests
+
+Run the full test suite:
+
+[source,bash]
+----
+flutter test
+----
+
+Run a single test file:
+
+[source,bash]
+----
+flutter test test/unit/domain/scan_barcode_usecase_test.dart
+----
+
+Run tests matching a name pattern:
+
+[source,bash]
+----
+flutter test --name "should return metadata"
+----
+
+The project has approximately 610 tests covering domain logic, the data layer, presentation providers, and widgets.
+See xref:testing.adoc[Testing] for the full test structure.
+
+== Running and Analysing
+
+Run the application on a connected device or emulator:
+
+[source,bash]
+----
+flutter run
+----
+
+Analyse the codebase for warnings and errors:
+
+[source,bash]
+----
+flutter analyze
+----
+
+== Platform Build Commands
+
+=== Android
+
+Build a debug APK using the `dev` flavour:
+
+[source,bash]
+----
+flutter build apk --debug --flavor dev
+----
+
+Build a release APK using the `prod` flavour:
+
+[source,bash]
+----
+flutter build apk --release --flavor prod
+----
+
+=== iOS
+
+Build for iOS without code signing (suitable for CI or simulator testing):
+
+[source,bash]
+----
+flutter build ios --no-codesign
+----
+
+NOTE: The iOS deployment target is 15.5, required by `google_mlkit_commons`.
+
+=== macOS
+
+Build a debug macOS application:
+
+[source,bash]
+----
+flutter build macos --debug
+----
+
+== API Keys Setup
+
+MyMediaScanner uses several external metadata APIs.
+Users supply their own API keys, which are stored securely via `flutter_secure_storage`.
+Keys are entered in the *Settings* screen at runtime.
+
+[cols="1,1,2", options="header"]
+|===
+| Service | Key Required | Purpose
+
+| TMDB
+| Yes
+| Film and TV metadata; IMDb ID lookup via the `/find` endpoint
+
+| Discogs
+| Yes
+| Music metadata for CDs and vinyl
+
+| UPCitemdb
+| Yes
+| Fallback barcode lookup when specialist APIs return no result
+
+| Google Books
+| No
+| Book metadata by ISBN
+
+| Open Library
+| No
+| Book metadata fallback by ISBN
+|===
+
+TIP: Google Books and Open Library require no registration.
+You can start cataloguing books immediately without configuring any API keys.
+
+== Project Structure
+
+MyMediaScanner follows clean architecture with a strict dependency rule: `domain/` has no dependencies on `data/` or `presentation/`.
+
+[source]
+----
+lib/
+  app/
+    theme/          <1>
+    app.dart        <2>
+    router.dart     <3>
+  core/
+    constants/      <4>
+    utils/          <5>
+  data/
+    local/          <6>
+    remote/
+      api/          <7>
+      sync/         <8>
+    mappers/        <9>
+    repositories/   <10>
+  domain/
+    entities/       <11>
+    repositories/   <12>
+    usecases/       <13>
+  presentation/
+    providers/      <14>
+    screens/        <15>
+    widgets/        <16>
+----
+<1> Custom design system: `app_colors`, `app_typography`, `app_theme`, `app_theme_extensions`
+<2> `MaterialApp.router` entry point with theme mode provider
+<3> GoRouter with 8 `StatefulShellBranch` routes
+<4> App-wide constants and breakpoints
+<5> Platform utilities, barcode utilities, Cover OCR helper, Vision OCR method channel
+<6> Drift database, table definitions, and DAOs
+<7> Retrofit API clients for TMDB, Discogs, Google Books, Open Library, and UPCitemdb
+<8> PostgreSQL sync client and conflict resolution logic
+<9> DTO to domain entity converters (mappers)
+<10> Concrete implementations of domain repository interfaces
+<11> Pure Dart models (`@freezed`) and enums
+<12> Abstract repository interfaces (prefixed with `I`, e.g. `IMediaItemRepository`)
+<13> Business logic orchestrators (use cases)
+<14> Hand-written Riverpod 3.x `Notifier` and `AsyncNotifier` providers
+<15> Feature screens organised by route (dashboard, collection, scanner, shelves, batch, etc.)
+<16> Shared widgets: `app_scaffold`, `glass_container`, `gradient_button`, `screen_header`, and state placeholders
+
+See xref:architecture.adoc[Clean Architecture] for a full description of dependency rules and module responsibilities.

@@ -1,0 +1,168 @@
+= Lending Tracker
+include::_attributes.adoc[]
+:description: Manage borrowers and track loans against your physical media collection.
+
+The lending tracker allows you to record when you lend physical media to friends, family, or colleagues.
+It maintains a full history of every loan, highlights overdue items, and keeps all lending data synchronised with your self-hosted PostgreSQL instance.
+
+== Borrower Management
+
+A borrower record stores the contact details of anyone to whom you lend items.
+
+.Borrower fields
+[cols="1,1,3", options="header"]
+|===
+| Field | Type | Description
+
+| `id`
+| UUID
+| Primary key, generated on creation.
+
+| `name`
+| String
+| Full display name of the borrower. Required.
+
+| `email`
+| String?
+| Optional e-mail address for reminder notifications.
+
+| `phone`
+| String?
+| Optional phone number.
+
+| `notes`
+| String?
+| Free-text notes (e.g. preferred contact method, relationship).
+
+| `deleted`
+| Integer
+| Soft-delete flag. `1` = deleted. Never hard-deleted.
+
+| `updated_at`
+| DateTime
+| Last-write timestamp used for sync conflict resolution.
+|===
+
+Borrowers are managed from the *Settings* screen under the *Borrowers* section.
+From there you can add, edit, or soft-delete borrower records.
+A borrower cannot be hard-deleted while they have outstanding (unreturned) loans.
+
+== Loan Tracking
+
+Each loan links a single media item to a single borrower and records the key dates of the lending lifecycle.
+
+.Loan fields
+[cols="1,1,3", options="header"]
+|===
+| Field | Type | Description
+
+| `id`
+| UUID
+| Primary key.
+
+| `media_item_id`
+| UUID (FK)
+| The item being lent. References `media_items.id`.
+
+| `borrower_id`
+| UUID (FK)
+| The person borrowing the item. References `borrowers.id`.
+
+| `lent_at`
+| DateTime
+| When the item was handed over. Set automatically on loan creation.
+
+| `due_at`
+| DateTime?
+| Optional return deadline. Used to drive overdue alerts.
+
+| `returned_at`
+| DateTime?
+| Set when the item is marked as returned. Null while on loan.
+
+| `notes`
+| String?
+| Per-loan notes (e.g. agreed return condition).
+
+| `deleted`
+| Integer
+| Soft-delete flag.
+
+| `updated_at`
+| DateTime
+| Last-write timestamp.
+|===
+
+An item can only have one active loan at a time.
+Creating a new loan for an already-lent item is blocked at the repository layer.
+
+=== Creating a Loan
+
+. Navigate to the item detail screen for the media item you wish to lend.
+. Tap the *Lend* button in the lending section.
+. Select an existing borrower or create a new one inline.
+. Optionally set a due date.
+. Tap *Confirm* to save the loan.
+
+=== Marking an Item as Returned
+
+. Open the item detail screen for the lent item.
+. Tap *Mark Returned* in the active loan card.
+. The `returned_at` timestamp is set to the current time and the loan is closed.
+
+== Overdue Loan Alerts
+
+When a loan has a `due_at` date set and that date passes without a `returned_at` value being recorded, the item is considered overdue.
+
+Overdue notifications are delivered via `flutter_local_notifications`.
+A background task checks for overdue loans at app launch and once daily thereafter.
+
+NOTE: Local notifications require the user to grant notification permission on Android 13+ and iOS. The app requests this permission on first launch.
+
+.Notification behaviour by platform
+[cols="1,3", options="header"]
+|===
+| Platform | Behaviour
+
+| Android
+| Heads-up notification in the system tray. Tapping opens the item detail screen.
+
+| iOS
+| Banner notification. Tapping opens the item detail screen.
+
+| macOS
+| System notification centre alert.
+
+| Windows / Linux
+| Toast notification via the platform notification service.
+|===
+
+Notifications are not repeated more than once per day per overdue loan to avoid alert fatigue.
+
+== Borrower Detail Screen
+
+Tapping a borrower in the borrower list (accessible from *Settings > Borrowers*) opens the borrower detail screen.
+
+The detail screen shows:
+
+* Contact details (name, e-mail, phone, notes).
+* *Active loans* — items currently on loan to this borrower, with due dates highlighted in amber (due within 7 days) or red (overdue).
+* *Loan history* — all past loans, sorted by `lent_at` descending.
+* *Statistics* — total items borrowed, currently on loan, and overdue count.
+
+From this screen you can:
+
+* Edit the borrower's contact details.
+* Create a new loan directly (selecting from your collection).
+* Mark any active loan as returned.
+
+== Sync Behaviour
+
+All lending data participates in the standard xref:sync-strategy.adoc[sync strategy].
+
+* Both `borrowers` and `loans` tables use soft deletes — rows are never physically removed.
+* The `deleted = 1` flag is included in sync payloads so that deletions propagate to all devices.
+* Conflict resolution uses last-write-wins per field based on the `updated_at` timestamp.
+* A loan marked as returned on one device will propagate the `returned_at` value to all other synced devices.
+
+WARNING: Ensure your PostgreSQL instance is reachable before performing bulk lending operations across multiple devices to avoid conflicting loan states that require manual resolution.

@@ -1,0 +1,27 @@
+flowchart TD
+    A[User opens Collection screen] --> B{Search query\ngreater than or equal to 2 chars?}
+    B -->|Yes| C[FTS5 full-text search]
+    B -->|No| D[watchAll with SQL params]
+
+    D --> E[SQL WHERE deleted = 0]
+    D --> F[SQL WHERE media_type = ?]
+    D --> G[SQL ORDER BY sort_column]
+
+    E --> H[(SQLite with indexes)]
+    F --> H
+    G --> H
+    C --> H
+
+    H --> I[Stream of MediaItem rows]
+    I --> J{lentOnly or\nrippedOnly?}
+    J -->|Yes| K[In-memory filter\nvia loan/rip IDs]
+    J -->|No| L[Pass through]
+    K --> M[CollectionProvider emits filtered list]
+    L --> M
+
+    M --> N{Grid or Table view?}
+    N -->|Grid| O[GridView.builder — lazy]
+    N -->|Table| P[PaginatedDataTable2 — 50 rows/page]
+
+    style H fill:#e1f5fe
+    style M fill:#f3e5f5

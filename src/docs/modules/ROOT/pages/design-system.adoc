@@ -1,0 +1,169 @@
+= Design System
+Paul Snow
+0.0.0
+include::_attributes.adoc[]
+
+MyMediaScanner ships a bespoke design system built on Material 3.
+Two named themes — *Obsidian Lens* (dark) and *Precision Editorial* (light) — share a common set of design principles whilst providing distinct visual personalities.
+The system is entirely self-contained: fonts are bundled in `assets/fonts/` and no runtime dependency on `google_fonts` is required.
+
+== Themes
+
+=== Obsidian Lens (Dark)
+
+The dark theme is designed for low-light environments and media-browsing contexts where rich cover art should be the focal point.
+
+[cols="2,3", options="header"]
+|===
+| Token
+| Value
+
+| Surface colour
+| `#0e0e0e` (deep obsidian)
+
+| Primary colour
+| `#6dddff` (electric cyan)
+
+| Body typeface
+| Inter
+
+| Design character
+| High contrast, cinematic, artwork-forward
+|===
+
+=== Precision Editorial (Light)
+
+The light theme takes an editorial stance suited to catalogue management and data-dense screens.
+
+[cols="2,3", options="header"]
+|===
+| Token
+| Value
+
+| Surface colour
+| `#f5f6f7` (warm off-white)
+
+| Primary colour
+| `#00647a` (deep teal)
+
+| Body typeface
+| Manrope
+
+| Design character
+| Clean, typographic, information-forward
+|===
+
+== Design Principles
+
+=== No-Line Rule
+
+Borders and dividers are avoided throughout the interface.
+Visual separation between regions is achieved exclusively through tonal surface shifts — for example, using `surfaceContainerHigh` for card surfaces against a `surface` background.
+This creates a sense of depth without introducing visual noise.
+
+=== Glassmorphism Navigation
+
+Navigation elements — the desktop sidebar and the mobile bottom navigation bar — use a glassmorphism treatment: a semi-transparent frosted-glass backdrop with a subtle blur, allowing underlying content to bleed through while remaining visually distinct.
+Glassmorphism parameters (blur radius, opacity, tint) are carried on `AppDesignExtension` so they can be referenced consistently across the widget tree.
+
+=== Gradient CTAs
+
+Primary call-to-action buttons (e.g. the hero scan button on the Dashboard) use a linear gradient rather than a flat colour fill.
+Gradient start and end colours are derived from the active theme's primary and secondary colour tokens and are exposed as a `Gradient` property on `AppDesignExtension`.
+
+=== Ghost Borders
+
+Interactive containers that require a subtle boundary — such as form fields and selected list items — use a ghost border: the Material `outline-variant` colour applied at 15% opacity.
+This satisfies accessibility contrast requirements for state indication whilst preserving the no-line aesthetic.
+
+=== Ambient Shadows
+
+Elevation is communicated through diffuse ambient shadows rather than sharp drop shadows.
+Shadow colour and spread are theme-specific tokens on `AppDesignExtension` and are applied via a shared `BoxDecoration` helper used by `GlassContainer` and tonal card widgets.
+
+== Typography
+
+Both themes share a dual-typeface system.
+Fonts are bundled in `assets/fonts/` and declared in `pubspec.yaml` — there is no runtime download or dependency on the `google_fonts` package.
+
+[cols="2,2,3", options="header"]
+|===
+| Typeface
+| Role
+| Theme Usage
+
+| Manrope
+| Headings and labels
+| All headings in both themes; body text in Precision Editorial
+
+| Inter
+| Body and data text
+| Body, captions, and monospace-adjacent data in Obsidian Lens
+|===
+
+Text styles (headline, title, body, label, caption scales) are defined in `app_typography.dart` and applied to the Material `TextTheme` for both themes.
+
+== AppDesignExtension
+
+`AppDesignExtension` is a custom `ThemeExtension` that carries design tokens not natively supported by Material 3's `ColorScheme` or `TextTheme`.
+
+[cols="2,3", options="header"]
+|===
+| Property Group
+| Tokens Included
+
+| Glassmorphism
+| Blur radius, background opacity, tint colour
+
+| Gradients
+| CTA gradient (`Gradient`), header gradient
+
+| Shadows
+| Ambient shadow colour, blur radius, spread radius
+|===
+
+Access the extension anywhere in the widget tree:
+
+[source,dart]
+----
+final ext = Theme.of(context).extension<AppDesignExtension>()!;
+// Use ext.ctaGradient, ext.glassOpacity, etc.
+----
+
+== Theme Source Files
+
+Theme logic is split across four files, all located in `lib/app/theme/`:
+
+[cols="2,3", options="header"]
+|===
+| File
+| Responsibility
+
+| `app_colors.dart`
+| Colour constant definitions for both themes
+
+| `app_typography.dart`
+| `TextTheme` construction from Manrope and Inter font families
+
+| `app_theme.dart`
+| `ThemeData` assembly for `obsidianLens` and `precisionEditorial`
+
+| `app_theme_extensions.dart`
+| `AppDesignExtension` definition and per-theme instances
+|===
+
+== Theme Mode
+
+The user can choose between three theme modes via the Settings screen:
+
+* *System* — follows the operating system light/dark preference
+* *Light* — forces Precision Editorial regardless of system setting
+* *Dark* — forces Obsidian Lens regardless of system setting
+
+The selected mode is persisted to `SharedPreferences` and restored on next launch.
+A Riverpod provider exposes the current `ThemeMode` and handles writes to `SharedPreferences` when the user changes the setting.
+
+== Related Pages
+
+* xref:navigation.adoc[Navigation & Routing] — sidebar and bottom navigation implementation
+* xref:architecture.adoc[Clean Architecture] — how the presentation layer consumes theme providers

@@ -1,0 +1,123 @@
+= Desktop Mode
+include::_attributes.adoc[]
+:description: Desktop-specific features in MyMediaScanner including sidebar navigation, keyboard shortcuts, resizable layouts, and platform-specific scanning.
+
+MyMediaScanner adapts its interface for desktop platforms (macOS, Windows, and Linux) with a sidebar navigation, keyboard shortcuts, resizable split layouts, and webcam barcode scanning.
+
+== Sidebar Navigation
+
+The desktop sidebar displays all 8 navigation branches including the Scanner entry.
+At window widths below 600 pixels, the sidebar collapses into a hamburger menu drawer to preserve screen space.
+
+=== Sidebar Items
+
+[cols="^1,2,2", options="header"]
+|===
+| Position | Label | Route
+
+| 0 | Dashboard | `/`
+| 1 | Library | `/collection`
+| 2 | Scanner | `/scan`
+| 3 | Shelves | `/shelves`
+| 4 | Batch Editor | `/batch`
+| 5 | Insights | `/insights`
+| 6 | Settings | `/settings`
+| 7 | Rips | `/rips`
+|===
+
+The sidebar expands to show labels at window widths of 1200 pixels or above.
+Between 600 and 1200 pixels it displays icons only.
+Below 600 pixels it collapses to a drawer accessible via a hamburger menu button.
+
+== Keyboard Shortcuts
+
+[cols="2,3", options="header"]
+|===
+| Shortcut | Action
+
+| `Ctrl+N` | Open Scanner
+| `Ctrl+F` | Focus search bar
+| `Ctrl+,` | Open Settings
+| `F1` | Show shortcuts help overlay
+|===
+
+=== Table Navigation
+
+When the collection or rips table view has focus, the following keys are active:
+
+[cols="2,3", options="header"]
+|===
+| Key | Action
+
+| Up / Down arrows | Move selection
+| Home / End | Jump to first / last item
+| Enter | Open selected item
+| Delete / Backspace | Delete selected item
+| Escape | Clear selection
+|===
+
+== Resizable Master-Detail Split
+
+The collection and shelves screens use a master-detail layout on desktop.
+The divider between the master and detail panes is draggable — hover to see the resize cursor, then drag to adjust the split.
+The user's preferred ratio is persisted to SharedPreferences.
+
+Default split ratio is 45% master / 55% detail.
+The master pane has a minimum width of 400 pixels; the detail pane has a minimum width of 300 pixels.
+
+== Webcam Scanning
+
+All desktop platforms support webcam-based barcode scanning.
+
+[cols="1,3", options="header"]
+|===
+| Platform | Implementation
+
+| macOS
+| `mobile_scanner` package (ML Kit)
+
+| Windows
+| `camera_desktop` + `flutter_zxing` (periodic still-frame capture)
+
+| Linux
+| `camera_desktop` + `flutter_zxing` (periodic still-frame capture)
+|===
+
+Toggle between keyboard input and webcam mode using the camera icon in the Scanner toolbar.
+When the webcam is active, cover OCR can capture directly from the camera rather than requiring a gallery file pick.
+
+== Cover OCR
+
+Cover OCR extracts text from media artwork when barcode lookup fails.
+
+[cols="1,3", options="header"]
+|===
+| Platform | Implementation
+
+| macOS
+| Apple Vision framework via method channel
+
+| Windows
+| Tesseract via `flutter_tesseract_ocr`
+
+| Linux
+| Tesseract via `flutter_tesseract_ocr`
+|===
+
+On Windows and Linux with an active webcam, the "Capture cover" button takes a still frame from the camera.
+Otherwise, a gallery file picker is used.
+
+== Minimum Window Size
+
+The minimum window size is enforced at 800 × 600 pixels across all desktop platforms.
+Window position and size are persisted to SharedPreferences and restored on relaunch.
+
+== Performance Optimisations
+
+The data layer includes several optimisations for large collections:
+
+* *Database indexes* on `deleted`, `media_type + date_added`, `updated_at`, `barcode` (media_items), `synced` (sync_log), `borrower_id` and `returned_at` (loans)
+* *SQL-level sorting and filtering* — sort order and media type filter are pushed into SQLite queries rather than applied in Dart
+* *Batch sync* — PostgreSQL upserts use multi-row INSERT statements in batches of 50, reducing network round-trips
+* *Debounced statistics* — the insights dashboard debounces recomputation by 500ms to avoid excessive recalculation
+* *Virtualised table* — the collection table view uses `PaginatedDataTable2` with lazy row rendering (50 rows per page)

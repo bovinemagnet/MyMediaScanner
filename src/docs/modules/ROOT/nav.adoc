@@ -1,0 +1,18 @@
+* xref:index.adoc[Overview]
+* xref:getting-started.adoc[Getting Started]
+* Architecture
+** xref:architecture.adoc[Clean Architecture]
+** xref:navigation.adoc[Navigation & Routing]
+** xref:design-system.adoc[Design System]
+* Data
+** xref:data-model.adoc[Data Model]
+** xref:metadata-lookup.adoc[Metadata Lookup]
+** xref:sync-strategy.adoc[Sync Strategy]
+* Features
+** xref:scanning.adoc[Barcode Scanning]
+** xref:batch-scanning.adoc[Batch Scanning]
+** xref:lending.adoc[Lending Tracker]
+** xref:rip-library.adoc[Rip Library]
+** xref:desktop-mode.adoc[Desktop Mode]
+* xref:api-configuration.adoc[API Configuration]
+* xref:testing.adoc[Testing]

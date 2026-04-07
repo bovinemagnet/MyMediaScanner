@@ -1,0 +1,99 @@
+%% Riverpod provider dependency graph
+%% All providers are hand-written Notifier/AsyncNotifier — riverpod_generator is not used
+flowchart TD
+    subgraph INFRA["Infrastructure Providers"]
+        DB["databaseProvider\n(AppDatabase singleton)"]
+        SECURE["secureStorageProvider\n(FlutterSecureStorage)"]
+        PREFS["sharedPreferencesProvider\n(SharedPreferences)"]
+        DIO["dioProvider\n(Dio + interceptors)"]
+    end
+
+    subgraph CONFIG["Configuration Providers"]
+        PG["postgresConfigProvider\n(host, port, db, credentials)"]
+        KEYS["apiKeysProvider\n(TMDB, Discogs, UPCitemdb keys)"]
+        THEME["themeModeProvider\n(Notifier — system/light/dark)"]
+    end
+
+    subgraph DAO["DAO Providers"]
+        MEDIA_DAO["mediaItemsDaoProvider"]
+        TAGS_DAO["tagsDaoProvider"]
+        SHELVES_DAO["shelvesDaoProvider"]
+        SYNC_DAO["syncLogDaoProvider"]
+        BORROW_DAO["borrowersDaoProvider"]
+        RIP_DAO["ripAlbumsDaoProvider"]
+        BATCH_DAO["batchSessionsDaoProvider"]
+    end
+
+    subgraph REPO["Repository Providers"]
+        MEDIA_REPO["mediaItemRepositoryProvider\n(IMediaItemRepository)"]
+        META_REPO["metadataRepositoryProvider\n(IMetadataRepository)"]
+        TAG_REPO["tagRepositoryProvider\n(ITagRepository)"]
+        SHELF_REPO["shelfRepositoryProvider\n(IShelfRepository)"]
+        SYNC_REPO["syncRepositoryProvider\n(ISyncRepository)"]
+        BORROW_REPO["borrowerRepositoryProvider\n(IBorrowerRepository)"]
+        RIP_REPO["ripAlbumRepositoryProvider\n(IRipAlbumRepository)"]
+        BATCH_REPO["batchSessionRepositoryProvider\n(IBatchSessionRepository)"]
+    end
+
+    subgraph FEATURE["Feature Providers (UI state)"]
+        COLLECTION["collectionProvider\n(AsyncNotifier)\nStream of MediaItem list"]
+        SCANNER["scannerProvider\n(Notifier)\nScan state machine"]
+        META_LOOKUP["metadataLookupProvider\n(FutureProvider)"]
+        SYNC_STATUS["syncStatusProvider\n(Stream of SyncStatus)"]
+        SHELVES["shelvesProvider\n(AsyncNotifier)"]
+        BATCH["batchEditorProvider\n(Notifier)"]
+        LENDING["lendingProvider\n(AsyncNotifier)"]
+        INSIGHTS["insightsProvider\n(AsyncNotifier)"]
+        RIP_LIB["ripLibraryProvider\n(AsyncNotifier)"]
+    end
+
+    %% Infrastructure → DAO
+    DB --> MEDIA_DAO
+    DB --> TAGS_DAO
+    DB --> SHELVES_DAO
+    DB --> SYNC_DAO
+    DB --> BORROW_DAO
+    DB --> RIP_DAO
+    DB --> BATCH_DAO
+
+    %% Infrastructure → Config
+    SECURE --> PG
+    SECURE --> KEYS
+    PREFS --> THEME
+
+    %% DAO → Repository
+    MEDIA_DAO --> MEDIA_REPO
+    TAGS_DAO --> TAG_REPO
+    SHELVES_DAO --> SHELF_REPO
+    SYNC_DAO --> SYNC_REPO
+    BORROW_DAO --> BORROW_REPO
+    RIP_DAO --> RIP_REPO
+    BATCH_DAO --> BATCH_REPO
+
+    %% Config + DIO → Metadata repo
+    KEYS --> META_REPO
+    DIO --> META_REPO
+    MEDIA_DAO --> META_REPO
+
+    %% Config → Sync repo
+    PG --> SYNC_REPO
+
+    %% Repository → Feature providers
+    MEDIA_REPO --> COLLECTION
+    MEDIA_REPO --> SCANNER
+    META_REPO --> META_LOOKUP
+    META_LOOKUP --> SCANNER
+    SYNC_REPO --> SYNC_STATUS
+    SHELF_REPO --> SHELVES
+    BATCH_REPO --> BATCH
+    SYNC_REPO --> BATCH
+    BORROW_REPO --> LENDING
+    MEDIA_REPO --> INSIGHTS
+    RIP_REPO --> RIP_LIB
+    MEDIA_REPO --> RIP_LIB
+
+    style INFRA fill:#2a2a2a,color:#cccccc,stroke:#888888
+    style CONFIG fill:#2a2a2a,color:#cccccc,stroke:#888888
+    style DAO fill:#1a3a4a,color:#6dddff,stroke:#6dddff
+    style REPO fill:#00647a,color:#ffffff,stroke:#004d5c
+    style FEATURE fill:#1a4a3a,color:#aaffcc,stroke:#44aa88

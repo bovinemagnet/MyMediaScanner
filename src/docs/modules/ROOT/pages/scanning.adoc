@@ -1,0 +1,149 @@
+= Barcode Scanning
+include::_attributes.adoc[]
+:description: How MyMediaScanner detects and processes barcodes across all supported platforms.
+
+Barcode scanning is the primary way to add items to your collection.
+MyMediaScanner supports real-time camera scanning on mobile, keyboard-wedge USB scanners on desktop, and manual barcode entry on any platform.
+
+== Scan Flow
+
+The diagram below shows the complete lifecycle of a single scan, from the camera opening to the item being stored in SQLite and queued for background sync.
+
+[{MERMAID}]
+----
+include::example$scan-flow.mmd[]
+----
+
+== Platform Support
+
+[cols="1,^1,3",options="header"]
+|===
+| Platform | Priority | Scanning Method
+
+| Android
+| P0
+| Device camera (ML Kit)
+
+| iOS
+| P0
+| Device camera (ML Kit)
+
+| macOS
+| P1
+| USB scanner + webcam + manual entry
+
+| Windows
+| P1
+| USB scanner + webcam + manual entry
+
+| Linux
+| P1
+| USB scanner + webcam + manual entry
+|===
+
+P0 platforms ship with full camera-based scanning out of the box.
+P1 platforms rely primarily on keyboard-wedge input; webcam scanning is available on all desktop platforms.
+
+== Mobile Scanning
+
+On Android and iOS, MyMediaScanner uses the `mobile_scanner` package (backed by Google ML Kit) to provide a real-time viewfinder overlay.
+
+=== Viewfinder Overlay
+
+The viewfinder renders a live camera preview with a targeting reticle.
+When ML Kit identifies a barcode within the frame the app immediately triggers:
+
+* a confirmation animation on the viewfinder,
+* haptic feedback (vibration), and
+* an audible confirmation tone.
+
+The camera is then paused while metadata lookup proceeds so that accidental double-scans are avoided.
+
+=== External Scanner Toggle
+
+A toggle in the scan screen toolbar switches the input source from the device camera to a *Bluetooth or USB external scanner*.
+When active, the viewfinder is hidden and the app accepts barcode strings from the connected hardware device in the same way as a keyboard-wedge scanner on desktop.
+
+== Desktop Scanning
+
+=== Keyboard-Wedge USB Scanner
+
+On macOS, Windows, and Linux the primary scanning method is a *keyboard-wedge USB barcode scanner*.
+These devices emulate a keyboard: they type the barcode digits followed by an `Enter` keystroke.
+
+The scan screen keeps a dedicated text field in focus at all times.
+When the scanner fires, the barcode string is inserted into the field and the `Enter` key triggers the metadata lookup automatically — no mouse interaction is required.
+
+A keyboard shortcut (`Ctrl+Shift+S` on Windows/Linux, `Cmd+Shift+S` on macOS) can be used to focus the text field if focus is lost.
+
+=== Webcam Scanning
+
+Webcam-based barcode scanning is available on all desktop platforms.
+macOS uses the `mobile_scanner` package (backed by ML Kit) to drive the webcam.
+Windows and Linux use the `camera_desktop` package with `flutter_zxing` for barcode detection; frames are captured periodically as still images and passed to the ZXing decoder.
+
+=== Manual Entry
+
+All desktop platforms support manual barcode entry.
+Type or paste the barcode into the text field and press `Enter` to begin the metadata lookup.
+
+== Media Type Filter
+
+The scan screen includes a row of media type filter toggles:
+
+* All
+* Film
+* TV
+* Music
+* Book
+* Game
+
+Selecting a specific type narrows the metadata lookup to the appropriate API (for example, choosing *Music* routes EAN barcodes directly to Discogs rather than attempting a TMDB lookup first).
+The selected filter is preserved for the duration of the scanning session.
+
+== Duplicate Detection
+
+Before saving, MyMediaScanner checks whether the scanned barcode already exists in the `barcode_cache` table.
+If a matching record is found:
+
+* A warning dialogue is displayed informing the user that the item is already in their collection.
+* The user may cancel the scan or choose to save the item again (for example, when adding a second copy).
+
+== Cover OCR
+
+Cover OCR extracts text from physical media artwork to supplement or correct metadata.
+Support varies by platform.
+
+[cols="1,3",options="header"]
+|===
+| Platform | OCR Implementation
+
+| Android
+| Google ML Kit text recognition
+
+| iOS
+| Google ML Kit text recognition
+
+| macOS
+| Apple Vision framework via method channel (`com.mymediascanner/vision_ocr`), using gallery file picker
+
+| Windows
+| Tesseract OCR (`flutter_tesseract_ocr`)
+
+| Linux
+| Tesseract OCR (`flutter_tesseract_ocr`)
+|===
+
+NOTE: On Windows and Linux, cover OCR can capture directly from the webcam when it is active, or fall back to a gallery file picker when no webcam session is running.
+On macOS, a gallery file picker is always used because `ImagePicker.camera` is unreliable on desktop.
+
+== Scan Flow Summary
+
+. The camera opens (or external scanner / manual entry is ready).
+. A barcode is detected.
+. Haptic and audible feedback confirms the detection.
+. A metadata lookup begins (see xref:metadata-lookup.adoc[Metadata Lookup] for the full lookup strategy).
+. The user reviews and optionally edits the returned metadata.
+. If a duplicate is detected, a warning is shown.
+. The item is saved to SQLite.
+. A background sync task queues the new record for upload to PostgreSQL.

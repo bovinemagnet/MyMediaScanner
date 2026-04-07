@@ -1,0 +1,70 @@
+%% Scan user flow — mobile camera path and desktop keyboard/USB path
+flowchart TD
+    %% ── Entry points ──────────────────────────────────────────────
+    MobileEntry(["Mobile: Tap Scan FAB"])
+    DesktopEntry(["Desktop: Press S\nor click Scan in sidebar"])
+
+    %% ── Mobile path ───────────────────────────────────────────────
+    Camera["Open camera viewfinder\n(mobile_scanner / ML Kit)"]
+    BarcodeDetected{"Barcode\ndetected?"}
+    Haptic["Haptic feedback\n+ audible beep"]
+
+    %% ── Desktop path ──────────────────────────────────────────────
+    ScanField["Scan input field\nfocused"]
+    DesktopInput{"USB wedge scan\nor type barcode?"}
+    UsbScan["USB barcode scanner\n(keyboard-wedge input)"]
+    TypeBarcode["User types barcode\nmanually"]
+
+    %% ── Shared lookup flow ─────────────────────────────────────────
+    LookupStart["MetadataRepository\nlookupBarcode(barcode)"]
+    LookupResult{"Lookup\nresult?"}
+    MultiMatch["Disambiguation screen\n(user selects candidate)"]
+    ConfirmScreen["Metadata Confirm screen\n(user reviews / edits)"]
+    DuplicateCheck{"Duplicate\ndetected?"}
+    WarnDuplicate["Warn user\n(duplicate exists)"]
+    UserChoice{"User\ndecision?"}
+    Save["Save MediaItem\nto SQLite"]
+    BackgroundSync["Background sync\nto PostgreSQL"]
+    ReturnCollection(["Return to Collection"])
+    ReturnScanner(["Return to Scanner\n(batch mode continues)"])
+    Cancel(["Cancel — discard"])
+
+    %% ── Mobile flow ───────────────────────────────────────────────
+    MobileEntry --> Camera
+    Camera --> BarcodeDetected
+    BarcodeDetected -- "no" --> Camera
+    BarcodeDetected -- "yes" --> Haptic
+    Haptic --> LookupStart
+
+    %% ── Desktop flow ──────────────────────────────────────────────
+    DesktopEntry --> ScanField
+    ScanField --> DesktopInput
+    DesktopInput -- "USB scanner" --> UsbScan
+    DesktopInput -- "manual entry" --> TypeBarcode
+    UsbScan --> LookupStart
+    TypeBarcode --> LookupStart
+
+    %% ── Shared path ───────────────────────────────────────────────
+    LookupStart --> LookupResult
+    LookupResult -- "not found" --> ConfirmScreen
+    LookupResult -- "single match" --> ConfirmScreen
+    LookupResult -- "multiple matches" --> MultiMatch
+    MultiMatch --> ConfirmScreen
+
+    ConfirmScreen --> DuplicateCheck
+    DuplicateCheck -- "no" --> Save
+    DuplicateCheck -- "yes" --> WarnDuplicate
+    WarnDuplicate --> UserChoice
+    UserChoice -- "save anyway" --> Save
+    UserChoice -- "cancel" --> Cancel
+
+    Save --> BackgroundSync
+    BackgroundSync --> ReturnCollection
+    ReturnCollection --> ReturnScanner
+
+    style MobileEntry fill:#1a3a4a,color:#6dddff,stroke:#6dddff
+    style DesktopEntry fill:#1a3a4a,color:#6dddff,stroke:#6dddff
+    style Save fill:#00647a,color:#fff,stroke:#004d5c
+    style BackgroundSync fill:#1a4a3a,color:#aaffcc,stroke:#44aa88
+    style Cancel fill:#7a3030,color:#fff,stroke:#5c2020
+    style WarnDuplicate fill:#4a4a1a,color:#ffeeaa,stroke:#888822

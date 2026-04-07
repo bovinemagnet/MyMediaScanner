@@ -1,0 +1,53 @@
+sequenceDiagram
+    participant App as Flutter App
+    participant SQLite as Local SQLite
+    participant PG as PostgreSQL
+
+    Note over App,PG: Push Phase
+
+    App->>SQLite: Query rows where synced_at IS NULL OR updated_at > synced_at
+    SQLite-->>App: Changed rows
+
+    App->>App: Partition changed rows into batches of 50
+
+    loop For each batch of up to 50 rows
+        loop For each row in batch — conflict detection
+            App->>PG: Fetch current remote version of row
+            PG-->>App: Remote row (or not found)
+
+            alt local.updated_at > remote.updated_at
+                Note over App: Local wins — field-by-field merge
+            else remote.updated_at within conflict threshold
+                Note over App: Flag for user review
+            else remote.updated_at >= local.updated_at
+                Note over App: Remote wins for conflicting fields
+            end
+        end
+
+        App->>PG: Multi-row INSERT...ON CONFLICT DO UPDATE (batch)
+        PG-->>App: OK
+        App->>SQLite: Update synced_at = now() for all rows in batch
+        App->>SQLite: Write to sync_log (direction=push, batch_size=N)
+    end
+
+    Note over App,PG: Pull Phase
+
+    App->>PG: Query rows where updated_at > last_synced_at (per table)
+    PG-->>App: Remote changes
+
+    loop For each remote row
+        App->>SQLite: Fetch local version of row
+        SQLite-->>App: Local row (or not found)
+
+        alt Row not found locally
+            App->>SQLite: Insert new row
+        else local.updated_at > remote.updated_at
+            Note over App: Local wins — skip remote value
+        else
+            App->>SQLite: Merge remote values into local row
+        end
+
+        App->>SQLite: Write to sync_log (direction=pull)
+    end
+
+    Note over App,SQLite: Sync complete

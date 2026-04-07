@@ -1,0 +1,158 @@
+erDiagram
+    media_items {
+        TEXT id PK
+        TEXT barcode
+        TEXT barcode_type
+        TEXT media_type
+        TEXT title
+        TEXT subtitle
+        TEXT description
+        TEXT cover_url
+        INTEGER year
+        TEXT publisher
+        TEXT format
+        TEXT genres
+        TEXT extra_metadata
+        TEXT source_apis
+        REAL user_rating
+        TEXT user_review
+        INTEGER date_added
+        INTEGER date_scanned
+        INTEGER updated_at
+        INTEGER synced_at
+        INTEGER deleted
+    }
+
+    tags {
+        TEXT id PK
+        TEXT name
+        TEXT colour
+        INTEGER updated_at
+        INTEGER deleted
+    }
+
+    media_item_tags {
+        TEXT media_item_id FK
+        TEXT tag_id FK
+    }
+
+    shelves {
+        TEXT id PK
+        TEXT name
+        TEXT description
+        INTEGER sort_order
+        INTEGER updated_at
+        INTEGER deleted
+    }
+
+    shelf_items {
+        TEXT shelf_id FK
+        TEXT media_item_id FK
+        INTEGER position
+    }
+
+    barcode_cache {
+        TEXT barcode PK
+        TEXT media_type_hint
+        TEXT response_json
+        TEXT source_api
+        INTEGER cached_at
+    }
+
+    sync_log {
+        TEXT id PK
+        TEXT entity_type
+        TEXT entity_id
+        TEXT operation
+        TEXT payload_json
+        INTEGER created_at
+        INTEGER attempted_at
+        INTEGER synced
+        TEXT error_message
+        INTEGER duration_ms
+        TEXT direction
+        TEXT resolved_by
+    }
+
+    borrowers {
+        TEXT id PK
+        TEXT name
+        TEXT email
+        TEXT phone
+        TEXT notes
+        INTEGER updated_at
+        INTEGER deleted
+    }
+
+    loans {
+        TEXT id PK
+        TEXT media_item_id FK
+        TEXT borrower_id FK
+        INTEGER lent_at
+        INTEGER returned_at
+        INTEGER due_at
+        TEXT notes
+        INTEGER updated_at
+        INTEGER deleted
+    }
+
+    rip_albums {
+        TEXT id PK
+        TEXT media_item_id FK
+        TEXT path
+        TEXT album_title
+        TEXT artist_name
+        INTEGER disc_count
+        INTEGER total_size_bytes
+        INTEGER updated_at
+        INTEGER deleted
+    }
+
+    rip_tracks {
+        TEXT id PK
+        TEXT rip_album_id FK
+        INTEGER disc_number
+        INTEGER track_number
+        TEXT title
+        TEXT file_path
+        INTEGER duration_ms
+        INTEGER size_bytes
+        TEXT codec
+        INTEGER sample_rate
+        INTEGER bit_depth
+        TEXT accurate_rip
+        TEXT rip_log_source
+        INTEGER quality_checked_at
+        INTEGER updated_at
+        INTEGER deleted
+    }
+
+    batch_sessions {
+        TEXT id PK
+        INTEGER created_at
+        INTEGER completed_at
+        TEXT status
+        INTEGER item_count
+    }
+
+    batch_queue_items {
+        TEXT id PK
+        TEXT session_id FK
+        TEXT barcode
+        TEXT barcode_type
+        TEXT status
+        INTEGER scanned_at
+        TEXT metadata_json
+        TEXT scan_result_json
+        INTEGER sort_order
+    }
+
+    media_items ||--o{ media_item_tags : "tagged with"
+    tags ||--o{ media_item_tags : "applied to"
+    media_items ||--o{ shelf_items : "placed on"
+    shelves ||--o{ shelf_items : "contains"
+    media_items ||--o{ loans : "lent via"
+    borrowers ||--o{ loans : "borrows"
+    media_items ||--o| rip_albums : "ripped as"
+    rip_albums ||--o{ rip_tracks : "contains"
+    batch_sessions ||--o{ batch_queue_items : "queues"

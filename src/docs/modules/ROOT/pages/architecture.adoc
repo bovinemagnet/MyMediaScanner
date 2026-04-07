@@ -1,0 +1,115 @@
+= Clean Architecture
+include::_attributes.adoc[]
+:author: Paul Snow
+:version: 0.0.0
+:description: Overview of MyMediaScanner's clean architecture, layer responsibilities, state management, and key conventions.
+
+MyMediaScanner follows clean architecture principles with a strict, one-way dependency rule: the `domain/` layer has *zero* dependencies on `data/` or `presentation/`.
+All business logic lives in the domain layer; outer layers depend inward, never the other way around.
+
+== Layer Overview
+
+The following diagram illustrates the five top-level layers and the direction of their dependencies.
+
+[{MERMAID}]
+....
+include::example$architecture-layers.mmd[]
+....
+
+The dashed border around `core/` indicates that it is a cross-cutting concern available to all layers but has no dependencies of its own.
+
+== Layer Descriptions
+
+=== app/
+
+The application bootstrap layer.
+It owns the Material 3 theme configuration (colour schemes, typography tokens, theme extensions) and wires together the top-level widget tree.
+
+`app/theme/`:: Custom design system — `app_colors`, `app_typography`, `app_theme`, and `app_theme_extensions`.
+`app/app.dart`:: `MaterialApp.router` entry point; reads `themeModeProvider` to switch between Obsidian Lens (dark) and Precision Editorial (light) themes.
+`app/router.dart`:: GoRouter configuration with 8 `StatefulShellBranch` routes.
+See xref:navigation.adoc[] for the full routing table.
+
+=== core/
+
+Cross-cutting utilities shared across all layers.
+Nothing in `core/` imports from `domain/`, `data/`, or `presentation/`.
+
+`core/constants/`:: App-wide constants and Material 3 breakpoint definitions.
+`core/utils/`:: `platform_utils.dart` — the single authoritative place for platform detection (never use `dart:io Platform` directly in the presentation layer); `barcode_utils.dart` — barcode type classification; cover OCR helper; Vision OCR method channel (`com.mymediascanner/vision_ocr`) for macOS; Tesseract OCR service for Windows and Linux.
+
+`core/services/camera/`:: Camera service abstraction with platform-specific implementations — `MobileScannerCameraService` for Android/iOS/macOS (mobile_scanner + ML Kit) and `NativeCameraService` for Windows/Linux (camera_desktop + flutter_zxing).
+
+=== data/
+
+The infrastructure layer.
+It implements the abstract repository interfaces defined in `domain/` and manages all I/O.
+
+`data/local/`:: Drift (SQLite) database, typed table definitions, and DAOs.
+Schema version {schema-version} contains 13 tables: `media_items`, `tags`, `media_item_tags`, `shelves`, `shelf_items`, `barcode_cache`, `sync_log`, `borrowers`, `loans`, `rip_albums`, `rip_tracks`, `batch_sessions`, and `batch_queue_items`.
+`data/remote/api/`:: Retrofit API clients for TMDB, Discogs, Google Books, Open Library, and UPCitemdb.
+Users supply their own API keys stored in `flutter_secure_storage`.
+`data/remote/sync/`:: PostgreSQL sync client (direct connection via the `postgres` Dart package) with last-write-wins conflict resolution.
+`data/mappers/`:: Stateless converter functions that transform API DTOs and Drift row types into domain entities.
+`data/repositories/`:: Concrete implementations of every `I`-prefixed repository interface from `domain/repositories/`.
+
+=== domain/
+
+The innermost layer.
+Pure Dart only — no Flutter, no Drift, no HTTP client.
+This layer defines *what* the app does; outer layers define *how*.
+
+`domain/entities/`:: Immutable value objects generated with `@freezed`, plus enums and sealed classes.
+`domain/repositories/`:: Abstract interfaces that `data/` implements.
+All interfaces are prefixed with `I` (e.g. `IMediaItemRepository`, `IMetadataRepository`).
+`domain/usecases/`:: Business logic orchestrators that compose repository calls.
+Examples include `ScanBarcodeUseCase`, `SaveMediaItemUseCase`, and `SyncUseCase`.
+
+=== presentation/
+
+The UI layer.
+It reads state from Riverpod providers and emits user-intent events back through them.
+It depends on `domain/` for entities and use-case interfaces, but never on `data/`.
+
+`presentation/providers/`:: Hand-written Riverpod 3.x providers.
+See <<state-management>> for details.
+`presentation/screens/`:: Feature screens — `dashboard`, `collection`, `scanner`, `metadata_confirm`, `disambiguation`, `shelves`, `batch`, `item_detail`, `settings`, `rips`, and `about`.
+`presentation/widgets/`:: Shared widgets: `AppScaffold` (sidebar / glassmorphism bottom nav), `GlassContainer`, `GradientButton`, `ScreenHeader`, `MasterDetailLayout` (resizable split with draggable divider, drawer mode for narrow windows), `TableKeyboardNavigation` (keyboard navigation for collection and rips tables), and standardised empty / error / loading states.
+
+[#state-management]
+== State Management
+
+MyMediaScanner uses *Riverpod 3.x* with hand-written `Notifier` and `AsyncNotifier` classes.
+
+IMPORTANT: `riverpod_generator` is *not* used in this project.
+It is incompatible with `drift_dev` because both tools run code generation and produce conflicting outputs.
+All providers must be declared manually.
+
+Every provider falls into one of four tiers:
+
+Infrastructure providers:: Singleton services — `databaseProvider`, `dioProvider`, `secureStorageProvider`, `themeModeProvider`.
+Repository providers:: Wrap the concrete repository classes from `data/`; depend on infrastructure providers.
+Use-case providers:: Compose repository providers; encapsulate business logic.
+Screen providers:: `AsyncNotifier` or `Notifier` classes consumed directly by screen widgets.
+
+The diagram below shows the dependency edges between representative providers.
+
+[{MERMAID}]
+....
+include::example$provider-graph.mmd[]
+....
+
+== Key Conventions
+
+The following conventions are enforced across the entire codebase.
+
+Repository interface naming:: All domain repository interfaces are prefixed with `I` — for example, `IMediaItemRepository`, `IShelfRepository`, `IBorrowerRepository`.
+Platform detection:: Always use `core/utils/platform_utils.dart`.
+Never import `dart:io Platform` directly in the presentation layer, as it throws on web and behaves inconsistently across build contexts.
+Soft deletes:: Rows are never hard-deleted from the database.
+Deleted records have `deleted = 1` and are included in sync payloads so that deletions propagate to the PostgreSQL replica.
+Desktop screen headers:: Desktop screens use the inline `ScreenHeader` widget instead of an `AppBar`, which is reserved for mobile screens that need back-navigation affordance.
+Section layout:: Content sections use tonal containers (`surfaceContainerHigh` colour role) with uppercase label headers.
+Dividers are not used.
+Database migrations:: Every schema change requires a new migration entry in `AppDatabase`.
+The current schema version is {schema-version}.

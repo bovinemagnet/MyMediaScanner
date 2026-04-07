@@ -1,0 +1,55 @@
+%% Clean architecture layers — dependency arrows point inward toward domain
+%% Key rule: domain/ has ZERO dependencies on data/ or presentation/
+flowchart TD
+    subgraph APP["app/ — Application Bootstrap"]
+        direction TB
+        AppTheme["Theme\n(app_colors, app_typography,\napp_theme, app_theme_extensions)"]
+        AppRouter["Router\n(GoRouter, StatefulShellRoute)"]
+        AppEntry["MaterialApp.router\n(app.dart)"]
+    end
+
+    subgraph PRESENTATION["presentation/ — UI Layer"]
+        direction TB
+        Screens["Screens\n(dashboard, collection, scanner,\nbatch, shelves, settings, rips)"]
+        Widgets["Shared Widgets\n(AppScaffold, GlassContainer,\nMasterDetailLayout, GradientButton)"]
+        Providers["Riverpod Providers\n(Notifier / AsyncNotifier\nhand-written, no riverpod_generator)"]
+    end
+
+    subgraph DOMAIN["domain/ — Business Logic (no external deps)"]
+        direction TB
+        Entities["Entities\n(@freezed immutable models,\nenums, sealed classes)"]
+        UseCases["Use Cases\n(ScanBarcodeUseCase,\nSyncUseCase, LendingUseCase)"]
+        RepoInterfaces["Repository Interfaces\n(IMediaItemRepository,\nIMetadataRepository, ISyncRepository)"]
+    end
+
+    subgraph DATA["data/ — Infrastructure Layer"]
+        direction TB
+        RepoConcrete["Repository Implementations\n(MediaItemRepository,\nMetadataRepository, SyncRepository)"]
+        APIClients["API Clients\n(Retrofit — TMDB, Discogs,\nGoogle Books, Open Library, UPCitemdb)"]
+        Database["Local Database\n(Drift / SQLite, DAOs,\nschema v7, 13 tables)"]
+        Mappers["Mappers\n(DTO → domain entity converters)"]
+        SyncClient["Sync Client\n(PostgreSQL direct,\nconflict resolution)"]
+    end
+
+    subgraph CORE["core/ — Cross-cutting Concerns (used by all layers)"]
+        direction LR
+        Constants["Constants\n(breakpoints, app constants)"]
+        Utils["Utilities\n(PlatformUtils, BarcodeUtils,\nCoverOCR, VisionOCR channel)"]
+    end
+
+    %% Dependency edges — all arrows point toward domain
+    APP --> PRESENTATION
+    PRESENTATION --> DOMAIN
+    DATA --> DOMAIN
+
+    %% core is used by everyone
+    CORE -.->|"used by"| PRESENTATION
+    CORE -.->|"used by"| DATA
+    CORE -.->|"used by"| APP
+
+    %% Explicit prohibition (domain must NOT depend on data or presentation)
+    style DOMAIN fill:#00647a,color:#ffffff,stroke:#004d5c,stroke-width:2px
+    style PRESENTATION fill:#1a3a4a,color:#6dddff,stroke:#6dddff,stroke-width:2px
+    style DATA fill:#1a4a3a,color:#aaffcc,stroke:#44aa88,stroke-width:2px
+    style APP fill:#2a2a2a,color:#f5f6f7,stroke:#888888,stroke-width:2px
+    style CORE fill:#333333,color:#cccccc,stroke:#888888,stroke-width:1px,stroke-dasharray:4 2

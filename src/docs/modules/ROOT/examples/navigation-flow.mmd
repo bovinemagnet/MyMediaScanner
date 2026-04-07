@@ -1,0 +1,63 @@
+%% Navigation routes — GoRouter StatefulShellRoute with 8 branches
+%% Desktop: sidebar navigation  Mobile: bottom nav (subset of branches)
+flowchart LR
+    Root(["MaterialApp.router\nGoRouter"])
+
+    subgraph SHELL["StatefulShellRoute — 8 Branches"]
+        B0["Branch 0\n/ — Dashboard\nDesktop + Mobile"]
+        B1["Branch 1\n/collection — Collection\nDesktop + Mobile"]
+        B2["Branch 2\n/scan — Scanner\nMobile only"]
+        B3["Branch 3\n/shelves — Shelves\nDesktop sidebar +\nLibrary AppBar"]
+        B4["Branch 4\n/batch — Batch Editor\nDesktop sidebar"]
+        B5["Branch 5\n/insights — Insights\nDesktop + Mobile"]
+        B6["Branch 6\n/settings — Settings\nDesktop sidebar"]
+        B7["Branch 7\n/rips — Rip Library\nDesktop only"]
+    end
+
+    subgraph COLLECTION_ROUTES["Collection nested routes"]
+        ITEM["/collection/item/:id\nItem Detail"]
+    end
+
+    subgraph SCAN_ROUTES["Scanner nested routes"]
+        CONFIRM["/scan/confirm\nMetadata Confirm"]
+        DISAMBIG["/scan/disambiguate\nDisambiguation\n(multi-match)"]
+    end
+
+    subgraph BATCH_ROUTES["Batch nested routes"]
+        BATCH_HIST["/batch/history\nBatch History"]
+    end
+
+    subgraph SETTINGS_ROUTES["Settings nested routes"]
+        SETTINGS_PG["/settings/postgres\nPostgreSQL Config"]
+        SETTINGS_ABOUT["/settings/about\nAbout"]
+        SETTINGS_BORROWERS["/settings/borrowers\nBorrowers List"]
+        SETTINGS_SYNC["/settings/sync-log\nSync Log"]
+    end
+
+    subgraph BORROWER_ROUTES["Borrower nested routes"]
+        BORROWER_DETAIL["/borrowers/:id\nBorrower Detail"]
+    end
+
+    Root --> SHELL
+
+    B1 --> COLLECTION_ROUTES
+    B2 --> SCAN_ROUTES
+    B4 --> BATCH_ROUTES
+    B6 --> SETTINGS_ROUTES
+    SETTINGS_BORROWERS --> BORROWER_ROUTES
+
+    style Root fill:#00647a,color:#fff,stroke:#004d5c
+    style SHELL fill:#1a1a1a,color:#cccccc,stroke:#444444
+    style B0 fill:#1a3a4a,color:#6dddff,stroke:#6dddff
+    style B1 fill:#1a3a4a,color:#6dddff,stroke:#6dddff
+    style B2 fill:#1a3a4a,color:#6dddff,stroke:#6dddff
+    style B3 fill:#1a3a4a,color:#6dddff,stroke:#6dddff
+    style B4 fill:#1a3a4a,color:#6dddff,stroke:#6dddff
+    style B5 fill:#1a3a4a,color:#6dddff,stroke:#6dddff
+    style B6 fill:#1a3a4a,color:#6dddff,stroke:#6dddff
+    style B7 fill:#1a3a4a,color:#6dddff,stroke:#6dddff
+    style COLLECTION_ROUTES fill:#1a2a1a,color:#aaffcc,stroke:#44aa88
+    style SCAN_ROUTES fill:#1a2a1a,color:#aaffcc,stroke:#44aa88
+    style BATCH_ROUTES fill:#1a2a1a,color:#aaffcc,stroke:#44aa88
+    style SETTINGS_ROUTES fill:#1a2a1a,color:#aaffcc,stroke:#44aa88
+    style BORROWER_ROUTES fill:#1a2a1a,color:#aaffcc,stroke:#44aa88
