@@ -5,6 +5,7 @@ import 'package:mymediascanner/domain/repositories/i_sync_repository.dart';
 import 'package:mymediascanner/presentation/providers/connection_health_provider.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/sync_provider.dart';
+import 'package:mymediascanner/presentation/screens/settings/widgets/sync_conflict_dialog.dart';
 
 class SyncStatusTile extends ConsumerWidget {
   const SyncStatusTile({super.key});
@@ -155,12 +156,21 @@ class SyncStatusTile extends ConsumerWidget {
           backgroundColor: Colors.red,
         ),
       );
-    } else {
-      final message = summary.conflicts > 0
-          ? 'Sync complete — ${summary.conflicts} conflict(s) detected'
-          : 'Sync complete';
+    } else if (summary.conflicts > 0) {
+      // Show conflict resolution dialog
+      final conflicts = await ref.read(syncConflictsProvider.future);
+      if (context.mounted && conflicts.isNotEmpty) {
+        await SyncConflictDialog.show(context, conflicts);
+      }
       messenger.showSnackBar(
-        SnackBar(content: Text(message)),
+        SnackBar(
+          content:
+              Text('Sync complete — ${summary.conflicts} conflict(s) detected'),
+        ),
+      );
+    } else {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Sync complete')),
       );
     }
   }
