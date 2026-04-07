@@ -61,6 +61,15 @@ class LoansDao extends DatabaseAccessor<AppDatabase> with _$LoansDaoMixin {
         .write(companion);
   }
 
+  Future<void> updateDueDate(String loanId, int? dueAt, int updatedAt) {
+    return (update(loansTable)..where((t) => t.id.equals(loanId))).write(
+      LoansTableCompanion(
+        dueAt: Value(dueAt),
+        updatedAt: Value(updatedAt),
+      ),
+    );
+  }
+
   Future<void> returnItem(String loanId, int returnedAt, int updatedAt) {
     return (update(loansTable)..where((t) => t.id.equals(loanId))).write(
       LoansTableCompanion(

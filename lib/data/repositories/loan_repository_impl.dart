@@ -71,6 +71,12 @@ class LoanRepositoryImpl implements ILoanRepository {
   }
 
   @override
+  Future<void> updateDueDate(String loanId, int? dueAt) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await _loansDao.updateDueDate(loanId, dueAt, now);
+  }
+
+  @override
   Future<void> returnItem(String loanId) async {
     final now = DateTime.now().millisecondsSinceEpoch;
     await _loansDao.returnItem(loanId, now, now);

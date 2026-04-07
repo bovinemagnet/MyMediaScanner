@@ -8,5 +8,6 @@ abstract interface class ILoanRepository {
   Stream<List<Loan>> watchLoansForBorrower(String borrowerId);
   Future<void> createLoan(Loan loan);
   Future<void> updateLoan(Loan loan);
+  Future<void> updateDueDate(String loanId, int? dueAt);
   Future<void> returnItem(String loanId);
 }
