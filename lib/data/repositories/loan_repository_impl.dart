@@ -10,6 +10,13 @@ class LoanRepositoryImpl implements ILoanRepository {
   final LoansDao _loansDao;
 
   @override
+  Stream<List<Loan>> watchAll() {
+    return _loansDao.watchAll().map(
+          (rows) => rows.map(_fromRow).toList(),
+        );
+  }
+
+  @override
   Stream<Loan?> watchActiveLoanForItem(String mediaItemId) {
     return _loansDao.watchActiveLoanForItem(mediaItemId).map(
           (row) => row != null ? _fromRow(row) : null,
