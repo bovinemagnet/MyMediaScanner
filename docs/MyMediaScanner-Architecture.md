@@ -1,8 +1,8 @@
 # Architecture: MyMediaScanner
 
-**Version:** 1.0  
+**Version:** 1.1  
 **Status:** Draft  
-**Last Updated:** 2026-03-15  
+**Last Updated:** 2026-04-07  
 
 ---
 
@@ -304,7 +304,86 @@ sync_log                                   -- outbound change queue
   created_at        INTEGER NOT NULL
   attempted_at      INTEGER
   synced            INTEGER NOT NULL DEFAULT 0
+  error_message     TEXT                   -- v7: error detail on failure
+  duration_ms       INTEGER                -- v7: sync duration in milliseconds
+  direction         TEXT                   -- v7: push | pull
+  resolved_by       TEXT                   -- v7: auto | user
+
+borrowers
+───────────────────────────────────────────────────────
+  id                UUID PK
+  name              TEXT NOT NULL
+  email             TEXT
+  phone             TEXT
+  notes             TEXT
+  updated_at        INTEGER NOT NULL
+  deleted           INTEGER NOT NULL DEFAULT 0
+
+loans
+───────────────────────────────────────────────────────
+  id                UUID PK
+  media_item_id     UUID FK → media_items.id
+  borrower_id       UUID FK → borrowers.id
+  lent_at           INTEGER NOT NULL        -- Unix ms
+  returned_at       INTEGER                 -- Unix ms; NULL = still active
+  due_at            INTEGER                 -- v7: Unix ms; NULL = no due date
+  notes             TEXT
+  updated_at        INTEGER NOT NULL
+  deleted           INTEGER NOT NULL DEFAULT 0
+
+rip_albums
+───────────────────────────────────────────────────────
+  id                UUID PK
+  media_item_id     UUID FK → media_items.id  -- NULL = unmatched
+  path              TEXT NOT NULL
+  album_title       TEXT NOT NULL
+  artist_name       TEXT
+  disc_count        INTEGER NOT NULL DEFAULT 1
+  total_size_bytes  INTEGER NOT NULL DEFAULT 0
+  updated_at        INTEGER NOT NULL
+  deleted           INTEGER NOT NULL DEFAULT 0
+
+rip_tracks
+───────────────────────────────────────────────────────
+  id                UUID PK
+  rip_album_id      UUID FK → rip_albums.id
+  disc_number       INTEGER NOT NULL DEFAULT 1
+  track_number      INTEGER NOT NULL
+  title             TEXT NOT NULL
+  file_path         TEXT NOT NULL
+  duration_ms       INTEGER
+  size_bytes        INTEGER NOT NULL DEFAULT 0
+  codec             TEXT
+  sample_rate       INTEGER
+  bit_depth         INTEGER
+  accurate_rip      TEXT                   -- verified | mismatch | unknown
+  rip_log_source    TEXT
+  quality_checked_at INTEGER
+  updated_at        INTEGER NOT NULL
+  deleted           INTEGER NOT NULL DEFAULT 0
+
+batch_sessions                             -- v7: batch scan session tracking
+───────────────────────────────────────────────────────
+  id                UUID PK
+  created_at        INTEGER NOT NULL
+  completed_at      INTEGER                 -- NULL = active
+  status            TEXT NOT NULL           -- active | completed | discarded
+  item_count        INTEGER NOT NULL DEFAULT 0
+
+batch_queue_items                          -- v7: persisted batch queue items
+───────────────────────────────────────────────────────
+  id                UUID PK
+  session_id        UUID FK → batch_sessions.id
+  barcode           TEXT NOT NULL
+  barcode_type      TEXT NOT NULL
+  status            TEXT NOT NULL           -- pending | confirmed | saved | conflict | duplicate
+  scanned_at        INTEGER NOT NULL
+  metadata_json     TEXT                   -- JSON-encoded MetadataResult
+  scan_result_json  TEXT                   -- JSON-encoded ScanResult
+  sort_order        INTEGER NOT NULL DEFAULT 0
 ```
+
+**Schema version:** 7 (13 tables)
 
 ### 3.2 PostgreSQL Schema (Sync Target)
 
@@ -398,15 +477,25 @@ Feature providers (watch DAOs / call repositories)
 
 | Route | Screen | Notes |
 |---|---|---|
-| `/` | Collection screen | Default route |
-| `/scan` | Scanner screen (platform-adaptive) | |
-| `/scan/confirm` | Metadata confirm screen | Receives `MetadataResult` as extra |
-| `/item/:id` | Item detail screen | |
-| `/item/:id/edit` | Edit metadata screen | |
+| `/` | Dashboard | Landing page with quick scan CTA |
+| `/collection` | Collection/Library | Browse, search, filter |
+| `/collection/statistics` | Statistics | Legacy route (redirects to insights) |
+| `/collection/item/:id` | Item detail | With lending section, overdue badges |
+| `/scan` | Scanner | Platform-adaptive barcode + OCR |
+| `/scan/confirm` | Metadata confirm | Receives `MetadataResult` as extra |
+| `/scan/disambiguate` | Disambiguation | Multi-match candidate selection |
 | `/shelves` | Shelves list | |
 | `/shelves/:id` | Shelf detail | |
-| `/settings` | Settings screen | |
+| `/batch` | Batch editor | Queue with persistence, undo/redo |
+| `/batch/history` | Batch history | Past batch sessions (v7) |
+| `/insights` | Insights dashboard | Charts, lending stats, rip coverage |
+| `/settings` | Settings | |
 | `/settings/postgres` | Postgres config form | |
+| `/settings/about` | About screen | |
+| `/settings/borrowers` | Borrowers management | Search, add, delete (v7) |
+| `/settings/sync-log` | Sync log viewer | Paginated sync history (v7) |
+| `/borrowers/:id` | Borrower detail | Loan history, edit, statistics (v7) |
+| `/rips` | Rips browser | Desktop only |
 
 ---
 
@@ -476,9 +565,15 @@ dependencies:
   freezed_annotation: ^2.x
   json_annotation: ^4.x
 
+  # Charts (insights dashboard)
+  fl_chart: ^0.70.x
+
+  # Notifications (overdue loan alerts)
+  flutter_local_notifications: ^19.x
+
   # Utilities
   uuid: ^4.x
-  intl: ^0.19.x
+  intl: ^0.20.x
 
 dev_dependencies:
   build_runner: ^2.x

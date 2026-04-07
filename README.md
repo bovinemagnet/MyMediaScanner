@@ -8,16 +8,17 @@ Cross-platform app for scanning barcodes on physical media (CDs, DVDs, Blu-rays,
 
 - **Barcode scanning** — camera on Android/iOS, keyboard-wedge USB scanner on desktop
 - **Automatic metadata lookup** — tiered strategy across TMDB (film/TV), Discogs (music), Google Books, Open Library (books), and UPCitemdb (fallback)
+- **Cover OCR** — recognise text from cover images (ML Kit on Android/iOS, Vision framework on macOS) and use it to improve metadata searches or pre-fill manual entry
 - **Critic scores** — community/critic ratings from TMDB, Discogs, and Google Books displayed alongside your own rating
 - **Collection management** — browse, search, filter by type/genre/tag/year, sort by title/date/year/rating
 - **Star ratings and reviews** — personal 1-5 star rating and free-text review per item
 - **Tags** — create custom tags, assign to items, filter by tag
 - **Shelves** — organise items into named, ordered collections
-- **Lending tracker** — track who you've lent items to, manage borrowers, view lending history
-- **Batch scanning** — scan multiple items in sequence without returning to the home screen
-- **Statistics dashboard** — collection totals, breakdown by type/year/genre, average rating
-- **Export** — export your collection as CSV or JSON
-- **Sync** — push/pull to self-hosted PostgreSQL with last-write-wins conflict resolution
+- **Lending tracker** — track who you've lent items to, manage borrowers, set due dates, overdue notifications, dedicated borrowers management screen with loan history
+- **Batch scanning** — scan multiple items in sequence with queue persistence across app restarts, undo/redo, progress indicators, within-batch duplicate detection, and batch session history
+- **Insights dashboard** — interactive charts (fl_chart) for collection growth, media type distribution, lending statistics, rip library coverage, and CSV/JSON export
+- **Export** — export your collection as CSV or JSON from the insights screen or collection view
+- **Sync** — push/pull to self-hosted PostgreSQL with conflict resolution UI, sync progress indicators, connection health monitoring, and sync log viewer
 - **Offline-first** — all data stored locally in SQLite, fully functional without network
 
 ## Platforms
@@ -37,6 +38,8 @@ Cross-platform app for scanning barcodes on physical media (CDs, DVDs, Blu-rays,
 - **HTTP:** Dio + Retrofit for metadata API clients
 - **Models:** Freezed for immutable entities
 - **Scanning:** mobile_scanner (ML Kit) on Android/iOS
+- **Charts:** fl_chart for interactive line, bar, and pie charts
+- **Notifications:** flutter_local_notifications for overdue loan alerts
 - **Secrets:** flutter_secure_storage for credentials and API keys
 
 ## Getting Started

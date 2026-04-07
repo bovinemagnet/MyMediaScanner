@@ -70,7 +70,7 @@ flutter build macos --debug
 
 ## Testing
 
-The project has ~472 tests covering domain logic, data layer, presentation providers, and widget tests. Run `flutter test` to execute the full suite. Tests use `mocktail` for mocking and `ProviderContainer` with overrides for provider testing.
+The project has ~610 tests covering domain logic, data layer, presentation providers, and widget tests. Run `flutter test` to execute the full suite. Tests use `mocktail` for mocking and `ProviderContainer` with overrides for provider testing.
 
 ## Architecture
 
@@ -146,9 +146,9 @@ Design principles: "no-line" rule (tonal shifts instead of borders), glassmorphi
 - Platform checks use `core/utils/platform_utils.dart` — never use `dart:io Platform` directly in presentation layer
 - Soft deletes only: set `deleted = 1`, never hard-delete rows; deleted records are included in sync
 - Metadata lookup follows a tiered strategy: cache check → barcode type detection → specialist API → UPCitemdb fallback
-- Sync uses last-write-wins per-field conflict resolution based on `updated_at` timestamps
+- Sync uses last-write-wins per-field conflict resolution based on `updated_at` timestamps, with user-facing conflict resolution UI for concurrent edits within a configurable threshold
 - Database schema changes require a new migration in `AppDatabase`
-- Current schema version is 5 with 11 tables: `media_items`, `tags`, `media_item_tags`, `shelves`, `shelf_items`, `barcode_cache`, `sync_log`, `borrowers`, `loans`, `rip_albums`, `rip_tracks`
+- Current schema version is 7 with 13 tables: `media_items`, `tags`, `media_item_tags`, `shelves`, `shelf_items`, `barcode_cache`, `sync_log`, `borrowers`, `loans`, `rip_albums`, `rip_tracks`, `batch_sessions`, `batch_queue_items`
 - Desktop screens use inline `ScreenHeader` widget instead of AppBar; mobile screens keep AppBar for back navigation
 - Sections use tonal containers (`surfaceContainerHigh`) with uppercase label headers, not dividers
 
