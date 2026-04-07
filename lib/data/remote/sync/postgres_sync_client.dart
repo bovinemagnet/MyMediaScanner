@@ -25,8 +25,45 @@ class PostgresConfig {
 class PostgresSyncClient {
   PostgresSyncClient({required this.config});
 
+  /// Maximum number of records per batched INSERT statement.
+  static const _batchSize = 50;
+
   final PostgresConfig config;
   Connection? _connection;
+
+  /// Builds a multi-row INSERT ... ON CONFLICT SQL statement for batch upserts.
+  ///
+  /// Returns the generated SQL string and ordered parameter list.
+  /// Exposed as static for testability without requiring a live connection.
+  static ({String sql, List<dynamic> params}) buildBatchUpsertSql(
+    String table,
+    List<Map<String, dynamic>> records,
+  ) {
+    final columns = records.first.keys.toList();
+    final params = <dynamic>[];
+    final valueClauses = <String>[];
+
+    for (var i = 0; i < records.length; i++) {
+      final placeholders = <String>[];
+      for (var j = 0; j < columns.length; j++) {
+        final paramIndex = i * columns.length + j + 1;
+        placeholders.add('\$$paramIndex');
+        params.add(records[i][columns[j]]);
+      }
+      valueClauses.add('(${placeholders.join(', ')})');
+    }
+
+    final updates = columns
+        .where((c) => c != 'id')
+        .map((c) => '$c = EXCLUDED.$c')
+        .join(', ');
+
+    final sql = 'INSERT INTO $table (${columns.join(', ')}) '
+        'VALUES ${valueClauses.join(', ')} '
+        'ON CONFLICT (id) DO UPDATE SET $updates';
+
+    return (sql: sql, params: params);
+  }
 
   Future<Connection> _getConnection() async {
     if (_connection != null) return _connection!;
@@ -60,7 +97,10 @@ class PostgresSyncClient {
     }
   }
 
-  /// Push a batch of records to Postgres.
+  /// Push a batch of records to Postgres using multi-row INSERT statements.
+  ///
+  /// Records are split into chunks of [_batchSize] to avoid overly large
+  /// queries whilst still minimising round-trips.
   Future<void> upsertRecords(
     String table,
     List<Map<String, dynamic>> records,
@@ -68,23 +108,13 @@ class PostgresSyncClient {
     if (records.isEmpty) return;
     final conn = await _getConnection();
 
-    for (final record in records) {
-      final columns = record.keys.toList();
-      final placeholders =
-          List.generate(columns.length, (i) => '\$${i + 1}').join(', ');
-      final updates = columns
-          .where((c) => c != 'id')
-          .map((c) => '$c = EXCLUDED.$c')
-          .join(', ');
-
-      await conn.execute(
-        Sql.named(
-          'INSERT INTO $table (${columns.join(', ')}) '
-          'VALUES ($placeholders) '
-          'ON CONFLICT (id) DO UPDATE SET $updates',
-        ),
-        parameters: record,
+    for (var i = 0; i < records.length; i += _batchSize) {
+      final batch = records.sublist(
+        i,
+        i + _batchSize > records.length ? records.length : i + _batchSize,
       );
+      final (:sql, :params) = buildBatchUpsertSql(table, batch);
+      await conn.execute(sql, parameters: params);
     }
   }
 
