@@ -153,7 +153,7 @@ Design principles: "no-line" rule (tonal shifts instead of borders), glassmorphi
 - Metadata lookup follows a tiered strategy: cache check → barcode type detection → specialist API → UPCitemdb fallback
 - Sync uses last-write-wins per-field conflict resolution based on `updated_at` timestamps, with user-facing conflict resolution UI for concurrent edits within a configurable threshold
 - Database schema changes require a new migration in `AppDatabase`
-- Current schema version is 7 with 13 tables: `media_items`, `tags`, `media_item_tags`, `shelves`, `shelf_items`, `barcode_cache`, `sync_log`, `borrowers`, `loans`, `rip_albums`, `rip_tracks`, `batch_sessions`, `batch_queue_items`
+- Current schema version is 8 with 13 tables: `media_items`, `tags`, `media_item_tags`, `shelves`, `shelf_items`, `barcode_cache`, `sync_log`, `borrowers`, `loans`, `rip_albums`, `rip_tracks`, `batch_sessions`, `batch_queue_items`
 - Desktop screens use inline `ScreenHeader` widget instead of AppBar; mobile screens keep AppBar for back navigation
 - Sections use tonal containers (`surfaceContainerHigh`) with uppercase label headers, not dividers
 

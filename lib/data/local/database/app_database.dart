@@ -70,13 +70,14 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) async {
           await m.createAll();
           await _createFts5Table(m);
+          await _createIndexes();
         },
         onUpgrade: (m, from, to) async {
           if (from < 2) {
@@ -121,6 +122,9 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(syncLogTable, syncLogTable.durationMs);
             await m.addColumn(syncLogTable, syncLogTable.direction);
             await m.addColumn(syncLogTable, syncLogTable.resolvedBy);
+          }
+          if (from < 8) {
+            await _createIndexes();
           }
         },
       );
@@ -169,5 +173,30 @@ class AppDatabase extends _$AppDatabase {
     await customStatement(
       "INSERT INTO media_items_fts(media_items_fts) VALUES('rebuild')",
     );
+  }
+
+  /// Creates indexes on commonly queried columns to improve performance.
+  Future<void> _createIndexes() async {
+    await customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_media_items_deleted '
+        'ON media_items (deleted)');
+    await customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_media_items_type_date '
+        'ON media_items (media_type, date_added)');
+    await customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_media_items_updated '
+        'ON media_items (updated_at)');
+    await customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_media_items_barcode '
+        'ON media_items (barcode)');
+    await customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_sync_log_synced '
+        'ON sync_log (synced)');
+    await customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_loans_borrower '
+        'ON loans (borrower_id)');
+    await customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_loans_active '
+        'ON loans (returned_at)');
   }
 }
