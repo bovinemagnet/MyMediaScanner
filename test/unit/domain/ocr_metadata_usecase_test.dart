@@ -160,7 +160,7 @@ void main() {
             barcode,
             barcodeType,
             typeHint: any(named: 'typeHint'),
-          )).thenAnswer((_) async => ScanResult.notFound(
+          )).thenAnswer((_) async => const ScanResult.notFound(
             barcode: barcode,
             barcodeType: barcodeType,
           ));
@@ -183,7 +183,7 @@ void main() {
             barcode,
             barcodeType,
             typeHint: MediaType.music,
-          )).thenAnswer((_) async => ScanResult.notFound(
+          )).thenAnswer((_) async => const ScanResult.notFound(
             barcode: barcode,
             barcodeType: barcodeType,
           ));
