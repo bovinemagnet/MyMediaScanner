@@ -28,3 +28,24 @@ final loansForItemProvider =
     StreamProvider.family<List<Loan>, String>((ref, mediaItemId) {
   return ref.watch(loanRepositoryProvider).watchLoansForItem(mediaItemId);
 });
+
+final loansForBorrowerProvider =
+    StreamProvider.family<List<Loan>, String>((ref, borrowerId) {
+  return ref.watch(loanRepositoryProvider).watchLoansForBorrower(borrowerId);
+});
+
+final overdueLoansProvider = StreamProvider<List<Loan>>((ref) {
+  return ref.watch(loanRepositoryProvider).watchOverdueLoans();
+});
+
+final overdueCountProvider = Provider<int>((ref) {
+  return ref.watch(overdueLoansProvider).valueOrNull?.length ?? 0;
+});
+
+/// Set of media item IDs that have an overdue active loan.
+final overdueItemIdsProvider = StreamProvider<Set<String>>((ref) {
+  return ref
+      .watch(loanRepositoryProvider)
+      .watchOverdueLoans()
+      .map((loans) => loans.map((l) => l.mediaItemId).toSet());
+});
