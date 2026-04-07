@@ -21,6 +21,8 @@ class AppScaffold extends StatelessWidget {
     _SidebarDestination(Icons.dashboard_outlined, Icons.dashboard, 'Dashboard'),
     _SidebarDestination(
         Icons.library_music_outlined, Icons.library_music, 'Library'),
+    _SidebarDestination(
+        Icons.qr_code_scanner_outlined, Icons.qr_code_scanner, 'Scanner'),
     _SidebarDestination(Icons.view_comfy_outlined, Icons.view_comfy, 'Shelves'),
     _SidebarDestination(
         Icons.dynamic_feed_outlined, Icons.dynamic_feed, 'Batch Editor'),
@@ -91,6 +93,37 @@ class AppScaffold extends StatelessWidget {
               Expanded(child: navigationShell),
             ],
           ),
+        ),
+      );
+    }
+
+    // Desktop at narrow width — use drawer instead of bottom nav.
+    if (isDesktop) {
+      return wrapWithShortcuts(
+        Scaffold(
+          appBar: AppBar(
+            leading: Builder(
+              builder: (ctx) => IconButton(
+                icon: const Icon(Icons.menu),
+                onPressed: () => Scaffold.of(ctx).openDrawer(),
+              ),
+            ),
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+          ),
+          extendBodyBehindAppBar: true,
+          drawer: Drawer(
+            child: _DesktopSidebar(
+              currentIndex: navigationShell.currentIndex,
+              onDestinationSelected: (index) {
+                Navigator.of(context).pop(); // close drawer
+                _onDestinationSelected(index);
+              },
+              showRips: true,
+              isExpanded: true,
+            ),
+          ),
+          body: navigationShell,
         ),
       );
     }
@@ -176,35 +209,12 @@ class _DesktopSidebar extends StatelessWidget {
       if (showRips) AppScaffold._ripsSidebarItem,
     ];
 
-    // Map sidebar visual index to shell branch index.
-    // Sidebar order:   Dashboard(0), Library(1), Shelves(2), Batch(3), Insights(4), Settings(5), Rips(6)
-    // Shell branches:  Dashboard(0), Collection(1), Scanner(2), Shelves(3), Batch(4), Insights(5), Settings(6), Rips(7)
-    int sidebarToShellIndex(int sidebarIndex) {
-      return switch (sidebarIndex) {
-        0 => 0, // Dashboard
-        1 => 1, // Library/Collection
-        2 => 3, // Shelves
-        3 => 4, // Batch Editor
-        4 => 5, // Insights
-        5 => 6, // Settings
-        6 => 7, // Rips
-        _ => 0,
-      };
-    }
+    // Sidebar and shell branch indices are now 1:1.
+    // Both: Dashboard(0), Library(1), Scanner(2), Shelves(3), Batch(4),
+    //       Insights(5), Settings(6), Rips(7)
+    int sidebarToShellIndex(int sidebarIndex) => sidebarIndex;
 
-    int shellToSidebarIndex(int shellIndex) {
-      return switch (shellIndex) {
-        0 => 0, // Dashboard
-        1 => 1, // Library/Collection
-        2 => -1, // Scanner (not in sidebar)
-        3 => 2, // Shelves
-        4 => 3, // Batch Editor
-        5 => 4, // Insights
-        6 => 5, // Settings
-        7 => 6, // Rips
-        _ => 0,
-      };
-    }
+    int shellToSidebarIndex(int shellIndex) => shellIndex;
 
     final activeSidebarIndex = shellToSidebarIndex(currentIndex);
 

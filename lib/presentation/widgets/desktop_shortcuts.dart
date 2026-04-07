@@ -24,15 +24,15 @@ class DesktopShortcuts extends StatelessWidget {
 
     return Shortcuts(
       shortcuts: <ShortcutActivator, Intent>{
-        // Ctrl+N → Scan tab (branch 1)
+        // Ctrl+N → Scan tab (branch 2)
         const SingleActivator(LogicalKeyboardKey.keyN, control: true):
-            const _SwitchTabIntent(1),
+            const _SwitchTabIntent(2),
         // Ctrl+F → focus search (handled by collection screen)
         const SingleActivator(LogicalKeyboardKey.keyF, control: true):
             const _FocusSearchIntent(),
-        // Ctrl+, → Settings tab (branch 3)
+        // Ctrl+, → Settings tab (branch 6)
         const SingleActivator(LogicalKeyboardKey.comma, control: true):
-            const _SwitchTabIntent(3),
+            const _SwitchTabIntent(6),
         // F1 → Shortcuts help overlay
         const SingleActivator(LogicalKeyboardKey.f1):
             const _ShowHelpIntent(),
