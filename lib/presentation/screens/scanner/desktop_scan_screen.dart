@@ -468,11 +468,11 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
     final ocr = CoverOcrHelper();
     try {
       // On macOS, use gallery picker since camera capture isn't standard
-      final title = await ocr.pickAndExtract();
-      if (title != null && mounted) {
-        ref
+      final ocrResult = await ocr.pickAndExtractStructured();
+      if (!ocrResult.isEmpty && mounted) {
+        await ref
             .read(scannerProvider.notifier)
-            .onCoverTextRecognised(title, barcode, barcodeType);
+            .onCoverOcrResult(ocrResult, barcode, barcodeType);
       } else if (mounted) {
         context.go('/scan/confirm');
       }
