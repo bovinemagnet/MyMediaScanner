@@ -26,6 +26,11 @@ abstract class CameraService {
   /// Whether the camera is currently active.
   bool get isActive;
 
+  /// Capture a still image and return the file path.
+  ///
+  /// Returns `null` if the camera is not active or capture fails.
+  Future<String?> captureImage();
+
   /// Dispose of all resources.
   Future<void> dispose();
 }

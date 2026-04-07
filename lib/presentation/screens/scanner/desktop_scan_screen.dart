@@ -533,8 +533,8 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
               Navigator.pop(ctx);
               _scanCover(barcode, barcodeType);
             },
-            icon: const Icon(Icons.image_search),
-            label: const Text('Scan cover'),
+            icon: Icon(_webcamMode ? Icons.camera_alt : Icons.image_search),
+            label: Text(_webcamMode ? 'Capture cover' : 'Pick cover image'),
           ),
         ],
       ),
@@ -544,8 +544,15 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
   Future<void> _scanCover(String barcode, String barcodeType) async {
     final ocr = CoverOcrHelper();
     try {
-      // On macOS, use gallery picker since camera capture isn't standard
-      final ocrResult = await ocr.pickAndExtractStructured();
+      // If the webcam is active and supports still capture (Windows/Linux),
+      // capture directly from the camera instead of opening the gallery.
+      final capturedPath =
+          _webcamMode ? await _cameraService?.captureImage() : null;
+
+      final ocrResult = capturedPath != null
+          ? await ocr.extractStructuredFromFile(capturedPath)
+          : await ocr.pickAndExtractStructured();
+
       if (!ocrResult.isEmpty && mounted) {
         await ref
             .read(scannerProvider.notifier)

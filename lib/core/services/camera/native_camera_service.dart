@@ -96,6 +96,24 @@ class NativeCameraService implements CameraService {
   bool get isActive => _isActive;
 
   @override
+  Future<String?> captureImage() async {
+    if (!_isActive || _controller == null) return null;
+    if (!_controller!.value.isInitialized) return null;
+
+    try {
+      // Pause periodic barcode detection during capture.
+      _captureTimer?.cancel();
+      final xFile = await _controller!.takePicture();
+      _startPeriodicCapture();
+      return xFile.path;
+    } on CameraException catch (e) {
+      debugPrint('Still capture failed: ${e.description}');
+      _startPeriodicCapture();
+      return null;
+    }
+  }
+
+  @override
   Future<void> dispose() async {
     await stop();
     await _barcodeController.close();

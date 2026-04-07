@@ -53,6 +53,13 @@ class MobileScannerCameraService implements CameraService {
   bool get isActive => _controller.value.isRunning;
 
   @override
+  Future<String?> captureImage() async {
+    // MobileScanner doesn't expose still capture directly.
+    // Fall back to gallery picker for cover OCR on macOS.
+    return null;
+  }
+
+  @override
   Future<void> dispose() async {
     await stop();
     await _barcodeController.close();
