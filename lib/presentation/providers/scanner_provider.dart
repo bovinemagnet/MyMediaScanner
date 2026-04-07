@@ -1,6 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/domain/entities/metadata_result.dart';
+import 'package:mymediascanner/domain/entities/ocr_result.dart';
+import 'package:mymediascanner/domain/entities/ocr_search_result.dart';
+import 'package:mymediascanner/domain/usecases/ocr_metadata_usecase.dart';
 import 'package:mymediascanner/domain/usecases/scan_barcode_usecase.dart';
 import 'package:mymediascanner/presentation/providers/batch_editor_provider.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
@@ -36,6 +39,7 @@ class ScannerState {
       MediaType.book,
       MediaType.game,
     },
+    this.ocrSearchResult,
   });
 
   final ScanState state;
@@ -45,6 +49,9 @@ class ScannerState {
   final int batchCount;
   final ScanMode scanMode;
   final Set<MediaType> enabledMediaTypes;
+
+  /// OCR context from cover scan, if available.
+  final OcrSearchResult? ocrSearchResult;
 
   MediaType? get typeHint {
     if (enabledMediaTypes.length == 1) return enabledMediaTypes.first;
@@ -61,6 +68,7 @@ class ScannerState {
     int? batchCount,
     ScanMode? scanMode,
     Set<MediaType>? enabledMediaTypes,
+    OcrSearchResult? ocrSearchResult,
   }) => ScannerState(
     state: state ?? this.state,
     result: result ?? this.result,
@@ -69,6 +77,7 @@ class ScannerState {
     batchCount: batchCount ?? this.batchCount,
     scanMode: scanMode ?? this.scanMode,
     enabledMediaTypes: enabledMediaTypes ?? this.enabledMediaTypes,
+    ocrSearchResult: ocrSearchResult ?? this.ocrSearchResult,
   );
 }
 
@@ -307,10 +316,95 @@ class ScannerNotifier extends Notifier<ScannerState> {
     state = state.copyWith(state: ScanState.coverScan);
   }
 
+  /// Called when structured OCR results are available from a cover scan.
+  /// Uses [OcrMetadataUseCase] to orchestrate search with OCR context.
+  Future<void> onCoverOcrResult(
+    OcrResult ocrResult,
+    String barcode,
+    String barcodeType,
+  ) async {
+    _generation++;
+    final gen = _generation;
+    state = state.copyWith(state: ScanState.lookingUp);
+
+    try {
+      final useCase = OcrMetadataUseCase(
+        metadataRepository: ref.read(metadataRepositoryProvider),
+      );
+      final ocrSearchResult = await useCase.execute(
+        ocrResult,
+        barcode,
+        barcodeType,
+        typeHint: state.typeHint,
+      );
+      if (_generation != gen) return;
+
+      switch (ocrSearchResult.scanResult) {
+        case SingleScanResult(:final isDuplicate):
+          if (isDuplicate) {
+            state = ScannerState(
+              state: ScanState.duplicate,
+              result: ocrSearchResult.scanResult,
+              batchMode: state.batchMode,
+              batchCount: state.batchCount,
+              enabledMediaTypes: state.enabledMediaTypes,
+              scanMode: state.scanMode,
+              ocrSearchResult: ocrSearchResult,
+            );
+          } else {
+            state = ScannerState(
+              state: ScanState.found,
+              result: ocrSearchResult.scanResult,
+              batchMode: state.batchMode,
+              batchCount: state.batchCount,
+              enabledMediaTypes: state.enabledMediaTypes,
+              scanMode: state.scanMode,
+              ocrSearchResult: ocrSearchResult,
+            );
+          }
+        case MultiMatchScanResult():
+          state = ScannerState(
+            state: ScanState.disambiguating,
+            result: ocrSearchResult.scanResult,
+            batchMode: state.batchMode,
+            batchCount: state.batchCount,
+            enabledMediaTypes: state.enabledMediaTypes,
+            scanMode: state.scanMode,
+            ocrSearchResult: ocrSearchResult,
+          );
+        case NotFoundScanResult():
+          state = ScannerState(
+            state: ScanState.notFound,
+            result: ocrSearchResult.scanResult,
+            batchMode: state.batchMode,
+            batchCount: state.batchCount,
+            enabledMediaTypes: state.enabledMediaTypes,
+            scanMode: state.scanMode,
+            ocrSearchResult: ocrSearchResult,
+          );
+      }
+    } catch (e) {
+      if (_generation != gen) return;
+      state = ScannerState(
+        state: ScanState.error,
+        error: e.toString(),
+        batchMode: state.batchMode,
+        batchCount: state.batchCount,
+        enabledMediaTypes: state.enabledMediaTypes,
+        scanMode: state.scanMode,
+      );
+    }
+  }
+
   /// Called when cover OCR extracts text. Searches by the extracted title.
+  @Deprecated('Use onCoverOcrResult() instead')
   Future<void> onCoverTextRecognised(
       String text, String barcode, String barcodeType) async {
-    await searchByTitle(text, barcode, barcodeType);
+    // Wrap plain text in an OcrResult for backward compatibility
+    final ocrResult = OcrResult(blocks: [
+      OcrTextBlock(text: text, confidence: 0.85, area: 1.0),
+    ]);
+    await onCoverOcrResult(ocrResult, barcode, barcodeType);
   }
 
   void reset() {

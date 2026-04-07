@@ -6,6 +6,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/domain/entities/metadata_candidate.dart';
 import 'package:mymediascanner/domain/entities/metadata_result.dart';
+import 'package:mymediascanner/domain/entities/ocr_result.dart';
 import 'package:mymediascanner/domain/entities/scan_result.dart';
 import 'package:mymediascanner/domain/repositories/i_media_item_repository.dart';
 import 'package:mymediascanner/domain/repositories/i_metadata_repository.dart';
@@ -442,20 +443,108 @@ void main() {
         );
 
         when(() => mockMetadataRepo.searchByTitle(
-              'Cover Title',
+              any(),
               '000',
               'ean13',
-              typeHint: null,
+              typeHint: any(named: 'typeHint'),
             )).thenAnswer((_) async => searchResult);
 
         final container = createContainer();
         addTearDown(container.dispose);
 
+        // ignore: deprecated_member_use_from_same_package
         final notifier = container.read(scannerProvider.notifier);
+        // ignore: deprecated_member_use_from_same_package
         await notifier.onCoverTextRecognised('Cover Title', '000', 'ean13');
 
         final state = container.read(scannerProvider);
         expect(state.state, ScanState.found);
+      });
+    });
+
+    group('onCoverOcrResult', () {
+      test('transitions to found with OCR context when search succeeds',
+          () async {
+        const ocrResult = OcrResult(blocks: [
+          OcrTextBlock(
+              text: 'The Matrix', confidence: 0.92, area: 15000.0),
+        ]);
+
+        when(() => mockMetadataRepo.searchByTitle(
+              any(),
+              '000',
+              'ean13',
+              typeHint: any(named: 'typeHint'),
+            )).thenAnswer((_) async => const ScanResult.single(
+              metadata: MetadataResult(
+                barcode: '000',
+                barcodeType: 'ean13',
+                title: 'The Matrix',
+                mediaType: MediaType.film,
+              ),
+              isDuplicate: false,
+            ));
+
+        final container = createContainer();
+        addTearDown(container.dispose);
+
+        final notifier = container.read(scannerProvider.notifier);
+        await notifier.onCoverOcrResult(ocrResult, '000', 'ean13');
+
+        final state = container.read(scannerProvider);
+        expect(state.state, ScanState.found);
+        expect(state.ocrSearchResult, isNotNull);
+        expect(state.ocrSearchResult!.searchTermUsed,
+            contains('The Matrix'));
+      });
+
+      test('transitions to notFound for empty OCR result', () async {
+        const ocrResult = OcrResult(blocks: []);
+
+        final container = createContainer();
+        addTearDown(container.dispose);
+
+        final notifier = container.read(scannerProvider.notifier);
+        await notifier.onCoverOcrResult(ocrResult, '000', 'ean13');
+
+        final state = container.read(scannerProvider);
+        expect(state.state, ScanState.notFound);
+        expect(state.ocrSearchResult, isNotNull);
+        expect(state.ocrSearchResult!.confidence, 0.0);
+      });
+
+      test('transitions to disambiguating for multi-match OCR result',
+          () async {
+        const ocrResult = OcrResult(blocks: [
+          OcrTextBlock(
+              text: 'Harry Potter', confidence: 0.90, area: 12000.0),
+        ]);
+
+        when(() => mockMetadataRepo.searchByTitle(
+              any(),
+              '000',
+              'ean13',
+              typeHint: any(named: 'typeHint'),
+            )).thenAnswer((_) async => const ScanResult.multiMatch(
+              candidates: [
+                MetadataCandidate(
+                    sourceApi: 'tmdb', sourceId: '1', title: 'HP 1'),
+                MetadataCandidate(
+                    sourceApi: 'tmdb', sourceId: '2', title: 'HP 2'),
+              ],
+              barcode: '000',
+              barcodeType: 'ean13',
+            ));
+
+        final container = createContainer();
+        addTearDown(container.dispose);
+
+        final notifier = container.read(scannerProvider.notifier);
+        await notifier.onCoverOcrResult(ocrResult, '000', 'ean13');
+
+        final state = container.read(scannerProvider);
+        expect(state.state, ScanState.disambiguating);
+        expect(state.ocrSearchResult, isNotNull);
       });
     });
   });

@@ -237,10 +237,10 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
 
     final ocr = CoverOcrHelper();
     try {
-      final title = await ocr.captureAndExtract();
-      if (title != null && title.isNotEmpty && mounted) {
-        await ref.read(scannerProvider.notifier).onCoverTextRecognised(
-              title,
+      final ocrResult = await ocr.captureAndExtractStructured();
+      if (!ocrResult.isEmpty && mounted) {
+        await ref.read(scannerProvider.notifier).onCoverOcrResult(
+              ocrResult,
               notFound.barcode,
               notFound.barcodeType,
             );

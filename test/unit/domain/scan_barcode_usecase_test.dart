@@ -3,6 +3,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/domain/entities/metadata_candidate.dart';
 import 'package:mymediascanner/domain/entities/metadata_result.dart';
+import 'package:mymediascanner/domain/entities/ocr_result.dart';
 import 'package:mymediascanner/domain/repositories/i_media_item_repository.dart';
 import 'package:mymediascanner/domain/repositories/i_metadata_repository.dart';
 import 'package:mymediascanner/domain/usecases/scan_barcode_usecase.dart';
@@ -164,6 +165,107 @@ void main() {
       final result = await useCase.execute(barcode);
 
       expect(result, isA<NotFoundScanResult>());
+    });
+
+    test('falls back to OCR title search when barcode lookup fails and ocrResult provided', () async {
+      const barcode = '0000000000000';
+      const lookupResult = ScanResult.notFound(
+        barcode: barcode,
+        barcodeType: 'ean13',
+      );
+      const ocrResult = OcrResult(blocks: [
+        OcrTextBlock(
+            text: 'The Matrix', confidence: 0.92, area: 15000.0),
+      ]);
+      const titleSearchResult = ScanResult.single(
+        metadata: MetadataResult(
+          barcode: barcode,
+          barcodeType: 'ean13',
+          title: 'The Matrix',
+          mediaType: MediaType.film,
+        ),
+        isDuplicate: false,
+      );
+
+      when(() => mockMediaItemRepo.barcodeExists(barcode))
+          .thenAnswer((_) async => false);
+      when(() => mockMetadataRepo.lookupBarcode(barcode, typeHint: null))
+          .thenAnswer((_) async => lookupResult);
+      when(() => mockMetadataRepo.searchByTitle(
+            'The Matrix',
+            barcode,
+            'ean13',
+            typeHint: null,
+          )).thenAnswer((_) async => titleSearchResult);
+
+      final result = await useCase.execute(barcode, ocrResult: ocrResult);
+
+      expect(result, isA<SingleScanResult>());
+      expect((result as SingleScanResult).metadata.title, 'The Matrix');
+      verify(() => mockMetadataRepo.searchByTitle(
+            'The Matrix',
+            barcode,
+            'ean13',
+            typeHint: null,
+          )).called(1);
+    });
+
+    test('does not OCR fallback when barcode lookup succeeds', () async {
+      const barcode = '9780141036144';
+      const lookupResult = ScanResult.single(
+        metadata: MetadataResult(
+          barcode: barcode,
+          barcodeType: 'isbn13',
+          title: '1984',
+          mediaType: MediaType.book,
+        ),
+        isDuplicate: false,
+      );
+      const ocrResult = OcrResult(blocks: [
+        OcrTextBlock(
+            text: 'Nineteen Eighty-Four', confidence: 0.90, area: 12000.0),
+      ]);
+
+      when(() => mockMediaItemRepo.barcodeExists(barcode))
+          .thenAnswer((_) async => false);
+      when(() => mockMetadataRepo.lookupBarcode(barcode, typeHint: null))
+          .thenAnswer((_) async => lookupResult);
+
+      final result = await useCase.execute(barcode, ocrResult: ocrResult);
+
+      expect(result, isA<SingleScanResult>());
+      expect((result as SingleScanResult).metadata.title, '1984');
+      verifyNever(() => mockMetadataRepo.searchByTitle(
+            any(),
+            any(),
+            any(),
+            typeHint: any(named: 'typeHint'),
+          ));
+    });
+
+    test('does not OCR fallback when ocrResult is empty', () async {
+      const barcode = '0000000000000';
+      const lookupResult = ScanResult.notFound(
+        barcode: barcode,
+        barcodeType: 'ean13',
+      );
+      const ocrResult = OcrResult(blocks: []);
+
+      when(() => mockMediaItemRepo.barcodeExists(barcode))
+          .thenAnswer((_) async => false);
+      when(() => mockMetadataRepo.lookupBarcode(barcode, typeHint: null))
+          .thenAnswer((_) async => lookupResult);
+
+      final result =
+          await useCase.execute(barcode, ocrResult: ocrResult);
+
+      expect(result, isA<NotFoundScanResult>());
+      verifyNever(() => mockMetadataRepo.searchByTitle(
+            any(),
+            any(),
+            any(),
+            typeHint: any(named: 'typeHint'),
+          ));
     });
   });
 }

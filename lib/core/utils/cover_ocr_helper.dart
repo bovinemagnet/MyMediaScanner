@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mymediascanner/core/utils/vision_ocr_channel.dart';
+import 'package:mymediascanner/domain/entities/ocr_result.dart';
 
 /// Extracts text from media cover images using ML Kit text recognition
 /// (Android/iOS) or macOS Vision framework (macOS).
@@ -17,8 +18,101 @@ class CoverOcrHelper {
   final TextRecognizer _recognizer;
   final ImagePicker _picker;
 
+  /// Captures a photo using the camera and extracts structured OCR output.
+  Future<OcrResult> captureAndExtractStructured() async {
+    final photo = await _picker.pickImage(
+      source: ImageSource.camera,
+      preferredCameraDevice: CameraDevice.rear,
+      imageQuality: 85,
+    );
+    if (photo == null) return const OcrResult();
+
+    return extractStructuredFromFile(photo.path);
+  }
+
+  /// Picks an image from the gallery and extracts structured OCR output.
+  Future<OcrResult> pickAndExtractStructured() async {
+    final photo = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
+    if (photo == null) return const OcrResult();
+
+    return extractStructuredFromFile(photo.path);
+  }
+
+  /// Extracts structured OCR output from an image file at [path].
+  ///
+  /// On macOS, uses the Vision framework via a method channel.
+  /// On Android/iOS, uses Google ML Kit text recognition.
+  /// Returns an empty [OcrResult] if no text is recognised.
+  Future<OcrResult> extractStructuredFromFile(String path) async {
+    // macOS: use Vision framework
+    if (VisionOcrChannel.isAvailable) {
+      return _extractStructuredWithVision(path);
+    }
+
+    // Android/iOS: use ML Kit
+    return _extractStructuredWithMlKit(path);
+  }
+
+  Future<OcrResult> _extractStructuredWithVision(String path) async {
+    try {
+      final structured =
+          await VisionOcrChannel.recogniseTextStructured(path);
+      if (structured != null && structured.isNotEmpty) {
+        final blocks = structured.map((m) {
+          return OcrTextBlock(
+            text: cleanTitle(m['text'] as String? ?? ''),
+            confidence: (m['confidence'] as num?)?.toDouble() ?? 1.0,
+            area: (m['area'] as num?)?.toDouble() ?? 0.0,
+          );
+        }).where((b) => b.text.isNotEmpty).toList();
+        return OcrResult(blocks: blocks);
+      }
+
+      // Fallback to plain text
+      final text = await VisionOcrChannel.recogniseText(path);
+      if (text == null || text.isEmpty) return const OcrResult();
+      final cleaned = cleanTitle(text);
+      if (cleaned.isEmpty) return const OcrResult();
+      return OcrResult(blocks: [
+        OcrTextBlock(text: cleaned, confidence: 1.0, area: 1.0),
+      ]);
+    } on Exception catch (e) {
+      debugPrint('Vision OCR structured failed: $e');
+      return const OcrResult();
+    }
+  }
+
+  Future<OcrResult> _extractStructuredWithMlKit(String path) async {
+    try {
+      final inputImage = InputImage.fromFilePath(path);
+      final recognised = await _recognizer.processImage(inputImage);
+
+      if (recognised.text.isEmpty) return const OcrResult();
+
+      final blocks = recognised.blocks.map((block) {
+        final area = block.boundingBox.width * block.boundingBox.height;
+        return OcrTextBlock(
+          text: cleanTitle(block.text),
+          // ML Kit does not expose per-block confidence in the Dart
+          // package; use 0.85 as a reasonable default for readable text.
+          confidence: 0.85,
+          area: area,
+        );
+      }).where((b) => b.text.isNotEmpty).toList();
+
+      return OcrResult(blocks: blocks);
+    } on Exception catch (e) {
+      debugPrint('Cover OCR structured failed: $e');
+      return const OcrResult();
+    }
+  }
+
   /// Captures a photo using the camera and extracts the most prominent
   /// text from it. Returns `null` if the user cancels or no text is found.
+  @Deprecated('Use captureAndExtractStructured() instead')
   Future<String?> captureAndExtract() async {
     final photo = await _picker.pickImage(
       source: ImageSource.camera,
@@ -32,6 +126,7 @@ class CoverOcrHelper {
 
   /// Picks an image from the gallery (useful on desktop where the camera
   /// picker may not be available) and extracts text.
+  @Deprecated('Use pickAndExtractStructured() instead')
   Future<String?> pickAndExtract() async {
     final photo = await _picker.pickImage(
       source: ImageSource.gallery,
@@ -47,6 +142,7 @@ class CoverOcrHelper {
   /// On macOS, uses the Vision framework via a method channel.
   /// On Android/iOS, uses Google ML Kit text recognition.
   /// Returns `null` if no text is recognised.
+  @Deprecated('Use extractStructuredFromFile() instead')
   Future<String?> extractFromFile(String path) async {
     // macOS: use Vision framework
     if (VisionOcrChannel.isAvailable) {
