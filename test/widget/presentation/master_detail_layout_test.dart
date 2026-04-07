@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mymediascanner/core/constants/app_constants.dart';
 import 'package:mymediascanner/presentation/widgets/master_detail_layout.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Builds a [MasterDetailLayout] inside a [MaterialApp] whose viewport is
 /// constrained to [screenWidth] × 800 via [MediaQuery].
@@ -10,14 +12,16 @@ Widget _buildSubject({
   Widget? detail,
   double masterMinWidth = 400,
 }) {
-  return MaterialApp(
-    home: MediaQuery(
-      data: MediaQueryData(size: Size(screenWidth, 800)),
-      child: Scaffold(
-        body: MasterDetailLayout(
-          master: const Text('master content'),
-          detail: detail,
-          masterMinWidth: masterMinWidth,
+  return ProviderScope(
+    child: MaterialApp(
+      home: MediaQuery(
+        data: MediaQueryData(size: Size(screenWidth, 800)),
+        child: Scaffold(
+          body: MasterDetailLayout(
+            master: const Text('master content'),
+            detail: detail,
+            masterMinWidth: masterMinWidth,
+          ),
         ),
       ),
     ),
@@ -26,6 +30,9 @@ Widget _buildSubject({
 
 void main() {
   group('MasterDetailLayout', () {
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+    });
     // ------------------------------------------------------------------
     // Desktop — wide screen (≥ mediumBreakpoint) with detail provided
     // ------------------------------------------------------------------
@@ -53,9 +60,9 @@ void main() {
             detail: const Text('detail content'),
           ));
 
-          // Ghost divider is a 1px Container (replacing VerticalDivider)
+          // Ghost divider is a 2px Container inside an 8px drag handle
           final dividers = find.byWidgetPredicate(
-              (w) => w is Container && w.constraints?.maxWidth == 1);
+              (w) => w is Container && w.constraints?.maxWidth == 2);
           expect(dividers, findsOneWidget);
         },
         variant: TargetPlatformVariant.desktop(),
@@ -139,9 +146,9 @@ void main() {
 
           expect(find.text('master content'), findsOneWidget);
           expect(find.text('detail content'), findsOneWidget);
-          // Ghost divider is a 1px Container (replacing VerticalDivider)
+          // Ghost divider is a 2px Container inside an 8px drag handle
           final dividers = find.byWidgetPredicate(
-              (w) => w is Container && w.constraints?.maxWidth == 1);
+              (w) => w is Container && w.constraints?.maxWidth == 2);
           expect(dividers, findsOneWidget);
         },
         variant: TargetPlatformVariant.desktop(),
