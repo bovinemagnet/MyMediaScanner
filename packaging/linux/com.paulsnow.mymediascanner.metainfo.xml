@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.paulsnow.mymediascanner</id>
+  <name>MyMediaScanner</name>
+  <summary>Scan barcodes on physical media and build a personal collection catalogue</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>LicenseRef-proprietary</project_license>
+  <description>
+    <p>
+      MyMediaScanner is a cross-platform application for scanning barcodes on
+      CDs, DVDs, Blu-rays, books, and video games to build a personal collection
+      catalogue. Features include lending tracking, critic scores, FLAC rip
+      library scanning, and insights analytics.
+    </p>
+  </description>
+  <launchable type="desktop-id">com.paulsnow.mymediascanner.desktop</launchable>
+  <categories>
+    <category>Utility</category>
+    <category>AudioVideo</category>
+  </categories>
+  <url type="homepage">https://github.com/bovinemagnet/MyMediaScanner</url>
+  <url type="bugtracker">https://github.com/bovinemagnet/MyMediaScanner/issues</url>
+  <developer id="com.paulsnow">
+    <name>Paul Snow</name>
+  </developer>
+</component>

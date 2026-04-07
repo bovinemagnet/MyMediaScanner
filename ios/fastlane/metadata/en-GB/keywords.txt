@@ -1,0 +1,1 @@
+barcode,scanner,media,collection,dvd,bluray,cd,vinyl,books,catalogue

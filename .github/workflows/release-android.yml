@@ -5,6 +5,7 @@ on:
     tags:
       - 'v*.*.*'
       - 'v*.*.*-SNAPSHOT-*'
+  workflow_call:
   workflow_dispatch:
     inputs:
       flavor:

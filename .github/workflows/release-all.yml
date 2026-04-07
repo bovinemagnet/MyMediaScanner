@@ -1,0 +1,33 @@
+name: Release All Platforms
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+jobs:
+  android:
+    uses: ./.github/workflows/release-android.yml
+    permissions:
+      contents: write
+
+  ios:
+    uses: ./.github/workflows/release-ios.yml
+    permissions:
+      contents: write
+
+  macos:
+    uses: ./.github/workflows/release-macos.yml
+    permissions:
+      contents: write
+
+  windows:
+    uses: ./.github/workflows/release-windows.yml
+    permissions:
+      contents: write
+
+  linux:
+    uses: ./.github/workflows/release-linux.yml
+    permissions:
+      contents: write

@@ -1,0 +1,89 @@
+name: Release macOS DMG
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_call:
+  workflow_dispatch:
+
+env:
+  FLUTTER_CHANNEL: stable
+
+jobs:
+  build-macos-dmg:
+    name: Build macOS DMG
+    runs-on: macos-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: ${{ env.FLUTTER_CHANNEL }}
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run code generation
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Analyse code
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test
+
+      - name: Build macOS release
+        run: flutter build macos --release
+
+      - name: Install create-dmg
+        run: brew install create-dmg
+
+      - name: Determine version
+        id: version
+        run: |
+          VERSION=$(grep '^\s*version:' pubspec.yaml | sed 's/.*version:[[:space:]]*//' | sed 's/+.*//' | tr -d ' ')
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Create DMG
+        env:
+          APP_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          APP_NAME="MyMediaScanner"
+          BUILD_DIR="build/macos/Build/Products/Release"
+          DMG_NAME="${APP_NAME}-${APP_VERSION}-macOS.dmg"
+          create-dmg \
+            --volname "${APP_NAME}" \
+            --volicon "macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_512.png" \
+            --window-pos 200 120 \
+            --window-size 600 400 \
+            --icon-size 100 \
+            --icon "${APP_NAME}.app" 175 190 \
+            --app-drop-link 425 190 \
+            --hide-extension "${APP_NAME}.app" \
+            "build/${DMG_NAME}" \
+            "${BUILD_DIR}/${APP_NAME}.app"
+          echo "dmg_name=${DMG_NAME}" >> "$GITHUB_ENV"
+          echo "dmg_path=build/${DMG_NAME}" >> "$GITHUB_ENV"
+
+      - name: Upload DMG artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.dmg_name }}
+          path: ${{ env.dmg_path }}
+          retention-days: 30
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: false
+          prerelease: false
+          files: ${{ env.dmg_path }}
+          generate_release_notes: true

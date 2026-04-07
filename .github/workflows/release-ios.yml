@@ -1,0 +1,82 @@
+name: Release iOS IPA
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_call:
+  workflow_dispatch:
+
+env:
+  FLUTTER_CHANNEL: stable
+
+jobs:
+  build-ios-ipa:
+    name: Build iOS IPA
+    runs-on: macos-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: ${{ env.FLUTTER_CHANNEL }}
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run code generation
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Analyse code
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test
+
+      - name: Build iOS release (no codesign)
+        run: flutter build ios --release --no-codesign
+
+      - name: Determine version
+        id: version
+        run: |
+          VERSION=$(grep '^\s*version:' pubspec.yaml | sed 's/.*version:[[:space:]]*//' | sed 's/+.*//' | tr -d ' ')
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Create unsigned IPA
+        id: ipa
+        run: |
+          APP_NAME="MyMediaScanner"
+          VERSION="${{ steps.version.outputs.version }}"
+          IPA_NAME="${APP_NAME}-${VERSION}-ios-unsigned.ipa"
+          BUILD_DIR="build/ios/iphoneos"
+          APP_PATH="${BUILD_DIR}/Runner.app"
+          PAYLOAD_DIR="build/Payload"
+          mkdir -p "${PAYLOAD_DIR}"
+          cp -R "${APP_PATH}" "${PAYLOAD_DIR}/"
+          cd build
+          zip -r -q "${IPA_NAME}" Payload/
+          cd ..
+          echo "ipa_name=${IPA_NAME}" >> "$GITHUB_OUTPUT"
+          echo "ipa_path=build/${IPA_NAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload IPA artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.ipa.outputs.ipa_name }}
+          path: ${{ steps.ipa.outputs.ipa_path }}
+          retention-days: 30
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: false
+          prerelease: false
+          files: ${{ steps.ipa.outputs.ipa_path }}
+          generate_release_notes: true

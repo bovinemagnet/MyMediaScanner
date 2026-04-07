@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=MyMediaScanner
+Comment=Scan barcodes on physical media and build a personal collection catalogue
+Exec=mymediascanner
+Icon=com.paulsnow.mymediascanner
+Terminal=false
+Type=Application
+Categories=Utility;AudioVideo;Database;
+Keywords=barcode;media;scanner;collection;dvd;bluray;cd;vinyl;

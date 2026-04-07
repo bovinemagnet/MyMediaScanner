@@ -1,0 +1,34 @@
+version: 1
+script:
+  - rm -rf AppDir || true
+  - cp -r build/linux/x64/release/bundle AppDir
+  - mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+  - cp assets/icon/app_icon.png AppDir/usr/share/icons/hicolor/256x256/apps/com.paulsnow.mymediascanner.png
+  - mkdir -p AppDir/usr/share/applications
+  - cp linux/com.paulsnow.mymediascanner.desktop AppDir/usr/share/applications/
+  - mkdir -p AppDir/usr/share/metainfo
+  - cp packaging/linux/com.paulsnow.mymediascanner.metainfo.xml AppDir/usr/share/metainfo/
+
+AppDir:
+  path: ./AppDir
+  app_info:
+    id: com.paulsnow.mymediascanner
+    name: MyMediaScanner
+    icon: com.paulsnow.mymediascanner
+    version: latest
+    exec: mymediascanner
+    exec_args: $@
+
+  runtime:
+    env:
+      APPDIR_LIBRARY_PATH: $APPDIR/lib
+
+  files:
+    include: []
+    exclude:
+      - usr/share/man
+      - usr/share/doc
+
+AppImage:
+  arch: x86_64
+  update-information: guess

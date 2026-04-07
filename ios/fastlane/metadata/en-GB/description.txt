@@ -1,0 +1,18 @@
+MyMediaScanner is a cross-platform app for scanning barcodes on physical media
+— CDs, DVDs, Blu-rays, books, and video games — and building a personal
+collection catalogue.
+
+Features:
+• Camera and Bluetooth/USB barcode scanning
+• Automatic metadata lookup from TMDB, Discogs, Google Books, and Open Library
+• Lending tracker to manage borrowed items
+• Shelf organisation with drag-and-drop reordering
+• FLAC rip library scanner with coverage comparison
+• Batch scanning mode for rapid cataloguing
+• IMDb ID lookup for films and TV series
+• Cover OCR text recognition
+• Statistics dashboard with CSV/JSON export
+• Optional sync to self-hosted PostgreSQL
+• Light and dark themes with custom design system
+
+Your collection data is stored locally in SQLite. No account required.

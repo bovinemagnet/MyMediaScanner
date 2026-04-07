@@ -1,0 +1,78 @@
+name: Release Windows MSIX
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_call:
+  workflow_dispatch:
+
+env:
+  FLUTTER_CHANNEL: stable
+
+jobs:
+  build-windows-msix:
+    name: Build Windows MSIX
+    runs-on: windows-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: ${{ env.FLUTTER_CHANNEL }}
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run code generation
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Analyse code
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test
+
+      - name: Build Windows release
+        run: flutter build windows --release
+
+      - name: Create MSIX package
+        run: dart run msix:create
+
+      - name: Locate MSIX artefact
+        id: locate_msix
+        shell: pwsh
+        run: |
+          $version = (Select-String -Path pubspec.yaml -Pattern '^\s*version:' | ForEach-Object { $_ -replace '.*version:\s*', '' -replace '\+.*', '' }).Trim()
+          $msixFile = Get-ChildItem -Path build -Recurse -Filter *.msix | Select-Object -First 1
+          if (-not $msixFile) {
+            Write-Error "MSIX file not found"
+            exit 1
+          }
+          $newName = "MyMediaScanner-$version-windows.msix"
+          $dest = Join-Path $msixFile.DirectoryName $newName
+          Move-Item $msixFile.FullName $dest
+          echo "msix_name=$newName" >> $env:GITHUB_OUTPUT
+          echo "msix_path=$dest" >> $env:GITHUB_OUTPUT
+
+      - name: Upload MSIX artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.locate_msix.outputs.msix_name }}
+          path: ${{ steps.locate_msix.outputs.msix_path }}
+          retention-days: 30
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: false
+          prerelease: false
+          files: ${{ steps.locate_msix.outputs.msix_path }}
+          generate_release_notes: true
