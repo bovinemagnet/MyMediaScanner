@@ -6,6 +6,7 @@ import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/presentation/providers/collection_provider.dart';
 import 'package:mymediascanner/presentation/providers/selected_item_provider.dart';
+import 'package:mymediascanner/presentation/widgets/table_keyboard_navigation.dart';
 
 /// Sortable data table for the collection, used on desktop.
 class CollectionTableView extends ConsumerWidget {
@@ -15,12 +16,14 @@ class CollectionTableView extends ConsumerWidget {
     required this.lentIds,
     required this.rippedIds,
     required this.onItemTap,
+    this.onDeleteItem,
   });
 
   final List<MediaItem> items;
   final Set<String> lentIds;
   final Set<String> rippedIds;
   final ValueChanged<String> onItemTap;
+  final ValueChanged<String>? onDeleteItem;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -28,7 +31,34 @@ class CollectionTableView extends ConsumerWidget {
     final selectedId = ref.watch(selectedItemProvider);
     final dateFormat = DateFormat.yMMMd();
 
-    return DataTable2(
+    final itemIds = items.map((e) => e.id).toList();
+
+    return TableKeyboardNavigation(
+      onMoveUp: () =>
+          ref.read(selectedItemProvider.notifier).movePrevious(itemIds),
+      onMoveDown: () =>
+          ref.read(selectedItemProvider.notifier).moveNext(itemIds),
+      onMoveToFirst: () {
+        if (itemIds.isNotEmpty) {
+          ref.read(selectedItemProvider.notifier).select(itemIds.first);
+        }
+      },
+      onMoveToLast: () {
+        if (itemIds.isNotEmpty) {
+          ref.read(selectedItemProvider.notifier).select(itemIds.last);
+        }
+      },
+      onSelect: () {
+        final id = selectedId;
+        if (id != null) onItemTap(id);
+      },
+      onDelete: () {
+        final id = selectedId;
+        if (id != null) onDeleteItem?.call(id);
+      },
+      onClearSelection: () =>
+          ref.read(selectedItemProvider.notifier).clear(),
+      child: DataTable2(
       columnSpacing: 12,
       horizontalMargin: 16,
       sortColumnIndex: _sortColumnIndex(filter.sortBy),
@@ -123,6 +153,7 @@ class CollectionTableView extends ConsumerWidget {
           ],
         );
       }).toList(),
+      ),
     );
   }
 

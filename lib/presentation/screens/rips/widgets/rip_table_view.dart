@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
 import 'package:mymediascanner/presentation/providers/selected_rip_album_provider.dart';
+import 'package:mymediascanner/presentation/widgets/table_keyboard_navigation.dart';
 
 /// Sortable data table for the rips library, used on desktop.
 class RipTableView extends ConsumerStatefulWidget {
@@ -65,8 +66,35 @@ class _RipTableViewState extends ConsumerState<RipTableView> {
   @override
   Widget build(BuildContext context) {
     final selectedId = ref.watch(selectedRipAlbumProvider);
+    final albumIds = _sorted.map((a) => a.id).toList();
 
-    return DataTable2(
+    return TableKeyboardNavigation(
+      onMoveUp: () =>
+          ref.read(selectedRipAlbumProvider.notifier).movePrevious(albumIds),
+      onMoveDown: () =>
+          ref.read(selectedRipAlbumProvider.notifier).moveNext(albumIds),
+      onMoveToFirst: () {
+        if (albumIds.isNotEmpty) {
+          ref.read(selectedRipAlbumProvider.notifier).select(albumIds.first);
+        }
+      },
+      onMoveToLast: () {
+        if (albumIds.isNotEmpty) {
+          ref.read(selectedRipAlbumProvider.notifier).select(albumIds.last);
+        }
+      },
+      onSelect: () {
+        if (selectedId != null) {
+          final album = _sorted.firstWhere(
+            (a) => a.id == selectedId,
+            orElse: () => _sorted.first,
+          );
+          widget.onAlbumTap(album);
+        }
+      },
+      onClearSelection: () =>
+          ref.read(selectedRipAlbumProvider.notifier).clear(),
+      child: DataTable2(
       columnSpacing: 12,
       horizontalMargin: 16,
       sortColumnIndex: _sortColumnIndex,
@@ -138,6 +166,7 @@ class _RipTableViewState extends ConsumerState<RipTableView> {
           ],
         );
       }).toList(),
+      ),
     );
   }
 

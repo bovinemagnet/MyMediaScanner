@@ -142,6 +142,8 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                   lentIds: lentIds,
                   rippedIds: rippedIds,
                   onItemTap: (id) => _onItemTap(context, id),
+                  onDeleteItem: (id) =>
+                      _confirmDeleteItem(context, ref, id),
                 );
               }
               return GridView.builder(
