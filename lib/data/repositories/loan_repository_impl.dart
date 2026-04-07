@@ -44,6 +44,7 @@ class LoanRepositoryImpl implements ILoanRepository {
       mediaItemId: Value(loan.mediaItemId),
       borrowerId: Value(loan.borrowerId),
       lentAt: Value(loan.lentAt),
+      dueAt: Value(loan.dueAt),
       notes: Value(loan.notes),
       updatedAt: Value(loan.updatedAt),
     ));
@@ -61,6 +62,7 @@ class LoanRepositoryImpl implements ILoanRepository {
         borrowerId: row.borrowerId,
         lentAt: row.lentAt,
         returnedAt: row.returnedAt,
+        dueAt: row.dueAt,
         notes: row.notes,
         updatedAt: row.updatedAt,
         deleted: row.deleted == 1,

@@ -3958,6 +3958,15 @@ class $LoansTableTable extends LoansTable
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _dueAtMeta = const VerificationMeta('dueAt');
+  @override
+  late final GeneratedColumn<int> dueAt = GeneratedColumn<int>(
+    'due_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _notesMeta = const VerificationMeta('notes');
   @override
   late final GeneratedColumn<String> notes = GeneratedColumn<String>(
@@ -3997,6 +4006,7 @@ class $LoansTableTable extends LoansTable
     borrowerId,
     lentAt,
     returnedAt,
+    dueAt,
     notes,
     updatedAt,
     deleted,
@@ -4051,6 +4061,12 @@ class $LoansTableTable extends LoansTable
         returnedAt.isAcceptableOrUnknown(data['returned_at']!, _returnedAtMeta),
       );
     }
+    if (data.containsKey('due_at')) {
+      context.handle(
+        _dueAtMeta,
+        dueAt.isAcceptableOrUnknown(data['due_at']!, _dueAtMeta),
+      );
+    }
     if (data.containsKey('notes')) {
       context.handle(
         _notesMeta,
@@ -4100,6 +4116,10 @@ class $LoansTableTable extends LoansTable
         DriftSqlType.int,
         data['${effectivePrefix}returned_at'],
       ),
+      dueAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}due_at'],
+      ),
       notes: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}notes'],
@@ -4127,6 +4147,7 @@ class LoansTableData extends DataClass implements Insertable<LoansTableData> {
   final String borrowerId;
   final int lentAt;
   final int? returnedAt;
+  final int? dueAt;
   final String? notes;
   final int updatedAt;
   final int deleted;
@@ -4136,6 +4157,7 @@ class LoansTableData extends DataClass implements Insertable<LoansTableData> {
     required this.borrowerId,
     required this.lentAt,
     this.returnedAt,
+    this.dueAt,
     this.notes,
     required this.updatedAt,
     required this.deleted,
@@ -4149,6 +4171,9 @@ class LoansTableData extends DataClass implements Insertable<LoansTableData> {
     map['lent_at'] = Variable<int>(lentAt);
     if (!nullToAbsent || returnedAt != null) {
       map['returned_at'] = Variable<int>(returnedAt);
+    }
+    if (!nullToAbsent || dueAt != null) {
+      map['due_at'] = Variable<int>(dueAt);
     }
     if (!nullToAbsent || notes != null) {
       map['notes'] = Variable<String>(notes);
@@ -4167,6 +4192,9 @@ class LoansTableData extends DataClass implements Insertable<LoansTableData> {
       returnedAt: returnedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(returnedAt),
+      dueAt: dueAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dueAt),
       notes: notes == null && nullToAbsent
           ? const Value.absent()
           : Value(notes),
@@ -4186,6 +4214,7 @@ class LoansTableData extends DataClass implements Insertable<LoansTableData> {
       borrowerId: serializer.fromJson<String>(json['borrowerId']),
       lentAt: serializer.fromJson<int>(json['lentAt']),
       returnedAt: serializer.fromJson<int?>(json['returnedAt']),
+      dueAt: serializer.fromJson<int?>(json['dueAt']),
       notes: serializer.fromJson<String?>(json['notes']),
       updatedAt: serializer.fromJson<int>(json['updatedAt']),
       deleted: serializer.fromJson<int>(json['deleted']),
@@ -4200,6 +4229,7 @@ class LoansTableData extends DataClass implements Insertable<LoansTableData> {
       'borrowerId': serializer.toJson<String>(borrowerId),
       'lentAt': serializer.toJson<int>(lentAt),
       'returnedAt': serializer.toJson<int?>(returnedAt),
+      'dueAt': serializer.toJson<int?>(dueAt),
       'notes': serializer.toJson<String?>(notes),
       'updatedAt': serializer.toJson<int>(updatedAt),
       'deleted': serializer.toJson<int>(deleted),
@@ -4212,6 +4242,7 @@ class LoansTableData extends DataClass implements Insertable<LoansTableData> {
     String? borrowerId,
     int? lentAt,
     Value<int?> returnedAt = const Value.absent(),
+    Value<int?> dueAt = const Value.absent(),
     Value<String?> notes = const Value.absent(),
     int? updatedAt,
     int? deleted,
@@ -4221,6 +4252,7 @@ class LoansTableData extends DataClass implements Insertable<LoansTableData> {
     borrowerId: borrowerId ?? this.borrowerId,
     lentAt: lentAt ?? this.lentAt,
     returnedAt: returnedAt.present ? returnedAt.value : this.returnedAt,
+    dueAt: dueAt.present ? dueAt.value : this.dueAt,
     notes: notes.present ? notes.value : this.notes,
     updatedAt: updatedAt ?? this.updatedAt,
     deleted: deleted ?? this.deleted,
@@ -4238,6 +4270,7 @@ class LoansTableData extends DataClass implements Insertable<LoansTableData> {
       returnedAt: data.returnedAt.present
           ? data.returnedAt.value
           : this.returnedAt,
+      dueAt: data.dueAt.present ? data.dueAt.value : this.dueAt,
       notes: data.notes.present ? data.notes.value : this.notes,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       deleted: data.deleted.present ? data.deleted.value : this.deleted,
@@ -4252,6 +4285,7 @@ class LoansTableData extends DataClass implements Insertable<LoansTableData> {
           ..write('borrowerId: $borrowerId, ')
           ..write('lentAt: $lentAt, ')
           ..write('returnedAt: $returnedAt, ')
+          ..write('dueAt: $dueAt, ')
           ..write('notes: $notes, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('deleted: $deleted')
@@ -4266,6 +4300,7 @@ class LoansTableData extends DataClass implements Insertable<LoansTableData> {
     borrowerId,
     lentAt,
     returnedAt,
+    dueAt,
     notes,
     updatedAt,
     deleted,
@@ -4279,6 +4314,7 @@ class LoansTableData extends DataClass implements Insertable<LoansTableData> {
           other.borrowerId == this.borrowerId &&
           other.lentAt == this.lentAt &&
           other.returnedAt == this.returnedAt &&
+          other.dueAt == this.dueAt &&
           other.notes == this.notes &&
           other.updatedAt == this.updatedAt &&
           other.deleted == this.deleted);
@@ -4290,6 +4326,7 @@ class LoansTableCompanion extends UpdateCompanion<LoansTableData> {
   final Value<String> borrowerId;
   final Value<int> lentAt;
   final Value<int?> returnedAt;
+  final Value<int?> dueAt;
   final Value<String?> notes;
   final Value<int> updatedAt;
   final Value<int> deleted;
@@ -4300,6 +4337,7 @@ class LoansTableCompanion extends UpdateCompanion<LoansTableData> {
     this.borrowerId = const Value.absent(),
     this.lentAt = const Value.absent(),
     this.returnedAt = const Value.absent(),
+    this.dueAt = const Value.absent(),
     this.notes = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.deleted = const Value.absent(),
@@ -4311,6 +4349,7 @@ class LoansTableCompanion extends UpdateCompanion<LoansTableData> {
     required String borrowerId,
     required int lentAt,
     this.returnedAt = const Value.absent(),
+    this.dueAt = const Value.absent(),
     this.notes = const Value.absent(),
     required int updatedAt,
     this.deleted = const Value.absent(),
@@ -4326,6 +4365,7 @@ class LoansTableCompanion extends UpdateCompanion<LoansTableData> {
     Expression<String>? borrowerId,
     Expression<int>? lentAt,
     Expression<int>? returnedAt,
+    Expression<int>? dueAt,
     Expression<String>? notes,
     Expression<int>? updatedAt,
     Expression<int>? deleted,
@@ -4337,6 +4377,7 @@ class LoansTableCompanion extends UpdateCompanion<LoansTableData> {
       if (borrowerId != null) 'borrower_id': borrowerId,
       if (lentAt != null) 'lent_at': lentAt,
       if (returnedAt != null) 'returned_at': returnedAt,
+      if (dueAt != null) 'due_at': dueAt,
       if (notes != null) 'notes': notes,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (deleted != null) 'deleted': deleted,
@@ -4350,6 +4391,7 @@ class LoansTableCompanion extends UpdateCompanion<LoansTableData> {
     Value<String>? borrowerId,
     Value<int>? lentAt,
     Value<int?>? returnedAt,
+    Value<int?>? dueAt,
     Value<String?>? notes,
     Value<int>? updatedAt,
     Value<int>? deleted,
@@ -4361,6 +4403,7 @@ class LoansTableCompanion extends UpdateCompanion<LoansTableData> {
       borrowerId: borrowerId ?? this.borrowerId,
       lentAt: lentAt ?? this.lentAt,
       returnedAt: returnedAt ?? this.returnedAt,
+      dueAt: dueAt ?? this.dueAt,
       notes: notes ?? this.notes,
       updatedAt: updatedAt ?? this.updatedAt,
       deleted: deleted ?? this.deleted,
@@ -4386,6 +4429,9 @@ class LoansTableCompanion extends UpdateCompanion<LoansTableData> {
     if (returnedAt.present) {
       map['returned_at'] = Variable<int>(returnedAt.value);
     }
+    if (dueAt.present) {
+      map['due_at'] = Variable<int>(dueAt.value);
+    }
     if (notes.present) {
       map['notes'] = Variable<String>(notes.value);
     }
@@ -4409,6 +4455,7 @@ class LoansTableCompanion extends UpdateCompanion<LoansTableData> {
           ..write('borrowerId: $borrowerId, ')
           ..write('lentAt: $lentAt, ')
           ..write('returnedAt: $returnedAt, ')
+          ..write('dueAt: $dueAt, ')
           ..write('notes: $notes, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('deleted: $deleted, ')
@@ -9491,6 +9538,7 @@ typedef $$LoansTableTableCreateCompanionBuilder =
       required String borrowerId,
       required int lentAt,
       Value<int?> returnedAt,
+      Value<int?> dueAt,
       Value<String?> notes,
       required int updatedAt,
       Value<int> deleted,
@@ -9503,6 +9551,7 @@ typedef $$LoansTableTableUpdateCompanionBuilder =
       Value<String> borrowerId,
       Value<int> lentAt,
       Value<int?> returnedAt,
+      Value<int?> dueAt,
       Value<String?> notes,
       Value<int> updatedAt,
       Value<int> deleted,
@@ -9573,6 +9622,11 @@ class $$LoansTableTableFilterComposer
 
   ColumnFilters<int> get returnedAt => $composableBuilder(
     column: $table.returnedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get dueAt => $composableBuilder(
+    column: $table.dueAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -9662,6 +9716,11 @@ class $$LoansTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get dueAt => $composableBuilder(
+    column: $table.dueAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get notes => $composableBuilder(
     column: $table.notes,
     builder: (column) => ColumnOrderings(column),
@@ -9743,6 +9802,9 @@ class $$LoansTableTableAnnotationComposer
     column: $table.returnedAt,
     builder: (column) => column,
   );
+
+  GeneratedColumn<int> get dueAt =>
+      $composableBuilder(column: $table.dueAt, builder: (column) => column);
 
   GeneratedColumn<String> get notes =>
       $composableBuilder(column: $table.notes, builder: (column) => column);
@@ -9833,6 +9895,7 @@ class $$LoansTableTableTableManager
                 Value<String> borrowerId = const Value.absent(),
                 Value<int> lentAt = const Value.absent(),
                 Value<int?> returnedAt = const Value.absent(),
+                Value<int?> dueAt = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<int> updatedAt = const Value.absent(),
                 Value<int> deleted = const Value.absent(),
@@ -9843,6 +9906,7 @@ class $$LoansTableTableTableManager
                 borrowerId: borrowerId,
                 lentAt: lentAt,
                 returnedAt: returnedAt,
+                dueAt: dueAt,
                 notes: notes,
                 updatedAt: updatedAt,
                 deleted: deleted,
@@ -9855,6 +9919,7 @@ class $$LoansTableTableTableManager
                 required String borrowerId,
                 required int lentAt,
                 Value<int?> returnedAt = const Value.absent(),
+                Value<int?> dueAt = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 required int updatedAt,
                 Value<int> deleted = const Value.absent(),
@@ -9865,6 +9930,7 @@ class $$LoansTableTableTableManager
                 borrowerId: borrowerId,
                 lentAt: lentAt,
                 returnedAt: returnedAt,
+                dueAt: dueAt,
                 notes: notes,
                 updatedAt: updatedAt,
                 deleted: deleted,
