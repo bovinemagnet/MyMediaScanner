@@ -1,8 +1,14 @@
+import 'dart:async';
+
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:mymediascanner/core/services/camera/camera_service.dart';
+import 'package:mymediascanner/core/services/camera/mobile_scanner_camera_service.dart';
+import 'package:mymediascanner/core/services/camera/native_camera_service.dart';
 import 'package:mymediascanner/core/utils/cover_ocr_helper.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
 import 'package:mymediascanner/domain/entities/scan_result.dart';
@@ -25,8 +31,10 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
   final _keyboardFocusNode = FocusNode();
 
   bool _webcamMode = false;
-  MobileScannerController? _cameraController;
+  CameraService? _cameraService;
+  StreamSubscription<BarcodeResult>? _barcodeSubscription;
   bool _hasScanned = false;
+  String? _cameraError;
 
   @override
   void initState() {
@@ -39,38 +47,80 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
     _controller.dispose();
     _focusNode.dispose();
     _keyboardFocusNode.dispose();
-    _cameraController?.dispose();
+    _barcodeSubscription?.cancel();
+    _cameraService?.dispose();
     super.dispose();
   }
 
-  void _toggleWebcam() {
+  Future<void> _toggleWebcam() async {
+    if (_webcamMode) {
+      // Switching off webcam
+      await _barcodeSubscription?.cancel();
+      _barcodeSubscription = null;
+      await _cameraService?.stop();
+      await _cameraService?.dispose();
+      _cameraService = null;
+      setState(() {
+        _webcamMode = false;
+        _cameraError = null;
+      });
+      _focusNode.requestFocus();
+      return;
+    }
+
+    // Switching on webcam — create the appropriate service for the platform.
     setState(() {
-      _webcamMode = !_webcamMode;
-      if (_webcamMode) {
-        _cameraController = MobileScannerController(
-          detectionSpeed: DetectionSpeed.normal,
-          detectionTimeoutMs: 500,
-        );
-        _hasScanned = false;
-      } else {
-        _cameraController?.dispose();
-        _cameraController = null;
-        _focusNode.requestFocus();
-      }
+      _webcamMode = true;
+      _hasScanned = false;
+      _cameraError = null;
     });
+
+    try {
+      if (PlatformCapability.canUseMobileScanner) {
+        _cameraService = MobileScannerCameraService();
+      } else if (PlatformCapability.canUseNativeCamera) {
+        final service = NativeCameraService();
+        _cameraService = service;
+        await service.start();
+        setState(() {}); // Rebuild to show preview
+      }
+
+      // Listen for barcode detections from the service.
+      _barcodeSubscription = _cameraService?.onBarcodeDetected.listen(
+        (result) => _onServiceBarcodeDetected(result.rawValue),
+      );
+    } on Exception catch (e) {
+      setState(() => _cameraError = e.toString());
+    }
   }
 
-  void _onBarcodeDetected(BarcodeCapture capture) {
+  void _onServiceBarcodeDetected(String barcodeValue) {
+    if (_hasScanned) return;
+    if (barcodeValue.trim().isEmpty) return;
+
+    _hasScanned = true;
+    _cameraService?.stop();
+
+    ref.read(scannerProvider.notifier).onBarcodeScanned(barcodeValue.trim());
+  }
+
+  /// Legacy callback for the MobileScanner widget (macOS).
+  void _onMobileScannerDetected(BarcodeCapture capture) {
     if (_hasScanned) return;
 
     final barcodes = capture.barcodes;
     if (barcodes.isEmpty) return;
 
-    final barcodeValue = barcodes.first.rawValue ?? barcodes.first.displayValue;
+    final barcodeValue =
+        barcodes.first.rawValue ?? barcodes.first.displayValue;
     if (barcodeValue == null || barcodeValue.trim().isEmpty) return;
 
     _hasScanned = true;
-    _cameraController?.stop();
+    // Stop the MobileScanner controller directly.
+    final service = _cameraService;
+    if (service is MobileScannerCameraService) {
+      service.controller.stop();
+    }
 
     ref.read(scannerProvider.notifier).onBarcodeScanned(barcodeValue.trim());
   }
@@ -78,7 +128,7 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
   void _resumeWebcamScanning() {
     ref.read(scannerProvider.notifier).reset();
     _hasScanned = false;
-    _cameraController?.start();
+    _cameraService?.start();
   }
 
   void _onSubmitted(String barcode) {
@@ -187,7 +237,9 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
             ),
         ],
       ),
-      body: _webcamMode ? _buildWebcamBody(scannerState) : _buildKeyboardBody(scannerState),
+      body: _webcamMode
+          ? _buildWebcamBody(scannerState)
+          : _buildKeyboardBody(scannerState),
     );
   }
 
@@ -209,34 +261,7 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
         Expanded(
           child: Stack(
             children: [
-              if (_cameraController != null)
-                MobileScanner(
-                  controller: _cameraController!,
-                  onDetect: _onBarcodeDetected,
-                  errorBuilder: (context, error) {
-                    return Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.videocam_off,
-                              size: 48,
-                              color: Theme.of(context).colorScheme.error),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Camera error: ${error.errorCode.message}',
-                            style: TextStyle(
-                                color: Theme.of(context).colorScheme.error),
-                          ),
-                          const SizedBox(height: 16),
-                          FilledButton.tonal(
-                            onPressed: _toggleWebcam,
-                            child: const Text('Switch to keyboard input'),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+              _buildCameraPreview(),
               // Crosshair overlay
               Center(
                 child: Container(
@@ -278,6 +303,58 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  /// Builds the appropriate camera preview widget for the current platform.
+  Widget _buildCameraPreview() {
+    if (_cameraError != null) {
+      return _buildCameraError(_cameraError!);
+    }
+
+    final service = _cameraService;
+
+    // macOS/Android/iOS: use MobileScanner widget (handles both preview + detection).
+    if (service is MobileScannerCameraService) {
+      return MobileScanner(
+        controller: service.controller,
+        onDetect: _onMobileScannerDetected,
+        errorBuilder: (context, error) =>
+            _buildCameraError('Camera error: ${error.errorCode.message}'),
+      );
+    }
+
+    // Windows/Linux: use CameraPreview from the camera package.
+    if (service is NativeCameraService) {
+      final controller = service.controller;
+      if (controller != null && controller.value.isInitialized) {
+        return CameraPreview(controller);
+      }
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return const Center(child: CircularProgressIndicator());
+  }
+
+  Widget _buildCameraError(String message) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.videocam_off,
+              size: 48, color: Theme.of(context).colorScheme.error),
+          const SizedBox(height: 16),
+          Text(
+            message,
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
+          const SizedBox(height: 16),
+          FilledButton.tonal(
+            onPressed: _toggleWebcam,
+            child: const Text('Switch to keyboard input'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -378,8 +455,8 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
           if (scannerState.state == ScanState.error)
             Text(
               scannerState.error ?? 'Unknown error',
-              style: TextStyle(
-                  color: Theme.of(context).colorScheme.error),
+              style:
+                  TextStyle(color: Theme.of(context).colorScheme.error),
             ),
           if (scannerState.state == ScanState.duplicate)
             Card(
