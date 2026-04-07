@@ -39,7 +39,11 @@ final overdueLoansProvider = StreamProvider<List<Loan>>((ref) {
 });
 
 final overdueCountProvider = Provider<int>((ref) {
-  return ref.watch(overdueLoansProvider).valueOrNull?.length ?? 0;
+  return ref.watch(overdueLoansProvider).when(
+    data: (loans) => loans.length,
+    loading: () => 0,
+    error: (_, _) => 0,
+  );
 });
 
 /// Set of media item IDs that have an overdue active loan.
