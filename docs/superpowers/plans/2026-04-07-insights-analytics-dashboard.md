@@ -73,7 +73,7 @@ test/
 **Files:**
 - Modify: `pubspec.yaml`
 
-- [ ] **Step 1: Add fl_chart to pubspec.yaml**
+- [x] **Step 1: Add fl_chart to pubspec.yaml**
 
 Add after the existing `file_picker` dependency line:
 
@@ -81,12 +81,12 @@ Add after the existing `file_picker` dependency line:
   fl_chart: ^0.70.2
 ```
 
-- [ ] **Step 2: Run flutter pub get**
+- [x] **Step 2: Run flutter pub get**
 
 Run: `flutter pub get`
 Expected: Dependencies resolved successfully.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ---
 
@@ -95,7 +95,7 @@ Expected: Dependencies resolved successfully.
 **Files:**
 - Create: `lib/domain/entities/insights_data.dart`
 
-- [ ] **Step 1: Create the InsightsData freezed model**
+- [x] **Step 1: Create the InsightsData freezed model**
 
 This model aggregates all analytics data into a single immutable payload consumed by the screen. It extends the existing `CollectionStatistics` concept with lending, rip coverage, and growth timeline data.
 
@@ -142,12 +142,12 @@ sealed class InsightsData with _$InsightsData {
 }
 ```
 
-- [ ] **Step 2: Run build_runner**
+- [x] **Step 2: Run build_runner**
 
 Run: `dart run build_runner build --delete-conflicting-outputs`
 Expected: Generates `insights_data.freezed.dart` without errors.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ---
 
@@ -156,7 +156,7 @@ Expected: Generates `insights_data.freezed.dart` without errors.
 **Files:**
 - Modify: `lib/presentation/providers/statistics_provider.dart`
 
-- [ ] **Step 1: Add insightsProvider that combines collection, loan, and rip data**
+- [x] **Step 1: Add insightsProvider that combines collection, loan, and rip data**
 
 The new `insightsProvider` watches `collectionProvider`, `activeLoansProvider`, `allBorrowersProvider`, and `allRipAlbumsProvider` to compute the full `InsightsData`. The existing `statisticsProvider` is kept for backwards compatibility (dashboard screen uses it).
 
@@ -167,7 +167,7 @@ Key computation logic:
 - **Most borrowed items:** Count all loans (active + returned) per media item, join with item titles.
 - **Rip coverage:** Count rip albums with non-null `mediaItemId` (matched) vs null (unmatched). Count music items from collection that appear in rippedItemIds.
 
-- [ ] **Step 2: Write unit tests for InsightsData computation**
+- [x] **Step 2: Write unit tests for InsightsData computation**
 
 Create `test/unit/presentation/providers/statistics_provider_test.dart`:
 - Test monthly growth grouping with items spread across months
@@ -180,7 +180,7 @@ Create `test/unit/presentation/providers/statistics_provider_test.dart`:
 Run: `flutter test test/unit/presentation/providers/statistics_provider_test.dart`
 Expected: All tests pass.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ---
 
@@ -193,7 +193,7 @@ Expected: All tests pass.
 
 ### Sub-task 4a: Collection Growth Line Chart
 
-- [ ] **Step 1: Create growth_chart.dart**
+- [x] **Step 1: Create growth_chart.dart**
 
 An fl_chart `LineChart` showing cumulative item count over time. X-axis: months. Y-axis: cumulative count. Uses `monthlyGrowth` from `InsightsData`. Follows design system: primary colour for the line, `surfaceContainerHigh` background, tonal container card wrapper, uppercase label header.
 
@@ -205,17 +205,17 @@ Features:
 
 ### Sub-task 4b: Media Type Pie Chart
 
-- [ ] **Step 2: Create media_type_pie_chart.dart**
+- [x] **Step 2: Create media_type_pie_chart.dart**
 
 An fl_chart `PieChart` (donut style) showing `byMediaType` distribution. Each segment uses the existing `AppColors.filmColor`, `AppColors.tvColor`, etc. from `app_colors.dart`. Centre shows total count. Legend below with colour swatches.
 
 ### Sub-task 4c: Time Period Selector
 
-- [ ] **Step 3: Create time_period_selector.dart**
+- [x] **Step 3: Create time_period_selector.dart**
 
 A `SegmentedButton<TimePeriod>` with options: 3 months, 6 months, 12 months, All time. Stored as a Riverpod `StateProvider<TimePeriod>` so chart widgets react to changes.
 
-- [ ] **Step 4: Write widget tests for chart components**
+- [x] **Step 4: Write widget tests for chart components**
 
 - Test renders without error with sample data
 - Test empty data shows placeholder message
@@ -223,7 +223,7 @@ A `SegmentedButton<TimePeriod>` with options: 3 months, 6 months, 12 months, All
 Run: `flutter test test/presentation/screens/collection/widgets/`
 Expected: All tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ---
 
@@ -232,7 +232,7 @@ Expected: All tests pass.
 **Files:**
 - Create: `lib/presentation/screens/collection/widgets/lending_stats_card.dart`
 
-- [ ] **Step 1: Create lending_stats_card.dart**
+- [x] **Step 1: Create lending_stats_card.dart**
 
 A tonal container card showing:
 - **Active loans count** — prominent number with icon
@@ -242,7 +242,7 @@ A tonal container card showing:
 
 Follows design system: `surfaceContainerHigh` background, uppercase `LENDING` label header, no dividers (tonal shifts only), `AppDesignExtension` shadow tokens.
 
-- [ ] **Step 2: Write widget test**
+- [x] **Step 2: Write widget test**
 
 - Test renders active loans count
 - Test overdue badge shown when overdue > 0
@@ -251,7 +251,7 @@ Follows design system: `surfaceContainerHigh` background, uppercase `LENDING` la
 Run: `flutter test test/presentation/screens/collection/widgets/lending_stats_card_test.dart`
 Expected: All tests pass.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ---
 
@@ -260,7 +260,7 @@ Expected: All tests pass.
 **Files:**
 - Create: `lib/presentation/screens/collection/widgets/rip_coverage_card.dart`
 
-- [ ] **Step 1: Create rip_coverage_card.dart**
+- [x] **Step 1: Create rip_coverage_card.dart**
 
 A tonal container card showing:
 - **Total rip albums** — number with disc icon
@@ -270,7 +270,7 @@ A tonal container card showing:
 
 Follows design system conventions. Uses `AppColors.musicColor` for rip-related accents.
 
-- [ ] **Step 2: Write widget test**
+- [x] **Step 2: Write widget test**
 
 - Test renders total rip albums
 - Test coverage percentage calculation
@@ -279,7 +279,7 @@ Follows design system conventions. Uses `AppColors.musicColor` for rip-related a
 Run: `flutter test test/presentation/screens/collection/widgets/rip_coverage_card_test.dart`
 Expected: All tests pass.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ---
 
@@ -290,7 +290,7 @@ Expected: All tests pass.
 - Create: `lib/presentation/providers/insights_export_provider.dart`
 - Modify: `lib/presentation/screens/collection/collection_screen.dart`
 
-- [ ] **Step 1: Create export_action_bar.dart**
+- [x] **Step 1: Create export_action_bar.dart**
 
 A row of two buttons:
 - **Export CSV** — triggers `ExportCollectionUseCase` with `ExportFormat.csv`
@@ -298,15 +298,15 @@ A row of two buttons:
 
 Uses `file_picker` to let user choose output directory. Shows `SnackBar` with file path on success or error message on failure.
 
-- [ ] **Step 2: Create insights_export_provider.dart**
+- [x] **Step 2: Create insights_export_provider.dart**
 
 A simple provider that wraps `ExportCollectionUseCase` so both collection screen and insights screen can call it without duplicating logic.
 
-- [ ] **Step 3: Refactor CollectionScreen to use shared export provider**
+- [x] **Step 3: Refactor CollectionScreen to use shared export provider**
 
 Update `lib/presentation/screens/collection/collection_screen.dart` to call the shared provider instead of inline `ExportCollectionUseCase` construction.
 
-- [ ] **Step 4: Write widget test**
+- [x] **Step 4: Write widget test**
 
 - Test renders both export buttons
 - Test CSV button triggers export
@@ -314,7 +314,7 @@ Update `lib/presentation/screens/collection/collection_screen.dart` to call the 
 Run: `flutter test test/presentation/screens/collection/widgets/export_action_bar_test.dart`
 Expected: All tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ---
 
@@ -323,7 +323,7 @@ Expected: All tests pass.
 **Files:**
 - Modify: `lib/presentation/screens/collection/statistics_screen.dart`
 
-- [ ] **Step 1: Update StatisticsScreen to use insightsProvider and new widgets**
+- [x] **Step 1: Update StatisticsScreen to use insightsProvider and new widgets**
 
 Replace the existing `statisticsProvider` watch with `insightsProvider`. Restructure the `ListView` sections in this order:
 
@@ -344,16 +344,16 @@ Layout notes:
 - Growth chart spans full width
 - Export bar sits above the top rated gallery
 
-- [ ] **Step 2: Update imports and remove unused code**
+- [x] **Step 2: Update imports and remove unused code**
 
 Remove inline `_CollectionHealthCard` if fully replaced by the pie chart, or keep it as a secondary view.
 
-- [ ] **Step 3: Run flutter analyse**
+- [x] **Step 3: Run flutter analyse**
 
 Run: `flutter analyze`
 Expected: No issues found.
 
-- [ ] **Step 4: Write/update widget tests for the full screen**
+- [x] **Step 4: Write/update widget tests for the full screen**
 
 - Test screen renders with mock `InsightsData`
 - Test lending section visible when loans exist
@@ -364,23 +364,23 @@ Expected: No issues found.
 Run: `flutter test test/presentation/screens/collection/statistics_screen_test.dart`
 Expected: All tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ---
 
 ## Task 9: Full Test Suite & Polish
 
-- [ ] **Step 1: Run the full test suite**
+- [x] **Step 1: Run the full test suite**
 
 Run: `flutter test`
 Expected: All tests pass, no regressions.
 
-- [ ] **Step 2: Run flutter analyse**
+- [x] **Step 2: Run flutter analyse**
 
 Run: `flutter analyze`
 Expected: No issues found.
 
-- [ ] **Step 3: Manual smoke test**
+- [x] **Step 3: Manual smoke test**
 
 Run: `flutter run -d macos` (or preferred platform)
 - Navigate to `/insights`
@@ -392,7 +392,7 @@ Run: `flutter run -d macos` (or preferred platform)
 - Verify responsive layout (resize window on desktop)
 - Test both dark and light themes
 
-- [ ] **Step 4: Final commit if any polish needed**
+- [x] **Step 4: Final commit if any polish needed**
 
 ---
 

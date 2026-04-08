@@ -41,7 +41,7 @@
 - Modify: `pubspec.yaml` (add Windows + Linux launcher icon config)
 - Regenerate: all platform icon assets
 
-- [ ] **Step 1: Fix Android adaptive icon background colour**
+- [x] **Step 1: Fix Android adaptive icon background colour**
 
 Update `android/app/src/main/res/values/colors.xml` to match the `pubspec.yaml` config:
 
@@ -49,7 +49,7 @@ Update `android/app/src/main/res/values/colors.xml` to match the `pubspec.yaml` 
 <color name="ic_launcher_background">#0E0E0E</color>
 ```
 
-- [ ] **Step 2: Extend `flutter_launcher_icons` config for Windows and Linux**
+- [x] **Step 2: Extend `flutter_launcher_icons` config for Windows and Linux**
 
 In `pubspec.yaml`, update the `flutter_launcher_icons:` section:
 
@@ -73,7 +73,7 @@ flutter_launcher_icons:
     image_path: "assets/icon/app_icon.png"
 ```
 
-- [ ] **Step 3: Regenerate icons**
+- [x] **Step 3: Regenerate icons**
 
 ```bash
 dart run flutter_launcher_icons
@@ -81,7 +81,7 @@ dart run flutter_launcher_icons
 
 Verify that `windows/runner/resources/app_icon.ico` is overwritten with the branded icon.
 
-- [ ] **Step 4: Create Linux `.desktop` file**
+- [x] **Step 4: Create Linux `.desktop` file**
 
 Create `linux/com.paulsnow.mymediascanner.desktop`:
 
@@ -97,7 +97,7 @@ Categories=Utility;AudioVideo;Database;
 Keywords=barcode;media;scanner;collection;dvd;bluray;cd;vinyl;
 ```
 
-- [ ] **Step 5: Update Linux `CMakeLists.txt` to install `.desktop` and icon**
+- [x] **Step 5: Update Linux `CMakeLists.txt` to install `.desktop` and icon**
 
 Add install rules for the `.desktop` file and a correctly-named icon:
 
@@ -110,7 +110,7 @@ install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../assets/icon/app_icon.png"
   DESTINATION "${INSTALL_BUNDLE_DATA_DIR}" COMPONENT Runtime)
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```
 feat: fix icon colour mismatch and extend launcher icons to all platforms
@@ -125,13 +125,13 @@ feat: fix icon colour mismatch and extend launcher icons to all platforms
 - Create: `assets/icon/splash_icon.png` (centred logo, no background — 1152×1152 recommended)
 - Regenerate: Android `launch_background.xml`, iOS `LaunchImage`, macOS/Windows/Linux splash assets
 
-- [ ] **Step 1: Add `flutter_native_splash` dev dependency**
+- [x] **Step 1: Add `flutter_native_splash` dev dependency**
 
 ```yaml
   flutter_native_splash: ^2.4.6
 ```
 
-- [ ] **Step 2: Add splash screen configuration to `pubspec.yaml`**
+- [x] **Step 2: Add splash screen configuration to `pubspec.yaml`**
 
 ```yaml
 flutter_native_splash:
@@ -149,21 +149,21 @@ flutter_native_splash:
 
 The Obsidian surface colour `#0e0e0e` is used as the background for both light and dark modes to maintain brand consistency during launch.
 
-- [ ] **Step 3: Generate splash assets**
+- [x] **Step 3: Generate splash assets**
 
 ```bash
 dart run flutter_native_splash:create
 ```
 
-- [ ] **Step 4: Verify iOS `LaunchImage` assets are replaced**
+- [x] **Step 4: Verify iOS `LaunchImage` assets are replaced**
 
 Check that `ios/Runner/Assets.xcassets/LaunchImage.imageset/` now contains branded PNGs rather than blank placeholders.
 
-- [ ] **Step 5: Verify Android `launch_background.xml` is updated**
+- [x] **Step 5: Verify Android `launch_background.xml` is updated**
 
 The drawable should reference the branded splash rather than `@android:color/white`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```
 feat: add branded splash screens for Android and iOS
@@ -178,7 +178,7 @@ feat: add branded splash screens for Android and iOS
 - Modify: `windows/runner/Runner.rc` (update branding strings)
 - Create: `.github/workflows/release-windows.yml`
 
-- [ ] **Step 1: Update Windows `Runner.rc` branding**
+- [x] **Step 1: Update Windows `Runner.rc` branding**
 
 Update the `StringFileInfo` block:
 
@@ -191,13 +191,13 @@ VALUE "OriginalFilename", "MyMediaScanner.exe" "\0"
 VALUE "ProductName", "MyMediaScanner" "\0"
 ```
 
-- [ ] **Step 2: Add `msix` dev dependency**
+- [x] **Step 2: Add `msix` dev dependency**
 
 ```yaml
   msix: ^3.16.8
 ```
 
-- [ ] **Step 3: Add MSIX configuration to `pubspec.yaml`**
+- [x] **Step 3: Add MSIX configuration to `pubspec.yaml`**
 
 ```yaml
 msix_config:
@@ -210,13 +210,13 @@ msix_config:
   languages: en-gb
 ```
 
-- [ ] **Step 4: Test local MSIX build**
+- [x] **Step 4: Test local MSIX build**
 
 ```bash
 dart run msix:create
 ```
 
-- [ ] **Step 5: Create Windows release workflow**
+- [x] **Step 5: Create Windows release workflow**
 
 Create `.github/workflows/release-windows.yml`:
 
@@ -224,7 +224,7 @@ Create `.github/workflows/release-windows.yml`:
 - Runs on `windows-latest`
 - Steps: checkout → setup Flutter → pub get → build_runner → analyse → test → `flutter build windows --release` → `dart run msix:create` → upload MSIX artefact → create GitHub Release
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```
 feat: add Windows MSIX installer configuration and CI workflow
@@ -239,7 +239,7 @@ feat: add Windows MSIX installer configuration and CI workflow
 - Create: `packaging/macos/dmg-background.png` (optional branded background)
 - Create: `.github/workflows/release-macos.yml`
 
-- [ ] **Step 1: Create DMG packaging script**
+- [x] **Step 1: Create DMG packaging script**
 
 Create `packaging/macos/create-dmg.sh`:
 
@@ -271,7 +271,7 @@ create-dmg \
 echo "Created: build/${DMG_NAME}"
 ```
 
-- [ ] **Step 2: Create macOS release workflow**
+- [x] **Step 2: Create macOS release workflow**
 
 Create `.github/workflows/release-macos.yml`:
 
@@ -280,7 +280,7 @@ Create `.github/workflows/release-macos.yml`:
 - Steps: checkout → setup Flutter → pub get → build_runner → analyse → test → `flutter build macos --release` → install `create-dmg` via Homebrew → run DMG script → upload DMG artefact → create GitHub Release
 - Note: code signing and notarisation are out of scope for v1; add as follow-up
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```
 feat: add macOS DMG packaging script and CI workflow
@@ -296,7 +296,7 @@ feat: add macOS DMG packaging script and CI workflow
 - Create: `packaging/linux/com.paulsnow.mymediascanner.metainfo.xml` (AppStream metadata)
 - Create: `.github/workflows/release-linux.yml`
 
-- [ ] **Step 1: Create AppStream metadata**
+- [x] **Step 1: Create AppStream metadata**
 
 Create `packaging/linux/com.paulsnow.mymediascanner.metainfo.xml`:
 
@@ -329,7 +329,7 @@ Create `packaging/linux/com.paulsnow.mymediascanner.metainfo.xml`:
 </component>
 ```
 
-- [ ] **Step 2: Create AppImage configuration**
+- [x] **Step 2: Create AppImage configuration**
 
 Create `packaging/linux/AppImageBuilder.yml` using `appimage-builder` format. This bundles the Flutter Linux build output into a portable AppImage:
 
@@ -338,7 +338,7 @@ Create `packaging/linux/AppImageBuilder.yml` using `appimage-builder` format. Th
 - Icon: `assets/icon/app_icon.png`
 - Runtime: continuous type2
 
-- [ ] **Step 3: Create Flatpak manifest**
+- [x] **Step 3: Create Flatpak manifest**
 
 Create `packaging/linux/com.paulsnow.mymediascanner.yml`:
 
@@ -347,7 +347,7 @@ Create `packaging/linux/com.paulsnow.mymediascanner.yml`:
 - Finish-args: `--share=ipc`, `--socket=fallback-x11`, `--socket=wayland`, `--device=dri`, `--share=network`
 - Build from pre-built Flutter bundle using `simple` buildsystem
 
-- [ ] **Step 4: Create Linux release workflow**
+- [x] **Step 4: Create Linux release workflow**
 
 Create `.github/workflows/release-linux.yml`:
 
@@ -356,7 +356,7 @@ Create `.github/workflows/release-linux.yml`:
 - Steps: checkout → install Linux build deps (`ninja-build`, `libgtk-3-dev`, etc.) → setup Flutter → pub get → build_runner → test → `flutter build linux --release` → build AppImage → upload artefacts → create GitHub Release
 - Flatpak build is optional (can be a separate job or manual)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```
 feat: add Linux AppImage and Flatpak packaging with CI workflow
@@ -374,7 +374,7 @@ feat: add Linux AppImage and Flatpak packaging with CI workflow
 - Create: `android/fastlane/metadata/android/en-GB/title.txt`
 - Create: `android/fastlane/metadata/android/en-GB/changelogs/1.txt`
 
-- [ ] **Step 1: Initialise Fastlane for Android**
+- [x] **Step 1: Initialise Fastlane for Android**
 
 Create `android/fastlane/Appfile`:
 
@@ -383,7 +383,7 @@ json_key_file("") # Path to service account JSON (set in CI secrets)
 package_name("com.paulsnow.mymediascanner")
 ```
 
-- [ ] **Step 2: Create listing metadata files**
+- [x] **Step 2: Create listing metadata files**
 
 `title.txt`:
 ```
@@ -422,11 +422,11 @@ Your collection data is stored locally in SQLite. No account required.
 Initial release — barcode scanning, metadata lookup, collection management, lending tracker, and insights dashboard.
 ```
 
-- [ ] **Step 3: Create basic Fastfile**
+- [x] **Step 3: Create basic Fastfile**
 
 Create `android/fastlane/Fastfile` with lanes for `beta` (internal track) and `release` (production track). Actual Play Store upload requires a service account key configured as a CI secret — document this in the Fastfile comments.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```
 feat: add Android Play Store listing metadata via Fastlane
@@ -446,7 +446,7 @@ feat: add Android Play Store listing metadata via Fastlane
 - Create: `ios/fastlane/metadata/en-GB/privacy_url.txt`
 - Create: `ios/fastlane/metadata/en-GB/release_notes.txt`
 
-- [ ] **Step 1: Initialise Fastlane for iOS**
+- [x] **Step 1: Initialise Fastlane for iOS**
 
 Create `ios/fastlane/Appfile`:
 
@@ -454,7 +454,7 @@ Create `ios/fastlane/Appfile`:
 app_identifier("com.paulsnow.mymediascanner")
 ```
 
-- [ ] **Step 2: Create App Store listing metadata**
+- [x] **Step 2: Create App Store listing metadata**
 
 `name.txt`:
 ```
@@ -483,11 +483,11 @@ Initial release.
 https://github.com/bovinemagnet/MyMediaScanner/blob/main/PRIVACY.md
 ```
 
-- [ ] **Step 3: Create basic Fastfile**
+- [x] **Step 3: Create basic Fastfile**
 
 Lanes for `beta` (TestFlight) and `release` (App Store). Code signing and provisioning profiles are out of scope — document as placeholders.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```
 feat: add iOS App Store listing metadata via Fastlane

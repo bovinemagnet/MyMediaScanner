@@ -38,7 +38,7 @@ The batch editor currently:
 - Create: `lib/data/local/database/tables/batch_queue_items_table.dart`
 - Modify: `lib/data/local/database/app_database.dart` (register tables, bump schema to 7, add migration)
 
-- [ ] **Step 1: Write failing test for batch session DAO**
+- [x] **Step 1: Write failing test for batch session DAO**
 
 Create `test/unit/data/dao/batch_session_dao_test.dart` with tests that verify:
 - Creating a new batch session with a timestamp and status
@@ -48,15 +48,15 @@ Create `test/unit/data/dao/batch_session_dao_test.dart` with tests that verify:
 Run: `flutter test test/unit/data/dao/batch_session_dao_test.dart`
 Expected: FAIL — tables and DAO do not exist yet.
 
-- [ ] **Step 2: Create `batch_sessions_table.dart`**
+- [x] **Step 2: Create `batch_sessions_table.dart`**
 
 Columns: `id` (text PK, UUID v7), `created_at` (int, epoch ms), `completed_at` (int nullable), `status` (text: 'active'|'completed'|'discarded'), `item_count` (int, denormalised for quick display)
 
-- [ ] **Step 3: Create `batch_queue_items_table.dart`**
+- [x] **Step 3: Create `batch_queue_items_table.dart`**
 
 Columns: `id` (text PK, UUID v7), `session_id` (text FK → batch_sessions), `barcode` (text), `barcode_type` (text), `status` (text, mirrors BatchItemStatus), `scanned_at` (int, epoch ms), `metadata_json` (text nullable, JSON-encoded MetadataResult), `scan_result_json` (text nullable, JSON-encoded ScanResult for conflict resolution), `sort_order` (int, insertion position)
 
-- [ ] **Step 4: Create `BatchSessionDao`**
+- [x] **Step 4: Create `BatchSessionDao`**
 
 **Files:**
 - Create: `lib/data/local/dao/batch_session_dao.dart`
@@ -71,11 +71,11 @@ Methods:
 - `deleteQueueItem(String id)`
 - `deleteSessionQueueItems(String sessionId)` — bulk delete for discard
 
-- [ ] **Step 5: Register tables and DAO in `app_database.dart`**
+- [x] **Step 5: Register tables and DAO in `app_database.dart`**
 
 Add `BatchSessionsTable` and `BatchQueueItemsTable` to the `@DriftDatabase` tables list. Add `BatchSessionDao` to the daos list. Bump `schemaVersion` to 7. Add migration.
 
-- [ ] **Step 6: Run `build_runner` and verify tests pass**
+- [x] **Step 6: Run `build_runner` and verify tests pass**
 
 ### Task 1.2: Add JSON Serialisation to BatchItem / MetadataResult
 
@@ -83,17 +83,17 @@ Add `BatchSessionsTable` and `BatchQueueItemsTable` to the `@DriftDatabase` tabl
 - Modify: `lib/presentation/providers/batch_editor_provider.dart` (add `toJson`/`fromJson` on `BatchItem`)
 - Create: `lib/data/mappers/batch_item_mapper.dart` (maps between `BatchQueueItem` and `BatchItem`)
 
-- [ ] **Step 1: Write failing test for round-trip serialisation**
+- [x] **Step 1: Write failing test for round-trip serialisation**
 
 Create `test/unit/data/mappers/batch_item_mapper_test.dart`:
 - Serialise a `BatchItem` with confirmed status and metadata → write to DB row → read back → assert equality
 - Serialise a conflict `BatchItem` with `MultiMatchScanResult` → round-trip → candidates preserved
 
-- [ ] **Step 2: Implement `batch_item_mapper.dart`**
+- [x] **Step 2: Implement `batch_item_mapper.dart`**
 
 Use `MetadataResult.toJson()` (already available via Freezed) to encode metadata as JSON text for the `metadata_json` column. Likewise encode `ScanResult` to JSON for the `scan_result_json` column.
 
-- [ ] **Step 3: Run mapper tests**
+- [x] **Step 3: Run mapper tests**
 
 ### Task 1.3: Wire Persistence into BatchEditorNotifier
 
@@ -101,33 +101,33 @@ Use `MetadataResult.toJson()` (already available via Freezed) to encode metadata
 - Modify: `lib/presentation/providers/batch_editor_provider.dart`
 - Modify: `lib/presentation/providers/repository_providers.dart` (expose `BatchSessionDao`)
 
-- [ ] **Step 1: Write failing integration test**
+- [x] **Step 1: Write failing integration test**
 
 Create `test/unit/presentation/providers/batch_editor_persistence_test.dart`:
 - Add items to batch → dispose container → create new container → verify items restored
 - Discard batch → verify session marked as discarded in DB
 - Save all → verify session marked as completed
 
-- [ ] **Step 2: Convert `BatchEditorNotifier` to `AsyncNotifier`**
+- [x] **Step 2: Convert `BatchEditorNotifier` to `AsyncNotifier`**
 
 Change `Notifier<BatchEditorState>` to `AsyncNotifier<BatchEditorState>`. The `build()` method now:
 1. Checks for an active session in DB via `BatchSessionDao.getActiveSession()`
 2. If found, loads queue items and maps them to `BatchItem` list
 3. If not found, creates a new session
 
-- [ ] **Step 3: Persist on every mutation**
+- [x] **Step 3: Persist on every mutation**
 
 Each mutation method (`addScanResult`, `resolveItem`, `removeItem`, `saveItem`, `saveAllConfirmed`, `clearBatch`) must also write through to the DAO.
 
-- [ ] **Step 4: Update batch screen to handle `AsyncValue`**
+- [x] **Step 4: Update batch screen to handle `AsyncValue`**
 
 `BatchPlaceholderScreen` currently does `ref.watch(batchEditorProvider)` which returns `BatchEditorState` synchronously. After the notifier becomes async, it returns `AsyncValue<BatchEditorState>`. Update the screen to handle loading/error states.
 
-- [ ] **Step 5: Update existing tests**
+- [x] **Step 5: Update existing tests**
 
 Adapt `test/unit/presentation/providers/batch_editor_provider_test.dart` for the async notifier pattern.
 
-- [ ] **Step 6: Run full test suite**
+- [x] **Step 6: Run full test suite**
 
 ---
 
@@ -138,7 +138,7 @@ Adapt `test/unit/presentation/providers/batch_editor_provider_test.dart` for the
 **Files:**
 - Modify: `lib/presentation/providers/batch_editor_provider.dart`
 
-- [ ] **Step 1: Write failing tests for undo/redo**
+- [x] **Step 1: Write failing tests for undo/redo**
 
 Add to `test/unit/presentation/providers/batch_editor_provider_test.dart`:
 - Add item → undo → item removed, undo stack empty, redo stack has one entry
@@ -150,7 +150,7 @@ Add to `test/unit/presentation/providers/batch_editor_provider_test.dart`:
 - Redo when stack empty → no-op
 - New action after undo → redo stack cleared
 
-- [ ] **Step 2: Define `BatchAction` sealed class**
+- [x] **Step 2: Define `BatchAction` sealed class**
 
 ```dart
 sealed class BatchAction {
@@ -162,24 +162,24 @@ class ResolveAction extends BatchAction { final String itemId; final BatchItem p
 class SaveAction extends BatchAction { final String itemId; final BatchItem previousState; }
 ```
 
-- [ ] **Step 3: Add undo/redo stacks to `BatchEditorState`**
+- [x] **Step 3: Add undo/redo stacks to `BatchEditorState`**
 
 Add `List<BatchAction> undoStack` and `List<BatchAction> redoStack` fields (not persisted to DB — undo history is session-only).
 
-- [ ] **Step 4: Implement `undo()` and `redo()` methods**
+- [x] **Step 4: Implement `undo()` and `redo()` methods**
 
 Each method pops from one stack, applies the inverse operation, pushes onto the other stack, and persists the resulting state to DB.
 
-- [ ] **Step 5: Add `canUndo` / `canRedo` getters to state**
+- [x] **Step 5: Add `canUndo` / `canRedo` getters to state**
 
-- [ ] **Step 6: Run tests**
+- [x] **Step 6: Run tests**
 
 ### Task 2.2: Add Undo/Redo Controls to Batch Screen
 
 **Files:**
 - Modify: `lib/presentation/screens/batch/batch_placeholder_screen.dart`
 
-- [ ] **Step 1: Add undo/redo buttons to the header actions (desktop) and app bar (mobile)**
+- [x] **Step 1: Add undo/redo buttons to the header actions (desktop) and app bar (mobile)**
 
 Desktop: Add `IconButton` pair (undo / redo) before the existing "Discard Batch" button in `ScreenHeader.actions`.
 
@@ -187,17 +187,17 @@ Mobile: Add undo/redo `IconButton`s to the `AppBar.actions` list.
 
 Both buttons disabled when `canUndo` / `canRedo` is false.
 
-- [ ] **Step 2: Add keyboard shortcuts (desktop only)**
+- [x] **Step 2: Add keyboard shortcuts (desktop only)**
 
 Wrap the batch screen body in a `Shortcuts` + `Actions` widget:
 - `Ctrl+Z` → undo
 - `Ctrl+Shift+Z` / `Ctrl+Y` → redo
 
-- [ ] **Step 3: Show snackbar on undo/redo with action description**
+- [x] **Step 3: Show snackbar on undo/redo with action description**
 
 After undo/redo, show a brief snackbar: "Undid: removed item 'Album Name'" / "Redid: added item 'Album Name'".
 
-- [ ] **Step 4: Manual verification**
+- [x] **Step 4: Manual verification**
 
 ---
 
@@ -208,14 +208,14 @@ After undo/redo, show a brief snackbar: "Undid: removed item 'Album Name'" / "Re
 **Files:**
 - Modify: `lib/presentation/providers/batch_editor_provider.dart`
 
-- [ ] **Step 1: Write failing tests for progress tracking**
+- [x] **Step 1: Write failing tests for progress tracking**
 
 Add tests:
 - `saveAllConfirmed` with 3 items → progress callbacks at 0/3, 1/3, 2/3, 3/3
 - State exposes `saveProgress` (nullable `BatchSaveProgress` with `current` and `total` fields)
 - Progress is null when not saving
 
-- [ ] **Step 2: Add `BatchSaveProgress` to state**
+- [x] **Step 2: Add `BatchSaveProgress` to state**
 
 ```dart
 class BatchSaveProgress {
@@ -228,29 +228,29 @@ class BatchSaveProgress {
 
 Add `BatchSaveProgress? saveProgress` to `BatchEditorState`. Replace the boolean `isSaving` field (or keep it as a convenience getter: `bool get isSaving => saveProgress != null`).
 
-- [ ] **Step 3: Update `saveAllConfirmed` to emit progress**
+- [x] **Step 3: Update `saveAllConfirmed` to emit progress**
 
 Before each item save, update `state` with incremented `saveProgress.current`.
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 ### Task 3.2: Progress UI in Batch Screen
 
 **Files:**
 - Modify: `lib/presentation/screens/batch/batch_placeholder_screen.dart`
 
-- [ ] **Step 1: Replace the spinner with a `LinearProgressIndicator`**
+- [x] **Step 1: Replace the spinner with a `LinearProgressIndicator`**
 
 When `state.saveProgress != null`, show:
 - A `LinearProgressIndicator` with `value: saveProgress.fraction`
 - Text: "Saving item {current} of {total}..."
 - Disable all action buttons during save
 
-- [ ] **Step 2: Show completion summary**
+- [x] **Step 2: Show completion summary**
 
 After `saveAllConfirmed` completes, show a snackbar or inline banner: "Saved {n} items to collection."
 
-- [ ] **Step 3: Manual verification**
+- [x] **Step 3: Manual verification**
 
 ---
 
@@ -261,18 +261,18 @@ After `saveAllConfirmed` completes, show a snackbar or inline banner: "Saved {n}
 **Files:**
 - Modify: `lib/presentation/providers/batch_editor_provider.dart`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 Add to batch editor tests:
 - Add single result with barcode "123" → add another single result with barcode "123" → second item has status `duplicate`
 - Add single result → add multi-match with same barcode → second item marked `duplicate`
 - Duplicate detection is case-insensitive and ignores leading zeroes
 
-- [ ] **Step 2: Implement barcode duplicate check in `addScanResult`**
+- [x] **Step 2: Implement barcode duplicate check in `addScanResult`**
 
 Before inserting a new `BatchItem`, check if any existing (non-saved) item in the current batch has the same normalised barcode. If so, set the new item's status to `BatchItemStatus.duplicate`.
 
-- [ ] **Step 3: Add visual indicator for within-batch duplicates**
+- [x] **Step 3: Add visual indicator for within-batch duplicates**
 
 Add a `duplicateSource` field to `BatchItem`:
 
@@ -280,11 +280,11 @@ Add a `duplicateSource` field to `BatchItem`:
 enum DuplicateSource { collection, batch }
 ```
 
-- [ ] **Step 4: Allow user to force-keep a batch duplicate**
+- [x] **Step 4: Allow user to force-keep a batch duplicate**
 
 Add an action button "Keep Anyway" on duplicate items that changes their status to `confirmed`.
 
-- [ ] **Step 5: Run tests**
+- [x] **Step 5: Run tests**
 
 ---
 
@@ -295,34 +295,34 @@ Add an action button "Keep Anyway" on duplicate items that changes their status 
 **Files:**
 - Modify: `lib/presentation/providers/batch_editor_provider.dart`
 
-- [ ] **Step 1: Write failing tests for session lifecycle**
+- [x] **Step 1: Write failing tests for session lifecycle**
 
 - Starting a new batch after completing/discarding the previous one creates a new session
 - Completed sessions retain their queue items in the DB (read-only)
 - `getSessionHistory` returns sessions ordered by `created_at` descending
 
-- [ ] **Step 2: Implement session completion logic**
+- [x] **Step 2: Implement session completion logic**
 
 When `saveAllConfirmed` finishes and no unsaved items remain, mark the session as `completed`. When `clearBatch` is called, mark the session as `discarded`. In both cases, create a fresh active session for the next batch.
 
-- [ ] **Step 3: Run tests**
+- [x] **Step 3: Run tests**
 
 ### Task 5.2: Batch History Provider
 
 **Files:**
 - Create: `lib/presentation/providers/batch_history_provider.dart`
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 Create `test/unit/presentation/providers/batch_history_provider_test.dart`:
 - Provider loads paginated session list from DAO
 - Each session summary includes: date, item count, status, saved count
 
-- [ ] **Step 2: Implement `BatchHistoryNotifier`**
+- [x] **Step 2: Implement `BatchHistoryNotifier`**
 
 An `AsyncNotifier<List<BatchSessionSummary>>` that loads from `BatchSessionDao.getSessionHistory()`. Expose a `loadMore()` method for pagination.
 
-- [ ] **Step 3: Run test**
+- [x] **Step 3: Run test**
 
 ### Task 5.3: Batch History Screen
 
@@ -331,7 +331,7 @@ An `AsyncNotifier<List<BatchSessionSummary>>` that loads from `BatchSessionDao.g
 - Modify: `lib/app/router.dart` (add `/batch/history` route)
 - Modify: `lib/presentation/screens/batch/batch_placeholder_screen.dart` (add "History" button)
 
-- [ ] **Step 1: Create `batch_history_screen.dart`**
+- [x] **Step 1: Create `batch_history_screen.dart`**
 
 A read-only list of past batch sessions showing:
 - Date and time
@@ -341,14 +341,14 @@ A read-only list of past batch sessions showing:
 
 Follow existing design system conventions.
 
-- [ ] **Step 2: Add route to GoRouter** — `/batch/history` → `BatchHistoryScreen`
+- [x] **Step 2: Add route to GoRouter** — `/batch/history` → `BatchHistoryScreen`
 
-- [ ] **Step 3: Add "History" button to batch editor screen**
+- [x] **Step 3: Add "History" button to batch editor screen**
 
 Desktop: `OutlinedButton` with `Icons.history` in `ScreenHeader.actions`.
 Mobile: History icon button in `AppBar.actions`.
 
-- [ ] **Step 4: Manual verification**
+- [x] **Step 4: Manual verification**
 
 ---
 
