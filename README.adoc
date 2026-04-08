@@ -1,0 +1,233 @@
+= MyMediaScanner
+Paul Snow
+:description: Cross-platform Flutter app for scanning barcodes on physical media and building a personal collection catalogue.
+:url-docs: src/docs/modules/ROOT/pages
+:icons: font
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
+Cross-platform app for scanning barcodes on physical media (CDs, DVDs, Blu-rays, books, video games) and building a personal collection catalogue.
+Scan with your phone camera or a desktop USB barcode scanner / webcam, automatically enrich records with metadata from specialist APIs, and sync your collection across devices via self-hosted PostgreSQL.
+
+== Features
+
+Barcode scanning:: Camera on Android/iOS (ML Kit), webcam on all desktop platforms (macOS via mobile_scanner, Windows/Linux via camera_desktop + flutter_zxing), keyboard-wedge USB scanner on desktop, manual entry everywhere.
+
+Automatic metadata lookup:: Tiered strategy across TMDB (film/TV), Discogs (music), Google Books, Open Library (books), and UPCitemdb (fallback). Multi-match disambiguation when multiple results are found.
+
+Cover OCR:: Recognise text from cover images — ML Kit on Android/iOS, Vision framework on macOS, Tesseract on Windows/Linux. Webcam capture or gallery file picker.
+
+Collection management:: Browse, search (FTS5), filter by type/genre/tag/year, sort by title/date/year/rating. Resizable master-detail layout on desktop with keyboard navigation.
+
+Star ratings and reviews:: Personal 1-5 star rating and free-text review per item.
+
+Tags and shelves:: Custom tags, named ordered collections, drag-to-reorder.
+
+Lending tracker:: Track borrowers, set due dates, overdue notifications, loan history.
+
+Batch scanning:: Queue-based review mode with undo/redo, within-batch duplicate detection, and session history.
+
+Insights dashboard:: Interactive charts for collection growth, media type distribution, lending statistics, rip coverage, and CSV/JSON export.
+
+FLAC rip library:: Scan a local FLAC library, compare coverage against the physical collection, AccurateRip verification and click/pop detection.
+
+Sync:: Push/pull to self-hosted PostgreSQL with per-field conflict resolution, sync progress, connection health monitoring, and sync log viewer.
+
+Offline-first:: All data stored locally in SQLite. Fully functional without network.
+
+== Platforms
+
+[cols="1,1,3",options="header"]
+|===
+| Platform | Status | Scanning Method
+
+| Android
+| Supported
+| Device camera (ML Kit)
+
+| iOS
+| Supported
+| Device camera (ML Kit)
+
+| macOS
+| Supported
+| USB scanner + webcam (ML Kit) + manual entry
+
+| Windows
+| Supported
+| USB scanner + webcam (flutter_zxing) + manual entry
+
+| Linux
+| Supported
+| USB scanner + webcam (flutter_zxing) + manual entry
+|===
+
+== Technology Stack
+
+[cols="1,3",options="header"]
+|===
+| Technology | Role
+
+| Flutter (all platforms)
+| UI framework; custom Material 3 design system with "Obsidian Lens" (dark) and "Precision Editorial" (light) themes
+
+| Riverpod 3.x
+| State management with hand-written `Notifier` and `AsyncNotifier` providers
+
+| Drift (SQLite)
+| Local database with type-safe DAOs; schema version 8 with 13 tables and 7 performance indexes
+
+| PostgreSQL
+| Optional remote sync via the `postgres` Dart package (direct connection, no intermediary API)
+
+| Dio + Retrofit
+| HTTP client and generated API clients for TMDB, Discogs, Google Books, Open Library, and UPCitemdb
+
+| GoRouter
+| Declarative navigation with `StatefulShellRoute`; desktop sidebar (with drawer fallback) and glassmorphism mobile bottom nav
+
+| Freezed
+| Immutable domain entities and sealed classes via code generation
+
+| mobile_scanner
+| Barcode scanning on Android, iOS, and macOS using ML Kit
+
+| camera_desktop + flutter_zxing
+| Barcode scanning on Windows and Linux via native camera and ZXing C++ FFI
+
+| flutter_tesseract_ocr
+| Cover OCR text recognition on Windows and Linux
+|===
+
+== Getting Started
+
+=== Prerequisites
+
+* Flutter 3.41+ / Dart 3.11+
+* Android SDK 36+ (for Android builds)
+* Xcode 26+ (for iOS/macOS builds)
+
+=== Run
+
+[source,bash]
+----
+# Get dependencies
+flutter pub get
+
+# Run code generation (after any schema/annotation changes)
+dart run build_runner build --delete-conflicting-outputs
+
+# Run on your platform
+flutter run
+
+# Run tests (~683 tests)
+flutter test
+
+# Analyse
+flutter analyze
+----
+
+=== API Keys
+
+The app requires user-supplied API keys for metadata lookup.
+Configure these in *Settings > API Keys*:
+
+[cols="2,3,1",options="header"]
+|===
+| Service | Purpose | Free Tier
+
+| https://www.themoviedb.org/settings/api[TMDB]
+| Film/TV metadata + scores
+| Yes (generous)
+
+| https://www.discogs.com/settings/developers[Discogs]
+| Music metadata + scores
+| Yes (rate-limited)
+
+| https://www.upcitemdb.com/wp/docs/main/development/getting-started/[UPCitemdb]
+| General UPC fallback
+| Yes (limited)
+|===
+
+Google Books and Open Library require no API keys.
+
+=== PostgreSQL Sync (Optional)
+
+To sync across devices, set up a PostgreSQL instance and configure the connection in *Settings > PostgreSQL Configuration*.
+
+. Create the database and apply migrations:
++
+[source,bash]
+----
+createdb mymediascanner
+psql mymediascanner -f lib/data/remote/sync/migrations/001_initial_schema.sql
+psql mymediascanner -f lib/data/remote/sync/migrations/002_lending_tables.sql
+psql mymediascanner -f lib/data/remote/sync/migrations/003_critic_scores.sql
+----
+
+. In the app, go to *Settings > PostgreSQL Configuration*, enter your connection details, and tap *Test Connection*.
+
+TLS is required by default.
+For local development, you can disable it in settings.
+
+== Architecture
+
+Clean architecture with strict dependency rules: `domain/` has zero dependencies on `data/` or `presentation/`.
+
+[source]
+----
+lib/
+  app/          -- MaterialApp.router, GoRouter routes, theme
+  core/
+    constants/  -- App-wide constants, breakpoints, window dimensions
+    services/
+      camera/   -- CameraService abstraction with platform implementations
+    utils/      -- Platform utils, barcode utils, OCR helpers
+  data/
+    local/      -- Drift database, tables, DAOs
+    remote/
+      api/      -- Retrofit API clients (TMDB, Discogs, Google Books, Open Library, UPC)
+      sync/     -- PostgreSQL sync client, conflict resolution, migrations
+    mappers/    -- DTO to domain entity converters
+    repositories/ -- Concrete implementations of domain interfaces
+  domain/
+    entities/   -- Pure Dart models (Freezed)
+    repositories/ -- Abstract interfaces (prefixed with I)
+    usecases/   -- Business logic orchestrators
+  presentation/
+    providers/  -- Riverpod providers (hand-written)
+    screens/    -- Feature screens with widgets
+    widgets/    -- Shared widgets (sidebar, master-detail, keyboard nav, etc.)
+----
+
+== Documentation
+
+Full documentation is available in AsciiDoc format under `link:{url-docs}/index.adoc[src/docs/]`, built with https://antora.org[Antora].
+
+Key pages:
+
+* link:{url-docs}/getting-started.adoc[Getting Started] -- prerequisites, build commands, project structure
+* link:{url-docs}/architecture.adoc[Clean Architecture] -- dependency rules and module layout
+* link:{url-docs}/data-model.adoc[Data Model] -- schema tables, indexes, and entity design
+* link:{url-docs}/metadata-lookup.adoc[Metadata Lookup] -- tiered lookup strategy and caching
+* link:{url-docs}/scanning.adoc[Barcode Scanning] -- camera, USB, and webcam scanning
+* link:{url-docs}/desktop-mode.adoc[Desktop Mode] -- sidebar, keyboard shortcuts, resizable split, webcam
+* link:{url-docs}/sync-strategy.adoc[Sync Strategy] -- PostgreSQL sync with conflict resolution
+* link:{url-docs}/testing.adoc[Testing] -- test structure and how to run the suite
+
+To build the documentation locally:
+
+[source,bash]
+----
+npx antora local-antora-playbook-search.yml
+# Output: target/public/
+----
+
+== Licence
+
+Private project. All rights reserved.

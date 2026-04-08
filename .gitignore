@@ -1,6 +1,11 @@
 # Superpowers brainstorm sessions
 .superpowers/
 
+# Antora build output and cache
+.cache/
+target/
+local-antora-playbook-search.yml
+
 # Miscellaneous
 *.class
 *.log
