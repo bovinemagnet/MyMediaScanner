@@ -25,13 +25,19 @@ class ShelfRepositoryImpl implements IShelfRepository {
 
   @override
   Future<void> save(Shelf shelf) async {
-    await _shelvesDao.insertShelf(ShelvesTableCompanion(
+    final companion = ShelvesTableCompanion(
       id: Value(shelf.id),
       name: Value(shelf.name),
       description: Value(shelf.description),
       sortOrder: Value(shelf.sortOrder),
       updatedAt: Value(shelf.updatedAt),
-    ));
+    );
+    final existing = await _shelvesDao.getById(shelf.id);
+    if (existing != null) {
+      await _shelvesDao.updateShelf(companion);
+    } else {
+      await _shelvesDao.insertShelf(companion);
+    }
   }
 
   @override
