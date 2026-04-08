@@ -6,6 +6,7 @@ import 'package:mymediascanner/app/theme/app_colors.dart';
 import 'package:mymediascanner/core/constants/app_constants.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
+import 'package:mymediascanner/domain/entities/rip_track.dart';
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
 import 'package:mymediascanner/presentation/providers/selected_rip_album_provider.dart';
 import 'package:mymediascanner/presentation/providers/rip_view_mode_provider.dart';
@@ -306,14 +307,107 @@ class _RipAlbumCard extends ConsumerWidget {
 }
 
 /// Embedded rip album detail for the master-detail side panel.
-class _RipAlbumDetailPanel extends ConsumerWidget {
+class _RipAlbumDetailPanel extends ConsumerStatefulWidget {
   const _RipAlbumDetailPanel({required this.album});
 
   final RipAlbum album;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final tracksAsync = ref.watch(ripTracksProvider(album.id));
+  ConsumerState<_RipAlbumDetailPanel> createState() =>
+      _RipAlbumDetailPanelState();
+}
+
+class _RipAlbumDetailPanelState extends ConsumerState<_RipAlbumDetailPanel> {
+  bool _editing = false;
+  late TextEditingController _artistController;
+  late TextEditingController _albumTitleController;
+  final Map<String, TextEditingController> _trackTitleControllers = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _artistController =
+        TextEditingController(text: widget.album.artist ?? '');
+    _albumTitleController =
+        TextEditingController(text: widget.album.albumTitle ?? '');
+  }
+
+  @override
+  void dispose() {
+    _artistController.dispose();
+    _albumTitleController.dispose();
+    for (final c in _trackTitleControllers.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  TextEditingController _trackController(RipTrack track) {
+    return _trackTitleControllers.putIfAbsent(
+      track.id,
+      () => TextEditingController(text: track.title ?? ''),
+    );
+  }
+
+  Future<void> _save(List<RipTrack> tracks) async {
+    final notifier = ref.read(ripMetadataEditNotifierProvider.notifier);
+
+    final newArtist = _artistController.text.trim();
+    final newAlbumTitle = _albumTitleController.text.trim();
+    final artistChanged = newArtist != (widget.album.artist ?? '');
+    final albumTitleChanged = newAlbumTitle != (widget.album.albumTitle ?? '');
+
+    if (artistChanged || albumTitleChanged) {
+      await notifier.saveAlbumMetadata(
+        album: widget.album,
+        tracks: tracks,
+        artist: artistChanged ? newArtist : null,
+        albumTitle: albumTitleChanged ? newAlbumTitle : null,
+      );
+    }
+
+    for (final track in tracks) {
+      final controller = _trackTitleControllers[track.id];
+      if (controller != null) {
+        final newTitle = controller.text.trim();
+        final oldTitle = track.title ?? '';
+        if (newTitle != oldTitle) {
+          await notifier.saveTrackTitle(
+            track: track,
+            title: newTitle.isEmpty ? null : newTitle,
+          );
+        }
+      }
+    }
+
+    final editState = ref.read(ripMetadataEditNotifierProvider);
+    if (mounted) {
+      if (editState.status == RipMetadataEditStatus.error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                editState.error ?? 'Failed to save metadata.'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      } else {
+        setState(() => _editing = false);
+      }
+    }
+  }
+
+  void _discard() {
+    _artistController.text = widget.album.artist ?? '';
+    _albumTitleController.text = widget.album.albumTitle ?? '';
+    _trackTitleControllers.clear();
+    setState(() => _editing = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tracksAsync = ref.watch(ripTracksProvider(widget.album.id));
+    final editState = ref.watch(ripMetadataEditNotifierProvider);
+    final isSaving = editState.status == RipMetadataEditStatus.saving;
     final theme = Theme.of(context);
 
     return Column(
@@ -323,40 +417,93 @@ class _RipAlbumDetailPanel extends ConsumerWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           color: theme.colorScheme.surfaceContainerHigh,
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          child: _editing
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(
-                      album.artist ?? 'Unknown Artist',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                    TextFormField(
+                      controller: _artistController,
+                      decoration: const InputDecoration(
+                        labelText: 'Artist',
+                        isDense: true,
                       ),
-                      overflow: TextOverflow.ellipsis,
                     ),
-                    Text(
-                      album.albumTitle ?? 'Unknown Album',
-                      style: theme.textTheme.titleSmall,
-                      overflow: TextOverflow.ellipsis,
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _albumTitleController,
+                      decoration: const InputDecoration(
+                        labelText: 'Album Title',
+                        isDense: true,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: isSaving ? null : _discard,
+                          child: const Text('Discard'),
+                        ),
+                        const SizedBox(width: 8),
+                        isSaving
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2),
+                              )
+                            : FilledButton(
+                                onPressed: () {
+                                  final tracks = ref
+                                      .read(ripTracksProvider(widget.album.id))
+                                      .value ?? [];
+                                  _save(tracks);
+                                },
+                                child: const Text('Save Changes'),
+                              ),
+                      ],
+                    ),
+                  ],
+                )
+              : Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.album.artist ?? 'Unknown Artist',
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            widget.album.albumTitle ?? 'Unknown Album',
+                            style: theme.textTheme.titleSmall,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.edit, size: 20),
+                      tooltip: 'Edit metadata',
+                      onPressed: () => setState(() => _editing = true),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 20),
+                      tooltip: 'Close panel',
+                      onPressed: () =>
+                          ref.read(selectedRipAlbumProvider.notifier).clear(),
                     ),
                   ],
                 ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.close, size: 20),
-                tooltip: 'Close panel',
-                onPressed: () =>
-                    ref.read(selectedRipAlbumProvider.notifier).clear(),
-              ),
-            ],
-          ),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           child: Text(
-            album.libraryPath,
+            widget.album.libraryPath,
             style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant),
             maxLines: 2,
@@ -372,7 +519,7 @@ class _RipAlbumDetailPanel extends ConsumerWidget {
             color: theme.colorScheme.surfaceContainerHigh,
             borderRadius: BorderRadius.circular(10),
           ),
-          child: QualityAnalysisSection(albumId: album.id),
+          child: QualityAnalysisSection(albumId: widget.album.id),
         ),
         const SizedBox(height: 12),
         // Track listing
@@ -398,6 +545,24 @@ class _RipAlbumDetailPanel extends ConsumerWidget {
                 itemCount: tracks.length,
                 itemBuilder: (context, index) {
                   final track = tracks[index];
+                  if (_editing) {
+                    return ListTile(
+                      dense: true,
+                      leading: QualityIcon(track: track),
+                      title: TextFormField(
+                        controller: _trackController(track),
+                        decoration: InputDecoration(
+                          labelText: 'Track ${track.trackNumber}',
+                          isDense: true,
+                          border: const UnderlineInputBorder(),
+                        ),
+                      ),
+                      subtitle: track.accurateRipStatus != null
+                          ? Text(track.accurateRipStatus!,
+                              style: theme.textTheme.bodySmall)
+                          : null,
+                    );
+                  }
                   return ListTile(
                     dense: true,
                     leading: QualityIcon(track: track),

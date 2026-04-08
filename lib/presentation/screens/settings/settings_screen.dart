@@ -386,7 +386,7 @@ class _FlacLibrarySectionState extends ConsumerState<_FlacLibrarySection> {
                 decoration: const InputDecoration(
                   labelText: 'flac binary path (optional)',
                   hintText: '/opt/homebrew/bin/flac',
-                  helperText: 'Leave empty to use flac from PATH',
+                  helperText: 'Leave empty to use flac and metaflac from PATH',
                   border: OutlineInputBorder(),
                 ),
                 onSubmitted: (value) {

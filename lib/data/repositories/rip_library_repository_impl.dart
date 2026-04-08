@@ -41,6 +41,7 @@ class RipLibraryRepositoryImpl implements IRipLibraryRepository {
       discCount: Value(album.discCount),
       totalSizeBytes: Value(album.totalSizeBytes),
       mediaItemId: Value(album.mediaItemId),
+      cueFilePath: Value(album.cueFilePath),
       lastScannedAt: Value(album.lastScannedAt),
       updatedAt: Value(album.updatedAt),
     ));
@@ -58,6 +59,7 @@ class RipLibraryRepositoryImpl implements IRipLibraryRepository {
       discCount: Value(album.discCount),
       totalSizeBytes: Value(album.totalSizeBytes),
       mediaItemId: Value(album.mediaItemId),
+      cueFilePath: Value(album.cueFilePath),
       lastScannedAt: Value(album.lastScannedAt),
       updatedAt: Value(album.updatedAt),
     ));
@@ -138,10 +140,16 @@ class RipLibraryRepositoryImpl implements IRipLibraryRepository {
         discCount: row.discCount,
         totalSizeBytes: row.totalSizeBytes,
         mediaItemId: row.mediaItemId,
+        cueFilePath: row.cueFilePath,
         lastScannedAt: row.lastScannedAt,
         updatedAt: row.updatedAt,
         deleted: row.deleted == 1,
       );
+
+  @override
+  Future<void> updateTrackTitle(String trackId, String? title) async {
+    await _dao.updateTrackTitle(trackId, title);
+  }
 
   @override
   Future<void> updateTrackQuality(

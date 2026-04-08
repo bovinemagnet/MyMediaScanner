@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/core/utils/flac_decoder.dart';
+import 'package:mymediascanner/core/utils/metaflac_writer.dart';
+import 'package:mymediascanner/domain/usecases/edit_rip_metadata_usecase.dart';
 import 'package:mymediascanner/data/remote/api/accuraterip/accuraterip_client.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
 import 'package:mymediascanner/domain/entities/rip_track.dart';
@@ -297,5 +299,106 @@ class QualityAnalysisNotifier extends Notifier<QualityAnalysisState> {
         error: e.toString(),
       );
     }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Metadata editing providers
+// ---------------------------------------------------------------------------
+
+/// Provider for the MetaflacWriter instance, derived from the flac binary path.
+final metaflacWriterProvider = Provider<MetaflacWriter>((ref) {
+  final flacOverride = ref.watch(flacBinaryPathOverrideProvider).value;
+  return MetaflacWriter(
+      binaryPath: deriveMetaflacPath(flacOverride));
+});
+
+/// State for rip metadata editing operations.
+enum RipMetadataEditStatus { idle, saving, saved, error }
+
+class RipMetadataEditState {
+  const RipMetadataEditState({
+    this.status = RipMetadataEditStatus.idle,
+    this.error,
+  });
+
+  final RipMetadataEditStatus status;
+  final String? error;
+
+  RipMetadataEditState copyWith({
+    RipMetadataEditStatus? status,
+    String? error,
+  }) =>
+      RipMetadataEditState(
+        status: status ?? this.status,
+        error: error,
+      );
+}
+
+/// Notifier managing rip metadata editing (writing tags to FLAC files).
+final ripMetadataEditNotifierProvider =
+    NotifierProvider<RipMetadataEditNotifier, RipMetadataEditState>(
+  RipMetadataEditNotifier.new,
+);
+
+class RipMetadataEditNotifier extends Notifier<RipMetadataEditState> {
+  @override
+  RipMetadataEditState build() => const RipMetadataEditState();
+
+  Future<void> saveAlbumMetadata({
+    required RipAlbum album,
+    required List<RipTrack> tracks,
+    String? artist,
+    String? albumTitle,
+  }) async {
+    if (state.status == RipMetadataEditStatus.saving) return;
+    state = const RipMetadataEditState(status: RipMetadataEditStatus.saving);
+
+    try {
+      final useCase = EditRipMetadataUseCase(
+        repository: ref.read(ripLibraryRepositoryProvider),
+        writer: ref.read(metaflacWriterProvider),
+      );
+      await useCase.editAlbumMetadata(
+        album: album,
+        tracks: tracks,
+        artist: artist,
+        albumTitle: albumTitle,
+      );
+      state = const RipMetadataEditState(status: RipMetadataEditStatus.saved);
+      ref.invalidate(allRipAlbumsProvider);
+    } catch (e) {
+      state = RipMetadataEditState(
+        status: RipMetadataEditStatus.error,
+        error: e.toString(),
+      );
+    }
+  }
+
+  Future<void> saveTrackTitle({
+    required RipTrack track,
+    required String? title,
+  }) async {
+    if (state.status == RipMetadataEditStatus.saving) return;
+    state = const RipMetadataEditState(status: RipMetadataEditStatus.saving);
+
+    try {
+      final useCase = EditRipMetadataUseCase(
+        repository: ref.read(ripLibraryRepositoryProvider),
+        writer: ref.read(metaflacWriterProvider),
+      );
+      await useCase.editTrackTitle(track: track, title: title);
+      state = const RipMetadataEditState(status: RipMetadataEditStatus.saved);
+      ref.invalidate(ripTracksProvider(track.ripAlbumId));
+    } catch (e) {
+      state = RipMetadataEditState(
+        status: RipMetadataEditStatus.error,
+        error: e.toString(),
+      );
+    }
+  }
+
+  void reset() {
+    state = const RipMetadataEditState();
   }
 }

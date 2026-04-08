@@ -139,6 +139,17 @@ class RipLibraryDao extends DatabaseAccessor<AppDatabase>
     );
   }
 
+  /// Update the title of a single track.
+  Future<void> updateTrackTitle(String trackId, String? title) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return (update(ripTracksTable)..where((t) => t.id.equals(trackId))).write(
+      RipTracksTableCompanion(
+        title: Value(title),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
   /// Get all non-deleted rip albums (for matching).
   Future<List<RipAlbumsTableData>> getAllNonDeleted() {
     return (select(ripAlbumsTable)..where((t) => t.deleted.equals(0))).get();

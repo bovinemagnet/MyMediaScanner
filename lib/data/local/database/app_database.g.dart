@@ -4797,6 +4797,17 @@ class $RipAlbumsTableTable extends RipAlbumsTable
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _cueFilePathMeta = const VerificationMeta(
+    'cueFilePath',
+  );
+  @override
+  late final GeneratedColumn<String> cueFilePath = GeneratedColumn<String>(
+    'cue_file_path',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _deletedMeta = const VerificationMeta(
     'deleted',
   );
@@ -4822,6 +4833,7 @@ class $RipAlbumsTableTable extends RipAlbumsTable
     mediaItemId,
     lastScannedAt,
     updatedAt,
+    cueFilePath,
     deleted,
   ];
   @override
@@ -4923,6 +4935,15 @@ class $RipAlbumsTableTable extends RipAlbumsTable
     } else if (isInserting) {
       context.missing(_updatedAtMeta);
     }
+    if (data.containsKey('cue_file_path')) {
+      context.handle(
+        _cueFilePathMeta,
+        cueFilePath.isAcceptableOrUnknown(
+          data['cue_file_path']!,
+          _cueFilePathMeta,
+        ),
+      );
+    }
     if (data.containsKey('deleted')) {
       context.handle(
         _deletedMeta,
@@ -4982,6 +5003,10 @@ class $RipAlbumsTableTable extends RipAlbumsTable
         DriftSqlType.int,
         data['${effectivePrefix}updated_at'],
       )!,
+      cueFilePath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}cue_file_path'],
+      ),
       deleted: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}deleted'],
@@ -5008,6 +5033,7 @@ class RipAlbumsTableData extends DataClass
   final String? mediaItemId;
   final int lastScannedAt;
   final int updatedAt;
+  final String? cueFilePath;
   final int deleted;
   const RipAlbumsTableData({
     required this.id,
@@ -5021,6 +5047,7 @@ class RipAlbumsTableData extends DataClass
     this.mediaItemId,
     required this.lastScannedAt,
     required this.updatedAt,
+    this.cueFilePath,
     required this.deleted,
   });
   @override
@@ -5045,6 +5072,9 @@ class RipAlbumsTableData extends DataClass
     }
     map['last_scanned_at'] = Variable<int>(lastScannedAt);
     map['updated_at'] = Variable<int>(updatedAt);
+    if (!nullToAbsent || cueFilePath != null) {
+      map['cue_file_path'] = Variable<String>(cueFilePath);
+    }
     map['deleted'] = Variable<int>(deleted);
     return map;
   }
@@ -5070,6 +5100,9 @@ class RipAlbumsTableData extends DataClass
           : Value(mediaItemId),
       lastScannedAt: Value(lastScannedAt),
       updatedAt: Value(updatedAt),
+      cueFilePath: cueFilePath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(cueFilePath),
       deleted: Value(deleted),
     );
   }
@@ -5091,6 +5124,7 @@ class RipAlbumsTableData extends DataClass
       mediaItemId: serializer.fromJson<String?>(json['mediaItemId']),
       lastScannedAt: serializer.fromJson<int>(json['lastScannedAt']),
       updatedAt: serializer.fromJson<int>(json['updatedAt']),
+      cueFilePath: serializer.fromJson<String?>(json['cueFilePath']),
       deleted: serializer.fromJson<int>(json['deleted']),
     );
   }
@@ -5109,6 +5143,7 @@ class RipAlbumsTableData extends DataClass
       'mediaItemId': serializer.toJson<String?>(mediaItemId),
       'lastScannedAt': serializer.toJson<int>(lastScannedAt),
       'updatedAt': serializer.toJson<int>(updatedAt),
+      'cueFilePath': serializer.toJson<String?>(cueFilePath),
       'deleted': serializer.toJson<int>(deleted),
     };
   }
@@ -5125,6 +5160,7 @@ class RipAlbumsTableData extends DataClass
     Value<String?> mediaItemId = const Value.absent(),
     int? lastScannedAt,
     int? updatedAt,
+    Value<String?> cueFilePath = const Value.absent(),
     int? deleted,
   }) => RipAlbumsTableData(
     id: id ?? this.id,
@@ -5138,6 +5174,7 @@ class RipAlbumsTableData extends DataClass
     mediaItemId: mediaItemId.present ? mediaItemId.value : this.mediaItemId,
     lastScannedAt: lastScannedAt ?? this.lastScannedAt,
     updatedAt: updatedAt ?? this.updatedAt,
+    cueFilePath: cueFilePath.present ? cueFilePath.value : this.cueFilePath,
     deleted: deleted ?? this.deleted,
   );
   RipAlbumsTableData copyWithCompanion(RipAlbumsTableCompanion data) {
@@ -5165,6 +5202,9 @@ class RipAlbumsTableData extends DataClass
           ? data.lastScannedAt.value
           : this.lastScannedAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      cueFilePath: data.cueFilePath.present
+          ? data.cueFilePath.value
+          : this.cueFilePath,
       deleted: data.deleted.present ? data.deleted.value : this.deleted,
     );
   }
@@ -5183,6 +5223,7 @@ class RipAlbumsTableData extends DataClass
           ..write('mediaItemId: $mediaItemId, ')
           ..write('lastScannedAt: $lastScannedAt, ')
           ..write('updatedAt: $updatedAt, ')
+          ..write('cueFilePath: $cueFilePath, ')
           ..write('deleted: $deleted')
           ..write(')'))
         .toString();
@@ -5201,6 +5242,7 @@ class RipAlbumsTableData extends DataClass
     mediaItemId,
     lastScannedAt,
     updatedAt,
+    cueFilePath,
     deleted,
   );
   @override
@@ -5218,6 +5260,7 @@ class RipAlbumsTableData extends DataClass
           other.mediaItemId == this.mediaItemId &&
           other.lastScannedAt == this.lastScannedAt &&
           other.updatedAt == this.updatedAt &&
+          other.cueFilePath == this.cueFilePath &&
           other.deleted == this.deleted);
 }
 
@@ -5233,6 +5276,7 @@ class RipAlbumsTableCompanion extends UpdateCompanion<RipAlbumsTableData> {
   final Value<String?> mediaItemId;
   final Value<int> lastScannedAt;
   final Value<int> updatedAt;
+  final Value<String?> cueFilePath;
   final Value<int> deleted;
   final Value<int> rowid;
   const RipAlbumsTableCompanion({
@@ -5247,6 +5291,7 @@ class RipAlbumsTableCompanion extends UpdateCompanion<RipAlbumsTableData> {
     this.mediaItemId = const Value.absent(),
     this.lastScannedAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
+    this.cueFilePath = const Value.absent(),
     this.deleted = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -5262,6 +5307,7 @@ class RipAlbumsTableCompanion extends UpdateCompanion<RipAlbumsTableData> {
     this.mediaItemId = const Value.absent(),
     required int lastScannedAt,
     required int updatedAt,
+    this.cueFilePath = const Value.absent(),
     this.deleted = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -5282,6 +5328,7 @@ class RipAlbumsTableCompanion extends UpdateCompanion<RipAlbumsTableData> {
     Expression<String>? mediaItemId,
     Expression<int>? lastScannedAt,
     Expression<int>? updatedAt,
+    Expression<String>? cueFilePath,
     Expression<int>? deleted,
     Expression<int>? rowid,
   }) {
@@ -5297,6 +5344,7 @@ class RipAlbumsTableCompanion extends UpdateCompanion<RipAlbumsTableData> {
       if (mediaItemId != null) 'media_item_id': mediaItemId,
       if (lastScannedAt != null) 'last_scanned_at': lastScannedAt,
       if (updatedAt != null) 'updated_at': updatedAt,
+      if (cueFilePath != null) 'cue_file_path': cueFilePath,
       if (deleted != null) 'deleted': deleted,
       if (rowid != null) 'rowid': rowid,
     });
@@ -5314,6 +5362,7 @@ class RipAlbumsTableCompanion extends UpdateCompanion<RipAlbumsTableData> {
     Value<String?>? mediaItemId,
     Value<int>? lastScannedAt,
     Value<int>? updatedAt,
+    Value<String?>? cueFilePath,
     Value<int>? deleted,
     Value<int>? rowid,
   }) {
@@ -5329,6 +5378,7 @@ class RipAlbumsTableCompanion extends UpdateCompanion<RipAlbumsTableData> {
       mediaItemId: mediaItemId ?? this.mediaItemId,
       lastScannedAt: lastScannedAt ?? this.lastScannedAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      cueFilePath: cueFilePath ?? this.cueFilePath,
       deleted: deleted ?? this.deleted,
       rowid: rowid ?? this.rowid,
     );
@@ -5370,6 +5420,9 @@ class RipAlbumsTableCompanion extends UpdateCompanion<RipAlbumsTableData> {
     if (updatedAt.present) {
       map['updated_at'] = Variable<int>(updatedAt.value);
     }
+    if (cueFilePath.present) {
+      map['cue_file_path'] = Variable<String>(cueFilePath.value);
+    }
     if (deleted.present) {
       map['deleted'] = Variable<int>(deleted.value);
     }
@@ -5393,6 +5446,7 @@ class RipAlbumsTableCompanion extends UpdateCompanion<RipAlbumsTableData> {
           ..write('mediaItemId: $mediaItemId, ')
           ..write('lastScannedAt: $lastScannedAt, ')
           ..write('updatedAt: $updatedAt, ')
+          ..write('cueFilePath: $cueFilePath, ')
           ..write('deleted: $deleted, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -11272,6 +11326,7 @@ typedef $$RipAlbumsTableTableCreateCompanionBuilder =
       Value<String?> mediaItemId,
       required int lastScannedAt,
       required int updatedAt,
+      Value<String?> cueFilePath,
       Value<int> deleted,
       Value<int> rowid,
     });
@@ -11288,6 +11343,7 @@ typedef $$RipAlbumsTableTableUpdateCompanionBuilder =
       Value<String?> mediaItemId,
       Value<int> lastScannedAt,
       Value<int> updatedAt,
+      Value<String?> cueFilePath,
       Value<int> deleted,
       Value<int> rowid,
     });
@@ -11408,6 +11464,11 @@ class $$RipAlbumsTableTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get cueFilePath => $composableBuilder(
+    column: $table.cueFilePath,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<int> get deleted => $composableBuilder(
     column: $table.deleted,
     builder: (column) => ColumnFilters(column),
@@ -11521,6 +11582,11 @@ class $$RipAlbumsTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get cueFilePath => $composableBuilder(
+    column: $table.cueFilePath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get deleted => $composableBuilder(
     column: $table.deleted,
     builder: (column) => ColumnOrderings(column),
@@ -11598,6 +11664,11 @@ class $$RipAlbumsTableTableAnnotationComposer
 
   GeneratedColumn<int> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get cueFilePath => $composableBuilder(
+    column: $table.cueFilePath,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<int> get deleted =>
       $composableBuilder(column: $table.deleted, builder: (column) => column);
@@ -11692,6 +11763,7 @@ class $$RipAlbumsTableTableTableManager
                 Value<String?> mediaItemId = const Value.absent(),
                 Value<int> lastScannedAt = const Value.absent(),
                 Value<int> updatedAt = const Value.absent(),
+                Value<String?> cueFilePath = const Value.absent(),
                 Value<int> deleted = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => RipAlbumsTableCompanion(
@@ -11706,6 +11778,7 @@ class $$RipAlbumsTableTableTableManager
                 mediaItemId: mediaItemId,
                 lastScannedAt: lastScannedAt,
                 updatedAt: updatedAt,
+                cueFilePath: cueFilePath,
                 deleted: deleted,
                 rowid: rowid,
               ),
@@ -11722,6 +11795,7 @@ class $$RipAlbumsTableTableTableManager
                 Value<String?> mediaItemId = const Value.absent(),
                 required int lastScannedAt,
                 required int updatedAt,
+                Value<String?> cueFilePath = const Value.absent(),
                 Value<int> deleted = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => RipAlbumsTableCompanion.insert(
@@ -11736,6 +11810,7 @@ class $$RipAlbumsTableTableTableManager
                 mediaItemId: mediaItemId,
                 lastScannedAt: lastScannedAt,
                 updatedAt: updatedAt,
+                cueFilePath: cueFilePath,
                 deleted: deleted,
                 rowid: rowid,
               ),
