@@ -13,7 +13,7 @@ class ReturnItemUseCase {
 
   Future<void> execute(String loanId) async {
     // Cancel any overdue notification for this loan.
-    _notifications?.cancelNotification(loanId.hashCode);
+    await _notifications?.cancelNotification(loanId.hashCode);
     await _repo.returnItem(loanId);
   }
 }

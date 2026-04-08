@@ -278,7 +278,7 @@ class _RipAlbumCard extends ConsumerWidget {
                     ),
                     if (withClicks > 0) ...[
                       const SizedBox(width: 8),
-                      Icon(Icons.warning_amber,
+                      const Icon(Icons.warning_amber,
                           size: 14, color: AppColors.tvColor),
                       const SizedBox(width: 4),
                       Text('$withClicks clicks',

@@ -66,7 +66,7 @@ class MediaTypePieChart extends StatelessWidget {
                       centerSpaceRadius: 45,
                       sections: _buildSections(theme),
                       pieTouchData: PieTouchData(
-                        touchCallback: (_, __) {},
+                        touchCallback: (_, _) {},
                       ),
                     ),
                   ),

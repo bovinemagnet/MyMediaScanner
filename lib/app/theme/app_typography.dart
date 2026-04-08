@@ -26,21 +26,21 @@ abstract final class AppTypography {
   }) {
     return TextTheme(
       // Display — editorial statements
-      displayLarge: TextStyle(
+      displayLarge: const TextStyle(
         fontFamily: _manrope,
         fontSize: 57,
         fontWeight: FontWeight.w800,
         letterSpacing: -1.14, // -2%
         height: 1.12,
       ),
-      displayMedium: TextStyle(
+      displayMedium: const TextStyle(
         fontFamily: _manrope,
         fontSize: 45,
         fontWeight: FontWeight.w700,
         letterSpacing: -0.9, // -2%
         height: 1.16,
       ),
-      displaySmall: TextStyle(
+      displaySmall: const TextStyle(
         fontFamily: _manrope,
         fontSize: 36,
         fontWeight: FontWeight.w700,
@@ -49,21 +49,21 @@ abstract final class AppTypography {
       ),
 
       // Headline — section anchors
-      headlineLarge: TextStyle(
+      headlineLarge: const TextStyle(
         fontFamily: _manrope,
         fontSize: 32,
         fontWeight: FontWeight.w700,
         letterSpacing: -0.64, // -2%
         height: 1.25,
       ),
-      headlineMedium: TextStyle(
+      headlineMedium: const TextStyle(
         fontFamily: _manrope,
         fontSize: 28,
         fontWeight: FontWeight.w600,
         letterSpacing: -0.56, // -2%
         height: 1.29,
       ),
-      headlineSmall: TextStyle(
+      headlineSmall: const TextStyle(
         fontFamily: _manrope,
         fontSize: 24,
         fontWeight: FontWeight.w600,
@@ -72,21 +72,21 @@ abstract final class AppTypography {
       ),
 
       // Title — categorisation
-      titleLarge: TextStyle(
+      titleLarge: const TextStyle(
         fontFamily: _manrope,
         fontSize: 22,
         fontWeight: FontWeight.w600,
         letterSpacing: -0.22, // -1%
         height: 1.27,
       ),
-      titleMedium: TextStyle(
+      titleMedium: const TextStyle(
         fontFamily: _manrope,
         fontSize: 16,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.15,
         height: 1.50,
       ),
-      titleSmall: TextStyle(
+      titleSmall: const TextStyle(
         fontFamily: _manrope,
         fontSize: 14,
         fontWeight: FontWeight.w600,

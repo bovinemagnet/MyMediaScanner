@@ -13,7 +13,7 @@ import 'package:mymediascanner/presentation/providers/collection_provider.dart';
 import 'package:mymediascanner/presentation/providers/statistics_provider.dart';
 import 'package:mymediascanner/presentation/screens/collection/statistics_screen.dart';
 
-final _sampleInsights = InsightsData(
+const _sampleInsights = InsightsData(
   totalItems: 42,
   byMediaType: {MediaType.film: 20, MediaType.music: 15, MediaType.book: 7},
   byYear: {2024: 10, 2025: 20, 2026: 12},
@@ -56,15 +56,15 @@ class _FakeInsightsNotifier extends DebouncedInsightsNotifier {
   Future<InsightsData> build() async => _data;
 }
 
-Widget _buildTestScreen({InsightsData? insights, bool withLoans = true}) {
+Widget _buildTestScreen({InsightsData? insights}) {
   final data = insights ?? _sampleInsights;
   return ProviderScope(
     overrides: [
       insightsProvider.overrideWith(() => _FakeInsightsNotifier(data)),
       collectionProvider.overrideWith((ref) => Stream.value(_sampleItems)),
     ],
-    child: MaterialApp(
-      home: const StatisticsScreen(),
+    child: const MaterialApp(
+      home: StatisticsScreen(),
     ),
   );
 }
@@ -96,7 +96,7 @@ void main() {
     });
 
     testWidgets('rip section hidden when no rip data', (tester) async {
-      final noRipInsights = InsightsData(
+      const noRipInsights = InsightsData(
         totalItems: 5,
         byMediaType: {MediaType.film: 5},
         byYear: {2026: 5},

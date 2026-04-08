@@ -12,10 +12,10 @@ void main() {
   group('TimePeriodSelector', () {
     testWidgets('renders all period options', (tester) async {
       await tester.pumpWidget(
-        ProviderScope(
+        const ProviderScope(
           child: MaterialApp(
             home: Scaffold(
-              body: const TimePeriodSelector(),
+              body: TimePeriodSelector(),
             ),
           ),
         ),

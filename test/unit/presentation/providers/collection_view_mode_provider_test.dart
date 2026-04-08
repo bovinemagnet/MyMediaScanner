@@ -8,7 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() {
   // Creates a fresh, isolated ProviderContainer for each test and registers
   // its disposal as a teardown so tests never share state.
-  ProviderContainer _makeContainer() {
+  ProviderContainer makeContainer() {
     final container = ProviderContainer();
     addTearDown(container.dispose);
     return container;
@@ -26,7 +26,7 @@ void main() {
     // ------------------------------------------------------------------
 
     test('build_initialState_isGrid', () {
-      final container = _makeContainer();
+      final container = makeContainer();
 
       expect(container.read(collectionViewModeProvider), CollectionViewMode.grid);
     });
@@ -36,7 +36,7 @@ void main() {
     // ------------------------------------------------------------------
 
     test('toggle_fromGrid_setsStateToTable', () {
-      final container = _makeContainer();
+      final container = makeContainer();
 
       container.read(collectionViewModeProvider.notifier).toggle();
 
@@ -44,7 +44,7 @@ void main() {
     });
 
     test('toggle_fromTable_setsStateBackToGrid', () {
-      final container = _makeContainer();
+      final container = makeContainer();
       final notifier = container.read(collectionViewModeProvider.notifier);
 
       notifier.toggle(); // grid → table
@@ -58,7 +58,7 @@ void main() {
     // ------------------------------------------------------------------
 
     test('setMode_table_setsStateToTable', () {
-      final container = _makeContainer();
+      final container = makeContainer();
 
       container.read(collectionViewModeProvider.notifier).setMode(CollectionViewMode.table);
 
@@ -66,7 +66,7 @@ void main() {
     });
 
     test('setMode_grid_afterTable_setsStateBackToGrid', () {
-      final container = _makeContainer();
+      final container = makeContainer();
       final notifier = container.read(collectionViewModeProvider.notifier);
 
       notifier.setMode(CollectionViewMode.table);

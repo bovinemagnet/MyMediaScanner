@@ -5,7 +5,7 @@ import 'package:mymediascanner/domain/entities/media_type.dart';
 
 void main() {
   group('MusicBrainzMapper', () {
-    final sampleRelease = MusicBrainzReleaseDto(
+    const sampleRelease = MusicBrainzReleaseDto(
       id: 'abc-123',
       title: 'Vertigo 2005 // Live From Chicago',
       date: '2005-11-11',
@@ -13,7 +13,7 @@ void main() {
       barcode: '602498746400',
       score: 100,
       packaging: 'Jewel Case',
-      artistCredit: const [
+      artistCredit: [
         MusicBrainzArtistCreditDto(
           name: 'U2',
           artist: MusicBrainzArtistDto(
@@ -23,12 +23,12 @@ void main() {
           ),
         ),
       ],
-      releaseGroup: const MusicBrainzReleaseGroupDto(
+      releaseGroup: MusicBrainzReleaseGroupDto(
         id: 'rg-456',
         title: 'Vertigo 2005 // Live From Chicago',
         primaryType: 'Album',
       ),
-      labelInfo: const [
+      labelInfo: [
         MusicBrainzLabelInfoDto(
           catalogNumber: '9874640',
           label: MusicBrainzLabelDto(
@@ -37,7 +37,7 @@ void main() {
           ),
         ),
       ],
-      media: const [
+      media: [
         MusicBrainzMediaDto(
           format: 'DVD',
           trackCount: 2,
@@ -57,7 +57,7 @@ void main() {
           ],
         ),
       ],
-      tags: const [
+      tags: [
         MusicBrainzTagDto(count: 5, name: 'rock'),
         MusicBrainzTagDto(count: 3, name: 'live'),
       ],

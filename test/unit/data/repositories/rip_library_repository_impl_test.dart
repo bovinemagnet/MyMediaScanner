@@ -112,14 +112,14 @@ void main() {
 
   // Register fallback values for companion types used in verify() capture.
   setUpAll(() {
-    registerFallbackValue(RipAlbumsTableCompanion(
-      id: const Value(''),
-      libraryPath: const Value(''),
-      trackCount: const Value(0),
-      discCount: const Value(1),
-      totalSizeBytes: const Value(0),
-      lastScannedAt: const Value(0),
-      updatedAt: const Value(0),
+    registerFallbackValue(const RipAlbumsTableCompanion(
+      id: Value(''),
+      libraryPath: Value(''),
+      trackCount: Value(0),
+      discCount: Value(1),
+      totalSizeBytes: Value(0),
+      lastScannedAt: Value(0),
+      updatedAt: Value(0),
     ));
     registerFallbackValue(<RipTracksTableCompanion>[]);
   });
@@ -316,7 +316,7 @@ void main() {
       () async {
         when(() => mockDao.insertAlbum(any())).thenAnswer((_) async {});
 
-        final album = RipAlbum(
+        const album = RipAlbum(
           id: 'rip-new',
           libraryPath: 'Pink Floyd/DSOTM',
           artist: 'Pink Floyd',
@@ -358,7 +358,7 @@ void main() {
       () async {
         when(() => mockDao.insertTracks(any())).thenAnswer((_) async {});
 
-        final tracks = [
+        const tracks = [
           RipTrack(
             id: 'track-a',
             ripAlbumId: 'rip-1',

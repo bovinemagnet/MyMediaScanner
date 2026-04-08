@@ -13,7 +13,7 @@ import 'helpers/test_app.dart';
 
 void main() {
   group('shelf CRUD', () {
-    Future<void> _setWideScreen(WidgetTester tester) async {
+    Future<void> setWideScreen(WidgetTester tester) async {
       tester.view.physicalSize = const Size(1400, 900);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
@@ -23,7 +23,7 @@ void main() {
     }
 
     testWidgets('shelves screen shows empty state', (tester) async {
-      await _setWideScreen(tester);
+      await setWideScreen(tester);
       await tester.pumpTestApp();
       await tester.pumpAndSettle();
 
@@ -38,7 +38,7 @@ void main() {
     });
 
     testWidgets('create shelf via dialog', (tester) async {
-      await _setWideScreen(tester);
+      await setWideScreen(tester);
       await tester.pumpTestApp();
       await tester.pumpAndSettle();
 
@@ -70,7 +70,7 @@ void main() {
     });
 
     testWidgets('rename shelf via context menu', (tester) async {
-      await _setWideScreen(tester);
+      await setWideScreen(tester);
       final res = await tester.pumpTestApp();
       await tester.pumpAndSettle();
 
@@ -118,7 +118,7 @@ void main() {
     });
 
     testWidgets('delete shelf via context menu', (tester) async {
-      await _setWideScreen(tester);
+      await setWideScreen(tester);
       final res = await tester.pumpTestApp();
       await tester.pumpAndSettle();
 

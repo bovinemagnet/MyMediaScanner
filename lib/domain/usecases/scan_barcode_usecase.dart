@@ -46,7 +46,7 @@ class ScanBarcodeUseCase {
         !ocrResult.isEmpty) {
       final ocrTitle = ocrResult.inferredTitle;
       if (ocrTitle != null && ocrTitle.isNotEmpty) {
-        final notFound = scanResult as NotFoundScanResult;
+        final notFound = scanResult;
         return _metadataRepo.searchByTitle(
           ocrTitle,
           notFound.barcode,

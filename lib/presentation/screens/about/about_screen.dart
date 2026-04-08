@@ -12,7 +12,7 @@ class AboutScreen extends StatelessWidget {
     final colors = theme.colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: Text('About ${AppConstants.appName}')),
+      appBar: AppBar(title: const Text('About ${AppConstants.appName}')),
       body: FutureBuilder<PackageInfo>(
         future: PackageInfo.fromPlatform(),
         builder: (context, snapshot) {
@@ -170,9 +170,9 @@ class AboutScreen extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    ListTile(
-                      leading: const FlutterLogo(size: 24),
-                      title: const Text('Built with Flutter'),
+                    const ListTile(
+                      leading: FlutterLogo(size: 24),
+                      title: Text('Built with Flutter'),
                     ),
                     ListTile(
                       leading: const Icon(Icons.description_outlined),

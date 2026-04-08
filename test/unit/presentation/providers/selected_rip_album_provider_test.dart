@@ -5,7 +5,7 @@ import 'package:mymediascanner/presentation/providers/selected_rip_album_provide
 void main() {
   // Creates a fresh, isolated ProviderContainer for each test and registers
   // its disposal as a teardown so tests never share state.
-  ProviderContainer _makeContainer() {
+  ProviderContainer makeContainer() {
     final container = ProviderContainer();
     addTearDown(container.dispose);
     return container;
@@ -17,7 +17,7 @@ void main() {
     // ------------------------------------------------------------------
 
     test('build_initialState_isNull', () {
-      final container = _makeContainer();
+      final container = makeContainer();
 
       expect(container.read(selectedRipAlbumProvider), isNull);
     });
@@ -27,7 +27,7 @@ void main() {
     // ------------------------------------------------------------------
 
     test('select_validId_setsStateToGivenId', () {
-      final container = _makeContainer();
+      final container = makeContainer();
 
       container.read(selectedRipAlbumProvider.notifier).select('album-1');
 
@@ -35,7 +35,7 @@ void main() {
     });
 
     test('select_calledTwice_stateReflectsLastId', () {
-      final container = _makeContainer();
+      final container = makeContainer();
       final notifier = container.read(selectedRipAlbumProvider.notifier);
 
       notifier.select('album-1');
@@ -49,7 +49,7 @@ void main() {
     // ------------------------------------------------------------------
 
     test('clear_afterSelect_resetsStateToNull', () {
-      final container = _makeContainer();
+      final container = makeContainer();
       final notifier = container.read(selectedRipAlbumProvider.notifier);
       notifier.select('album-1');
 
@@ -59,7 +59,7 @@ void main() {
     });
 
     test('clear_whenAlreadyNull_stateRemainsNull', () {
-      final container = _makeContainer();
+      final container = makeContainer();
 
       // Calling clear on an already-null state must not throw and must
       // leave state as null.

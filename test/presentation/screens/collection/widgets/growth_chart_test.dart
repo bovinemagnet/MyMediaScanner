@@ -12,7 +12,7 @@ void main() {
   group('GrowthChart', () {
     testWidgets('renders without error with sample data', (tester) async {
       await tester.pumpWidget(
-        ProviderScope(
+        const ProviderScope(
           child: MaterialApp(
             home: Scaffold(
               body: GrowthChart(
@@ -34,10 +34,10 @@ void main() {
     testWidgets('shows placeholder message when data is empty',
         (tester) async {
       await tester.pumpWidget(
-        ProviderScope(
+        const ProviderScope(
           child: MaterialApp(
             home: Scaffold(
-              body: GrowthChart(monthlyGrowth: const {}),
+              body: GrowthChart(monthlyGrowth: {}),
             ),
           ),
         ),
