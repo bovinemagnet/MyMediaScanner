@@ -11,7 +11,7 @@ import 'helpers/test_app.dart';
 
 void main() {
   group('settings', () {
-    Future<void> _setWideScreen(WidgetTester tester) async {
+    Future<void> setWideScreen(WidgetTester tester) async {
       tester.view.physicalSize = const Size(1400, 900);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
@@ -21,7 +21,7 @@ void main() {
     }
 
     testWidgets('renders all sections', (tester) async {
-      await _setWideScreen(tester);
+      await setWideScreen(tester);
       await tester.pumpTestApp();
       await tester.pumpAndSettle();
 
@@ -41,7 +41,7 @@ void main() {
     });
 
     testWidgets('theme toggle switches to light mode', (tester) async {
-      await _setWideScreen(tester);
+      await setWideScreen(tester);
       await tester.pumpTestApp();
       await tester.pumpAndSettle();
 
@@ -65,7 +65,7 @@ void main() {
     });
 
     testWidgets('about screen is accessible', (tester) async {
-      await _setWideScreen(tester);
+      await setWideScreen(tester);
       await tester.pumpTestApp();
       await tester.pumpAndSettle();
 

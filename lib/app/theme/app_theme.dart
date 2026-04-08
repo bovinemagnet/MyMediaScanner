@@ -6,7 +6,7 @@ import 'package:mymediascanner/app/theme/app_typography.dart';
 abstract final class AppTheme {
   // ── Light theme ("Precision Editorial") ────────────────────────────
   static ThemeData light() {
-    final colorScheme = ColorScheme(
+    const colorScheme = ColorScheme(
       brightness: Brightness.light,
       primary: AppColors.lightPrimary,
       onPrimary: AppColors.lightOnPrimary,
@@ -48,7 +48,7 @@ abstract final class AppTheme {
 
   // ── Dark theme ("Obsidian Lens") ───────────────────────────────────
   static ThemeData dark() {
-    final colorScheme = ColorScheme(
+    const colorScheme = ColorScheme(
       brightness: Brightness.dark,
       primary: AppColors.darkPrimary,
       onPrimary: AppColors.darkOnPrimary,

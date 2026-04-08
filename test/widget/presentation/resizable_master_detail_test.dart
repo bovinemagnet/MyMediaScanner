@@ -1,11 +1,9 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mymediascanner/core/constants/app_constants.dart';
-import 'package:mymediascanner/presentation/providers/split_ratio_provider.dart';
 import 'package:mymediascanner/presentation/widgets/master_detail_layout.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -115,7 +113,7 @@ void main() {
       (tester) async {
         const screenWidth = 1200.0;
         const detailMinWidth = 300.0;
-        final maxMasterWidth = screenWidth - detailMinWidth;
+        const maxMasterWidth = screenWidth - detailMinWidth;
         await tester.binding.setSurfaceSize(const Size(screenWidth, 800));
         addTearDown(() => tester.binding.setSurfaceSize(null));
 

@@ -5,7 +5,7 @@ import 'package:mymediascanner/presentation/providers/selected_item_provider.dar
 void main() {
   // Helper that creates a fresh ProviderContainer for each test, registers
   // teardown, and returns the notifier ready to exercise.
-  ProviderContainer _makeContainer() {
+  ProviderContainer makeContainer() {
     final container = ProviderContainer();
     addTearDown(container.dispose);
     return container;
@@ -17,7 +17,7 @@ void main() {
     // ------------------------------------------------------------------
 
     test('build_initialState_isNull', () {
-      final container = _makeContainer();
+      final container = makeContainer();
 
       expect(container.read(selectedItemProvider), isNull);
     });
@@ -27,7 +27,7 @@ void main() {
     // ------------------------------------------------------------------
 
     test('select_validId_setsStateToGivenId', () {
-      final container = _makeContainer();
+      final container = makeContainer();
 
       container.read(selectedItemProvider.notifier).select('abc');
 
@@ -39,7 +39,7 @@ void main() {
     // ------------------------------------------------------------------
 
     test('clear_afterSelect_resetsStateToNull', () {
-      final container = _makeContainer();
+      final container = makeContainer();
       container.read(selectedItemProvider.notifier).select('abc');
 
       container.read(selectedItemProvider.notifier).clear();
@@ -53,7 +53,7 @@ void main() {
 
     group('moveNext', () {
       test('moveNext_emptyList_returnsNullAndStateRemainsNull', () {
-        final container = _makeContainer();
+        final container = makeContainer();
         final notifier = container.read(selectedItemProvider.notifier);
 
         final result = notifier.moveNext([]);
@@ -63,7 +63,7 @@ void main() {
       });
 
       test('moveNext_nullStateNonEmptyList_selectsFirstItemAndReturnsIt', () {
-        final container = _makeContainer();
+        final container = makeContainer();
         final notifier = container.read(selectedItemProvider.notifier);
         final items = ['id1', 'id2', 'id3'];
 
@@ -74,7 +74,7 @@ void main() {
       });
 
       test('moveNext_currentIsMiddleItem_selectsNextItemAndReturnsIt', () {
-        final container = _makeContainer();
+        final container = makeContainer();
         final notifier = container.read(selectedItemProvider.notifier);
         final items = ['id1', 'id2', 'id3'];
         notifier.select('id2');
@@ -86,7 +86,7 @@ void main() {
       });
 
       test('moveNext_currentIsFirstItem_selectsSecondItemAndReturnsIt', () {
-        final container = _makeContainer();
+        final container = makeContainer();
         final notifier = container.read(selectedItemProvider.notifier);
         final items = ['id1', 'id2', 'id3'];
         notifier.select('id1');
@@ -98,7 +98,7 @@ void main() {
       });
 
       test('moveNext_currentIsLastItem_staysAtLastAndReturnsCurrent', () {
-        final container = _makeContainer();
+        final container = makeContainer();
         final notifier = container.read(selectedItemProvider.notifier);
         final items = ['id1', 'id2', 'id3'];
         notifier.select('id3');
@@ -110,7 +110,7 @@ void main() {
       });
 
       test('moveNext_currentIdNotInList_staysAtCurrentAndReturnsCurrent', () {
-        final container = _makeContainer();
+        final container = makeContainer();
         final notifier = container.read(selectedItemProvider.notifier);
         final items = ['id1', 'id2', 'id3'];
         notifier.select('unknown');
@@ -122,7 +122,7 @@ void main() {
       });
 
       test('moveNext_singleItemList_nullState_selectsThatItemAndReturnsIt', () {
-        final container = _makeContainer();
+        final container = makeContainer();
         final notifier = container.read(selectedItemProvider.notifier);
 
         final result = notifier.moveNext(['only']);
@@ -133,7 +133,7 @@ void main() {
 
       test('moveNext_singleItemList_alreadySelected_staysAndReturnsCurrent',
           () {
-        final container = _makeContainer();
+        final container = makeContainer();
         final notifier = container.read(selectedItemProvider.notifier);
         notifier.select('only');
 
@@ -150,7 +150,7 @@ void main() {
 
     group('movePrevious', () {
       test('movePrevious_emptyList_returnsNullAndStateRemainsNull', () {
-        final container = _makeContainer();
+        final container = makeContainer();
         final notifier = container.read(selectedItemProvider.notifier);
 
         final result = notifier.movePrevious([]);
@@ -161,7 +161,7 @@ void main() {
 
       test('movePrevious_nullStateNonEmptyList_selectsLastItemAndReturnsIt',
           () {
-        final container = _makeContainer();
+        final container = makeContainer();
         final notifier = container.read(selectedItemProvider.notifier);
         final items = ['id1', 'id2', 'id3'];
 
@@ -173,7 +173,7 @@ void main() {
 
       test('movePrevious_currentIsMiddleItem_selectsPreviousItemAndReturnsIt',
           () {
-        final container = _makeContainer();
+        final container = makeContainer();
         final notifier = container.read(selectedItemProvider.notifier);
         final items = ['id1', 'id2', 'id3'];
         notifier.select('id2');
@@ -186,7 +186,7 @@ void main() {
 
       test('movePrevious_currentIsLastItem_selectsSecondToLastAndReturnsIt',
           () {
-        final container = _makeContainer();
+        final container = makeContainer();
         final notifier = container.read(selectedItemProvider.notifier);
         final items = ['id1', 'id2', 'id3'];
         notifier.select('id3');
@@ -198,7 +198,7 @@ void main() {
       });
 
       test('movePrevious_currentIsFirstItem_staysAtFirstAndReturnsCurrent', () {
-        final container = _makeContainer();
+        final container = makeContainer();
         final notifier = container.read(selectedItemProvider.notifier);
         final items = ['id1', 'id2', 'id3'];
         notifier.select('id1');
@@ -212,7 +212,7 @@ void main() {
       test(
           'movePrevious_currentIdNotInList_staysAtCurrentAndReturnsCurrent',
           () {
-        final container = _makeContainer();
+        final container = makeContainer();
         final notifier = container.read(selectedItemProvider.notifier);
         final items = ['id1', 'id2', 'id3'];
         notifier.select('unknown');
@@ -225,7 +225,7 @@ void main() {
 
       test('movePrevious_singleItemList_nullState_selectsThatItemAndReturnsIt',
           () {
-        final container = _makeContainer();
+        final container = makeContainer();
         final notifier = container.read(selectedItemProvider.notifier);
 
         final result = notifier.movePrevious(['only']);
@@ -237,7 +237,7 @@ void main() {
       test(
           'movePrevious_singleItemList_alreadySelected_staysAndReturnsCurrent',
           () {
-        final container = _makeContainer();
+        final container = makeContainer();
         final notifier = container.read(selectedItemProvider.notifier);
         notifier.select('only');
 

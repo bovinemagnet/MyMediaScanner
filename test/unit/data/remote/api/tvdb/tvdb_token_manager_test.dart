@@ -18,7 +18,7 @@ void main() {
     registerFallbackValue(RequestOptions(path: ''));
   });
 
-  Response<Map<String, dynamic>> _loginResponse(String token) {
+  Response<Map<String, dynamic>> loginResponse(String token) {
     return Response(
       requestOptions: RequestOptions(path: '/login'),
       data: {
@@ -33,7 +33,7 @@ void main() {
       when(() => mockDio.post<Map<String, dynamic>>(
             '/login',
             data: any(named: 'data'),
-          )).thenAnswer((_) async => _loginResponse('jwt-token-1'));
+          )).thenAnswer((_) async => loginResponse('jwt-token-1'));
 
       final token = await manager.getToken();
 
@@ -48,7 +48,7 @@ void main() {
       when(() => mockDio.post<Map<String, dynamic>>(
             '/login',
             data: any(named: 'data'),
-          )).thenAnswer((_) async => _loginResponse('jwt-token-2'));
+          )).thenAnswer((_) async => loginResponse('jwt-token-2'));
 
       await manager.getToken();
       final token2 = await manager.getToken();
@@ -106,7 +106,7 @@ void main() {
             data: any(named: 'data'),
           )).thenAnswer((_) async {
         callCount++;
-        return _loginResponse('token-$callCount');
+        return loginResponse('token-$callCount');
       });
 
       final token1 = await manager.getToken();

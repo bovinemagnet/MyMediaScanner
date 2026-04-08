@@ -12,7 +12,7 @@ import 'helpers/test_app.dart';
 
 void main() {
   group('collection flow', () {
-    Future<void> _navigateToCollection(WidgetTester tester) async {
+    Future<void> navigateToCollection(WidgetTester tester) async {
       // Set wide surface for expanded sidebar
       tester.view.physicalSize = const Size(1400, 900);
       tester.view.devicePixelRatio = 1.0;
@@ -23,7 +23,7 @@ void main() {
     }
 
     testWidgets('seeded items appear in collection', (tester) async {
-      await _navigateToCollection(tester);
+      await navigateToCollection(tester);
       final res = await tester.pumpTestApp();
       await seedMediaItems(res.db, count: 5);
       await tester.pumpAndSettle();
@@ -41,7 +41,7 @@ void main() {
     });
 
     testWidgets('search filters items by title', (tester) async {
-      await _navigateToCollection(tester);
+      await navigateToCollection(tester);
       final res = await tester.pumpTestApp();
       await seedMediaItems(res.db, count: 5);
       await tester.pumpAndSettle();
@@ -63,7 +63,7 @@ void main() {
     });
 
     testWidgets('media type filter shows correct items', (tester) async {
-      await _navigateToCollection(tester);
+      await navigateToCollection(tester);
       final res = await tester.pumpTestApp();
 
       // Seed specific types: 2 films and 1 book
@@ -96,7 +96,7 @@ void main() {
     });
 
     testWidgets('item inserted via DB appears reactively', (tester) async {
-      await _navigateToCollection(tester);
+      await navigateToCollection(tester);
       final res = await tester.pumpTestApp();
       await tester.pumpAndSettle();
 

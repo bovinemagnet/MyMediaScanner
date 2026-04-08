@@ -11,7 +11,7 @@ void main() {
   group('RipCoverageCard', () {
     testWidgets('renders total rip albums', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: Scaffold(
             body: SingleChildScrollView(
               child: RipCoverageCard(
@@ -34,7 +34,7 @@ void main() {
 
     testWidgets('displays coverage percentage', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: Scaffold(
             body: SingleChildScrollView(
               child: RipCoverageCard(
@@ -57,7 +57,7 @@ void main() {
 
     testWidgets('shows empty state when no rips exist', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: Scaffold(
             body: RipCoverageCard(
               totalRipAlbums: 0,

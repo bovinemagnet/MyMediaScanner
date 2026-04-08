@@ -1,9 +1,7 @@
-import 'package:drift/drift.dart' hide isNotNull, isNull;
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:mymediascanner/data/local/dao/batch_session_dao.dart';
 import 'package:mymediascanner/data/local/database/app_database.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
@@ -24,7 +22,7 @@ void main() {
   setUp(() {
     mockRepo = MockMediaItemRepository();
     testDb = AppDatabase.forTesting(NativeDatabase.memory());
-    registerFallbackValue(MediaItem(
+    registerFallbackValue(const MediaItem(
       id: '',
       barcode: '',
       barcodeType: '',

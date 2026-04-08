@@ -302,7 +302,7 @@ void main() {
           .thenAnswer((_) async {});
     });
 
-    DioException _make429() {
+    DioException make429() {
       return DioException(
         requestOptions: RequestOptions(path: '/volumes'),
         response: Response(
@@ -322,7 +322,7 @@ void main() {
       );
 
       when(() => mockGoogleBooksApi.searchByIsbn('isbn:$isbn'))
-          .thenThrow(_make429());
+          .thenThrow(make429());
       when(() => mockOpenLibraryApi.getByIsbn(isbn))
           .thenAnswer((_) async => const OpenLibraryBookDto(
                 title: '1984',
@@ -346,7 +346,7 @@ void main() {
       );
 
       when(() => mockGoogleBooksApi.searchByIsbn('isbn:$isbn'))
-          .thenThrow(_make429());
+          .thenThrow(make429());
       when(() => mockOpenLibraryApi.getByIsbn(isbn))
           .thenAnswer((_) async => null);
 

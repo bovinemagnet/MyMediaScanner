@@ -11,15 +11,15 @@ void main() {
   group('LendingStatsCard', () {
     testWidgets('renders active loans count', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: Scaffold(
             body: SingleChildScrollView(
               child: LendingStatsCard(
                 activeLoansCount: 3,
                 overdueCount: 0,
                 totalLoansAllTime: 10,
-                topBorrowers: const {'Alice': 2, 'Bob': 1},
-                mostBorrowedItems: const {'Film A': 3, 'Book B': 2},
+                topBorrowers: {'Alice': 2, 'Bob': 1},
+                mostBorrowedItems: {'Film A': 3, 'Book B': 2},
               ),
             ),
           ),
@@ -34,15 +34,15 @@ void main() {
 
     testWidgets('shows overdue badge when overdue > 0', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: Scaffold(
             body: SingleChildScrollView(
               child: LendingStatsCard(
                 activeLoansCount: 5,
                 overdueCount: 2,
                 totalLoansAllTime: 15,
-                topBorrowers: const {},
-                mostBorrowedItems: const {},
+                topBorrowers: {},
+                mostBorrowedItems: {},
               ),
             ),
           ),
@@ -55,14 +55,14 @@ void main() {
 
     testWidgets('shows empty state when no loans exist', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: Scaffold(
             body: LendingStatsCard(
               activeLoansCount: 0,
               overdueCount: 0,
               totalLoansAllTime: 0,
-              topBorrowers: const {},
-              mostBorrowedItems: const {},
+              topBorrowers: {},
+              mostBorrowedItems: {},
             ),
           ),
         ),

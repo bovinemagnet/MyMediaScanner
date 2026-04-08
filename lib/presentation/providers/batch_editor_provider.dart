@@ -627,7 +627,7 @@ class BatchEditorNotifier extends AsyncNotifier<BatchEditorState> {
         await _dao.deleteQueueItem(item.id);
         await _updateSessionItemCount(updated.length);
 
-      case ResolveAction(:final itemId, :final previousState):
+      case ResolveAction():
         // Redo resolve = apply the resolution again.
         // We need the resolved state, which is the current item before undo
         // was applied. The resolve action stores the previous state (before
@@ -641,13 +641,13 @@ class BatchEditorNotifier extends AsyncNotifier<BatchEditorState> {
           redoStack: newRedoStack,
         ));
 
-      case SaveAction(:final itemId, :final previousState):
+      case SaveAction():
         state = AsyncValue.data(current.copyWith(
           undoStack: [...current.undoStack, action],
           redoStack: newRedoStack,
         ));
 
-      case ForceKeepAction(:final itemId, :final previousState):
+      case ForceKeepAction(:final itemId):
         // Redo force-keep = set back to confirmed.
         final updated = current.items.map((i) {
           if (i.id == itemId) {

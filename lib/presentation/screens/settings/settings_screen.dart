@@ -27,11 +27,11 @@ class SettingsScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(16),
         children: [
           if (isDesktop)
-            ScreenHeader(
+            const ScreenHeader(
               title: 'Settings',
               subtitle:
                   'Manage your API keys, sync configuration, and preferences.',
-              padding: const EdgeInsets.only(bottom: 16),
+              padding: EdgeInsets.only(bottom: 16),
             ),
 
           // Sync section
@@ -133,7 +133,7 @@ class SettingsScreen extends ConsumerWidget {
           // About
           ListTile(
             leading: const Icon(Icons.info_outline),
-            title: Text('About ${AppConstants.appName}'),
+            title: const Text('About ${AppConstants.appName}'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.go('/settings/about'),
           ),
@@ -174,8 +174,6 @@ class _ThemeModeTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentMode = ref.watch(themeModeProvider);
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
 
     String label(ThemeMode mode) => switch (mode) {
           ThemeMode.system => 'System default',
@@ -323,7 +321,7 @@ class _FlacLibrarySectionState extends ConsumerState<_FlacLibrarySection> {
                     await FilePicker.platform.getDirectoryPath();
                 if (path != null) {
                   _pathController.text = path;
-                  ref.read(ripLibraryPathProvider.notifier).setPath(path);
+                  await ref.read(ripLibraryPathProvider.notifier).setPath(path);
                 }
               },
             ),
@@ -409,7 +407,7 @@ class _FlacLibrarySectionState extends ConsumerState<_FlacLibrarySection> {
                 if (result != null && result.files.single.path != null) {
                   final path = result.files.single.path!;
                   _flacBinaryController.text = path;
-                  ref
+                  await ref
                       .read(flacBinaryPathOverrideProvider.notifier)
                       .setPath(path);
                 }

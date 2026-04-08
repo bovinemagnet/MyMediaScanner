@@ -12,10 +12,10 @@ void main() {
   group('ExportActionBar', () {
     testWidgets('renders both export buttons', (tester) async {
       await tester.pumpWidget(
-        ProviderScope(
+        const ProviderScope(
           child: MaterialApp(
             home: Scaffold(
-              body: const ExportActionBar(),
+              body: ExportActionBar(),
             ),
           ),
         ),
@@ -28,10 +28,10 @@ void main() {
 
     testWidgets('buttons are enabled by default', (tester) async {
       await tester.pumpWidget(
-        ProviderScope(
+        const ProviderScope(
           child: MaterialApp(
             home: Scaffold(
-              body: const ExportActionBar(),
+              body: ExportActionBar(),
             ),
           ),
         ),

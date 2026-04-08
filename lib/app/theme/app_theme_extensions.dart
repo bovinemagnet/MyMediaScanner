@@ -15,27 +15,6 @@ class AppDesignExtension extends ThemeExtension<AppDesignExtension> {
     required this.sidebarActiveBackground,
   });
 
-  /// Ghost border — outline-variant at 15 % opacity.
-  final Color ghostBorderColor;
-
-  /// Primary gradient for CTA buttons (135 deg, primary → primary-container).
-  final LinearGradient gradientPrimary;
-
-  /// Opacity for glassmorphism surfaces.
-  final double glassOpacity;
-
-  /// Backdrop blur radius for glassmorphism surfaces.
-  final double glassBlur;
-
-  /// Ambient shadow for floating elements.
-  final BoxShadow ambientShadow;
-
-  /// Active-item tint for sidebar navigation.
-  final Color sidebarActiveBackground;
-
-  // ── Factories (after fields per Dart style) ────────────────────────
-
-  // ignore: sort_constructors_first
   factory AppDesignExtension.light() => AppDesignExtension(
         ghostBorderColor:
             AppColors.lightOutlineVariant.withValues(alpha: 0.15),
@@ -73,6 +52,24 @@ class AppDesignExtension extends ThemeExtension<AppDesignExtension> {
         sidebarActiveBackground:
             AppColors.darkPrimary.withValues(alpha: 0.10),
       );
+
+  /// Ghost border — outline-variant at 15 % opacity.
+  final Color ghostBorderColor;
+
+  /// Primary gradient for CTA buttons (135 deg, primary → primary-container).
+  final LinearGradient gradientPrimary;
+
+  /// Opacity for glassmorphism surfaces.
+  final double glassOpacity;
+
+  /// Backdrop blur radius for glassmorphism surfaces.
+  final double glassBlur;
+
+  /// Ambient shadow for floating elements.
+  final BoxShadow ambientShadow;
+
+  /// Active-item tint for sidebar navigation.
+  final Color sidebarActiveBackground;
 
   // ── ThemeExtension contract ────────────────────────────────────────
 

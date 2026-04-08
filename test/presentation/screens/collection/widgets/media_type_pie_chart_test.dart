@@ -12,7 +12,7 @@ void main() {
   group('MediaTypePieChart', () {
     testWidgets('renders without error with sample data', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: Scaffold(
             body: MediaTypePieChart(
               byMediaType: {
@@ -33,10 +33,10 @@ void main() {
 
     testWidgets('shows placeholder when data is empty', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: Scaffold(
             body: MediaTypePieChart(
-              byMediaType: const {},
+              byMediaType: {},
               totalItems: 0,
             ),
           ),

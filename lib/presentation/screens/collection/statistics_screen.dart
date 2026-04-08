@@ -9,10 +9,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mymediascanner/app/theme/app_colors.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
 import 'package:mymediascanner/domain/entities/insights_data.dart';
-import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/presentation/providers/collection_provider.dart';
 import 'package:mymediascanner/presentation/providers/statistics_provider.dart';
 import 'package:mymediascanner/presentation/screens/collection/widgets/export_action_bar.dart';
@@ -51,12 +49,12 @@ class StatisticsScreen extends ConsumerWidget {
           children: [
             // ── Header ───────────────────────────────────────────
             if (isDesktop)
-              ScreenHeader(
+              const ScreenHeader(
                 title: 'Analytics',
                 subtitle:
                     'Deep dive into your media collection. Precision tracking '
                     'for your physical and digital assets.',
-                padding: const EdgeInsets.fromLTRB(8, 16, 8, 8),
+                padding: EdgeInsets.fromLTRB(8, 16, 8, 8),
               ),
 
             const SizedBox(height: 16),
@@ -173,10 +171,10 @@ class StatisticsScreen extends ConsumerWidget {
 
                 return Column(
                   children: [
-                    if (lendingCard != null) lendingCard,
+                    ?lendingCard,
                     if (lendingCard != null && ripCard != null)
                       const SizedBox(height: 16),
-                    if (ripCard != null) ripCard,
+                    ?ripCard,
                   ],
                 );
               },
@@ -882,7 +880,7 @@ class _TopRatedGallery extends StatelessWidget {
           height: 240,
           child: collectionAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (_, __) => Center(
+            error: (_, _) => Center(
               child: Text(
                 'Could not load items',
                 style: theme.textTheme.bodyMedium?.copyWith(
@@ -916,7 +914,7 @@ class _TopRatedGallery extends StatelessWidget {
               return ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: display.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                separatorBuilder: (_, _) => const SizedBox(width: 12),
                 itemBuilder: (context, index) {
                   final item = display[index];
                   return _GalleryItemCard(

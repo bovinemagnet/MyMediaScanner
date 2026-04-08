@@ -97,7 +97,7 @@ class RipCoverageCard extends StatelessWidget {
           // ── Total rip albums ─────────────────────────────
           Row(
             children: [
-              Icon(Icons.album, size: 24, color: AppColors.musicColor),
+              const Icon(Icons.album, size: 24, color: AppColors.musicColor),
               const SizedBox(width: 8),
               Text(
                 '$totalRipAlbums',

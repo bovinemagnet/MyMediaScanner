@@ -247,7 +247,7 @@ void main() {
           // default masterMinWidth of 400 px.  The SizedBox must be 540 px.
           const screenWidth = 1200.0;
           const masterMinWidth = 400.0;
-          final expectedWidth = screenWidth * 0.45; // 540
+          const expectedWidth = screenWidth * 0.45; // 540
           expect(expectedWidth, greaterThan(masterMinWidth));
 
           await tester.pumpWidget(_buildSubject(

@@ -19,7 +19,7 @@ void main() {
     final tenDaysAgo =
         DateTime.now().subtract(const Duration(days: 10)).millisecondsSinceEpoch;
 
-    MediaItem _makeItem({
+    MediaItem makeItem({
       required String id,
       MediaType mediaType = MediaType.film,
       int? dateAdded,
@@ -46,9 +46,9 @@ void main() {
       final jan = DateTime(2026, 1, 15).millisecondsSinceEpoch;
       final feb = DateTime(2026, 2, 10).millisecondsSinceEpoch;
       final items = [
-        _makeItem(id: '1', dateAdded: jan),
-        _makeItem(id: '2', dateAdded: jan),
-        _makeItem(id: '3', dateAdded: feb),
+        makeItem(id: '1', dateAdded: jan),
+        makeItem(id: '2', dateAdded: jan),
+        makeItem(id: '3', dateAdded: feb),
       ];
 
       final result = computeInsightsData(
@@ -81,7 +81,7 @@ void main() {
       );
 
       final result = computeInsightsData(
-        items: [_makeItem(id: 'i1'), _makeItem(id: 'i2')],
+        items: [makeItem(id: 'i1'), makeItem(id: 'i2')],
         activeLoans: [overdueLoan, recentLoan],
         allLoans: [overdueLoan, recentLoan],
         borrowers: [
@@ -124,9 +124,9 @@ void main() {
 
       final result = computeInsightsData(
         items: [
-          _makeItem(id: 'i1'),
-          _makeItem(id: 'i2'),
-          _makeItem(id: 'i3'),
+          makeItem(id: 'i1'),
+          makeItem(id: 'i2'),
+          makeItem(id: 'i3'),
         ],
         activeLoans: loans,
         allLoans: loans,
@@ -162,7 +162,7 @@ void main() {
           updatedAt: now);
 
       final result = computeInsightsData(
-        items: [_makeItem(id: 'i1'), _makeItem(id: 'i2')],
+        items: [makeItem(id: 'i1'), makeItem(id: 'i2')],
         activeLoans: [activeLoan, otherLoan],
         allLoans: [activeLoan, returnedLoan, otherLoan],
         borrowers: [Borrower(id: 'b1', name: 'Alice', updatedAt: now)],
@@ -199,8 +199,8 @@ void main() {
 
       final result = computeInsightsData(
         items: [
-          _makeItem(id: 'i1', mediaType: MediaType.music),
-          _makeItem(id: 'i2', mediaType: MediaType.music),
+          makeItem(id: 'i1', mediaType: MediaType.music),
+          makeItem(id: 'i2', mediaType: MediaType.music),
         ],
         activeLoans: [],
         allLoans: [],
@@ -245,7 +245,7 @@ void main() {
 
     test('deleted items are excluded from statistics', () {
       final items = [
-        _makeItem(id: 'i1'),
+        makeItem(id: 'i1'),
         MediaItem(
           id: 'i2',
           barcode: '456',
