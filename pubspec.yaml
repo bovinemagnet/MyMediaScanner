@@ -62,7 +62,7 @@ dependencies:
   google_mlkit_text_recognition: ^0.15.1
   image_picker: ^1.2.1
   camera: ^0.11.4
-  camera_desktop: ^1.0.8
+  camera_desktop: ^1.1.2
   flutter_zxing: ^2.2.1
   flutter_tesseract_ocr: ^0.4.30
 
@@ -82,7 +82,7 @@ dev_dependencies:
   drift_dev: ^2.32.0
   freezed: ^3.2.5
   json_serializable: ^6.13.0
-  retrofit_generator: ^10.2.3
+  retrofit_generator: ^10.2.4
   mocktail: ^1.0.4
   flutter_launcher_icons: ^0.14.4
   flutter_native_splash: ^2.4.6
