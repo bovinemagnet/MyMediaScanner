@@ -29,7 +29,7 @@ Cross-platform Flutter/Dart application for scanning barcodes on physical media 
 - **State:** Riverpod 3.x with hand-written providers (Notifier and AsyncNotifier); `riverpod_generator` is not used due to incompatibility with `drift_dev`
 - **Local DB:** Drift (SQLite) with type-safe DAOs
 - **Remote DB:** PostgreSQL via `postgres` Dart package (direct connection, no intermediary API)
-- **HTTP:** Dio + Retrofit for metadata API clients (TMDB, Discogs, Google Books, Open Library, UPCitemdb)
+- **HTTP:** Dio + Retrofit for metadata API clients (TMDB, TVDB, Discogs, MusicBrainz, TheAudioDB, Fanart, Google Books, Open Library, UPCitemdb)
 - **Navigation:** GoRouter with StatefulShellRoute; desktop sidebar + glassmorphism mobile bottom nav
 - **Models:** Freezed for immutable entities and sealed classes
 - **Scanning:** mobile_scanner (ML Kit) on Android/iOS/macOS; camera_desktop + flutter_zxing on Windows/Linux; keyboard-wedge USB scanner on all desktop platforms
@@ -73,7 +73,7 @@ flutter build macos --debug
 
 ## Testing
 
-The project has ~667 tests covering domain logic, data layer, presentation providers, and widget tests. Run `flutter test` to execute the full suite. Tests use `mocktail` for mocking and `ProviderContainer` with overrides for provider testing.
+The project has ~709 tests: ~683 unit/widget tests covering domain logic, data layer, presentation providers, and widget tests, plus ~26 integration tests covering full-app user flows. Run `flutter test` to execute the unit/widget suite. Integration tests run individually per file: `flutter test integration_test/<file>.dart -d linux`. Tests use `mocktail` for mocking and `ProviderContainer` with overrides for provider testing.
 
 ## Architecture
 
@@ -159,7 +159,7 @@ Design principles: "no-line" rule (tonal shifts instead of borders), glassmorphi
 
 ## External APIs
 
-Users supply their own API keys (stored in secure storage) for TMDB, Discogs, and UPCitemdb. Google Books and Open Library require no keys.
+Users supply their own API keys (stored in secure storage) for TMDB, Discogs, UPCitemdb, TVDB, and Fanart. Google Books, Open Library, MusicBrainz, and TheAudioDB require no keys.
 
 ## Metadata Lookup Order
 
@@ -168,8 +168,9 @@ Users supply their own API keys (stored in secure storage) for TMDB, Discogs, an
 3. Route by type:
    - IMDb ID (tt*) → TMDB `/find/{external_id}` endpoint
    - ISBN → Google Books → Open Library
-   - EAN/UPC → specialist API by type hint (TMDB for film/TV, Discogs for music)
+   - EAN/UPC → specialist API by type hint (TMDB for film/TV, Discogs for music, MusicBrainz as music fallback)
 4. Fallback to UPCitemdb if specialist returns nothing
+4b. Enrich with artwork from Fanart and metadata from TheAudioDB where available
 5. Cache raw response, map to `MetadataResult` domain entity
 
 ## Known Constraints

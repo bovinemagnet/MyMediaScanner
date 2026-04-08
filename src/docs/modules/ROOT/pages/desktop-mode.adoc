@@ -114,6 +114,13 @@ Window position and size are persisted to SharedPreferences and restored on rela
 
 == Performance Optimisations
 
+The diagram below shows how a collection query flows through the data layer, illustrating where SQL-level optimisations and in-memory filters are applied.
+
+[{MERMAID}]
+----
+include::example$performance-flow.mmd[]
+----
+
 The data layer includes several optimisations for large collections:
 
 * *Database indexes* on `deleted`, `media_type + date_added`, `updated_at`, `barcode` (media_items), `synced` (sync_log), `borrower_id` and `returned_at` (loans)
