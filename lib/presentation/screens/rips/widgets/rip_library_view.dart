@@ -563,17 +563,34 @@ class _RipAlbumDetailPanelState extends ConsumerState<_RipAlbumDetailPanel> {
                           : null,
                     );
                   }
+                  final duration = _formatDuration(track.durationMs);
+                  final discLabel = track.discNumber > 1
+                      ? 'Disc ${track.discNumber} · '
+                      : '';
+                  final subtitle =
+                      '$discLabel${track.trackNumber.toString().padLeft(2, '0')}'
+                      '${duration.isNotEmpty ? ' · $duration' : ''}';
                   return ListTile(
                     dense: true,
                     leading: QualityIcon(track: track),
                     title: Text(
                       track.title ?? 'Track ${track.trackNumber}',
-                      style: theme.textTheme.bodyMedium,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight:
+                            track.title != null ? FontWeight.w500 : null,
+                        fontStyle:
+                            track.title == null ? FontStyle.italic : null,
+                        color: track.title == null
+                            ? theme.colorScheme.onSurfaceVariant
+                            : null,
+                      ),
                     ),
-                    subtitle: track.accurateRipStatus != null
-                        ? Text(track.accurateRipStatus!,
-                            style: theme.textTheme.bodySmall)
-                        : null,
+                    subtitle: Text(
+                      subtitle,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
                   );
                 },
               );
@@ -582,5 +599,13 @@ class _RipAlbumDetailPanelState extends ConsumerState<_RipAlbumDetailPanel> {
         ),
       ],
     );
+  }
+
+  String _formatDuration(int? ms) {
+    if (ms == null) return '';
+    final seconds = ms ~/ 1000;
+    final m = seconds ~/ 60;
+    final s = seconds % 60;
+    return '$m:${s.toString().padLeft(2, '0')}';
   }
 }

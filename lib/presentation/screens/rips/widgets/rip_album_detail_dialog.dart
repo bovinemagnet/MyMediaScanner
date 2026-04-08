@@ -415,39 +415,50 @@ class _TrackTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final duration = _formatDuration(track.durationMs);
+    final discLabel =
+        track.discNumber > 1 ? 'Disc ${track.discNumber} · ' : '';
+    final subtitle =
+        '$discLabel${track.trackNumber.toString().padLeft(2, '0')}'
+        '${duration.isNotEmpty ? ' · $duration' : ''}';
 
     return ListTile(
       dense: true,
       leading: QualityIcon(track: track),
       title: Text(
         track.title ?? 'Track ${track.trackNumber}',
-        style: theme.textTheme.bodyMedium,
+        style: theme.textTheme.bodyMedium?.copyWith(
+          fontWeight: track.title != null ? FontWeight.w500 : null,
+          fontStyle: track.title == null ? FontStyle.italic : null,
+          color: track.title == null ? colors.onSurfaceVariant : null,
+        ),
       ),
       subtitle: Text(
-        _formatDuration(track.durationMs),
-        style: theme.textTheme.bodySmall,
+        subtitle,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: colors.onSurfaceVariant,
+        ),
       ),
-      trailing: track.qualityCheckedAt != null
-          ? Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if ((track.clickCount ?? 0) > 0)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: Chip(
-                      label: Text('${track.clickCount} clicks'),
-                      backgroundColor: AppColors.tvColor.withValues(alpha: 0.2),
-                      visualDensity: VisualDensity.compact,
-                    ),
-                  ),
-                if (track.accurateRipConfidence != null)
-                  Text(
-                    'AR: ${track.accurateRipConfidence}',
-                    style: theme.textTheme.bodySmall,
-                  ),
-              ],
-            )
-          : null,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if ((track.clickCount ?? 0) > 0)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Chip(
+                label: Text('${track.clickCount} clicks'),
+                backgroundColor: AppColors.tvColor.withValues(alpha: 0.2),
+                visualDensity: VisualDensity.compact,
+              ),
+            ),
+          if (track.accurateRipConfidence != null)
+            Text(
+              'AR: ${track.accurateRipConfidence}',
+              style: theme.textTheme.bodySmall,
+            ),
+        ],
+      ),
     );
   }
 
