@@ -79,7 +79,7 @@ NOTE: Schema changes require a new Drift migration in `AppDatabase`. Soft delete
 
 == Test Coverage
 
-The project has approximately *709 tests* (683 unit/widget and 26 integration tests) covering domain logic, the data layer, presentation providers, and widgets.
+The project has approximately *729 tests* (683 unit/widget and 46 integration tests) covering domain logic, the data layer, presentation providers, and widgets.
 Tests use `mocktail` for mocking and `ProviderContainer` with overrides for provider testing.
 
 == Quick Links

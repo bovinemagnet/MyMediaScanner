@@ -73,7 +73,7 @@ flutter build macos --debug
 
 ## Testing
 
-The project has ~709 tests: ~683 unit/widget tests covering domain logic, data layer, presentation providers, and widget tests, plus ~26 integration tests covering full-app user flows. Run `flutter test` to execute the unit/widget suite. Integration tests run individually per file: `flutter test integration_test/<file>.dart -d linux`. Tests use `mocktail` for mocking and `ProviderContainer` with overrides for provider testing.
+The project has ~729 tests: ~683 unit/widget tests covering domain logic, data layer, presentation providers, and widget tests, plus ~46 integration tests covering full-app user flows. Run `flutter test` to execute the unit/widget suite. Integration tests run individually per file: `flutter test integration_test/<file>.dart -d linux`. Tests use `mocktail` for mocking and `ProviderContainer` with overrides for provider testing.
 
 ## Architecture
 
