@@ -82,6 +82,18 @@ Webcam-based barcode scanning is available on all desktop platforms.
 macOS uses the `mobile_scanner` package (backed by ML Kit) to drive the webcam.
 Windows and Linux use the `camera_desktop` package with `flutter_zxing` for barcode detection; frames are captured periodically as still images and passed to the ZXing decoder.
 
+=== Camera Service Abstraction
+
+The camera layer is structured around a `CameraService` abstract interface, allowing the rest of the application to work with a single API regardless of whether the underlying implementation uses `mobile_scanner` (ML Kit) or `camera_desktop` (ZXing).
+
+[{MERMAID}]
+----
+include::example$camera-service.mmd[]
+----
+
+`MobileScannerCameraService` is used on Android, iOS, and macOS.
+`NativeCameraService` is used on Windows and Linux, where it drives `camera_desktop` and delegates barcode detection to `BarcodeDetector` via ZXing.
+
 === Manual Entry
 
 All desktop platforms support manual barcode entry.

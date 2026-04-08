@@ -2,7 +2,7 @@
 include::_attributes.adoc[]
 :description: Run, structure, and extend the MyMediaScanner test suite.
 
-MyMediaScanner maintains approximately 683 tests covering domain logic, the data layer, presentation providers, and widgets.
+MyMediaScanner maintains approximately 709 tests (683 unit/widget and 26 integration tests) covering domain logic, the data layer, presentation providers, and widgets.
 The project follows a test-driven development approach, particularly for changes to existing functionality.
 
 == Running Tests
@@ -188,6 +188,62 @@ If tests fail with "missing concrete implementation" or similar errors after a s
 ----
 dart run build_runner build --delete-conflicting-outputs
 ----
+
+== Integration Tests
+
+Integration tests exercise the full widget tree against an in-memory Drift database, verifying complete user flows from UI interaction through to database state.
+
+=== Location and Structure
+
+Integration tests live in the `integration_test/` directory at the project root, separate from the unit and widget tests under `test/`.
+
+[source]
+----
+integration_test/
+  helpers/
+    test_app.dart          <1>
+    seed_data.dart         <2>
+    mock_secure_storage.dart <3>
+  app_launch_test.dart
+  navigation_test.dart
+  collection_flow_test.dart
+  shelf_crud_test.dart
+  settings_test.dart
+  item_detail_test.dart
+  batch_editor_test.dart
+  rips_screen_test.dart
+  insights_test.dart
+----
+<1> Bootstrap helper that constructs a `ProviderScope` with an in-memory database and mocked secure storage.
+<2> Utility to seed the in-memory database with fixture data before a test scenario.
+<3> Replaces `flutter_secure_storage` with an in-memory map to avoid platform channel calls during testing.
+
+=== Coverage
+
+The integration suite covers:
+
+* App launch and initial state
+* Sidebar and bottom-nav navigation between all branches
+* Collection flow: scan, metadata confirm, save, and display in library
+* Shelf CRUD: create, rename, reorder, and delete shelves
+* Settings: API key entry, theme mode toggle, and sync configuration
+* Item detail: metadata display, lending actions, and rip status
+* Batch editor: queue review, conflict resolution, and bulk save
+* Rips screen: library browse and coverage comparison
+* Insights: statistics display and CSV/JSON export
+
+=== Running Integration Tests
+
+Integration tests must be run individually per file against a target device or platform:
+
+[source,bash]
+----
+flutter test integration_test/collection_flow_test.dart -d linux
+----
+
+Replace `linux` with the target platform identifier (`macos`, `windows`, `android`, `ios`).
+
+NOTE: Unlike unit and widget tests, integration tests cannot be run with a bare `flutter test` command because they require a running device or platform environment.
 
 == Continuous Integration
 

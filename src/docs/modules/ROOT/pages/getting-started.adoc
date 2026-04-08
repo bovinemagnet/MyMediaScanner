@@ -58,7 +58,7 @@ Run tests matching a name pattern:
 flutter test --name "should return metadata"
 ----
 
-The project has approximately 610 tests covering domain logic, the data layer, presentation providers, and widgets.
+The project has approximately 709 tests covering domain logic, the data layer, presentation providers, and widgets.
 See xref:testing.adoc[Testing] for the full test structure.
 
 == Running and Analysing
