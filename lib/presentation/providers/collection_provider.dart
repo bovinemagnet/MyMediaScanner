@@ -129,6 +129,8 @@ final collectionProvider = StreamProvider<List<MediaItem>>((ref) {
 
   final lentIds = ref.watch(lentItemIdsProvider).value ?? <String>{};
   final rippedIds = ref.watch(rippedItemIdsProvider).value ?? <String>{};
+  final qualityCache =
+      ref.watch(ripQualityStatusCacheProvider).value ?? <String, RipStatus>{};
   return stream.map(
     (items) => items.where((item) {
       if (filter.lentOnly && !lentIds.contains(item.id)) return false;
@@ -140,12 +142,10 @@ final collectionProvider = StreamProvider<List<MediaItem>>((ref) {
           if (!rippedIds.contains(item.id)) return false;
         case RipStatusFilter.noRip:
           if (rippedIds.contains(item.id)) return false;
-        // verified and qualityIssues require per-item async data — fall back to
-        // hasRip so the list is at least narrowed to ripped items.
         case RipStatusFilter.verified:
-          if (!rippedIds.contains(item.id)) return false;
+          if (qualityCache[item.id] != RipStatus.verified) return false;
         case RipStatusFilter.qualityIssues:
-          if (!rippedIds.contains(item.id)) return false;
+          if (qualityCache[item.id] != RipStatus.qualityIssues) return false;
       }
       return true;
     }).toList(),

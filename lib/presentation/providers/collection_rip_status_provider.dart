@@ -8,6 +8,8 @@
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mymediascanner/domain/entities/media_type.dart';
+import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
 
 // ---------------------------------------------------------------------------
@@ -128,14 +130,74 @@ class CollectionRipStats {
   int get noRip => total - ripped;
 }
 
-/// Computes aggregate [CollectionRipStats] from the set of ripped item IDs.
+// ---------------------------------------------------------------------------
+// Quality status cache provider
+// ---------------------------------------------------------------------------
+
+/// Pre-computed rip quality status for all ripped media items.
 ///
-/// This provider only gives counts — detailed per-item classification requires
-/// calling [mediaItemRipStatusProvider] per item.
+/// Maps media item ID → [RipStatus]. Items with no linked album map to
+/// [RipStatus.ripped]; items with quality data map to [RipStatus.verified]
+/// or [RipStatus.qualityIssues].
+final ripQualityStatusCacheProvider =
+    FutureProvider<Map<String, RipStatus>>((ref) async {
+  final rippedIds = ref.watch(rippedItemIdsProvider).value ?? {};
+  final cache = <String, RipStatus>{};
+
+  for (final itemId in rippedIds) {
+    final ripAlbum =
+        await ref.watch(ripAlbumForItemProvider(itemId).future);
+    if (ripAlbum == null) {
+      cache[itemId] = RipStatus.ripped;
+      continue;
+    }
+    final tracks =
+        await ref.watch(ripTracksProvider(ripAlbum.id).future);
+    final tracksWithData =
+        tracks.where((t) => t.qualityCheckedAt != null).toList();
+    if (tracksWithData.isEmpty) {
+      cache[itemId] = RipStatus.ripped;
+      continue;
+    }
+    final hasIssues = tracksWithData.any((t) =>
+        (t.accurateRipStatus != null &&
+            t.accurateRipStatus != 'verified') ||
+        (t.clickCount != null && t.clickCount! > 0));
+    cache[itemId] =
+        hasIssues ? RipStatus.qualityIssues : RipStatus.verified;
+  }
+  return cache;
+});
+
+/// Computes aggregate [CollectionRipStats] from the collection and rip data.
+///
+/// Counts total music items in the collection, how many are ripped, and
+/// breaks ripped items down into verified vs quality-issues using the
+/// [ripQualityStatusCacheProvider].
 final collectionRipStatsProvider =
     FutureProvider<CollectionRipStats>((ref) async {
-  final rippedIds = await ref.watch(rippedItemIdsProvider.future);
+  final rippedIds = ref.watch(rippedItemIdsProvider).value ?? {};
+
+  // Count total music items via the repository (avoids circular import with
+  // collection_provider.dart which already imports this file).
+  final repo = ref.watch(mediaItemRepositoryProvider);
+  final musicItems =
+      await repo.watchAll(mediaType: MediaType.music).first;
+
+  final qualityCache =
+      await ref.watch(ripQualityStatusCacheProvider.future);
+
+  int verifiedCount = 0;
+  int qualityIssuesCount = 0;
+  for (final status in qualityCache.values) {
+    if (status == RipStatus.verified) verifiedCount++;
+    if (status == RipStatus.qualityIssues) qualityIssuesCount++;
+  }
+
   return CollectionRipStats(
+    total: musicItems.length,
     ripped: rippedIds.length,
+    verified: verifiedCount,
+    qualityIssues: qualityIssuesCount,
   );
 });
