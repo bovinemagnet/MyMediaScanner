@@ -20,6 +20,7 @@ import 'package:mymediascanner/domain/entities/rip_track.dart';
 import 'package:mymediascanner/presentation/providers/playback_speed_provider.dart';
 import 'package:mymediascanner/presentation/providers/queue_provider.dart';
 import 'package:mymediascanner/presentation/providers/replay_gain_provider.dart';
+import 'package:mymediascanner/presentation/providers/rip_provider.dart';
 
 // ------------------------------------------------------------------
 // AudioPlayerService singleton
@@ -253,7 +254,7 @@ class PlaybackActionNotifier extends Notifier<void> {
   /// the audio service, ReplayGain normalisation is applied (if enabled) using
   /// the current track's embedded gain tags.
   Future<void> setVolume(double volume) async {
-    final effective = _calculateEffectiveVolume(volume);
+    final effective = await _calculateEffectiveVolume(volume);
     await _service.setVolume(effective);
     ref.read(volumeProvider.notifier).set(volume);
   }
@@ -267,14 +268,14 @@ class PlaybackActionNotifier extends Notifier<void> {
   /// Tags are sourced from the currently playing track when available.  If no
   /// track is loaded, or the track carries no gain tags, the service falls back
   /// to returning [userVolume] directly.
-  double _calculateEffectiveVolume(double userVolume) {
+  Future<double> _calculateEffectiveVolume(double userVolume) async {
     final mode = ref.read(replayGainModeProvider);
     final preamp = ref.read(replayGainPreampProvider);
     final preventClipping = ref.read(preventClippingProvider);
     final service = ref.read(replayGainServiceProvider);
 
     // Collect raw tags from the currently playing track (if any).
-    final rawTags = _currentTrackTags();
+    final rawTags = await _currentTrackTags();
 
     return service.calculateVolume(
       rawTags: rawTags,
@@ -287,11 +288,25 @@ class PlaybackActionNotifier extends Notifier<void> {
 
   /// Returns the ReplayGain raw tags for the currently playing track.
   ///
-  /// The current implementation returns an empty map because raw tag storage
-  /// is not yet part of the [RipTrack] entity.  This means ReplayGain
-  /// normalisation will pass through [userVolume] unchanged until tags are
-  /// persisted alongside track metadata in a future migration.
-  Map<String, String> _currentTrackTags() => const {};
+  /// Reads tags from [trackRawTagsProvider] for the active track so that
+  /// ReplayGain normalisation can apply the embedded gain values.  Returns an
+  /// empty map if no track is loaded or tag reading fails.
+  Future<Map<String, String>> _currentTrackTags() async {
+    final nowPlaying = ref.read(nowPlayingProvider);
+    final currentIndex = ref.read(currentTrackIndexProvider).value;
+    if (nowPlaying.tracks.isEmpty ||
+        currentIndex == null ||
+        currentIndex < 0 ||
+        currentIndex >= nowPlaying.tracks.length) {
+      return const {};
+    }
+    final track = nowPlaying.tracks[currentIndex];
+    try {
+      return await ref.read(trackRawTagsProvider(track.filePath).future);
+    } catch (_) {
+      return const {};
+    }
+  }
 
   /// Sets the loop mode (off, one, all).
   Future<void> setLoopMode(LoopMode mode) async {
