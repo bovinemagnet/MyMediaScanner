@@ -7,11 +7,14 @@ import 'package:mymediascanner/core/constants/app_constants.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
 import 'package:mymediascanner/domain/entities/rip_track.dart';
+import 'package:mymediascanner/presentation/providers/album_selection_provider.dart';
 import 'package:mymediascanner/presentation/providers/audio_player_provider.dart';
+import 'package:mymediascanner/presentation/providers/batch_analysis_provider.dart';
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
 import 'package:mymediascanner/presentation/providers/selected_rip_album_provider.dart';
 import 'package:mymediascanner/presentation/providers/rip_view_mode_provider.dart';
 import 'package:mymediascanner/presentation/providers/queue_provider.dart';
+import 'package:mymediascanner/presentation/screens/rips/widgets/batch_analysis_panel.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/playback_widgets.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/quality_widgets.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/queue_panel.dart';
@@ -64,6 +67,8 @@ class _RipLibraryViewState extends ConsumerState<RipLibraryView> {
     final scanState = ref.watch(ripScanNotifierProvider);
     final selectedAlbumId = ref.watch(selectedRipAlbumProvider);
     final viewMode = ref.watch(ripViewModeProvider);
+    final isSelecting = ref.watch(isInSelectionModeProvider);
+    final selectedIds = ref.watch(albumSelectionProvider);
 
     final masterContent = Column(
       children: [
@@ -151,6 +156,28 @@ class _RipLibraryViewState extends ConsumerState<RipLibraryView> {
                   : null,
             ),
           ),
+        // Selection toolbar — appears when at least one album is selected
+        if (isSelecting)
+          _SelectionToolbar(
+            selectedIds: selectedIds,
+            onSelectAll: () {
+              final albums =
+                  albumsAsync.whenOrNull(data: (a) => a) ?? [];
+              ref
+                  .read(albumSelectionProvider.notifier)
+                  .selectAll(albums.map((a) => a.id).toList());
+            },
+            onAnalyseQuality: () {
+              ref
+                  .read(batchAnalysisProvider.notifier)
+                  .queueAlbums(selectedIds.toList());
+              ref.read(albumSelectionProvider.notifier).clear();
+            },
+            onCancel: () =>
+                ref.read(albumSelectionProvider.notifier).clear(),
+          ),
+        // Batch analysis progress panel
+        const BatchAnalysisPanel(),
         Expanded(
           child: albumsAsync.when(
             loading: () => const LoadingIndicator(),
@@ -192,10 +219,26 @@ class _RipLibraryViewState extends ConsumerState<RipLibraryView> {
                   crossAxisSpacing: 12,
                 ),
                 itemCount: filtered.length,
-                itemBuilder: (context, index) => _RipAlbumCard(
-                  album: filtered[index],
-                  onTap: () => _onAlbumTap(context, filtered[index]),
-                ),
+                itemBuilder: (context, index) {
+                  final album = filtered[index];
+                  return _RipAlbumCard(
+                    album: album,
+                    onTap: () {
+                      if (isSelecting) {
+                        ref
+                            .read(albumSelectionProvider.notifier)
+                            .toggle(album.id);
+                      } else {
+                        _onAlbumTap(context, album);
+                      }
+                    },
+                    onLongPress: () => ref
+                        .read(albumSelectionProvider.notifier)
+                        .toggle(album.id),
+                    isSelected: selectedIds.contains(album.id),
+                    showCheckbox: isSelecting,
+                  );
+                },
               );
             },
           ),
@@ -245,10 +288,19 @@ class _RipLibraryViewState extends ConsumerState<RipLibraryView> {
 }
 
 class _RipAlbumCard extends ConsumerWidget {
-  const _RipAlbumCard({required this.album, this.onTap});
+  const _RipAlbumCard({
+    required this.album,
+    this.onTap,
+    this.onLongPress,
+    this.isSelected = false,
+    this.showCheckbox = false,
+  });
 
   final RipAlbum album;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
+  final bool isSelected;
+  final bool showCheckbox;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -267,19 +319,27 @@ class _RipAlbumCard extends ConsumerWidget {
 
     return Card(
       clipBehavior: Clip.antiAlias,
-      shape: isNowPlaying
+      shape: isSelected
           ? RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
               side: BorderSide(color: theme.colorScheme.primary, width: 2),
             )
-          : null,
+          : isNowPlaying
+              ? RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: theme.colorScheme.primary, width: 2),
+                )
+              : null,
       child: InkWell(
         onTap: onTap ??
             () => showDialog<void>(
                   context: context,
                   builder: (_) => RipAlbumDetailDialog(album: album),
                 ),
-        child: Padding(
+        onLongPress: onLongPress,
+        child: Stack(
+          children: [
+            Padding(
           padding: const EdgeInsets.all(12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -353,6 +413,32 @@ class _RipAlbumCard extends ConsumerWidget {
             ],
           ),
         ),
+            // Checkbox overlay when in selection mode
+            if (showCheckbox)
+              Positioned(
+                top: 6,
+                right: 6,
+                child: IgnorePointer(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.surface.withValues(alpha: 0.8),
+                      shape: BoxShape.circle,
+                    ),
+                    padding: const EdgeInsets.all(2),
+                    child: Icon(
+                      isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
+                      size: 20,
+                      color: isSelected
+                          ? theme.colorScheme.onPrimary
+                          : theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -362,6 +448,72 @@ class _RipAlbumCard extends ConsumerWidget {
       return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
     }
     return '${(bytes / (1024 * 1024)).toStringAsFixed(0)} MB';
+  }
+}
+
+/// Toolbar shown when one or more albums are selected.
+class _SelectionToolbar extends StatelessWidget {
+  const _SelectionToolbar({
+    required this.selectedIds,
+    required this.onSelectAll,
+    required this.onAnalyseQuality,
+    required this.onCancel,
+  });
+
+  final Set<String> selectedIds;
+  final VoidCallback onSelectAll;
+  final VoidCallback onAnalyseQuality;
+  final VoidCallback onCancel;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final count = selectedIds.length;
+
+    return Container(
+      color: theme.colorScheme.secondaryContainer,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          Text(
+            '$count selected',
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: theme.colorScheme.onSecondaryContainer,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(width: 12),
+          FilledButton.icon(
+            onPressed: count > 0 ? onAnalyseQuality : null,
+            icon: const Icon(Icons.analytics_outlined, size: 16),
+            label: const Text('Analyse Quality'),
+            style: FilledButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+            ),
+          ),
+          const SizedBox(width: 8),
+          OutlinedButton.icon(
+            onPressed: null, // placeholder — implemented in Task 11
+            icon: const Icon(Icons.label_outline, size: 16),
+            label: const Text('Edit Tags'),
+            style: OutlinedButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+            ),
+          ),
+          const SizedBox(width: 8),
+          TextButton(
+            onPressed: onSelectAll,
+            child: const Text('Select All'),
+          ),
+          const Spacer(),
+          IconButton(
+            icon: const Icon(Icons.close, size: 20),
+            tooltip: 'Cancel selection',
+            onPressed: onCancel,
+          ),
+        ],
+      ),
+    );
   }
 }
 
