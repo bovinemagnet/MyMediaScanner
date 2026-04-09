@@ -65,6 +65,7 @@ dependencies:
   camera_desktop: ^1.1.2
   flutter_zxing: ^2.2.1
   flutter_tesseract_ocr: ^0.4.30
+  just_audio: ^0.9.43
 
 dev_dependencies:
   flutter_test:
