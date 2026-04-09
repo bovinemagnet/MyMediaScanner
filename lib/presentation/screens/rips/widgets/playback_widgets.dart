@@ -8,6 +8,8 @@
 /// Since: 0.0.0
 library;
 
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
@@ -121,12 +123,20 @@ class InlinePlayerControls extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              trackTitle,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: colors.primary,
-              ),
+            Row(
+              children: [
+                AlbumCoverArt(albumId: album.id, size: 48),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    trackTitle,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colors.primary,
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 4),
             // Seek bar
@@ -275,5 +285,60 @@ class InlinePlayerControls extends ConsumerWidget {
       case LoopMode.one:
         return 'Repeat one';
     }
+  }
+}
+
+/// Displays album cover art loaded from directory images or embedded FLAC
+/// metadata. Shows a placeholder icon when no cover art is available.
+class AlbumCoverArt extends ConsumerWidget {
+  /// Creates an [AlbumCoverArt] widget.
+  const AlbumCoverArt({super.key, required this.albumId, this.size = 48});
+
+  /// The album ID to load cover art for.
+  final String albumId;
+
+  /// The width and height of the cover art image.
+  final double size;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final coverAsync = ref.watch(albumCoverArtProvider(albumId));
+    final colors = Theme.of(context).colorScheme;
+
+    return coverAsync.when(
+      data: (Uint8List? bytes) {
+        if (bytes == null) {
+          return _placeholder(colors);
+        }
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: Image.memory(
+            bytes,
+            width: size,
+            height: size,
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) => _placeholder(colors),
+          ),
+        );
+      },
+      loading: () => SizedBox(width: size, height: size),
+      error: (_, _) => SizedBox(width: size, height: size),
+    );
+  }
+
+  Widget _placeholder(ColorScheme colors) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Icon(
+        Icons.album,
+        size: size * 0.6,
+        color: colors.onSurfaceVariant,
+      ),
+    );
   }
 }

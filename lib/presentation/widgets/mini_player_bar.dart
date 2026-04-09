@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mymediascanner/presentation/providers/audio_player_provider.dart';
+import 'package:mymediascanner/presentation/screens/rips/widgets/playback_widgets.dart';
 
 /// A persistent mini player bar shown at the bottom of the screen.
 ///
@@ -77,6 +78,9 @@ class MiniPlayerBar extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             child: Row(
               children: [
+                AlbumCoverArt(
+                    albumId: nowPlaying.album!.id, size: 40),
+                const SizedBox(width: 12),
                 // Track info — tap to navigate to rips screen
                 Expanded(
                   child: GestureDetector(
