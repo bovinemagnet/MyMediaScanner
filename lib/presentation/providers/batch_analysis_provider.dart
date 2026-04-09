@@ -1,27 +1,19 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
+
+part 'batch_analysis_provider.freezed.dart';
 
 enum BatchStatus { idle, running, complete }
 
 enum AlbumAnalysisStatus { queued, analysing, done, error }
 
-class BatchAnalysisState {
-  const BatchAnalysisState({
-    this.status = BatchStatus.idle,
-    this.albumStatuses = const {},
-  });
-
-  final BatchStatus status;
-  final Map<String, AlbumAnalysisStatus> albumStatuses;
-
-  BatchAnalysisState copyWith({
-    BatchStatus? status,
-    Map<String, AlbumAnalysisStatus>? albumStatuses,
-  }) =>
-      BatchAnalysisState(
-        status: status ?? this.status,
-        albumStatuses: albumStatuses ?? this.albumStatuses,
-      );
+@freezed
+sealed class BatchAnalysisState with _$BatchAnalysisState {
+  const factory BatchAnalysisState({
+    @Default(BatchStatus.idle) BatchStatus status,
+    @Default({}) Map<String, AlbumAnalysisStatus> albumStatuses,
+  }) = _BatchAnalysisState;
 }
 
 class BatchAnalysisNotifier extends Notifier<BatchAnalysisState> {
