@@ -236,27 +236,6 @@ class InlinePlayerControls extends ConsumerWidget {
                         ref.read(playbackActionProvider.notifier).setVolume(value),
                   ),
                 ),
-                const SizedBox(width: 8),
-                Tooltip(
-                  message: 'Play on select',
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.touch_app, size: 16,
-                          color: colors.onSurfaceVariant),
-                      const SizedBox(width: 4),
-                      SizedBox(
-                        height: 24,
-                        child: Switch(
-                          value: ref.watch(playOnSelectProvider),
-                          onChanged: (_) => ref
-                              .read(playOnSelectProvider.notifier)
-                              .toggle(),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               ],
             ),
           ],

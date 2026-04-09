@@ -43,6 +43,17 @@ class _RipLibraryViewState extends ConsumerState<RipLibraryView> {
         builder: (_) => RipAlbumDetailDialog(album: album),
       );
     }
+
+    // Auto-play if toggle is on
+    if (ref.read(playOnSelectProvider)) {
+      final tracks = ref.read(ripTracksProvider(album.id)).value ?? [];
+      if (tracks.isNotEmpty) {
+        ref.read(playbackActionProvider.notifier).playAlbum(
+              album: album,
+              tracks: tracks,
+            );
+      }
+    }
   }
 
   @override
@@ -104,6 +115,27 @@ class _RipLibraryViewState extends ConsumerState<RipLibraryView> {
                       .read(ripViewModeProvider.notifier)
                       .setMode(selection.first);
                 },
+              ),
+              const SizedBox(width: 8),
+              Tooltip(
+                message: 'Auto-play album on select',
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.play_circle_outline, size: 18,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    const SizedBox(width: 4),
+                    SizedBox(
+                      height: 24,
+                      child: Switch(
+                        value: ref.watch(playOnSelectProvider),
+                        onChanged: (_) => ref
+                            .read(playOnSelectProvider.notifier)
+                            .toggle(),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -668,22 +700,15 @@ class _RipAlbumDetailPanelState extends ConsumerState<_RipAlbumDetailPanel> {
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
-                    onTap: !ref.watch(playOnSelectProvider)
-                        ? null
-                        : () {
-                            final np = ref.read(nowPlayingProvider);
-                            final actions =
-                                ref.read(playbackActionProvider.notifier);
-                            if (np.album?.id == widget.album.id) {
-                              actions.seekToIndex(index);
-                            } else {
-                              actions.playAlbum(
-                                album: widget.album,
-                                tracks: tracks,
-                                startIndex: index,
-                              );
-                            }
-                          },
+                    onTap: () {
+                      final np = ref.read(nowPlayingProvider);
+                      if (np.album?.id == widget.album.id) {
+                        // Same album playing — seek to this track
+                        ref
+                            .read(playbackActionProvider.notifier)
+                            .seekToIndex(index);
+                      }
+                    },
                   );
                 },
               );
