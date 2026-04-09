@@ -30,6 +30,9 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   _fixLocaleForMpv();
   JustAudioMediaKit.ensureInitialized();
+  // Disable demuxer cache — only playing local files, no need for file cache.
+  JustAudioMediaKit.bufferSize = 0;
+  JustAudioMediaKit.title = 'MyMediaScanner';
   await WindowManagerHelper.initialise();
   runApp(
     const ProviderScope(
