@@ -11,9 +11,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:mymediascanner/core/services/audio/audio_player_service.dart';
+import 'package:mymediascanner/core/services/audio/replay_gain_service.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
 import 'package:mymediascanner/domain/entities/rip_track.dart';
 import 'package:mymediascanner/presentation/providers/audio_player_provider.dart';
+import 'package:mymediascanner/presentation/providers/replay_gain_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MockAudioPlayerService extends Mock implements AudioPlayerService {}
 
@@ -66,12 +69,21 @@ void main() {
 
   setUp(() {
     mockService = MockAudioPlayerService();
+    // Provide an in-memory SharedPreferences store so ReplayGain providers
+    // don't touch the file system during tests.
+    SharedPreferences.setMockInitialValues({});
   });
 
   ProviderContainer makeContainer() {
     final container = ProviderContainer(
       overrides: [
         audioPlayerServiceProvider.overrideWithValue(mockService),
+        // Override ReplayGain providers with deterministic defaults so that
+        // setVolume() tests are not affected by async SharedPreferences loads.
+        replayGainModeProvider.overrideWith(() => _FixedReplayGainModeNotifier()),
+        replayGainPreampProvider.overrideWith(() => _FixedPreampNotifier()),
+        preventClippingProvider.overrideWith(() => _FixedPreventClippingNotifier()),
+        replayGainServiceProvider.overrideWithValue(const ReplayGainService()),
       ],
     );
     addTearDown(container.dispose);
@@ -379,4 +391,24 @@ void main() {
       await controller.close();
     });
   });
+}
+
+// ---------------------------------------------------------------------------
+// Stub notifiers that bypass SharedPreferences for use in makeContainer().
+// These extend the real notifier classes to satisfy overrideWith type checks.
+// ---------------------------------------------------------------------------
+
+class _FixedReplayGainModeNotifier extends ReplayGainModeNotifier {
+  @override
+  ReplayGainMode build() => ReplayGainMode.off; // skip async prefs load
+}
+
+class _FixedPreampNotifier extends ReplayGainPreampNotifier {
+  @override
+  double build() => 0.0; // skip async prefs load
+}
+
+class _FixedPreventClippingNotifier extends PreventClippingNotifier {
+  @override
+  bool build() => true; // skip async prefs load
 }

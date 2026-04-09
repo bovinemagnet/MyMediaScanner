@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:mymediascanner/core/constants/app_constants.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mymediascanner/core/services/audio/replay_gain_service.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
+import 'package:mymediascanner/presentation/providers/replay_gain_provider.dart';
 import 'package:mymediascanner/presentation/screens/settings/widgets/api_key_form.dart';
 import 'package:mymediascanner/presentation/providers/settings_provider.dart';
 import 'package:mymediascanner/presentation/screens/settings/widgets/sync_status_tile.dart';
@@ -77,6 +79,15 @@ class SettingsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
           ],
+
+          // Playback section
+          _SectionCard(
+            title: 'Playback',
+            colors: colors,
+            theme: theme,
+            children: const [_ReplayGainSection()],
+          ),
+          const SizedBox(height: 16),
 
           // Preferences section
           _SectionCard(
@@ -212,6 +223,85 @@ class _ThemeModeTile extends ConsumerWidget {
         },
         showSelectedIcon: false,
       ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// ReplayGain section
+// ---------------------------------------------------------------------------
+
+class _ReplayGainSection extends ConsumerWidget {
+  const _ReplayGainSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final mode = ref.watch(replayGainModeProvider);
+    final preamp = ref.watch(replayGainPreampProvider);
+    final preventClipping = ref.watch(preventClippingProvider);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ReplayGain Mode
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('ReplayGain Mode'),
+          subtitle: const Text('Normalise track loudness'),
+          trailing: SegmentedButton<ReplayGainMode>(
+            segments: const [
+              ButtonSegment(
+                value: ReplayGainMode.off,
+                label: Text('Off'),
+              ),
+              ButtonSegment(
+                value: ReplayGainMode.track,
+                label: Text('Track'),
+              ),
+              ButtonSegment(
+                value: ReplayGainMode.album,
+                label: Text('Album'),
+              ),
+            ],
+            selected: {mode},
+            onSelectionChanged: (selection) {
+              ref
+                  .read(replayGainModeProvider.notifier)
+                  .setMode(selection.first);
+            },
+            showSelectedIcon: false,
+          ),
+        ),
+
+        // Pre-amp
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text('Pre-amp: ${preamp >= 0 ? '+' : ''}${preamp.toStringAsFixed(1)} dB'),
+          subtitle: Slider(
+            value: preamp,
+            min: -6.0,
+            max: 6.0,
+            divisions: 24,
+            label: '${preamp >= 0 ? '+' : ''}${preamp.toStringAsFixed(1)} dB',
+            onChanged: (value) {
+              ref.read(replayGainPreampProvider.notifier).setPreamp(value);
+            },
+          ),
+        ),
+
+        // Prevent clipping
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Prevent Clipping'),
+          subtitle: const Text('Reduce gain when peak would exceed 0 dBFS'),
+          value: preventClipping,
+          onChanged: (value) {
+            ref
+                .read(preventClippingProvider.notifier)
+                .setPreventClipping(value);
+          },
+        ),
+      ],
     );
   }
 }

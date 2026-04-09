@@ -14,9 +14,11 @@ import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:mymediascanner/core/services/audio/audio_player_service.dart';
+import 'package:mymediascanner/core/services/audio/replay_gain_service.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
 import 'package:mymediascanner/domain/entities/rip_track.dart';
 import 'package:mymediascanner/presentation/providers/queue_provider.dart';
+import 'package:mymediascanner/presentation/providers/replay_gain_provider.dart';
 
 // ------------------------------------------------------------------
 // AudioPlayerService singleton
@@ -245,10 +247,50 @@ class PlaybackActionNotifier extends Notifier<void> {
   }
 
   /// Sets the playback volume (0.0 to 1.0).
+  ///
+  /// The supplied [volume] is the user-selected level.  Before forwarding to
+  /// the audio service, ReplayGain normalisation is applied (if enabled) using
+  /// the current track's embedded gain tags.
   Future<void> setVolume(double volume) async {
-    await _service.setVolume(volume);
+    final effective = _calculateEffectiveVolume(volume);
+    await _service.setVolume(effective);
     ref.read(volumeProvider.notifier).set(volume);
   }
+
+  /// Calculates the effective volume after applying ReplayGain normalisation.
+  ///
+  /// Reads the current ReplayGain settings from their providers and uses
+  /// [ReplayGainService] to compute the normalised level.  When the mode is
+  /// [ReplayGainMode.off], [userVolume] is returned unchanged.
+  ///
+  /// Tags are sourced from the currently playing track when available.  If no
+  /// track is loaded, or the track carries no gain tags, the service falls back
+  /// to returning [userVolume] directly.
+  double _calculateEffectiveVolume(double userVolume) {
+    final mode = ref.read(replayGainModeProvider);
+    final preamp = ref.read(replayGainPreampProvider);
+    final preventClipping = ref.read(preventClippingProvider);
+    final service = ref.read(replayGainServiceProvider);
+
+    // Collect raw tags from the currently playing track (if any).
+    final rawTags = _currentTrackTags();
+
+    return service.calculateVolume(
+      rawTags: rawTags,
+      mode: mode,
+      preampDb: preamp,
+      preventClipping: preventClipping,
+      userVolume: userVolume,
+    );
+  }
+
+  /// Returns the ReplayGain raw tags for the currently playing track.
+  ///
+  /// The current implementation returns an empty map because raw tag storage
+  /// is not yet part of the [RipTrack] entity.  This means ReplayGain
+  /// normalisation will pass through [userVolume] unchanged until tags are
+  /// persisted alongside track metadata in a future migration.
+  Map<String, String> _currentTrackTags() => const {};
 
   /// Sets the loop mode (off, one, all).
   Future<void> setLoopMode(LoopMode mode) async {
