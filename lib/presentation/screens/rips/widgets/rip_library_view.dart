@@ -702,11 +702,16 @@ class _RipAlbumDetailPanelState extends ConsumerState<_RipAlbumDetailPanel> {
                     ),
                     onTap: () {
                       final np = ref.read(nowPlayingProvider);
+                      final actions =
+                          ref.read(playbackActionProvider.notifier);
                       if (np.album?.id == widget.album.id) {
-                        // Same album playing — seek to this track
-                        ref
-                            .read(playbackActionProvider.notifier)
-                            .seekToIndex(index);
+                        actions.seekToIndex(index);
+                      } else {
+                        actions.playAlbum(
+                          album: widget.album,
+                          tracks: tracks,
+                          startIndex: index,
+                        );
                       }
                     },
                   );

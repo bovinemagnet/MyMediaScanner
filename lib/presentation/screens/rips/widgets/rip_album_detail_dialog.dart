@@ -543,9 +543,19 @@ class _TrackTile extends ConsumerWidget {
       ),
       onTap: () {
         final nowPlaying = ref.read(nowPlayingProvider);
+        final actions = ref.read(playbackActionProvider.notifier);
         if (nowPlaying.album?.id == album.id) {
-          // Same album playing — seek to this track
-          ref.read(playbackActionProvider.notifier).seekToIndex(trackIndex);
+          actions.seekToIndex(trackIndex);
+        } else {
+          final tracks =
+              ref.read(ripTracksProvider(album.id)).value ?? [];
+          if (tracks.isNotEmpty) {
+            actions.playAlbum(
+              album: album,
+              tracks: tracks,
+              startIndex: trackIndex,
+            );
+          }
         }
       },
     );
