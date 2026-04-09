@@ -7,6 +7,7 @@ import 'package:mymediascanner/core/constants/app_constants.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
 import 'package:mymediascanner/domain/entities/rip_track.dart';
+import 'package:mymediascanner/presentation/providers/audio_player_provider.dart';
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
 import 'package:mymediascanner/presentation/providers/selected_rip_album_provider.dart';
 import 'package:mymediascanner/presentation/providers/rip_view_mode_provider.dart';
@@ -210,6 +211,10 @@ class _RipAlbumCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final tracksAsync = ref.watch(ripTracksProvider(album.id));
     final theme = Theme.of(context);
+    final nowPlayingAlbumId = ref.watch(
+      nowPlayingProvider.select((s) => s.album?.id),
+    );
+    final isNowPlaying = nowPlayingAlbumId == album.id;
 
     // Quality summary from tracks
     final tracks = tracksAsync.whenOrNull(data: (t) => t) ?? [];
@@ -219,6 +224,12 @@ class _RipAlbumCard extends ConsumerWidget {
 
     return Card(
       clipBehavior: Clip.antiAlias,
+      shape: isNowPlaying
+          ? RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(color: theme.colorScheme.primary, width: 2),
+            )
+          : null,
       child: InkWell(
         onTap: onTap ??
             () => showDialog<void>(
@@ -287,8 +298,13 @@ class _RipAlbumCard extends ConsumerWidget {
                     ],
                   ],
                   const Spacer(),
+                  if (isNowPlaying)
+                    Icon(Icons.volume_up, size: 14, color: theme.colorScheme.primary),
                   if (album.mediaItemId != null)
-                    Icon(Icons.link, size: 14, color: theme.colorScheme.primary),
+                    Padding(
+                      padding: EdgeInsets.only(left: isNowPlaying ? 6 : 0),
+                      child: Icon(Icons.link, size: 14, color: theme.colorScheme.primary),
+                    ),
                 ],
               ),
             ],
