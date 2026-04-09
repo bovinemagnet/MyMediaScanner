@@ -132,6 +132,17 @@ class VolumeNotifier extends Notifier<double> {
 final volumeProvider =
     NotifierProvider<VolumeNotifier, double>(() => VolumeNotifier());
 
+/// Whether tapping a track in the track list should auto-play it.
+class PlayOnSelectNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void toggle() => state = !state;
+}
+
+final playOnSelectProvider =
+    NotifierProvider<PlayOnSelectNotifier, bool>(() => PlayOnSelectNotifier());
+
 // ------------------------------------------------------------------
 // Playback action notifier
 // ------------------------------------------------------------------

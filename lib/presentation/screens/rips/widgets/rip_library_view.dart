@@ -668,20 +668,22 @@ class _RipAlbumDetailPanelState extends ConsumerState<_RipAlbumDetailPanel> {
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
-                    onTap: () {
-                      final np = ref.read(nowPlayingProvider);
-                      final actions =
-                          ref.read(playbackActionProvider.notifier);
-                      if (np.album?.id == widget.album.id) {
-                        actions.seekToIndex(index);
-                      } else {
-                        actions.playAlbum(
-                          album: widget.album,
-                          tracks: tracks,
-                          startIndex: index,
-                        );
-                      }
-                    },
+                    onTap: !ref.watch(playOnSelectProvider)
+                        ? null
+                        : () {
+                            final np = ref.read(nowPlayingProvider);
+                            final actions =
+                                ref.read(playbackActionProvider.notifier);
+                            if (np.album?.id == widget.album.id) {
+                              actions.seekToIndex(index);
+                            } else {
+                              actions.playAlbum(
+                                album: widget.album,
+                                tracks: tracks,
+                                startIndex: index,
+                              );
+                            }
+                          },
                   );
                 },
               );
