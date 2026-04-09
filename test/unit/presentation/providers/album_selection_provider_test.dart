@@ -54,6 +54,42 @@ void main() {
 
       expect(container.read(albumSelectionProvider), isEmpty);
     });
+
+    test('selectRange_addsIdsInRange_fromLowToHigh', () {
+      final container = makeContainer();
+      final ordered = ['album-1', 'album-2', 'album-3', 'album-4', 'album-5'];
+
+      container
+          .read(albumSelectionProvider.notifier)
+          .selectRange(ordered, 1, 3);
+
+      expect(container.read(albumSelectionProvider),
+          {'album-2', 'album-3', 'album-4'});
+    });
+
+    test('selectRange_addsIdsInRange_fromHighToLow', () {
+      final container = makeContainer();
+      final ordered = ['album-1', 'album-2', 'album-3', 'album-4', 'album-5'];
+
+      container
+          .read(albumSelectionProvider.notifier)
+          .selectRange(ordered, 3, 1);
+
+      expect(container.read(albumSelectionProvider),
+          {'album-2', 'album-3', 'album-4'});
+    });
+
+    test('selectRange_mergesWithExistingSelection', () {
+      final container = makeContainer();
+      final notifier = container.read(albumSelectionProvider.notifier);
+      final ordered = ['album-1', 'album-2', 'album-3', 'album-4', 'album-5'];
+
+      notifier.toggle('album-5');
+      notifier.selectRange(ordered, 0, 1);
+
+      expect(container.read(albumSelectionProvider),
+          {'album-1', 'album-2', 'album-5'});
+    });
   });
 
   group('isInSelectionModeProvider', () {

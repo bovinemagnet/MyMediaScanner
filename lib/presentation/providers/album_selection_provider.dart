@@ -18,6 +18,13 @@ class AlbumSelectionNotifier extends Notifier<Set<String>> {
     state = {...albumIds};
   }
 
+  void selectRange(List<String> orderedAlbumIds, int from, int to) {
+    final start = from < to ? from : to;
+    final end = from < to ? to : from;
+    final rangeIds = orderedAlbumIds.sublist(start, end + 1);
+    state = {...state, ...rangeIds};
+  }
+
   void clear() {
     state = {};
   }

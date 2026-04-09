@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/presentation/providers/batch_analysis_provider.dart';
+import 'package:mymediascanner/presentation/providers/rip_provider.dart';
 
 /// Panel displayed above the album grid while a batch quality analysis is
 /// queued, running, or complete.
@@ -110,16 +111,23 @@ class BatchAnalysisPanel extends ConsumerWidget {
   }
 }
 
-class _AlbumStatusRow extends StatelessWidget {
+class _AlbumStatusRow extends ConsumerWidget {
   const _AlbumStatusRow({required this.albumId, required this.status});
 
   final String albumId;
   final AlbumAnalysisStatus status;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colours = theme.colorScheme;
+
+    final albums = ref.watch(allRipAlbumsProvider).value ?? [];
+    final albumMap = {for (final a in albums) a.id: a};
+    final album = albumMap[albumId];
+    final displayName = album != null
+        ? '${album.artist ?? "Unknown"} — ${album.albumTitle ?? "Unknown"}'
+        : albumId.substring(0, albumId.length.clamp(0, 8));
 
     Widget icon;
     switch (status) {
@@ -147,7 +155,7 @@ class _AlbumStatusRow extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              albumId,
+              displayName,
               style: theme.textTheme.bodySmall,
               overflow: TextOverflow.ellipsis,
             ),

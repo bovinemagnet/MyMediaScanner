@@ -180,6 +180,7 @@ class _RipLibraryViewState extends ConsumerState<RipLibraryView> {
               ref
                   .read(batchAnalysisProvider.notifier)
                   .queueAlbums(selectedIds.toList());
+              ref.read(batchAnalysisProvider.notifier).startAnalysis();
               ref.read(albumSelectionProvider.notifier).clear();
             },
             onEditTags: () {
