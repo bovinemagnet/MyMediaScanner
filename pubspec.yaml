@@ -66,6 +66,8 @@ dependencies:
   flutter_zxing: ^2.2.1
   flutter_tesseract_ocr: ^0.4.30
   just_audio: ^0.9.43
+  just_audio_mpv: ^0.1.7
+  just_audio_windows: ^0.2.3
 
 dev_dependencies:
   flutter_test:
