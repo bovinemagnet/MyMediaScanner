@@ -103,7 +103,7 @@ void main() {
 
       // Set up a queue with two tracks and current at index 0
       notifier.replaceQueue(_album, _tracks, startIndex: 0);
-      final insertItem = const QueueItem(
+      const insertItem = QueueItem(
         album: _album,
         track: _track3,
         source: QueueItemSource.manual,
