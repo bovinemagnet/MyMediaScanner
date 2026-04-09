@@ -17,6 +17,7 @@ import 'package:mymediascanner/core/services/audio/audio_player_service.dart';
 import 'package:mymediascanner/core/services/audio/replay_gain_service.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
 import 'package:mymediascanner/domain/entities/rip_track.dart';
+import 'package:mymediascanner/presentation/providers/playback_speed_provider.dart';
 import 'package:mymediascanner/presentation/providers/queue_provider.dart';
 import 'package:mymediascanner/presentation/providers/replay_gain_provider.dart';
 
@@ -302,6 +303,12 @@ class PlaybackActionNotifier extends Notifier<void> {
   Future<void> setShuffleEnabled(bool enabled) async {
     await _service.setShuffleEnabled(enabled);
     ref.read(shuffleEnabledProvider.notifier).set(enabled);
+  }
+
+  /// Sets the playback speed (0.5 to 2.0).
+  Future<void> setSpeed(double speed) async {
+    await _service.setSpeed(speed);
+    ref.read(playbackSpeedProvider.notifier).setSpeed(speed);
   }
 }
 

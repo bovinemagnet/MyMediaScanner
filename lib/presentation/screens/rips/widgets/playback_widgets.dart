@@ -15,8 +15,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
 import 'package:mymediascanner/presentation/providers/audio_player_provider.dart';
+import 'package:mymediascanner/presentation/providers/playback_speed_provider.dart';
 import 'package:mymediascanner/presentation/providers/queue_provider.dart';
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
+import 'package:mymediascanner/presentation/screens/rips/widgets/speed_control_popup.dart';
 
 /// Formats a [Duration] as `m:ss`.
 String formatPlaybackDuration(Duration d) {
@@ -107,6 +109,7 @@ class InlinePlayerControls extends ConsumerWidget {
     final loopMode = ref.watch(loopModeProvider);
     final shuffleEnabled = ref.watch(shuffleEnabledProvider);
     final volume = ref.watch(volumeProvider);
+    final speed = ref.watch(playbackSpeedProvider);
 
     final trackTitle = currentIndex < nowPlaying.tracks.length
         ? (nowPlaying.tracks[currentIndex].title ??
@@ -235,7 +238,7 @@ class InlinePlayerControls extends ConsumerWidget {
                 ),
               ],
             ),
-            // Volume slider + play-on-select toggle
+            // Volume slider + speed button
             Row(
               children: [
                 Icon(
@@ -252,6 +255,8 @@ class InlinePlayerControls extends ConsumerWidget {
                         ref.read(playbackActionProvider.notifier).setVolume(value),
                   ),
                 ),
+                // Speed button
+                _SpeedButton(speed: speed),
               ],
             ),
           ],
@@ -280,6 +285,56 @@ class InlinePlayerControls extends ConsumerWidget {
       case LoopMode.one:
         return 'Repeat one';
     }
+  }
+}
+
+/// Speed button that opens the [SpeedControlPopup] via a dialog.
+///
+/// Shows the current speed as text — subtle at 1.0×, highlighted cyan
+/// when the speed differs from normal.
+class _SpeedButton extends ConsumerWidget {
+  const _SpeedButton({required this.speed});
+
+  final double speed;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = Theme.of(context).colorScheme;
+    final isModified = (speed - 1.0).abs() > 0.01;
+    final label = '${speed.toStringAsFixed(speed == speed.roundToDouble() ? 1 : 2)}×';
+
+    return Tooltip(
+      message: 'Playback speed',
+      child: InkWell(
+        borderRadius: BorderRadius.circular(6),
+        onTap: () => showDialog<void>(
+          context: context,
+          barrierColor: Colors.transparent,
+          builder: (_) => const Dialog(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            child: SpeedControlPopup(),
+          ),
+        ),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+          decoration: BoxDecoration(
+            color: isModified
+                ? colors.primary.withValues(alpha: 0.12)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Text(
+            label,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: isModified ? colors.primary : colors.onSurfaceVariant,
+                  fontWeight:
+                      isModified ? FontWeight.bold : FontWeight.normal,
+                ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

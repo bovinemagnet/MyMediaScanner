@@ -136,6 +136,12 @@ class AudioPlayerService {
     await _player.setShuffleModeEnabled(enabled);
   }
 
+  /// Sets the playback speed (0.5 to 2.0).
+  Future<void> setSpeed(double speed) async => await _player.setSpeed(speed);
+
+  /// The current playback speed.
+  double get speed => _player.speed;
+
   /// Disposes the underlying player and releases resources.
   Future<void> dispose() async {
     await _player.dispose();
