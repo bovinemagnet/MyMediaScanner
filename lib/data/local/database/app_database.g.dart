@@ -8365,6 +8365,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final BatchSessionDao batchSessionDao = BatchSessionDao(
     this as AppDatabase,
   );
+  late final PlaylistDao playlistDao = PlaylistDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();

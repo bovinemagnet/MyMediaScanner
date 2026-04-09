@@ -25,6 +25,7 @@ import 'package:mymediascanner/data/local/database/tables/batch_sessions_table.d
 import 'package:mymediascanner/data/local/database/tables/batch_queue_items_table.dart';
 import 'package:mymediascanner/data/local/database/tables/playlists_table.dart';
 import 'package:mymediascanner/data/local/database/tables/playlist_tracks_table.dart';
+import 'package:mymediascanner/data/local/dao/playlist_dao.dart';
 
 part 'app_database.g.dart';
 
@@ -56,6 +57,7 @@ part 'app_database.g.dart';
     LoansDao,
     RipLibraryDao,
     BatchSessionDao,
+    PlaylistDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
