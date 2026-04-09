@@ -99,6 +99,12 @@ class AudioPlayerService {
     await _player.seek(position);
   }
 
+  /// Seeks to a specific track [index] in the playlist, starting from the
+  /// beginning of that track.
+  Future<void> seekToIndex(int index) async {
+    await _player.seek(Duration.zero, index: index);
+  }
+
   /// Seeks to the next track in the playlist.
   Future<void> seekToNext() async {
     await _player.seekToNext();
