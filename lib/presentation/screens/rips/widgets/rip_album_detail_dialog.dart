@@ -474,7 +474,7 @@ class _MusicItemPickerDialogState extends State<_MusicItemPickerDialog> {
   }
 }
 
-class _TrackTile extends ConsumerWidget {
+class _TrackTile extends ConsumerStatefulWidget {
   const _TrackTile({
     required this.track,
     required this.trackIndex,
@@ -486,7 +486,31 @@ class _TrackTile extends ConsumerWidget {
   final RipAlbum album;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_TrackTile> createState() => _TrackTileState();
+}
+
+class _TrackTileState extends ConsumerState<_TrackTile> {
+  bool _expanded = false;
+
+  static const _displayOrder = [
+    'TITLE', 'ARTIST', 'ALBUMARTIST', 'ALBUM', 'TRACKNUMBER', 'DISCNUMBER',
+    'GENRE', 'DATE', 'BPM', 'COMPOSER', 'PERFORMER', 'COMMENT',
+    'TOTALTRACKS', 'TOTALDISCS', 'BARCODE', 'ISRC', 'LYRICS',
+  ];
+
+  static const _tagLabels = {
+    'TITLE': 'Title', 'ARTIST': 'Artist', 'ALBUMARTIST': 'Album Artist',
+    'ALBUM': 'Album', 'TRACKNUMBER': 'Track Number',
+    'DISCNUMBER': 'Disc Number', 'GENRE': 'Genre', 'DATE': 'Date',
+    'BPM': 'BPM', 'COMPOSER': 'Composer', 'PERFORMER': 'Performer',
+    'COMMENT': 'Comment', 'TOTALTRACKS': 'Total Tracks',
+    'TOTALDISCS': 'Total Discs', 'BARCODE': 'Barcode', 'ISRC': 'ISRC',
+    'LYRICS': 'Lyrics',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final track = widget.track;
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final duration = _formatTrackDuration(track.durationMs);
@@ -499,66 +523,165 @@ class _TrackTile extends ConsumerWidget {
     final nowPlaying = ref.watch(nowPlayingProvider);
     final currentIndex = ref.watch(currentTrackIndexProvider).value;
     final isThisTrackPlaying = nowPlaying.album?.id == track.ripAlbumId &&
-        currentIndex == trackIndex;
+        currentIndex == widget.trackIndex;
 
-    return ListTile(
-      dense: true,
-      leading: isThisTrackPlaying
-          ? Icon(Icons.volume_up, color: colors.primary, size: 20)
-          : QualityIcon(track: track),
-      title: Text(
-        track.title ?? 'Track ${track.trackNumber}',
-        style: theme.textTheme.bodyMedium?.copyWith(
-          fontWeight: track.title != null ? FontWeight.w500 : null,
-          fontStyle: track.title == null ? FontStyle.italic : null,
-          color: isThisTrackPlaying
-              ? colors.primary
-              : (track.title == null ? colors.onSurfaceVariant : null),
-        ),
-      ),
-      subtitle: Text(
-        subtitle,
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: colors.onSurfaceVariant,
-        ),
-      ),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
+    return Card(
+      color: colors.surfaceContainerHigh,
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: Column(
         children: [
-          if ((track.clickCount ?? 0) > 0)
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: Chip(
-                label: Text('${track.clickCount} clicks'),
-                backgroundColor: AppColors.tvColor.withValues(alpha: 0.2),
-                visualDensity: VisualDensity.compact,
+          ListTile(
+            dense: true,
+            leading: isThisTrackPlaying
+                ? Icon(Icons.volume_up, color: colors.primary, size: 20)
+                : QualityIcon(track: track),
+            title: Text(
+              track.title ?? 'Track ${track.trackNumber}',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: track.title != null ? FontWeight.w500 : null,
+                fontStyle: track.title == null ? FontStyle.italic : null,
+                color: isThisTrackPlaying
+                    ? colors.primary
+                    : (track.title == null ? colors.onSurfaceVariant : null),
               ),
             ),
-          if (track.accurateRipConfidence != null)
-            Text(
-              'AR: ${track.accurateRipConfidence}',
-              style: theme.textTheme.bodySmall,
+            subtitle: Text(
+              subtitle,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colors.onSurfaceVariant,
+              ),
             ),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if ((track.clickCount ?? 0) > 0)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: Chip(
+                      label: Text('${track.clickCount} clicks'),
+                      backgroundColor: AppColors.tvColor.withValues(alpha: 0.2),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+                if (track.accurateRipConfidence != null)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: Text(
+                      'AR: ${track.accurateRipConfidence}',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ),
+                IconButton(
+                  icon: Icon(
+                    _expanded ? Icons.expand_less : Icons.expand_more,
+                    size: 20,
+                  ),
+                  tooltip: _expanded ? 'Hide tags' : 'Show tags',
+                  onPressed: () => setState(() => _expanded = !_expanded),
+                ),
+              ],
+            ),
+            onTap: () {
+              if (!ref.read(playOnSelectProvider)) return;
+              final np = ref.read(nowPlayingProvider);
+              final actions = ref.read(playbackActionProvider.notifier);
+              if (np.album?.id == widget.album.id) {
+                actions.seekToIndex(widget.trackIndex);
+              } else {
+                final tracks =
+                    ref.read(ripTracksProvider(widget.album.id)).value ?? [];
+                if (tracks.isNotEmpty) {
+                  actions.playAlbum(
+                    album: widget.album,
+                    tracks: tracks,
+                    startIndex: widget.trackIndex,
+                  );
+                }
+              }
+            },
+          ),
+          // Read-only tag display
+          if (_expanded)
+            ref.watch(trackRawTagsProvider(track.filePath)).when(
+                  loading: () => const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Center(
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ),
+                  ),
+                  error: (e, _) => Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Text('Could not read tags: $e',
+                        style: theme.textTheme.bodySmall),
+                  ),
+                  data: (rawTags) {
+                    // Build ordered list of tags to display
+                    final orderedKeys = <String>[];
+                    for (final key in _displayOrder) {
+                      if (rawTags.containsKey(key)) {
+                        orderedKeys.add(key);
+                      }
+                    }
+                    for (final key in rawTags.keys) {
+                      if (!orderedKeys.contains(key)) {
+                        orderedKeys.add(key);
+                      }
+                    }
+
+                    if (orderedKeys.isEmpty) {
+                      return Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Text(
+                          'No tags found in file.',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colors.onSurfaceVariant,
+                          ),
+                        ),
+                      );
+                    }
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      child: Column(
+                        children: [
+                          for (final key in orderedKeys)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 4),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SizedBox(
+                                    width: 120,
+                                    child: Text(
+                                      _tagLabels[key] ?? key,
+                                      style:
+                                          theme.textTheme.bodySmall?.copyWith(
+                                        color: colors.onSurfaceVariant,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      rawTags[key] ?? '',
+                                      style: theme.textTheme.bodySmall,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
         ],
       ),
-      onTap: () {
-        if (!ref.read(playOnSelectProvider)) return;
-        final nowPlaying = ref.read(nowPlayingProvider);
-        final actions = ref.read(playbackActionProvider.notifier);
-        if (nowPlaying.album?.id == album.id) {
-          actions.seekToIndex(trackIndex);
-        } else {
-          final tracks =
-              ref.read(ripTracksProvider(album.id)).value ?? [];
-          if (tracks.isNotEmpty) {
-            actions.playAlbum(
-              album: album,
-              tracks: tracks,
-              startIndex: trackIndex,
-            );
-          }
-        }
-      },
     );
   }
 }
