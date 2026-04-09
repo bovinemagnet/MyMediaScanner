@@ -13,9 +13,11 @@ import 'package:mymediascanner/presentation/widgets/overdue_badge.dart';
 import 'package:mymediascanner/domain/usecases/update_rating_usecase.dart';
 import 'package:mymediascanner/domain/entities/rip_track.dart';
 import 'package:mymediascanner/presentation/providers/loan_provider.dart';
+import 'package:mymediascanner/presentation/providers/audio_player_provider.dart';
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
 import 'package:mymediascanner/presentation/providers/metadata_provider.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
+import 'package:mymediascanner/presentation/providers/selected_rip_album_provider.dart';
 import 'package:mymediascanner/presentation/screens/collection/widgets/shelf_picker_dialog.dart';
 import 'package:mymediascanner/presentation/screens/item_detail/widgets/borrower_picker_dialog.dart';
 import 'package:mymediascanner/presentation/screens/item_detail/widgets/cover_art_hero.dart';
@@ -513,6 +515,20 @@ class _RipStatusSection extends ConsumerWidget {
                                   style:
                                       Theme.of(context).textTheme.bodySmall,
                                 ),
+                              const SizedBox(height: 2),
+                              Text(
+                                ripAlbum.libraryPath,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .outline,
+                                    ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ],
                           ),
                         ),
@@ -557,6 +573,36 @@ class _RipStatusSection extends ConsumerWidget {
                       ],
                     ),
                   ),
+                ),
+                // Play and navigation buttons
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    FilledButton.icon(
+                      onPressed: () async {
+                        final tracks = await ref.read(
+                            ripTracksProvider(ripAlbum.id).future);
+                        if (tracks.isNotEmpty) {
+                          await ref
+                              .read(playbackActionProvider.notifier)
+                              .playAlbum(album: ripAlbum, tracks: tracks);
+                        }
+                      },
+                      icon: const Icon(Icons.play_arrow),
+                      label: const Text('Play'),
+                    ),
+                    const SizedBox(width: 8),
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        ref
+                            .read(selectedRipAlbumProvider.notifier)
+                            .select(ripAlbum.id);
+                        context.go('/rips');
+                      },
+                      icon: const Icon(Icons.library_music),
+                      label: const Text('View in Rips Library'),
+                    ),
+                  ],
                 ),
                 // Analysis progress
                 if (analysisState.status ==
