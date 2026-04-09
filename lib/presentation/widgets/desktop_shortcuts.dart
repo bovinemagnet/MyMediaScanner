@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
+import 'package:mymediascanner/presentation/providers/audio_player_provider.dart';
 import 'package:mymediascanner/presentation/widgets/shortcuts_help_overlay.dart';
 
 /// Wraps its [child] with desktop-only global keyboard shortcuts.
 ///
 /// On non-desktop platforms, renders [child] unmodified.
-class DesktopShortcuts extends StatelessWidget {
+class DesktopShortcuts extends ConsumerWidget {
   const DesktopShortcuts({
     super.key,
     required this.child,
@@ -19,7 +21,7 @@ class DesktopShortcuts extends StatelessWidget {
   final ValueChanged<int> onSwitchTab;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (!PlatformCapability.isDesktop) return child;
 
     return Shortcuts(
@@ -36,6 +38,12 @@ class DesktopShortcuts extends StatelessWidget {
         // F1 → Shortcuts help overlay
         const SingleActivator(LogicalKeyboardKey.f1):
             const _ShowHelpIntent(),
+        // Ctrl+Right → Next track
+        const SingleActivator(LogicalKeyboardKey.arrowRight, control: true):
+            const _NextTrackIntent(),
+        // Ctrl+Left → Previous track
+        const SingleActivator(LogicalKeyboardKey.arrowLeft, control: true):
+            const _PreviousTrackIntent(),
       },
       child: Actions(
         actions: <Type, Action<Intent>>{
@@ -58,6 +66,18 @@ class DesktopShortcuts extends StatelessWidget {
                 context: context,
                 builder: (_) => const ShortcutsHelpOverlay(),
               );
+              return null;
+            },
+          ),
+          _NextTrackIntent: CallbackAction<_NextTrackIntent>(
+            onInvoke: (_) {
+              ref.read(playbackActionProvider.notifier).seekToNext();
+              return null;
+            },
+          ),
+          _PreviousTrackIntent: CallbackAction<_PreviousTrackIntent>(
+            onInvoke: (_) {
+              ref.read(playbackActionProvider.notifier).seekToPrevious();
               return null;
             },
           ),
@@ -87,3 +107,11 @@ class SearchFocusNotification extends Notification {}
 
 // ignore: library_private_types_in_public_api
 class _SearchFocusNotification extends SearchFocusNotification {}
+
+class _NextTrackIntent extends Intent {
+  const _NextTrackIntent();
+}
+
+class _PreviousTrackIntent extends Intent {
+  const _PreviousTrackIntent();
+}
