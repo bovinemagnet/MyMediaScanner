@@ -15,6 +15,7 @@ import 'package:mymediascanner/presentation/providers/selected_rip_album_provide
 import 'package:mymediascanner/presentation/providers/rip_view_mode_provider.dart';
 import 'package:mymediascanner/presentation/providers/queue_provider.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/batch_analysis_panel.dart';
+import 'package:mymediascanner/presentation/screens/rips/widgets/batch_tag_editor_dialog.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/playback_widgets.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/quality_widgets.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/queue_panel.dart';
@@ -172,6 +173,16 @@ class _RipLibraryViewState extends ConsumerState<RipLibraryView> {
                   .read(batchAnalysisProvider.notifier)
                   .queueAlbums(selectedIds.toList());
               ref.read(albumSelectionProvider.notifier).clear();
+            },
+            onEditTags: () {
+              final allAlbums = albumsAsync.whenOrNull(data: (a) => a) ?? [];
+              showDialog<void>(
+                context: context,
+                builder: (_) => BatchTagEditorDialog(
+                  selectedAlbumIds: selectedIds,
+                  albums: allAlbums,
+                ),
+              );
             },
             onCancel: () =>
                 ref.read(albumSelectionProvider.notifier).clear(),
@@ -457,12 +468,14 @@ class _SelectionToolbar extends StatelessWidget {
     required this.selectedIds,
     required this.onSelectAll,
     required this.onAnalyseQuality,
+    required this.onEditTags,
     required this.onCancel,
   });
 
   final Set<String> selectedIds;
   final VoidCallback onSelectAll;
   final VoidCallback onAnalyseQuality;
+  final VoidCallback onEditTags;
   final VoidCallback onCancel;
 
   @override
@@ -493,7 +506,7 @@ class _SelectionToolbar extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           OutlinedButton.icon(
-            onPressed: null, // placeholder — implemented in Task 11
+            onPressed: count > 0 ? onEditTags : null,
             icon: const Icon(Icons.label_outline, size: 16),
             label: const Text('Edit Tags'),
             style: OutlinedButton.styleFrom(
