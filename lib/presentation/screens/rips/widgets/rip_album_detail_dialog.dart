@@ -545,10 +545,8 @@ class _TrackTile extends ConsumerWidget {
         final nowPlaying = ref.read(nowPlayingProvider);
         final actions = ref.read(playbackActionProvider.notifier);
         if (nowPlaying.album?.id == album.id) {
-          // Already playing this album — seek to track
           actions.seekToIndex(trackIndex);
-        } else if (ref.read(playOnSelectProvider)) {
-          // Not playing but auto-play is on — start from this track
+        } else {
           final tracks =
               ref.read(ripTracksProvider(album.id)).value ?? [];
           if (tracks.isNotEmpty) {
