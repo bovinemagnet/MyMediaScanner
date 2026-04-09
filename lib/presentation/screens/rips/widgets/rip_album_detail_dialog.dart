@@ -550,7 +550,22 @@ class _EditableTrackTile extends ConsumerStatefulWidget {
 class _EditableTrackTileState extends ConsumerState<_EditableTrackTile> {
   bool _expanded = false;
 
-  /// Tags to display as editable fields (common Vorbis Comment keys).
+  /// Common tags that are always shown as editable fields, even when empty.
+  static const _alwaysShowTags = [
+    'TITLE',
+    'ARTIST',
+    'ALBUMARTIST',
+    'ALBUM',
+    'TRACKNUMBER',
+    'DISCNUMBER',
+    'GENRE',
+    'DATE',
+    'BPM',
+    'COMPOSER',
+    'PERFORMER',
+  ];
+
+  /// Full display order including less common tags (shown only if present).
   static const _displayOrder = [
     'TITLE',
     'ARTIST',
@@ -656,20 +671,26 @@ class _EditableTrackTileState extends ConsumerState<_EditableTrackTile> {
                     style: theme.textTheme.bodySmall),
               ),
               data: (rawTags) {
-                // Build ordered list: known tags first, then any extra tags
+                // Always show common tags (even when empty) + any extras
                 final orderedKeys = <String>[];
+                // Add all always-shown tags first
+                for (final key in _alwaysShowTags) {
+                  orderedKeys.add(key);
+                }
+                // Add remaining display-order tags if they exist in file
                 for (final key in _displayOrder) {
-                  if (rawTags.containsKey(key) || key == 'TITLE') {
+                  if (!orderedKeys.contains(key) &&
+                      rawTags.containsKey(key)) {
                     orderedKeys.add(key);
                   }
                 }
-                // Add any tags not in the display order
+                // Add any custom tags not in the display order
                 for (final key in rawTags.keys) {
                   if (!orderedKeys.contains(key)) {
                     orderedKeys.add(key);
                   }
                 }
-                // Remove TITLE from expanded list — it's already in the header
+                // Remove TITLE — it's already in the header
                 orderedKeys.remove('TITLE');
 
                 return Padding(

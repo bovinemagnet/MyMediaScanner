@@ -674,6 +674,11 @@ class _EditableTrackTileInlineState
     extends ConsumerState<_EditableTrackTileInline> {
   bool _expanded = false;
 
+  static const _alwaysShowTags = [
+    'TITLE', 'ARTIST', 'ALBUMARTIST', 'ALBUM', 'TRACKNUMBER', 'DISCNUMBER',
+    'GENRE', 'DATE', 'BPM', 'COMPOSER', 'PERFORMER',
+  ];
+
   static const _displayOrder = [
     'TITLE', 'ARTIST', 'ALBUMARTIST', 'ALBUM', 'TRACKNUMBER', 'DISCNUMBER',
     'GENRE', 'DATE', 'BPM', 'COMPOSER', 'PERFORMER', 'COMMENT',
@@ -749,8 +754,14 @@ class _EditableTrackTileInlineState
               ),
               data: (rawTags) {
                 final orderedKeys = <String>[];
+                // Always show common tags even when empty
+                for (final key in _alwaysShowTags) {
+                  orderedKeys.add(key);
+                }
+                // Add remaining display-order tags if present in file
                 for (final key in _displayOrder) {
-                  if (rawTags.containsKey(key) || key == 'TITLE') {
+                  if (!orderedKeys.contains(key) &&
+                      rawTags.containsKey(key)) {
                     orderedKeys.add(key);
                   }
                 }
