@@ -706,7 +706,7 @@ class _RipAlbumDetailPanelState extends ConsumerState<_RipAlbumDetailPanel> {
                           ref.read(playbackActionProvider.notifier);
                       if (np.album?.id == widget.album.id) {
                         actions.seekToIndex(index);
-                      } else {
+                      } else if (ref.read(playOnSelectProvider)) {
                         actions.playAlbum(
                           album: widget.album,
                           tracks: tracks,
