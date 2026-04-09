@@ -153,8 +153,7 @@ class PlaylistCrudNotifier extends Notifier<void> {
     final byId = {for (final t in existing) t.id: t};
     final now = DateTime.now().millisecondsSinceEpoch;
 
-    // Remove all current tracks then re-insert in the desired order.
-    await _dao.clearPlaylistTracks(playlistId);
+    // Build companions in the desired order then atomically clear + re-insert.
     final companions = orderedPlaylistTrackIds.indexed.map((entry) {
       final (index, ptId) = entry;
       final original = byId[ptId]!;
@@ -166,7 +165,7 @@ class PlaylistCrudNotifier extends Notifier<void> {
         addedAt: now,
       );
     }).toList();
-    await _dao.insertPlaylistTracks(companions);
+    await _dao.reorderTracks(playlistId, companions);
     ref.invalidate(playlistTracksProvider(playlistId));
   }
 }

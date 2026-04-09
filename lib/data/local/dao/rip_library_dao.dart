@@ -154,4 +154,16 @@ class RipLibraryDao extends DatabaseAccessor<AppDatabase>
   Future<List<RipAlbumsTableData>> getAllNonDeleted() {
     return (select(ripAlbumsTable)..where((t) => t.deleted.equals(0))).get();
   }
+
+  /// Returns IDs of non-deleted albums that have at least one track
+  /// without a quality check.
+  Future<List<String>> getUnanalysedAlbumIds() async {
+    final query = customSelect(
+      'SELECT DISTINCT ra.id FROM rip_albums ra '
+      'INNER JOIN rip_tracks rt ON rt.rip_album_id = ra.id '
+      'WHERE ra.deleted = 0 AND rt.quality_checked_at IS NULL',
+    );
+    final rows = await query.get();
+    return rows.map((row) => row.read<String>('id')).toList();
+  }
 }

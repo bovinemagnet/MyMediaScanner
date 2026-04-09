@@ -6,7 +6,10 @@ import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
 import 'package:mymediascanner/domain/entities/rip_track.dart';
+import 'package:mymediascanner/domain/entities/queue_item.dart';
 import 'package:mymediascanner/presentation/providers/audio_player_provider.dart';
+import 'package:mymediascanner/presentation/providers/playlist_provider.dart';
+import 'package:mymediascanner/presentation/providers/queue_provider.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/playback_widgets.dart';
@@ -474,6 +477,8 @@ class _MusicItemPickerDialogState extends State<_MusicItemPickerDialog> {
   }
 }
 
+enum _TrackAction { playNext, addToQueue, addToPlaylist }
+
 class _TrackTile extends ConsumerStatefulWidget {
   const _TrackTile({
     required this.track,
@@ -507,6 +512,83 @@ class _TrackTileState extends ConsumerState<_TrackTile> {
     'TOTALDISCS': 'Total Discs', 'BARCODE': 'Barcode', 'ISRC': 'ISRC',
     'LYRICS': 'Lyrics',
   };
+
+  void _handleTrackAction(_TrackAction action, BuildContext context) {
+    final track = widget.track;
+    final album = widget.album;
+    switch (action) {
+      case _TrackAction.playNext:
+        ref.read(queueProvider.notifier).playNext(
+              QueueItem(
+                album: album,
+                track: track,
+                source: QueueItemSource.manual,
+              ),
+            );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                '"${track.title ?? 'Track ${track.trackNumber}'}" will play next'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      case _TrackAction.addToQueue:
+        ref.read(queueProvider.notifier).addAlbumToQueue(album, [track]);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                '"${track.title ?? 'Track ${track.trackNumber}'}" added to queue'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      case _TrackAction.addToPlaylist:
+        _showAddToPlaylistDialog(context, track);
+    }
+  }
+
+  Future<void> _showAddToPlaylistDialog(
+      BuildContext context, RipTrack track) async {
+    final playlists = ref.read(allPlaylistsProvider).value;
+    if (playlists == null || playlists.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No playlists found. Create a playlist first.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    if (!context.mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => SimpleDialog(
+        title: const Text('Add to Playlist'),
+        children: [
+          for (final playlist in playlists)
+            SimpleDialogOption(
+              onPressed: () async {
+                Navigator.of(dialogContext).pop();
+                await ref
+                    .read(playlistCrudProvider.notifier)
+                    .addTracksToPlaylist(playlist.id, [track.id]);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                          '"${track.title ?? 'Track ${track.trackNumber}'}" added to "${playlist.name}"'),
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                }
+              },
+              child: Text(playlist.name),
+            ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -571,6 +653,26 @@ class _TrackTileState extends ConsumerState<_TrackTile> {
                       style: theme.textTheme.bodySmall,
                     ),
                   ),
+                PopupMenuButton<_TrackAction>(
+                  icon: const Icon(Icons.more_vert, size: 20),
+                  tooltip: 'Track actions',
+                  onSelected: (action) =>
+                      _handleTrackAction(action, context),
+                  itemBuilder: (_) => const [
+                    PopupMenuItem(
+                      value: _TrackAction.playNext,
+                      child: Text('Play Next'),
+                    ),
+                    PopupMenuItem(
+                      value: _TrackAction.addToQueue,
+                      child: Text('Add to Queue'),
+                    ),
+                    PopupMenuItem(
+                      value: _TrackAction.addToPlaylist,
+                      child: Text('Add to Playlist...'),
+                    ),
+                  ],
+                ),
                 IconButton(
                   icon: Icon(
                     _expanded ? Icons.expand_less : Icons.expand_more,

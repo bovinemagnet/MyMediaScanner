@@ -70,6 +70,20 @@ class PlaylistDao extends DatabaseAccessor<AppDatabase>
         .go();
   }
 
+  /// Atomically reorders tracks in a playlist by clearing and re-inserting
+  /// within a single transaction.
+  Future<void> reorderTracks(
+      String playlistId, List<PlaylistTracksTableCompanion> companions) {
+    return transaction(() async {
+      await (delete(playlistTracksTable)
+            ..where((t) => t.playlistId.equals(playlistId)))
+          .go();
+      await batch((b) {
+        b.insertAll(playlistTracksTable, companions);
+      });
+    });
+  }
+
   /// Get rip tracks for a playlist via join, ordered by sort order.
   Future<List<RipTracksTableData>> getRipTracksForPlaylist(String playlistId) {
     final query = select(ripTracksTable).join([

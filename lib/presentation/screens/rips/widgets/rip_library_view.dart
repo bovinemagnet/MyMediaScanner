@@ -10,6 +10,7 @@ import 'package:mymediascanner/domain/entities/rip_track.dart';
 import 'package:mymediascanner/presentation/providers/album_selection_provider.dart';
 import 'package:mymediascanner/presentation/providers/audio_player_provider.dart';
 import 'package:mymediascanner/presentation/providers/batch_analysis_provider.dart';
+import 'package:mymediascanner/presentation/providers/database_provider.dart';
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
 import 'package:mymediascanner/presentation/providers/selected_rip_album_provider.dart';
 import 'package:mymediascanner/presentation/providers/rip_view_mode_provider.dart';
@@ -113,6 +114,10 @@ class _RipLibraryViewState extends ConsumerState<RipLibraryView> {
                     : 'Scan Library'),
               ),
               const SizedBox(width: 8),
+              if (!isSelecting)
+                _AnalyseAllButton(),
+              if (!isSelecting)
+                const SizedBox(width: 8),
               SegmentedButton<RipViewMode>(
                 showSelectedIcon: false,
                 segments: const [
@@ -304,6 +309,36 @@ class _RipLibraryViewState extends ConsumerState<RipLibraryView> {
       return;
     }
     unawaited(ref.read(ripScanNotifierProvider.notifier).startScan(path));
+  }
+}
+
+class _AnalyseAllButton extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final batchState = ref.watch(batchAnalysisProvider);
+    final isRunning = batchState.status == BatchStatus.running;
+
+    return FilledButton.tonal(
+      onPressed: isRunning ? null : () => _analyseAll(context, ref),
+      child: const Text('Analyse All'),
+    );
+  }
+
+  Future<void> _analyseAll(BuildContext context, WidgetRef ref) async {
+    final dao = ref.read(ripLibraryDaoProvider);
+    final ids = await dao.getUnanalysedAlbumIds();
+
+    if (!context.mounted) return;
+
+    if (ids.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('All albums already analysed')),
+      );
+      return;
+    }
+
+    ref.read(batchAnalysisProvider.notifier).queueAlbums(ids);
+    unawaited(ref.read(batchAnalysisProvider.notifier).startAnalysis());
   }
 }
 

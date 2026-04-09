@@ -239,5 +239,145 @@ void main() {
       final noResult = await dao.getByLibraryPath('Nonexistent/Path');
       expect(noResult, isNull);
     });
+
+    group('getUnanalysedAlbumIds', () {
+      test('returns albums with at least one unchecked track', () async {
+        final now = DateTime.now().millisecondsSinceEpoch;
+
+        // Album with one unchecked track
+        await dao.insertAlbum(RipAlbumsTableCompanion(
+          id: const Value('rip-1'),
+          libraryPath: const Value('Artist/Album1'),
+          trackCount: const Value(1),
+          totalSizeBytes: const Value(50000000),
+          lastScannedAt: Value(now),
+          updatedAt: Value(now),
+        ));
+        await dao.insertTracks([
+          RipTracksTableCompanion(
+            id: const Value('track-1'),
+            ripAlbumId: const Value('rip-1'),
+            trackNumber: const Value(1),
+            filePath: const Value('/music/track1.flac'),
+            fileSizeBytes: const Value(50000000),
+            updatedAt: Value(now),
+            // qualityCheckedAt not set — null
+          ),
+        ]);
+
+        final ids = await dao.getUnanalysedAlbumIds();
+        expect(ids, contains('rip-1'));
+        expect(ids.length, 1);
+      });
+
+      test('excludes albums where all tracks are quality-checked', () async {
+        final now = DateTime.now().millisecondsSinceEpoch;
+
+        await dao.insertAlbum(RipAlbumsTableCompanion(
+          id: const Value('rip-1'),
+          libraryPath: const Value('Artist/Album1'),
+          trackCount: const Value(1),
+          totalSizeBytes: const Value(50000000),
+          lastScannedAt: Value(now),
+          updatedAt: Value(now),
+        ));
+        await dao.insertTracks([
+          RipTracksTableCompanion(
+            id: const Value('track-1'),
+            ripAlbumId: const Value('rip-1'),
+            trackNumber: const Value(1),
+            filePath: const Value('/music/track1.flac'),
+            fileSizeBytes: const Value(50000000),
+            updatedAt: Value(now),
+          ),
+        ]);
+
+        // Mark the track as quality-checked
+        await dao.updateTrackQuality('track-1', qualityCheckedAt: now);
+
+        final ids = await dao.getUnanalysedAlbumIds();
+        expect(ids, isEmpty);
+      });
+
+      test('excludes soft-deleted albums', () async {
+        final now = DateTime.now().millisecondsSinceEpoch;
+
+        await dao.insertAlbum(RipAlbumsTableCompanion(
+          id: const Value('rip-1'),
+          libraryPath: const Value('Artist/Album1'),
+          trackCount: const Value(1),
+          totalSizeBytes: const Value(50000000),
+          lastScannedAt: Value(now),
+          updatedAt: Value(now),
+        ));
+        await dao.insertTracks([
+          RipTracksTableCompanion(
+            id: const Value('track-1'),
+            ripAlbumId: const Value('rip-1'),
+            trackNumber: const Value(1),
+            filePath: const Value('/music/track1.flac'),
+            fileSizeBytes: const Value(50000000),
+            updatedAt: Value(now),
+          ),
+        ]);
+
+        // Soft-delete the album
+        await dao.softDeleteAlbum('rip-1', now + 1000);
+
+        final ids = await dao.getUnanalysedAlbumIds();
+        expect(ids, isEmpty);
+      });
+
+      test('returns only albums with at least one unchecked track when mixed',
+          () async {
+        final now = DateTime.now().millisecondsSinceEpoch;
+
+        // Album with one unchecked track
+        await dao.insertAlbum(RipAlbumsTableCompanion(
+          id: const Value('rip-unanalysed'),
+          libraryPath: const Value('Artist/Unanalysed'),
+          trackCount: const Value(1),
+          totalSizeBytes: const Value(50000000),
+          lastScannedAt: Value(now),
+          updatedAt: Value(now),
+        ));
+        await dao.insertTracks([
+          RipTracksTableCompanion(
+            id: const Value('track-unchecked'),
+            ripAlbumId: const Value('rip-unanalysed'),
+            trackNumber: const Value(1),
+            filePath: const Value('/music/unchecked.flac'),
+            fileSizeBytes: const Value(50000000),
+            updatedAt: Value(now),
+          ),
+        ]);
+
+        // Album fully analysed
+        await dao.insertAlbum(RipAlbumsTableCompanion(
+          id: const Value('rip-analysed'),
+          libraryPath: const Value('Artist/Analysed'),
+          trackCount: const Value(1),
+          totalSizeBytes: const Value(50000000),
+          lastScannedAt: Value(now),
+          updatedAt: Value(now),
+        ));
+        await dao.insertTracks([
+          RipTracksTableCompanion(
+            id: const Value('track-checked'),
+            ripAlbumId: const Value('rip-analysed'),
+            trackNumber: const Value(1),
+            filePath: const Value('/music/checked.flac'),
+            fileSizeBytes: const Value(50000000),
+            updatedAt: Value(now),
+          ),
+        ]);
+        await dao.updateTrackQuality('track-checked', qualityCheckedAt: now);
+
+        final ids = await dao.getUnanalysedAlbumIds();
+        expect(ids, contains('rip-unanalysed'));
+        expect(ids, isNot(contains('rip-analysed')));
+        expect(ids.length, 1);
+      });
+    });
   });
 }

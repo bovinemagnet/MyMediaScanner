@@ -9,45 +9,32 @@
 /// Since: 0.0.0
 library;
 
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/domain/entities/queue_item.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
 import 'package:mymediascanner/domain/entities/rip_track.dart';
+
+part 'queue_provider.freezed.dart';
 
 // ---------------------------------------------------------------------------
 // QueueState
 // ---------------------------------------------------------------------------
 
 /// Immutable state for the play queue.
-class QueueState {
+@freezed
+sealed class QueueState with _$QueueState {
   /// Creates a [QueueState].
-  const QueueState({
-    this.items = const [],
-    this.currentIndex = -1,
-    this.history = const [],
-  });
+  const factory QueueState({
+    /// The ordered list of items in the queue.
+    @Default([]) List<QueueItem> items,
 
-  /// The ordered list of items in the queue.
-  final List<QueueItem> items;
+    /// Index of the currently playing item, or -1 if nothing is playing.
+    @Default(-1) int currentIndex,
 
-  /// Index of the currently playing item, or -1 if nothing is playing.
-  final int currentIndex;
-
-  /// Previously played items (most recent last), capped at 50.
-  final List<QueueItem> history;
-
-  /// Returns a copy of this state with the given fields replaced.
-  QueueState copyWith({
-    List<QueueItem>? items,
-    int? currentIndex,
-    List<QueueItem>? history,
-  }) {
-    return QueueState(
-      items: items ?? this.items,
-      currentIndex: currentIndex ?? this.currentIndex,
-      history: history ?? this.history,
-    );
-  }
+    /// Previously played items (most recent last), capped at 50.
+    @Default([]) List<QueueItem> history,
+  }) = _QueueState;
 }
 
 // ---------------------------------------------------------------------------

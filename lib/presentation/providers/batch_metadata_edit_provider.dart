@@ -7,60 +7,40 @@
 /// Since: 0.0.0
 library;
 
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/domain/entities/rip_track.dart';
 import 'package:mymediascanner/domain/usecases/edit_rip_metadata_usecase.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
 
+part 'batch_metadata_edit_provider.freezed.dart';
+
 /// Lifecycle status for a batch metadata edit operation.
 enum BatchEditStatus { idle, previewing, applying, applied, error }
 
 /// Holds state for a batch metadata edit operation.
-class BatchMetadataEditState {
-  const BatchMetadataEditState({
-    this.status = BatchEditStatus.idle,
-    this.pendingChanges = const {},
-    this.originalValues = const {},
-    this.affectedTrackCount = 0,
-    this.affectedAlbumCount = 0,
-    this.error,
-  });
+@freezed
+sealed class BatchMetadataEditState with _$BatchMetadataEditState {
+  const factory BatchMetadataEditState({
+    /// Current lifecycle status.
+    @Default(BatchEditStatus.idle) BatchEditStatus status,
 
-  /// Current lifecycle status.
-  final BatchEditStatus status;
+    /// Map of trackId → (tagKey → newValue) for changes to be applied.
+    @Default({}) Map<String, Map<String, String>> pendingChanges,
 
-  /// Map of trackId → (tagKey → newValue) for changes to be applied.
-  final Map<String, Map<String, String>> pendingChanges;
+    /// Map of trackId → (tagKey → oldValue) for undo support.
+    @Default({}) Map<String, Map<String, String>> originalValues,
 
-  /// Map of trackId → (tagKey → oldValue) for undo support.
-  final Map<String, Map<String, String>> originalValues;
+    /// Number of individual tracks affected.
+    @Default(0) int affectedTrackCount,
 
-  /// Number of individual tracks affected.
-  final int affectedTrackCount;
+    /// Number of albums affected.
+    @Default(0) int affectedAlbumCount,
 
-  /// Number of albums affected.
-  final int affectedAlbumCount;
-
-  /// Error message if status is [BatchEditStatus.error].
-  final String? error;
-
-  BatchMetadataEditState copyWith({
-    BatchEditStatus? status,
-    Map<String, Map<String, String>>? pendingChanges,
-    Map<String, Map<String, String>>? originalValues,
-    int? affectedTrackCount,
-    int? affectedAlbumCount,
+    /// Error message if status is [BatchEditStatus.error].
     String? error,
-  }) =>
-      BatchMetadataEditState(
-        status: status ?? this.status,
-        pendingChanges: pendingChanges ?? this.pendingChanges,
-        originalValues: originalValues ?? this.originalValues,
-        affectedTrackCount: affectedTrackCount ?? this.affectedTrackCount,
-        affectedAlbumCount: affectedAlbumCount ?? this.affectedAlbumCount,
-        error: error,
-      );
+  }) = _BatchMetadataEditState;
 }
 
 /// Notifier managing the batch metadata edit lifecycle.
