@@ -10,6 +10,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/domain/entities/queue_item.dart';
+import 'package:mymediascanner/presentation/providers/playlist_provider.dart';
 import 'package:mymediascanner/presentation/providers/queue_provider.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/playback_widgets.dart';
 
@@ -97,7 +98,7 @@ class QueuePanel extends ConsumerWidget {
                 ],
               ),
             ),
-            _buildFooter(context, colors, theme),
+            _buildFooter(context, ref, colors, theme),
           ],
         ),
       ),
@@ -141,8 +142,12 @@ class QueuePanel extends ConsumerWidget {
     );
   }
 
-  Widget _buildFooter(
-      BuildContext context, ColorScheme colors, ThemeData theme) {
+  Widget _buildFooter(BuildContext context, WidgetRef ref,
+      ColorScheme colors, ThemeData theme) {
+    final queue = ref.watch(queueProvider);
+    final hasItems =
+        queue.items.isNotEmpty || queue.history.isNotEmpty;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -154,11 +159,76 @@ class QueuePanel extends ConsumerWidget {
         ),
       ),
       child: OutlinedButton.icon(
-        onPressed: null, // placeholder — playlist save not yet implemented
+        onPressed: hasItems
+            ? () => _saveAsPlaylist(context, ref, queue)
+            : null,
         icon: const Icon(Icons.playlist_add, size: 18),
         label: const Text('Save as Playlist'),
       ),
     );
+  }
+
+  Future<void> _saveAsPlaylist(
+      BuildContext context, WidgetRef ref, QueueState queue) async {
+    final nameController = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Save Queue as Playlist'),
+        content: TextField(
+          controller: nameController,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: 'Playlist name',
+            hintText: 'e.g. My Mix',
+          ),
+          onSubmitted: (_) => Navigator.of(ctx).pop(true),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || nameController.text.trim().isEmpty) {
+      nameController.dispose();
+      return;
+    }
+
+    final name = nameController.text.trim();
+    nameController.dispose();
+
+    // Collect track IDs from the queue (all items, including history).
+    final trackIds =
+        queue.items.map((qi) => qi.track.id).toList();
+
+    final id = await ref
+        .read(playlistCrudProvider.notifier)
+        .createPlaylist(name);
+
+    if (trackIds.isNotEmpty) {
+      await ref
+          .read(playlistCrudProvider.notifier)
+          .addTracksToPlaylist(id, trackIds);
+    }
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              'Saved "$name" with ${trackIds.length} '
+              '${trackIds.length == 1 ? 'track' : 'tracks'}.'),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
   }
 
   Widget _sectionLabel(
