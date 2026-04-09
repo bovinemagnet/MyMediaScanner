@@ -155,6 +155,89 @@ void main() {
       expect(playlist!.name, 'Updated Name');
     });
 
+    test('reorderTracks atomically clears and re-inserts', () async {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final albumId = uuid.v4();
+      final trackAId = uuid.v4();
+      final trackBId = uuid.v4();
+      final trackCId = uuid.v4();
+      final playlistId = uuid.v4();
+      final ptAId = uuid.v4();
+      final ptBId = uuid.v4();
+      final ptCId = uuid.v4();
+
+      await insertRipAlbum(albumId);
+      await insertRipTrack(trackAId, albumId, 1);
+      await insertRipTrack(trackBId, albumId, 2);
+      await insertRipTrack(trackCId, albumId, 3);
+
+      await dao.insertPlaylist(PlaylistsTableCompanion(
+        id: Value(playlistId),
+        name: const Value('Reorder Test'),
+        createdAt: Value(now),
+        updatedAt: Value(now),
+      ));
+
+      // Insert tracks in order A, B, C.
+      await dao.insertPlaylistTracks([
+        PlaylistTracksTableCompanion(
+          id: Value(ptAId),
+          playlistId: Value(playlistId),
+          ripTrackId: Value(trackAId),
+          sortOrder: const Value(1),
+          addedAt: Value(now),
+        ),
+        PlaylistTracksTableCompanion(
+          id: Value(ptBId),
+          playlistId: Value(playlistId),
+          ripTrackId: Value(trackBId),
+          sortOrder: const Value(2),
+          addedAt: Value(now),
+        ),
+        PlaylistTracksTableCompanion(
+          id: Value(ptCId),
+          playlistId: Value(playlistId),
+          ripTrackId: Value(trackCId),
+          sortOrder: const Value(3),
+          addedAt: Value(now),
+        ),
+      ]);
+
+      // Reorder to C, B, A.
+      final reordered = [
+        PlaylistTracksTableCompanion.insert(
+          id: ptCId,
+          playlistId: playlistId,
+          ripTrackId: trackCId,
+          sortOrder: 1,
+          addedAt: now,
+        ),
+        PlaylistTracksTableCompanion.insert(
+          id: ptBId,
+          playlistId: playlistId,
+          ripTrackId: trackBId,
+          sortOrder: 2,
+          addedAt: now,
+        ),
+        PlaylistTracksTableCompanion.insert(
+          id: ptAId,
+          playlistId: playlistId,
+          ripTrackId: trackAId,
+          sortOrder: 3,
+          addedAt: now,
+        ),
+      ];
+
+      await dao.reorderTracks(playlistId, reordered);
+
+      final tracks = await dao.getTracksForPlaylist(playlistId);
+      expect(tracks.length, 3);
+      // Verify new order: C, B, A.
+      expect(tracks[0].ripTrackId, trackCId);
+      expect(tracks[1].ripTrackId, trackBId);
+      expect(tracks[2].ripTrackId, trackAId);
+    });
+
     test('removeTrackFromPlaylist removes specific track', () async {
       final now = DateTime.now().millisecondsSinceEpoch;
       final albumId = uuid.v4();
