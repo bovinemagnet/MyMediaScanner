@@ -51,20 +51,14 @@ class RipStatusBadge extends ConsumerWidget {
             width: 20,
             height: 20,
             decoration: BoxDecoration(
-              color: badgeColour,
+              color: badgeColour.withValues(alpha: 0.15),
+              border: Border.all(color: badgeColour.withValues(alpha: 0.3)),
               shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.3),
-                  blurRadius: 4,
-                  offset: const Offset(0, 1),
-                ),
-              ],
             ),
             child: Icon(
               badgeIcon,
               size: 12,
-              color: Colors.black,
+              color: badgeColour,
             ),
           ),
         );

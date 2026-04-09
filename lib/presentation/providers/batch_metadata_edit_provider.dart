@@ -8,6 +8,7 @@
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mymediascanner/domain/entities/rip_track.dart';
 import 'package:mymediascanner/domain/usecases/edit_rip_metadata_usecase.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
@@ -121,27 +122,26 @@ class BatchMetadataEditNotifier extends Notifier<BatchMetadataEditState> {
         writer: ref.read(metaflacWriterProvider),
       );
 
-      // Group track IDs by their rip album so we can pass the album entity
-      // to the use case.  We look up each track via ripTracksProvider cache.
+      // Build a pre-computed lookup: trackId → RipTrack.
+      // Iterates albums once up front so the per-change loop is O(1).
+      final allAlbums = ref.read(allRipAlbumsProvider).value ?? [];
+      final trackLookup = <String, RipTrack>{};
+      for (final album in allAlbums) {
+        final tracks = ref.read(ripTracksProvider(album.id)).value ?? [];
+        for (final track in tracks) {
+          trackLookup[track.id] = track;
+        }
+      }
+
       final errors = <String>[];
 
       for (final entry in state.pendingChanges.entries) {
         final trackId = entry.key;
         final tags = entry.value;
 
-        // Find the track across all albums.
-        // ripTracksProvider is family-keyed by albumId; we stored the full
-        // file path as tagKey context, so we write directly via the writer.
         try {
-          // We only have a trackId here; iterate albums to find the track.
-          final allAlbums =
-              ref.read(allRipAlbumsProvider).value ?? [];
-          for (final album in allAlbums) {
-            final tracks =
-                ref.read(ripTracksProvider(album.id)).value ?? [];
-            final track =
-                tracks.where((t) => t.id == trackId).firstOrNull;
-            if (track != null) {
+          final track = trackLookup[trackId];
+          if (track != null) {
               // Apply TITLE separately if present, others via setTags.
               final titleValue = tags['TITLE'];
               final otherTags = Map<String, String>.from(tags)
@@ -158,8 +158,6 @@ class BatchMetadataEditNotifier extends Notifier<BatchMetadataEditState> {
                     .read(metaflacWriterProvider)
                     .setTags(track.filePath, otherTags);
               }
-              break;
-            }
           }
         } catch (e) {
           errors.add('$trackId: $e');
@@ -192,18 +190,23 @@ class BatchMetadataEditNotifier extends Notifier<BatchMetadataEditState> {
         writer: ref.read(metaflacWriterProvider),
       );
 
+      // Build a pre-computed lookup: trackId → RipTrack.
+      final allAlbums = ref.read(allRipAlbumsProvider).value ?? [];
+      final trackLookup = <String, RipTrack>{};
+      for (final album in allAlbums) {
+        final tracks = ref.read(ripTracksProvider(album.id)).value ?? [];
+        for (final track in tracks) {
+          trackLookup[track.id] = track;
+        }
+      }
+
       for (final entry in state.originalValues.entries) {
         final trackId = entry.key;
         final origTags = entry.value;
 
         try {
-          final allAlbums = ref.read(allRipAlbumsProvider).value ?? [];
-          for (final album in allAlbums) {
-            final tracks =
-                ref.read(ripTracksProvider(album.id)).value ?? [];
-            final track =
-                tracks.where((t) => t.id == trackId).firstOrNull;
-            if (track != null) {
+          final track = trackLookup[trackId];
+          if (track != null) {
               final titleValue = origTags['TITLE'];
               final otherTags = Map<String, String>.from(origTags)
                 ..remove('TITLE');
@@ -219,8 +222,6 @@ class BatchMetadataEditNotifier extends Notifier<BatchMetadataEditState> {
                     .read(metaflacWriterProvider)
                     .setTags(track.filePath, otherTags);
               }
-              break;
-            }
           }
         } catch (e) {
           errors.add('$trackId: $e');

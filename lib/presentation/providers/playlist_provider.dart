@@ -7,7 +7,6 @@ import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/data/local/dao/playlist_dao.dart';
 import 'package:mymediascanner/data/local/database/app_database.dart';
-import 'package:mymediascanner/data/local/database/tables/playlist_tracks_table.dart';
 import 'package:mymediascanner/presentation/providers/database_provider.dart';
 import 'package:uuid/uuid.dart';
 
@@ -34,6 +33,16 @@ final playlistTracksProvider =
     FutureProvider.family<List<PlaylistTracksTableData>, String>(
         (ref, playlistId) {
   return ref.watch(playlistDaoProvider).getTracksForPlaylist(playlistId);
+});
+
+/// Rip track rows for a specific playlist, joined directly in SQL.
+///
+/// Returns [RipTracksTableData] in playlist sort order, avoiding the
+/// O(albums * tracks) lookup loop in the UI layer.
+final playlistRipTracksProvider =
+    FutureProvider.family<List<RipTracksTableData>, String>(
+        (ref, playlistId) {
+  return ref.watch(playlistDaoProvider).getRipTracksForPlaylist(playlistId);
 });
 
 // ---------------------------------------------------------------------------

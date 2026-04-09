@@ -69,4 +69,17 @@ class PlaylistDao extends DatabaseAccessor<AppDatabase>
           ..where((t) => t.playlistId.equals(playlistId)))
         .go();
   }
+
+  /// Get rip tracks for a playlist via join, ordered by sort order.
+  Future<List<RipTracksTableData>> getRipTracksForPlaylist(String playlistId) {
+    final query = select(ripTracksTable).join([
+      innerJoin(
+        playlistTracksTable,
+        playlistTracksTable.ripTrackId.equalsExp(ripTracksTable.id),
+      ),
+    ])
+      ..where(playlistTracksTable.playlistId.equals(playlistId))
+      ..orderBy([OrderingTerm.asc(playlistTracksTable.sortOrder)]);
+    return query.map((row) => row.readTable(ripTracksTable)).get();
+  }
 }

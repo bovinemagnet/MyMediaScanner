@@ -29,6 +29,7 @@ class PlaylistDetail extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final playlistsAsync = ref.watch(allPlaylistsProvider);
     final tracksAsync = ref.watch(playlistTracksProvider(playlistId));
+    final ripTracksAsync = ref.watch(playlistRipTracksProvider(playlistId));
 
     return playlistsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -43,10 +44,18 @@ class PlaylistDetail extends ConsumerWidget {
         return tracksAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => Center(child: Text('Error loading tracks: $e')),
-          data: (tracks) => _PlaylistDetailContent(
-            playlist: playlist,
-            tracks: tracks,
-          ),
+          data: (tracks) {
+            // Build lookup from the SQL-joined result: ripTrackId -> row.
+            // Avoids loading every album's tracks separately in the widget.
+            final ripTrackLookup = <String, RipTracksTableData>{
+              for (final rt in (ripTracksAsync.value ?? [])) rt.id: rt,
+            };
+            return _PlaylistDetailContent(
+              playlist: playlist,
+              tracks: tracks,
+              ripTrackLookup: ripTrackLookup,
+            );
+          },
         );
       },
     );
@@ -61,32 +70,20 @@ class _PlaylistDetailContent extends ConsumerWidget {
   const _PlaylistDetailContent({
     required this.playlist,
     required this.tracks,
+    required this.ripTrackLookup,
   });
 
   final PlaylistsTableData playlist;
   final List<PlaylistTracksTableData> tracks;
 
+  /// Pre-computed map from ripTrackId -> [RipTracksTableData], built by a
+  /// SQL join in [PlaylistDao.getRipTracksForPlaylist].
+  final Map<String, RipTracksTableData> ripTrackLookup;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-
-    // Build a flat map of all rip tracks: trackId → RipTrack.
-    // We use the allRipAlbumsProvider to obtain album IDs, then load tracks
-    // per album via ripTracksProvider.
-    final albumsAsync = ref.watch(allRipAlbumsProvider);
-    final Map<String, (RipTrack, String)> trackLookup = {}; // id → (track, albumId)
-
-    if (albumsAsync.hasValue) {
-      for (final album in albumsAsync.value!) {
-        final albumTracksAsync = ref.watch(ripTracksProvider(album.id));
-        if (albumTracksAsync.hasValue) {
-          for (final t in albumTracksAsync.value!) {
-            trackLookup[t.id] = (t, album.id);
-          }
-        }
-      }
-    }
 
     final trackCount = tracks.length;
 
@@ -94,7 +91,7 @@ class _PlaylistDetailContent extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // Header
-        _buildHeader(context, ref, theme, colors, trackCount, trackLookup),
+        _buildHeader(context, ref, theme, colors, trackCount),
 
         // Track listing
         Expanded(
@@ -132,13 +129,12 @@ class _PlaylistDetailContent extends ConsumerWidget {
                   itemCount: tracks.length,
                   itemBuilder: (context, index) {
                     final pt = tracks[index];
-                    final resolved = trackLookup[pt.ripTrackId];
+                    final ripRow = ripTrackLookup[pt.ripTrackId];
                     return _PlaylistTrackTile(
                       index: index + 1,
                       playlistTrackId: pt.id,
                       playlistId: playlist.id,
-                      track: resolved?.$1,
-                      albumId: resolved?.$2,
+                      ripTrack: ripRow,
                     );
                   },
                 ),
@@ -153,7 +149,6 @@ class _PlaylistDetailContent extends ConsumerWidget {
     ThemeData theme,
     ColorScheme colors,
     int trackCount,
-    Map<String, (RipTrack, String)> trackLookup,
   ) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -242,25 +237,38 @@ class _PlaylistDetailContent extends ConsumerWidget {
             onPressed: trackCount == 0
                 ? null
                 : () async {
-                    final ptList =
-                        ref.read(playlistTracksProvider(playlist.id)).value ??
-                            [];
-                    if (ptList.isEmpty) return;
+                    // Build QueueItems using the pre-resolved ripTrackLookup.
+                    // RipTracksTableData is converted to domain RipTrack inline
+                    // so QueueItem receives the expected type.
+                    final albums =
+                        ref.read(allRipAlbumsProvider).value ?? [];
+                    final albumById = {for (final a in albums) a.id: a};
 
-                    // Build QueueItems from the resolved track lookup.
-                    // Tracks that have not yet resolved are skipped.
-                    final items = ptList
-                        .map((pt) => trackLookup[pt.ripTrackId])
-                        .whereType<(RipTrack, String)>()
-                        .map((entry) {
-                      final (track, albumId) = entry;
-                      // Look up the RipAlbum from the allRipAlbumsProvider.
-                      final albums =
-                          ref.read(allRipAlbumsProvider).value ?? [];
-                      final album = albums
-                          .where((a) => a.id == albumId)
-                          .firstOrNull;
+                    final items = tracks.map((pt) {
+                      final row = ripTrackLookup[pt.ripTrackId];
+                      if (row == null) return null;
+                      final album = albumById[row.ripAlbumId];
                       if (album == null) return null;
+                      final track = RipTrack(
+                        id: row.id,
+                        ripAlbumId: row.ripAlbumId,
+                        discNumber: row.discNumber,
+                        trackNumber: row.trackNumber,
+                        title: row.title,
+                        filePath: row.filePath,
+                        durationMs: row.durationMs,
+                        fileSizeBytes: row.fileSizeBytes,
+                        updatedAt: row.updatedAt,
+                        accurateRipStatus: row.accurateripStatus,
+                        accurateRipConfidence: row.accurateripConfidence,
+                        accurateRipCrc: row.accurateripCrc,
+                        peakLevel: row.peakLevel,
+                        trackQuality: row.trackQuality,
+                        copyCrc: row.copyCrc,
+                        clickCount: row.clickCount,
+                        ripLogSource: row.ripLogSource,
+                        qualityCheckedAt: row.qualityCheckedAt,
+                      );
                       return QueueItem(
                         album: album,
                         track: track,
@@ -356,23 +364,22 @@ class _PlaylistTrackTile extends ConsumerWidget {
     required this.index,
     required this.playlistTrackId,
     required this.playlistId,
-    this.track,
-    this.albumId,
+    this.ripTrack,
   });
 
   final int index;
   final String playlistTrackId;
   final String playlistId;
-  final RipTrack? track;
-  final String? albumId;
+  final RipTracksTableData? ripTrack;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
-    final title = track?.title ?? 'Track $index';
-    final subtitle = track != null ? 'Track ${track!.trackNumber}' : '';
+    final title = ripTrack?.title ?? 'Track $index';
+    final subtitle = ripTrack != null ? 'Track ${ripTrack!.trackNumber}' : '';
+    final albumId = ripTrack?.ripAlbumId;
 
     return ListTile(
       contentPadding:
@@ -392,7 +399,7 @@ class _PlaylistTrackTile extends ConsumerWidget {
           ),
           const SizedBox(width: 8),
           if (albumId != null)
-            AlbumCoverArt(albumId: albumId!, size: 36)
+            AlbumCoverArt(albumId: albumId, size: 36)
           else
             Container(
               width: 36,
