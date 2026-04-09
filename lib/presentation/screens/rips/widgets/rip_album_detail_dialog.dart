@@ -9,6 +9,7 @@ import 'package:mymediascanner/domain/entities/rip_track.dart';
 import 'package:mymediascanner/presentation/providers/audio_player_provider.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
+import 'package:mymediascanner/presentation/screens/rips/widgets/playback_widgets.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/quality_widgets.dart';
 import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
 
@@ -246,7 +247,7 @@ class _RipAlbumDetailDialogState extends ConsumerState<RipAlbumDetailDialog> {
                       child: const Text('Discard'),
                     ),
                   ] else ...[
-                    _PlayAlbumButton(album: widget.album),
+                    PlayAlbumButton(album: widget.album),
                     IconButton(
                       icon: const Icon(Icons.edit, size: 20),
                       tooltip: 'Edit metadata',
@@ -294,7 +295,7 @@ class _RipAlbumDetailDialogState extends ConsumerState<RipAlbumDetailDialog> {
               const SizedBox(height: 12),
 
               // Playback controls (visible when this album is playing)
-              _InlinePlayerControls(album: widget.album),
+              InlinePlayerControls(album: widget.album),
 
               // Track listing
               Text('TRACKS',
@@ -545,7 +546,7 @@ class _TrackTile extends ConsumerWidget {
         final actions = ref.read(playbackActionProvider.notifier);
         if (nowPlaying.album?.id == album.id) {
           // Same album — seek to this track index
-          ref.read(audioPlayerServiceProvider).seekToIndex(trackIndex);
+          actions.seekToIndex(trackIndex);
         } else {
           // Different album — load and play from this track
           final tracks =
@@ -769,170 +770,10 @@ class _EditableTrackTileState extends ConsumerState<_EditableTrackTile> {
   }
 }
 
-// ------------------------------------------------------------------
-// Playback helper widgets
-// ------------------------------------------------------------------
-
 String _formatTrackDuration(int? ms) {
   if (ms == null) return '';
   final seconds = ms ~/ 1000;
   final m = seconds ~/ 60;
   final s = seconds % 60;
   return '$m:${s.toString().padLeft(2, '0')}';
-}
-
-String _formatPlaybackDuration(Duration d) {
-  final m = d.inMinutes;
-  final s = d.inSeconds % 60;
-  return '$m:${s.toString().padLeft(2, '0')}';
-}
-
-class _PlayAlbumButton extends ConsumerWidget {
-  const _PlayAlbumButton({required this.album});
-
-  final RipAlbum album;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final nowPlaying = ref.watch(nowPlayingProvider);
-    final playerState = ref.watch(playerStateProvider).value;
-    final isThisAlbum = nowPlaying.album?.id == album.id;
-    final isPlaying = playerState?.playing ?? false;
-
-    if (isThisAlbum && isPlaying) {
-      return IconButton(
-        icon: Icon(Icons.pause_circle,
-            size: 28, color: Theme.of(context).colorScheme.primary),
-        tooltip: 'Pause',
-        onPressed: () =>
-            ref.read(playbackActionProvider.notifier).pause(),
-      );
-    }
-
-    if (isThisAlbum && !isPlaying) {
-      return IconButton(
-        icon: Icon(Icons.play_circle,
-            size: 28, color: Theme.of(context).colorScheme.primary),
-        tooltip: 'Resume',
-        onPressed: () =>
-            ref.read(playbackActionProvider.notifier).resume(),
-      );
-    }
-
-    return IconButton(
-      icon: Icon(Icons.play_circle,
-          size: 28, color: Theme.of(context).colorScheme.primary),
-      tooltip: 'Play album',
-      onPressed: () {
-        final tracks = ref.read(ripTracksProvider(album.id)).value ?? [];
-        if (tracks.isNotEmpty) {
-          ref.read(playbackActionProvider.notifier).playAlbum(
-                album: album,
-                tracks: tracks,
-              );
-        }
-      },
-    );
-  }
-}
-
-class _InlinePlayerControls extends ConsumerWidget {
-  const _InlinePlayerControls({required this.album});
-
-  final RipAlbum album;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final nowPlaying = ref.watch(nowPlayingProvider);
-    if (nowPlaying.album?.id != album.id) return const SizedBox.shrink();
-
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-    final playerState = ref.watch(playerStateProvider).value;
-    final isPlaying = playerState?.playing ?? false;
-    final position = ref.watch(playbackPositionProvider).value ?? Duration.zero;
-    final duration =
-        ref.watch(playbackDurationProvider).value ?? Duration.zero;
-    final currentIndex = ref.watch(currentTrackIndexProvider).value ?? 0;
-
-    final trackTitle = currentIndex < nowPlaying.tracks.length
-        ? (nowPlaying.tracks[currentIndex].title ??
-            'Track ${nowPlaying.tracks[currentIndex].trackNumber}')
-        : 'Unknown';
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: colors.surfaceContainerHigh,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              trackTitle,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: colors.primary,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                Text(
-                  _formatPlaybackDuration(position),
-                  style: theme.textTheme.bodySmall,
-                ),
-                Expanded(
-                  child: Slider(
-                    value: duration.inMilliseconds > 0
-                        ? position.inMilliseconds
-                            .clamp(0, duration.inMilliseconds)
-                            .toDouble()
-                        : 0,
-                    max: duration.inMilliseconds > 0
-                        ? duration.inMilliseconds.toDouble()
-                        : 1,
-                    onChanged: (value) {
-                      ref.read(playbackActionProvider.notifier).seek(
-                            Duration(milliseconds: value.toInt()),
-                          );
-                    },
-                  ),
-                ),
-                Text(
-                  _formatPlaybackDuration(duration),
-                  style: theme.textTheme.bodySmall,
-                ),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.skip_previous),
-                  onPressed: () =>
-                      ref.read(playbackActionProvider.notifier).seekToPrevious(),
-                ),
-                IconButton(
-                  icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow,
-                      size: 36),
-                  onPressed: () => ref
-                      .read(playbackActionProvider.notifier)
-                      .togglePlayPause(),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.skip_next),
-                  onPressed: () =>
-                      ref.read(playbackActionProvider.notifier).seekToNext(),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

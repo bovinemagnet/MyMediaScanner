@@ -89,6 +89,50 @@ final currentTrackIndexProvider = StreamProvider<int?>((ref) {
 });
 
 // ------------------------------------------------------------------
+// Playback mode state providers
+// ------------------------------------------------------------------
+
+/// Notifier for the current loop mode.
+class LoopModeNotifier extends Notifier<LoopMode> {
+  @override
+  LoopMode build() => LoopMode.off;
+
+  /// Updates the loop mode.
+  void set(LoopMode mode) => state = mode;
+}
+
+/// Provider for the current loop mode state (off, all, one).
+final loopModeProvider =
+    NotifierProvider<LoopModeNotifier, LoopMode>(() => LoopModeNotifier());
+
+/// Notifier for shuffle enabled state.
+class ShuffleEnabledNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  /// Updates the shuffle state.
+  void set(bool enabled) => state = enabled;
+}
+
+/// Provider for whether shuffle mode is enabled.
+final shuffleEnabledProvider =
+    NotifierProvider<ShuffleEnabledNotifier, bool>(
+        () => ShuffleEnabledNotifier());
+
+/// Notifier for playback volume.
+class VolumeNotifier extends Notifier<double> {
+  @override
+  double build() => 1.0;
+
+  /// Updates the volume.
+  void set(double volume) => state = volume;
+}
+
+/// Provider for the current playback volume (0.0 to 1.0).
+final volumeProvider =
+    NotifierProvider<VolumeNotifier, double>(() => VolumeNotifier());
+
+// ------------------------------------------------------------------
 // Playback action notifier
 // ------------------------------------------------------------------
 
@@ -146,6 +190,11 @@ class PlaybackActionNotifier extends Notifier<void> {
     await _service.seek(position);
   }
 
+  /// Seeks to the track at the given [index] within the playlist.
+  Future<void> seekToIndex(int index) async {
+    await _service.seekToIndex(index);
+  }
+
   /// Seeks to the next track in the playlist.
   Future<void> seekToNext() async {
     await _service.seekToNext();
@@ -159,16 +208,19 @@ class PlaybackActionNotifier extends Notifier<void> {
   /// Sets the playback volume (0.0 to 1.0).
   Future<void> setVolume(double volume) async {
     await _service.setVolume(volume);
+    ref.read(volumeProvider.notifier).set(volume);
   }
 
   /// Sets the loop mode (off, one, all).
   Future<void> setLoopMode(LoopMode mode) async {
     await _service.setLoopMode(mode);
+    ref.read(loopModeProvider.notifier).set(mode);
   }
 
   /// Enables or disables shuffle mode.
   Future<void> setShuffleEnabled(bool enabled) async {
     await _service.setShuffleEnabled(enabled);
+    ref.read(shuffleEnabledProvider.notifier).set(enabled);
   }
 }
 

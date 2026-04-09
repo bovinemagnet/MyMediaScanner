@@ -11,6 +11,7 @@ import 'package:mymediascanner/presentation/providers/audio_player_provider.dart
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
 import 'package:mymediascanner/presentation/providers/selected_rip_album_provider.dart';
 import 'package:mymediascanner/presentation/providers/rip_view_mode_provider.dart';
+import 'package:mymediascanner/presentation/screens/rips/widgets/playback_widgets.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/quality_widgets.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/rip_album_detail_dialog.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/rip_table_view.dart';
@@ -556,6 +557,7 @@ class _RipAlbumDetailPanelState extends ConsumerState<_RipAlbumDetailPanel> {
                         ],
                       ),
                     ),
+                    PlayAlbumButton(album: widget.album),
                     IconButton(
                       icon: const Icon(Icons.edit, size: 20),
                       tooltip: 'Edit metadata',
@@ -592,6 +594,11 @@ class _RipAlbumDetailPanelState extends ConsumerState<_RipAlbumDetailPanel> {
           child: QualityAnalysisSection(albumId: widget.album.id),
         ),
         const SizedBox(height: 12),
+        // Playback controls (visible when this album is playing)
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: InlinePlayerControls(album: widget.album),
+        ),
         // Track listing
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -629,9 +636,18 @@ class _RipAlbumDetailPanelState extends ConsumerState<_RipAlbumDetailPanel> {
                   final subtitle =
                       '$discLabel${track.trackNumber.toString().padLeft(2, '0')}'
                       '${duration.isNotEmpty ? ' · $duration' : ''}';
+                  final nowPlaying = ref.watch(nowPlayingProvider);
+                  final currentIdx =
+                      ref.watch(currentTrackIndexProvider).value;
+                  final isThisTrackPlaying =
+                      nowPlaying.album?.id == track.ripAlbumId &&
+                          currentIdx == index;
                   return ListTile(
                     dense: true,
-                    leading: QualityIcon(track: track),
+                    leading: isThisTrackPlaying
+                        ? Icon(Icons.volume_up,
+                            color: theme.colorScheme.primary, size: 20)
+                        : QualityIcon(track: track),
                     title: Text(
                       track.title ?? 'Track ${track.trackNumber}',
                       style: theme.textTheme.bodyMedium?.copyWith(
@@ -639,9 +655,11 @@ class _RipAlbumDetailPanelState extends ConsumerState<_RipAlbumDetailPanel> {
                             track.title != null ? FontWeight.w500 : null,
                         fontStyle:
                             track.title == null ? FontStyle.italic : null,
-                        color: track.title == null
-                            ? theme.colorScheme.onSurfaceVariant
-                            : null,
+                        color: isThisTrackPlaying
+                            ? theme.colorScheme.primary
+                            : (track.title == null
+                                ? theme.colorScheme.onSurfaceVariant
+                                : null),
                       ),
                     ),
                     subtitle: Text(
@@ -650,6 +668,20 @@ class _RipAlbumDetailPanelState extends ConsumerState<_RipAlbumDetailPanel> {
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
+                    onTap: () {
+                      final np = ref.read(nowPlayingProvider);
+                      final actions =
+                          ref.read(playbackActionProvider.notifier);
+                      if (np.album?.id == widget.album.id) {
+                        actions.seekToIndex(index);
+                      } else {
+                        actions.playAlbum(
+                          album: widget.album,
+                          tracks: tracks,
+                          startIndex: index,
+                        );
+                      }
+                    },
                   );
                 },
               );
