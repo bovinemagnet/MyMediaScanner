@@ -322,6 +322,7 @@ class _RipAlbumDetailPanelState extends ConsumerState<_RipAlbumDetailPanel> {
   late TextEditingController _artistController;
   late TextEditingController _albumTitleController;
   final Map<String, TextEditingController> _trackTitleControllers = {};
+  final Map<String, TextEditingController> _tagControllers = {};
 
   @override
   void initState() {
@@ -339,6 +340,9 @@ class _RipAlbumDetailPanelState extends ConsumerState<_RipAlbumDetailPanel> {
     for (final c in _trackTitleControllers.values) {
       c.dispose();
     }
+    for (final c in _tagControllers.values) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -351,6 +355,7 @@ class _RipAlbumDetailPanelState extends ConsumerState<_RipAlbumDetailPanel> {
 
   Future<void> _save(List<RipTrack> tracks) async {
     final notifier = ref.read(ripMetadataEditNotifierProvider.notifier);
+    final writer = ref.read(metaflacWriterProvider);
 
     final newArtist = _artistController.text.trim();
     final newAlbumTitle = _albumTitleController.text.trim();
@@ -367,15 +372,60 @@ class _RipAlbumDetailPanelState extends ConsumerState<_RipAlbumDetailPanel> {
     }
 
     for (final track in tracks) {
-      final controller = _trackTitleControllers[track.id];
-      if (controller != null) {
-        final newTitle = controller.text.trim();
+      // Title change
+      final titleCtrl = _trackTitleControllers[track.id];
+      if (titleCtrl != null) {
+        final newTitle = titleCtrl.text.trim();
         final oldTitle = track.title ?? '';
         if (newTitle != oldTitle) {
           await notifier.saveTrackTitle(
             track: track,
             title: newTitle.isEmpty ? null : newTitle,
           );
+        }
+      }
+
+      // Other tag changes via metaflac
+      if (track.filePath.toLowerCase().endsWith('.flac')) {
+        final rawTags =
+            ref.read(trackRawTagsProvider(track.filePath)).value ?? {};
+        final changedTags = <String, String>{};
+        final removedTags = <String>[];
+
+        for (final entry in _tagControllers.entries) {
+          if (!entry.key.startsWith('${track.id}:')) continue;
+          final tagKey = entry.key.substring(track.id.length + 1);
+          if (tagKey == 'TITLE') continue;
+          final newValue = entry.value.text.trim();
+          final oldValue = rawTags[tagKey] ?? '';
+          if (newValue != oldValue) {
+            if (newValue.isEmpty) {
+              removedTags.add(tagKey);
+            } else {
+              changedTags[tagKey] = newValue;
+            }
+          }
+        }
+
+        try {
+          if (changedTags.isNotEmpty) {
+            await writer.setTags(track.filePath, changedTags);
+          }
+          for (final key in removedTags) {
+            await writer.removeTag(track.filePath, key);
+          }
+          if (changedTags.isNotEmpty || removedTags.isNotEmpty) {
+            ref.invalidate(trackRawTagsProvider(track.filePath));
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error writing tags: $e'),
+                backgroundColor: Theme.of(context).colorScheme.error,
+              ),
+            );
+          }
         }
       }
     }
@@ -400,6 +450,10 @@ class _RipAlbumDetailPanelState extends ConsumerState<_RipAlbumDetailPanel> {
     _artistController.text = widget.album.artist ?? '';
     _albumTitleController.text = widget.album.albumTitle ?? '';
     _trackTitleControllers.clear();
+    for (final c in _tagControllers.values) {
+      c.dispose();
+    }
+    _tagControllers.clear();
     setState(() => _editing = false);
   }
 
@@ -546,21 +600,10 @@ class _RipAlbumDetailPanelState extends ConsumerState<_RipAlbumDetailPanel> {
                 itemBuilder: (context, index) {
                   final track = tracks[index];
                   if (_editing) {
-                    return ListTile(
-                      dense: true,
-                      leading: QualityIcon(track: track),
-                      title: TextFormField(
-                        controller: _trackController(track),
-                        decoration: InputDecoration(
-                          labelText: 'Track ${track.trackNumber}',
-                          isDense: true,
-                          border: const UnderlineInputBorder(),
-                        ),
-                      ),
-                      subtitle: track.accurateRipStatus != null
-                          ? Text(track.accurateRipStatus!,
-                              style: theme.textTheme.bodySmall)
-                          : null,
+                    return _EditableTrackTileInline(
+                      track: track,
+                      titleController: _trackController(track),
+                      tagControllers: _tagControllers,
                     );
                   }
                   final duration = _formatDuration(track.durationMs);
@@ -607,5 +650,146 @@ class _RipAlbumDetailPanelState extends ConsumerState<_RipAlbumDetailPanel> {
     final m = seconds ~/ 60;
     final s = seconds % 60;
     return '$m:${s.toString().padLeft(2, '0')}';
+  }
+}
+
+/// Expandable track tile for the inline panel, showing all tags for editing.
+class _EditableTrackTileInline extends ConsumerStatefulWidget {
+  const _EditableTrackTileInline({
+    required this.track,
+    required this.titleController,
+    required this.tagControllers,
+  });
+
+  final RipTrack track;
+  final TextEditingController titleController;
+  final Map<String, TextEditingController> tagControllers;
+
+  @override
+  ConsumerState<_EditableTrackTileInline> createState() =>
+      _EditableTrackTileInlineState();
+}
+
+class _EditableTrackTileInlineState
+    extends ConsumerState<_EditableTrackTileInline> {
+  bool _expanded = false;
+
+  static const _displayOrder = [
+    'TITLE', 'ARTIST', 'ALBUMARTIST', 'ALBUM', 'TRACKNUMBER', 'DISCNUMBER',
+    'GENRE', 'DATE', 'BPM', 'COMPOSER', 'PERFORMER', 'COMMENT',
+    'TOTALTRACKS', 'TOTALDISCS', 'BARCODE', 'ISRC', 'LYRICS',
+  ];
+
+  static const _tagLabels = {
+    'TITLE': 'Title', 'ARTIST': 'Artist', 'ALBUMARTIST': 'Album Artist',
+    'ALBUM': 'Album', 'TRACKNUMBER': 'Track Number',
+    'DISCNUMBER': 'Disc Number', 'GENRE': 'Genre', 'DATE': 'Date',
+    'BPM': 'BPM', 'COMPOSER': 'Composer', 'PERFORMER': 'Performer',
+    'COMMENT': 'Comment', 'TOTALTRACKS': 'Total Tracks',
+    'TOTALDISCS': 'Total Discs', 'BARCODE': 'Barcode', 'ISRC': 'ISRC',
+    'LYRICS': 'Lyrics',
+  };
+
+  TextEditingController _controllerForTag(
+      String tagKey, Map<String, String> rawTags) {
+    final compositeKey = '${widget.track.id}:$tagKey';
+    return widget.tagControllers.putIfAbsent(
+      compositeKey,
+      () => TextEditingController(text: rawTags[tagKey] ?? ''),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final rawTagsAsync =
+        ref.watch(trackRawTagsProvider(widget.track.filePath));
+
+    return Card(
+      color: colors.surfaceContainerHigh,
+      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
+      child: Column(
+        children: [
+          ListTile(
+            dense: true,
+            leading: QualityIcon(track: widget.track),
+            title: TextFormField(
+              controller: widget.titleController,
+              decoration: InputDecoration(
+                labelText: 'Track ${widget.track.trackNumber} — Title',
+                isDense: true,
+                border: const UnderlineInputBorder(),
+              ),
+            ),
+            trailing: IconButton(
+              icon: Icon(
+                _expanded ? Icons.expand_less : Icons.expand_more,
+                size: 20,
+              ),
+              tooltip: _expanded ? 'Show less' : 'Show all tags',
+              onPressed: () => setState(() => _expanded = !_expanded),
+            ),
+          ),
+          if (_expanded)
+            rawTagsAsync.when(
+              loading: () => const Padding(
+                padding: EdgeInsets.all(16),
+                child: Center(
+                  child: SizedBox(
+                    width: 20, height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+              ),
+              error: (e, _) => Padding(
+                padding: const EdgeInsets.all(12),
+                child: Text('Could not read tags: $e',
+                    style: theme.textTheme.bodySmall),
+              ),
+              data: (rawTags) {
+                final orderedKeys = <String>[];
+                for (final key in _displayOrder) {
+                  if (rawTags.containsKey(key) || key == 'TITLE') {
+                    orderedKeys.add(key);
+                  }
+                }
+                for (final key in rawTags.keys) {
+                  if (!orderedKeys.contains(key)) orderedKeys.add(key);
+                }
+                orderedKeys.remove('TITLE');
+
+                return Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Column(
+                    children: [
+                      for (final key in orderedKeys)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: TextFormField(
+                            controller: _controllerForTag(key, rawTags),
+                            decoration: InputDecoration(
+                              labelText: _tagLabels[key] ?? key,
+                              isDense: true,
+                              border: const OutlineInputBorder(),
+                            ),
+                          ),
+                        ),
+                      if (orderedKeys.isEmpty)
+                        Text(
+                          'No additional tags found in file.',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colors.onSurfaceVariant,
+                          ),
+                        ),
+                    ],
+                  ),
+                );
+              },
+            ),
+        ],
+      ),
+    );
   }
 }

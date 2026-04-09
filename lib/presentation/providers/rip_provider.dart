@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/core/utils/flac_decoder.dart';
+import 'package:mymediascanner/core/utils/flac_reader.dart';
 import 'package:mymediascanner/core/utils/metaflac_writer.dart';
+import 'package:mymediascanner/core/utils/mp3_reader.dart';
 import 'package:mymediascanner/domain/usecases/edit_rip_metadata_usecase.dart';
 import 'package:mymediascanner/data/remote/api/accuraterip/accuraterip_client.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
@@ -29,6 +31,32 @@ final ripAlbumForItemProvider =
 final ripTracksProvider =
     FutureProvider.family<List<RipTrack>, String>((ref, ripAlbumId) {
   return ref.watch(ripLibraryRepositoryProvider).getTracksForAlbum(ripAlbumId);
+});
+
+/// Raw metadata tags read from an audio file (FLAC Vorbis Comments or MP3 ID3).
+/// Keyed by file path. Returns all tag key-value pairs.
+final trackRawTagsProvider =
+    FutureProvider.family<Map<String, String>, String>((ref, filePath) async {
+  final ext = filePath.toLowerCase();
+  if (ext.endsWith('.flac')) {
+    final meta = await FlacReader.readMetadata(filePath);
+    return meta?.rawTags ?? {};
+  } else if (ext.endsWith('.mp3')) {
+    final meta = await Mp3Reader.readMetadata(filePath);
+    if (meta == null) return {};
+    // Build a tag map from Mp3Metadata fields
+    return {
+      if (meta.title != null) 'TITLE': meta.title!,
+      if (meta.artist != null) 'ARTIST': meta.artist!,
+      if (meta.albumArtist != null) 'ALBUMARTIST': meta.albumArtist!,
+      if (meta.album != null) 'ALBUM': meta.album!,
+      if (meta.trackNumber != null) 'TRACKNUMBER': meta.trackNumber.toString(),
+      if (meta.totalTracks != null) 'TOTALTRACKS': meta.totalTracks.toString(),
+      if (meta.discNumber != null) 'DISCNUMBER': meta.discNumber.toString(),
+      if (meta.barcode != null) 'BARCODE': meta.barcode!,
+    };
+  }
+  return {};
 });
 
 /// Set of media item IDs that have linked rip albums.

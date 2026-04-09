@@ -27,6 +27,7 @@ class _RipAlbumDetailDialogState extends ConsumerState<RipAlbumDetailDialog> {
   late TextEditingController _artistController;
   late TextEditingController _albumTitleController;
   final Map<String, TextEditingController> _trackTitleControllers = {};
+  final Map<String, TextEditingController> _tagControllers = {};
 
   @override
   void initState() {
@@ -44,6 +45,9 @@ class _RipAlbumDetailDialogState extends ConsumerState<RipAlbumDetailDialog> {
     for (final c in _trackTitleControllers.values) {
       c.dispose();
     }
+    for (final c in _tagControllers.values) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -56,6 +60,7 @@ class _RipAlbumDetailDialogState extends ConsumerState<RipAlbumDetailDialog> {
 
   Future<void> _save(List<RipTrack> tracks) async {
     final notifier = ref.read(ripMetadataEditNotifierProvider.notifier);
+    final writer = ref.read(metaflacWriterProvider);
 
     final newArtist = _artistController.text.trim();
     final newAlbumTitle = _albumTitleController.text.trim();
@@ -71,16 +76,63 @@ class _RipAlbumDetailDialogState extends ConsumerState<RipAlbumDetailDialog> {
       );
     }
 
+    // Save track-level changes (title via notifier, other tags via metaflac)
     for (final track in tracks) {
-      final controller = _trackTitleControllers[track.id];
-      if (controller != null) {
-        final newTitle = controller.text.trim();
+      // Title change
+      final titleCtrl = _trackTitleControllers[track.id];
+      if (titleCtrl != null) {
+        final newTitle = titleCtrl.text.trim();
         final oldTitle = track.title ?? '';
         if (newTitle != oldTitle) {
           await notifier.saveTrackTitle(
             track: track,
             title: newTitle.isEmpty ? null : newTitle,
           );
+        }
+      }
+
+      // Other tag changes — write directly via metaflac
+      if (track.filePath.toLowerCase().endsWith('.flac')) {
+        final rawTags =
+            ref.read(trackRawTagsProvider(track.filePath)).value ?? {};
+        final changedTags = <String, String>{};
+        final removedTags = <String>[];
+
+        for (final entry in _tagControllers.entries) {
+          // Keys are "trackId:TAG_KEY"
+          if (!entry.key.startsWith('${track.id}:')) continue;
+          final tagKey = entry.key.substring(track.id.length + 1);
+          if (tagKey == 'TITLE') continue; // handled via notifier above
+          final newValue = entry.value.text.trim();
+          final oldValue = rawTags[tagKey] ?? '';
+          if (newValue != oldValue) {
+            if (newValue.isEmpty) {
+              removedTags.add(tagKey);
+            } else {
+              changedTags[tagKey] = newValue;
+            }
+          }
+        }
+
+        try {
+          if (changedTags.isNotEmpty) {
+            await writer.setTags(track.filePath, changedTags);
+          }
+          for (final key in removedTags) {
+            await writer.removeTag(track.filePath, key);
+          }
+          if (changedTags.isNotEmpty || removedTags.isNotEmpty) {
+            ref.invalidate(trackRawTagsProvider(track.filePath));
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error writing tags to ${track.filePath}: $e'),
+                backgroundColor: Theme.of(context).colorScheme.error,
+              ),
+            );
+          }
         }
       }
     }
@@ -104,6 +156,10 @@ class _RipAlbumDetailDialogState extends ConsumerState<RipAlbumDetailDialog> {
     _artistController.text = widget.album.artist ?? '';
     _albumTitleController.text = widget.album.albumTitle ?? '';
     _trackTitleControllers.clear();
+    for (final c in _tagControllers.values) {
+      c.dispose();
+    }
+    _tagControllers.clear();
     setState(() => _editing = false);
   }
 
@@ -258,7 +314,8 @@ class _RipAlbumDetailDialogState extends ConsumerState<RipAlbumDetailDialog> {
                         return _editing
                             ? _EditableTrackTile(
                                 track: track,
-                                controller: _trackController(track),
+                                titleController: _trackController(track),
+                                tagControllers: _tagControllers,
                               )
                             : _TrackTile(track: track);
                       },
@@ -471,31 +528,180 @@ class _TrackTile extends StatelessWidget {
   }
 }
 
-class _EditableTrackTile extends StatelessWidget {
+/// Expandable track tile that shows all Vorbis Comment / ID3 tags for editing.
+class _EditableTrackTile extends ConsumerStatefulWidget {
   const _EditableTrackTile({
     required this.track,
-    required this.controller,
+    required this.titleController,
+    required this.tagControllers,
   });
 
   final RipTrack track;
-  final TextEditingController controller;
+  final TextEditingController titleController;
+
+  /// Shared mutable map of tag controllers, keyed by "trackId:TAG_KEY".
+  /// Managed by the parent state.
+  final Map<String, TextEditingController> tagControllers;
+
+  @override
+  ConsumerState<_EditableTrackTile> createState() => _EditableTrackTileState();
+}
+
+class _EditableTrackTileState extends ConsumerState<_EditableTrackTile> {
+  bool _expanded = false;
+
+  /// Tags to display as editable fields (common Vorbis Comment keys).
+  static const _displayOrder = [
+    'TITLE',
+    'ARTIST',
+    'ALBUMARTIST',
+    'ALBUM',
+    'TRACKNUMBER',
+    'DISCNUMBER',
+    'GENRE',
+    'DATE',
+    'BPM',
+    'COMPOSER',
+    'PERFORMER',
+    'COMMENT',
+    'TOTALTRACKS',
+    'TOTALDISCS',
+    'BARCODE',
+    'ISRC',
+    'LYRICS',
+  ];
+
+  /// Human-readable labels for common tags.
+  static const _tagLabels = {
+    'TITLE': 'Title',
+    'ARTIST': 'Artist',
+    'ALBUMARTIST': 'Album Artist',
+    'ALBUM': 'Album',
+    'TRACKNUMBER': 'Track Number',
+    'DISCNUMBER': 'Disc Number',
+    'GENRE': 'Genre',
+    'DATE': 'Date',
+    'BPM': 'BPM',
+    'COMPOSER': 'Composer',
+    'PERFORMER': 'Performer',
+    'COMMENT': 'Comment',
+    'TOTALTRACKS': 'Total Tracks',
+    'TOTALDISCS': 'Total Discs',
+    'BARCODE': 'Barcode',
+    'ISRC': 'ISRC',
+    'LYRICS': 'Lyrics',
+  };
+
+  TextEditingController _controllerForTag(
+      String tagKey, Map<String, String> rawTags) {
+    final compositeKey = '${widget.track.id}:$tagKey';
+    return widget.tagControllers.putIfAbsent(
+      compositeKey,
+      () => TextEditingController(text: rawTags[tagKey] ?? ''),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      dense: true,
-      leading: QualityIcon(track: track),
-      title: TextFormField(
-        controller: controller,
-        decoration: InputDecoration(
-          labelText: 'Track ${track.trackNumber}',
-          isDense: true,
-          border: const UnderlineInputBorder(),
-        ),
-      ),
-      subtitle: Text(
-        _formatDuration(track.durationMs),
-        style: Theme.of(context).textTheme.bodySmall,
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final rawTagsAsync = ref.watch(trackRawTagsProvider(widget.track.filePath));
+    final duration = _formatDuration(widget.track.durationMs);
+
+    return Card(
+      color: colors.surfaceContainerHigh,
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: Column(
+        children: [
+          // Compact header — always visible
+          ListTile(
+            dense: true,
+            leading: QualityIcon(track: widget.track),
+            title: TextFormField(
+              controller: widget.titleController,
+              decoration: InputDecoration(
+                labelText: 'Track ${widget.track.trackNumber} — Title',
+                isDense: true,
+                border: const UnderlineInputBorder(),
+              ),
+            ),
+            subtitle: duration.isNotEmpty
+                ? Text(duration, style: theme.textTheme.bodySmall)
+                : null,
+            trailing: IconButton(
+              icon: Icon(
+                _expanded ? Icons.expand_less : Icons.expand_more,
+                size: 20,
+              ),
+              tooltip: _expanded ? 'Show less' : 'Show all tags',
+              onPressed: () => setState(() => _expanded = !_expanded),
+            ),
+          ),
+          // Expanded tag list
+          if (_expanded)
+            rawTagsAsync.when(
+              loading: () => const Padding(
+                padding: EdgeInsets.all(16),
+                child: Center(
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+              ),
+              error: (e, _) => Padding(
+                padding: const EdgeInsets.all(12),
+                child: Text('Could not read tags: $e',
+                    style: theme.textTheme.bodySmall),
+              ),
+              data: (rawTags) {
+                // Build ordered list: known tags first, then any extra tags
+                final orderedKeys = <String>[];
+                for (final key in _displayOrder) {
+                  if (rawTags.containsKey(key) || key == 'TITLE') {
+                    orderedKeys.add(key);
+                  }
+                }
+                // Add any tags not in the display order
+                for (final key in rawTags.keys) {
+                  if (!orderedKeys.contains(key)) {
+                    orderedKeys.add(key);
+                  }
+                }
+                // Remove TITLE from expanded list — it's already in the header
+                orderedKeys.remove('TITLE');
+
+                return Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Column(
+                    children: [
+                      for (final key in orderedKeys)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: TextFormField(
+                            controller: _controllerForTag(key, rawTags),
+                            decoration: InputDecoration(
+                              labelText: _tagLabels[key] ?? key,
+                              isDense: true,
+                              border: const OutlineInputBorder(),
+                            ),
+                          ),
+                        ),
+                      if (orderedKeys.isEmpty)
+                        Text(
+                          'No additional tags found in file.',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colors.onSurfaceVariant,
+                          ),
+                        ),
+                    ],
+                  ),
+                );
+              },
+            ),
+        ],
       ),
     );
   }
