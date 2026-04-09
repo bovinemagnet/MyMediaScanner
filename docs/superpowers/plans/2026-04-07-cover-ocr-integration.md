@@ -1,6 +1,6 @@
 # Cover OCR Integration Implementation Plan
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Author:** Paul Snow
 **Date:** 2026-04-07
@@ -26,7 +26,7 @@
 
 The `OcrResult` entity holds structured OCR output: multiple text blocks with bounding-box area (as a proxy for prominence), individual confidence scores, and a derived overall confidence. This replaces the current approach of returning a single raw string.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```dart
 // test/unit/domain/ocr_result_test.dart
@@ -141,12 +141,12 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `flutter test test/unit/domain/ocr_result_test.dart`
 Expected: FAIL — `ocr_result.dart` not found
 
-- [ ] **Step 3: Create the OcrResult entity**
+- [x] **Step 3: Create the OcrResult entity**
 
 ```dart
 // lib/domain/entities/ocr_result.dart
@@ -208,17 +208,17 @@ sealed class OcrResult with _$OcrResult {
 }
 ```
 
-- [ ] **Step 4: Run code generation**
+- [x] **Step 4: Run code generation**
 
 Run: `dart run build_runner build --delete-conflicting-outputs`
 Expected: Generates `ocr_result.freezed.dart`
 
-- [ ] **Step 5: Run test to verify it passes**
+- [x] **Step 5: Run test to verify it passes**
 
 Run: `flutter test test/unit/domain/ocr_result_test.dart`
 Expected: PASS — all tests green
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add lib/domain/entities/ocr_result.dart lib/domain/entities/ocr_result.freezed.dart test/unit/domain/ocr_result_test.dart
@@ -237,7 +237,7 @@ git commit -m "feat: add OcrResult and OcrTextBlock Freezed entities"
 
 Refactor `CoverOcrHelper` to return `OcrResult` (with multiple blocks and confidence scores) instead of a plain `String?`. The existing `captureAndExtract`, `pickAndExtract`, and `extractFromFile` methods gain structured-result counterparts. The original string-returning methods are preserved for backward compatibility but marked `@Deprecated`.
 
-- [ ] **Step 1: Write tests for structured OCR extraction**
+- [x] **Step 1: Write tests for structured OCR extraction**
 
 ```dart
 // test/unit/core/cover_ocr_helper_test.dart
@@ -253,7 +253,7 @@ Key test scenarios:
 - `cleanTitle` still strips trademark symbols and collapses whitespace
 - Vision framework path returns `OcrResult` with a single block (Vision returns a single string)
 
-- [ ] **Step 2: Modify CoverOcrHelper**
+- [x] **Step 2: Modify CoverOcrHelper**
 
 Add new methods alongside existing ones:
 
@@ -270,12 +270,12 @@ Future<OcrResult> extractStructuredFromFile(String path) async { ... }
 
 The ML Kit path extracts all text blocks (not just the largest), recording each block's text, confidence, and bounding-box area. The Vision path wraps the single returned string in a one-element `OcrResult` with confidence 1.0 (Vision doesn't provide per-block confidence).
 
-- [ ] **Step 3: Run tests**
+- [x] **Step 3: Run tests**
 
 Run: `flutter test test/unit/core/cover_ocr_helper_test.dart`
 Expected: PASS
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add lib/core/utils/cover_ocr_helper.dart test/unit/core/cover_ocr_helper_test.dart
@@ -292,7 +292,7 @@ git commit -m "feat: add structured OCR extraction returning OcrResult"
 
 Currently the Vision method channel returns a single string. Enhance it to optionally return a structured map with text blocks and confidence values if the native side supports it.
 
-- [ ] **Step 1: Add structured method to VisionOcrChannel**
+- [x] **Step 1: Add structured method to VisionOcrChannel**
 
 ```dart
 /// Returns structured recognition results as a list of maps, each with
@@ -302,9 +302,9 @@ static Future<List<Map<String, dynamic>>?> recogniseTextStructured(
     String imagePath) async { ... }
 ```
 
-- [ ] **Step 2: Update CoverOcrHelper Vision path to use structured channel**
+- [x] **Step 2: Update CoverOcrHelper Vision path to use structured channel**
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add lib/core/utils/vision_ocr_channel.dart
@@ -323,7 +323,7 @@ git commit -m "feat: add structured text recognition to Vision OCR channel"
 
 This use case orchestrates the OCR-to-metadata pipeline: takes an `OcrResult`, applies heuristics to extract title/artist, builds search queries, and returns `ScanResult`. It encapsulates the intelligence for interpreting OCR text.
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 Key test scenarios:
 - High-confidence single block → searches by that text as title
@@ -333,7 +333,7 @@ Key test scenarios:
 - Year-like text (4-digit number 1900–2099) is extracted and used to filter/rank results
 - Common noise words ("Blu-ray", "DVD", "Disc", "Digital") are stripped before searching
 
-- [ ] **Step 2: Create the use case**
+- [x] **Step 2: Create the use case**
 
 ```dart
 // lib/domain/usecases/ocr_metadata_usecase.dart
@@ -367,12 +367,12 @@ class OcrMetadataUseCase {
 
 Introduce a small helper class `OcrTextAnalysis` (or use a record) to hold the cleaned title, cleaned artist, extracted year, and confidence assessment.
 
-- [ ] **Step 3: Run tests**
+- [x] **Step 3: Run tests**
 
 Run: `flutter test test/unit/domain/ocr_metadata_usecase_test.dart`
 Expected: PASS
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add lib/domain/usecases/ocr_metadata_usecase.dart test/unit/domain/ocr_metadata_usecase_test.dart
@@ -389,7 +389,7 @@ git commit -m "feat: add OcrMetadataUseCase for OCR-to-search orchestration"
 
 Wraps a `ScanResult` with additional OCR context: the original `OcrResult`, the cleaned search terms used, and the confidence assessment. This allows downstream UI to show the user what text was recognised and how confident the system is.
 
-- [ ] **Step 1: Create the entity**
+- [x] **Step 1: Create the entity**
 
 ```dart
 @freezed
@@ -405,12 +405,12 @@ sealed class OcrSearchResult with _$OcrSearchResult {
 }
 ```
 
-- [ ] **Step 2: Run code generation and tests**
+- [x] **Step 2: Run code generation and tests**
 
 Run: `dart run build_runner build --delete-conflicting-outputs`
 Run: `flutter test test/unit/domain/ocr_metadata_usecase_test.dart`
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add lib/domain/entities/ocr_search_result.dart lib/domain/entities/ocr_search_result.freezed.dart
@@ -429,7 +429,7 @@ git commit -m "feat: add OcrSearchResult entity wrapping scan result with OCR co
 
 Add a new `onCoverOcrResult` method that accepts an `OcrResult` and delegates to `OcrMetadataUseCase`, replacing the existing `onCoverTextRecognised` flow. The existing `onCoverTextRecognised` is kept for backward compatibility but refactored to construct an `OcrResult` internally.
 
-- [ ] **Step 1: Add `ocrSearchResult` to ScannerState**
+- [x] **Step 1: Add `ocrSearchResult` to ScannerState**
 
 ```dart
 class ScannerState {
@@ -441,7 +441,7 @@ class ScannerState {
 
 This allows the metadata confirm screen to access OCR context (recognised text, confidence) for pre-filling fields and showing confidence indicators.
 
-- [ ] **Step 2: Add `onCoverOcrResult` method to ScannerNotifier**
+- [x] **Step 2: Add `onCoverOcrResult` method to ScannerNotifier**
 
 ```dart
 Future<void> onCoverOcrResult(
@@ -461,9 +461,9 @@ Future<void> onCoverOcrResult(
 }
 ```
 
-- [ ] **Step 3: Write/update tests**
+- [x] **Step 3: Write/update tests**
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add lib/presentation/providers/scanner_provider.dart test/unit/presentation/scanner_provider_test.dart
@@ -485,25 +485,25 @@ When the user arrives at the metadata confirm screen after a cover OCR scan:
 2. Show an informational banner indicating the text was extracted via OCR, with the overall confidence percentage.
 3. If the barcode lookup returned `notFound` but OCR returned text, pre-populate the `TitleSearchField` with the inferred title.
 
-- [ ] **Step 1: Update MetadataConfirmScreen to read OCR context**
+- [x] **Step 1: Update MetadataConfirmScreen to read OCR context**
 
 Read `scannerState.ocrSearchResult` and pass inferred values to `EditableMetadataForm` as initial values when the metadata fields are empty.
 
-- [ ] **Step 2: Add OCR confidence banner widget**
+- [x] **Step 2: Add OCR confidence banner widget**
 
 Create a small inline widget showing "Text recognised from cover (85% confidence)" with an appropriate icon and tonal container styling, displayed above the form when OCR was used.
 
-- [ ] **Step 3: Pre-populate TitleSearchField from OCR**
+- [x] **Step 3: Pre-populate TitleSearchField from OCR**
 
 When `isNotFound` and `ocrSearchResult?.inferredTitle` is available, set the `TitleSearchField` controller's initial text to the inferred title so the user can immediately search or edit it.
 
-- [ ] **Step 4: Write widget tests**
+- [x] **Step 4: Write widget tests**
 
 Test that the OCR banner appears when `ocrSearchResult` is present.
 Test that form fields are pre-filled from OCR inferred values.
 Test that `TitleSearchField` is pre-populated when available.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/presentation/screens/metadata_confirm/metadata_confirm_screen.dart lib/presentation/screens/metadata_confirm/widgets/editable_metadata_form.dart test/widget/
@@ -525,13 +525,13 @@ A reusable widget that displays an OCR confidence score with visual feedback:
 
 Uses the design system's tonal containers and `surfaceContainerHigh` colour, consistent with the "no-line" rule.
 
-- [ ] **Step 1: Write widget test**
+- [x] **Step 1: Write widget test**
 
-- [ ] **Step 2: Create the widget**
+- [x] **Step 2: Create the widget**
 
-- [ ] **Step 3: Integrate into metadata confirm screen (from Task 7)**
+- [x] **Step 3: Integrate into metadata confirm screen (from Task 7)**
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add lib/presentation/widgets/ocr_confidence_indicator.dart test/widget/ocr_confidence_indicator_test.dart
@@ -549,7 +549,7 @@ git commit -m "feat: add OCR confidence indicator widget"
 
 Update `_scanCover` to use `CoverOcrHelper.captureAndExtractStructured()` and pass the `OcrResult` to `ScannerNotifier.onCoverOcrResult()` instead of the plain string path.
 
-- [ ] **Step 1: Update _scanCover method**
+- [x] **Step 1: Update _scanCover method**
 
 ```dart
 Future<void> _scanCover(NotFoundScanResult? notFound) async {
@@ -572,7 +572,7 @@ Future<void> _scanCover(NotFoundScanResult? notFound) async {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add lib/presentation/screens/scanner/mobile_scan_screen.dart
@@ -588,9 +588,9 @@ git commit -m "feat: wire mobile scanner to structured OCR flow"
 
 Same change as Task 9 but using `pickAndExtractStructured()` (gallery picker for macOS).
 
-- [ ] **Step 1: Update _scanCover method**
+- [x] **Step 1: Update _scanCover method**
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add lib/presentation/screens/scanner/desktop_scan_screen.dart
@@ -611,11 +611,11 @@ Add an optional `ocrResult` parameter to `ScanBarcodeUseCase.execute()`. When a 
 
 This enables a workflow where the user scans a barcode, it fails, they scan the cover, and the system uses both the barcode (for duplicate detection) and OCR text (for metadata search) together.
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 Test that when barcode lookup returns `notFound` and `ocrResult` is provided, the use case calls `searchByTitle` with the OCR-inferred title.
 
-- [ ] **Step 2: Add optional ocrResult parameter**
+- [x] **Step 2: Add optional ocrResult parameter**
 
 ```dart
 Future<ScanResult> execute(
@@ -638,12 +638,12 @@ Future<ScanResult> execute(
 }
 ```
 
-- [ ] **Step 3: Run tests**
+- [x] **Step 3: Run tests**
 
 Run: `flutter test test/unit/domain/scan_barcode_usecase_test.dart`
 Expected: PASS
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add lib/domain/usecases/scan_barcode_usecase.dart test/unit/domain/scan_barcode_usecase_test.dart
@@ -667,7 +667,7 @@ Utility functions for interpreting OCR text from media covers:
 3. **Title/artist splitting:** Heuristic to separate title from artist when they appear in the same block (common patterns: "Artist - Title", "Title by Artist")
 4. **Media type inference:** Guesses media type from OCR text clues (e.g., "Blu-ray" → film, "CD" → music, "ISBN" → book)
 
-- [ ] **Step 1: Write tests for each utility function**
+- [x] **Step 1: Write tests for each utility function**
 
 Key scenarios:
 - "Dark Side of the Moon (Remastered 2011) CD" → title: "Dark Side of the Moon", year: 2011, inferred type: music
@@ -676,18 +676,18 @@ Key scenarios:
 - "978-0-14-103614-4" → detected as ISBN, inferred type: book
 - Empty/whitespace-only → returns null analysis
 
-- [ ] **Step 2: Implement utility functions**
+- [x] **Step 2: Implement utility functions**
 
-- [ ] **Step 3: Integrate into OcrMetadataUseCase (Task 4)**
+- [x] **Step 3: Integrate into OcrMetadataUseCase (Task 4)**
 
 Update `OcrMetadataUseCase.analyseText` to use these utilities.
 
-- [ ] **Step 4: Run all tests**
+- [x] **Step 4: Run all tests**
 
 Run: `flutter test`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/core/utils/ocr_text_analysis.dart test/unit/core/ocr_text_analysis_test.dart lib/domain/usecases/ocr_metadata_usecase.dart
@@ -700,22 +700,22 @@ git commit -m "feat: add OCR text analysis heuristics for title/artist/year extr
 
 ### Task 13: Integration Testing and Final Verification
 
-- [ ] **Step 1: Run full test suite**
+- [x] **Step 1: Run full test suite**
 
 Run: `flutter test`
 Expected: All tests pass (existing ~472 + new tests)
 
-- [ ] **Step 2: Run code analysis**
+- [x] **Step 2: Run code analysis**
 
 Run: `flutter analyze`
 Expected: No issues
 
-- [ ] **Step 3: Run code generation to ensure consistency**
+- [x] **Step 3: Run code generation to ensure consistency**
 
 Run: `dart run build_runner build --delete-conflicting-outputs`
 Expected: No changes needed (all generated files up to date)
 
-- [ ] **Step 4: Manual smoke test on available platform**
+- [x] **Step 4: Manual smoke test on available platform**
 
 Verify:
 - Barcode scan → not found → cover scan → OCR extracts text → metadata search → confirm screen shows results with OCR banner
@@ -724,7 +724,7 @@ Verify:
 - Manual title search still works as before
 - Batch mode with OCR is not broken
 
-- [ ] **Step 5: Final commit (if any fixes were needed)**
+- [x] **Step 5: Final commit (if any fixes were needed)**
 
 ```bash
 git add -A

@@ -17,6 +17,7 @@ class RipAlbumsTable extends Table {
       text().nullable().references(MediaItemsTable, #id)();
   IntColumn get lastScannedAt => integer()();
   IntColumn get updatedAt => integer()();
+  TextColumn get cueFilePath => text().nullable()();
   IntColumn get deleted => integer().withDefault(const Constant(0))();
 
   @override

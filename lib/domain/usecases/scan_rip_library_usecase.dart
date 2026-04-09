@@ -1,7 +1,8 @@
 import 'dart:io';
 import 'dart:isolate';
 
-import 'package:mymediascanner/core/utils/flac_reader.dart';
+import 'package:mymediascanner/core/utils/audio_metadata_reader.dart';
+import 'package:mymediascanner/core/utils/cue_parser.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
 import 'package:mymediascanner/domain/entities/rip_track.dart';
 import 'package:mymediascanner/domain/repositories/i_rip_library_repository.dart';
@@ -31,6 +32,7 @@ class _AlbumScanResult {
     required this.discCount,
     required this.totalSizeBytes,
     required this.tracks,
+    this.cueFilePath,
   });
 
   final String directoryPath;
@@ -41,6 +43,7 @@ class _AlbumScanResult {
   final int discCount;
   final int totalSizeBytes;
   final List<_TrackScanResult> tracks;
+  final String? cueFilePath;
 }
 
 class _TrackScanResult {
@@ -61,7 +64,7 @@ class _TrackScanResult {
   final int fileSizeBytes;
 }
 
-/// Scans a local directory of ripped FLAC files and upserts rip albums
+/// Scans a local directory of ripped audio files (FLAC and MP3) and upserts rip albums
 /// and tracks into the local database.
 class ScanRipLibraryUseCase {
   const ScanRipLibraryUseCase({
@@ -124,6 +127,7 @@ class ScanRipLibraryUseCase {
           mediaItemId: existing.mediaItemId,
           lastScannedAt: now,
           updatedAt: now,
+          cueFilePath: result.cueFilePath,
         );
         await _repo.updateAlbum(updated);
 
@@ -144,6 +148,7 @@ class ScanRipLibraryUseCase {
           totalSizeBytes: result.totalSizeBytes,
           lastScannedAt: now,
           updatedAt: now,
+          cueFilePath: result.cueFilePath,
         );
         await _repo.insertAlbum(album);
         await _repo.insertTracks(_buildTracks(albumId, result.tracks, now));
@@ -178,27 +183,39 @@ class ScanRipLibraryUseCase {
         .toList();
   }
 
-  /// Scans the directory tree for FLAC files. Runs in an isolate.
+  /// Scans the directory tree for audio files and CUE sheets. Runs in an isolate.
   static Future<List<_AlbumScanResult>> _scanDirectory(String rootPath) async {
     final rootDir = Directory(rootPath);
     if (!await rootDir.exists()) return [];
 
-    // Find all FLAC files
-    final flacFiles = <File>[];
+    // Find all supported audio files and CUE sheets
+    final audioFiles = <File>[];
+    final cueFiles = <File>[];
     await for (final entity
         in rootDir.list(recursive: true, followLinks: false)) {
-      if (entity is File && entity.path.toLowerCase().endsWith('.flac')) {
-        flacFiles.add(entity);
+      if (entity is File) {
+        final path = entity.path.toLowerCase();
+        if (AudioMetadataReader.supportedExtensions.any((ext) => path.endsWith(ext))) {
+          audioFiles.add(entity);
+        } else if (path.endsWith('.cue')) {
+          cueFiles.add(entity);
+        }
       }
     }
 
-    if (flacFiles.isEmpty) return [];
+    if (audioFiles.isEmpty && cueFiles.isEmpty) return [];
 
-    // Group by parent directory
+    // Group audio files by parent directory
     final grouped = <String, List<File>>{};
-    for (final file in flacFiles) {
+    for (final file in audioFiles) {
       final parentPath = file.parent.path;
       grouped.putIfAbsent(parentPath, () => []).add(file);
+    }
+
+    // Group CUE files by parent directory (one per directory)
+    final cueByDir = <String, File>{};
+    for (final cue in cueFiles) {
+      cueByDir.putIfAbsent(cue.parent.path, () => cue);
     }
 
     final results = <_AlbumScanResult>[];
@@ -211,9 +228,9 @@ class ScanRipLibraryUseCase {
       files.sort((a, b) => a.path.compareTo(b.path));
 
       // Read metadata from first track for album-level info
-      FlacMetadata? firstTrackMeta;
+      AudioMetadata? firstTrackMeta;
       for (final file in files) {
-        firstTrackMeta = await FlacReader.readMetadata(file.path);
+        firstTrackMeta = await AudioMetadataReader.readMetadata(file.path);
         if (firstTrackMeta != null) break;
       }
 
@@ -227,7 +244,7 @@ class ScanRipLibraryUseCase {
         final fileSize = stat.size;
         totalSize += fileSize;
 
-        final meta = await FlacReader.readMetadata(file.path);
+        final meta = await AudioMetadataReader.readMetadata(file.path);
         final discNumber = meta?.discNumber ?? 1;
         if (discNumber > maxDisc) maxDisc = discNumber;
 
@@ -255,6 +272,97 @@ class ScanRipLibraryUseCase {
         discCount: maxDisc,
         totalSizeBytes: totalSize,
         tracks: tracks,
+      ));
+
+      // Check if this directory has a CUE file — enrich/override album metadata
+      final cueFile = cueByDir[dirPath];
+      if (cueFile != null) {
+        final cueSheet = await CueParser.parse(cueFile.path);
+        if (cueSheet != null && cueSheet.tracks.isNotEmpty) {
+          final cueArtist = cueSheet.performer ?? firstTrackMeta?.effectiveArtist;
+          final cueTitle = cueSheet.title ?? firstTrackMeta?.album;
+          final cueBarcode = cueSheet.barcode ?? firstTrackMeta?.barcode;
+
+          final cueTracks = <_TrackScanResult>[];
+          for (final cueTrack in cueSheet.tracks) {
+            cueTracks.add(_TrackScanResult(
+              filePath: files.isNotEmpty ? files.first.path : '',
+              discNumber: cueSheet.discNumber ?? 1,
+              trackNumber: cueTrack.trackNumber,
+              title: cueTrack.title,
+              durationMs: cueTrack.durationMs,
+              fileSizeBytes: 0,
+            ));
+          }
+
+          final cueRelativePath = cueFile.path.startsWith(rootPath)
+              ? cueFile.path.substring(rootPath.length).replaceAll(RegExp(r'^[/\\]'), '')
+              : cueFile.path;
+
+          results.removeLast();
+          results.add(_AlbumScanResult(
+            directoryPath: relativePath,
+            artist: cueArtist,
+            albumTitle: cueTitle,
+            barcode: cueBarcode,
+            trackCount: cueTracks.length,
+            discCount: cueSheet.discNumber ?? maxDisc,
+            totalSizeBytes: totalSize,
+            tracks: cueTracks,
+            cueFilePath: cueRelativePath,
+          ));
+
+          cueByDir.remove(dirPath);
+        }
+      }
+    }
+
+    // Process CUE files in directories with no audio files
+    for (final entry in cueByDir.entries) {
+      final dirPath = entry.key;
+      final cueFile = entry.value;
+      final cueSheet = await CueParser.parse(cueFile.path);
+      if (cueSheet == null || cueSheet.tracks.isEmpty) continue;
+
+      final relativePath = dirPath.startsWith(rootPath)
+          ? dirPath.substring(rootPath.length).replaceAll(RegExp(r'^[/\\]'), '')
+          : dirPath;
+
+      String audioFilePath = '';
+      int totalSize = 0;
+      if (cueSheet.fileName != null) {
+        final audioFile = File('$dirPath/${cueSheet.fileName}');
+        if (await audioFile.exists()) {
+          audioFilePath = audioFile.path;
+          totalSize = (await audioFile.stat()).size;
+        }
+      }
+
+      final cueTracks = cueSheet.tracks
+          .map((t) => _TrackScanResult(
+                filePath: audioFilePath,
+                discNumber: cueSheet.discNumber ?? 1,
+                trackNumber: t.trackNumber,
+                title: t.title,
+                durationMs: t.durationMs,
+                fileSizeBytes: 0,
+              ))
+          .toList();
+
+      final cueRelativePath = cueFile.path.startsWith(rootPath)
+          ? cueFile.path.substring(rootPath.length).replaceAll(RegExp(r'^[/\\]'), '')
+          : cueFile.path;
+
+      results.add(_AlbumScanResult(
+        directoryPath: relativePath,
+        artist: cueSheet.performer,
+        albumTitle: cueSheet.title,
+        barcode: cueSheet.barcode,
+        trackCount: cueTracks.length,
+        discCount: cueSheet.discNumber ?? 1,
+        totalSizeBytes: totalSize,
+        tracks: cueTracks,
+        cueFilePath: cueRelativePath,
       ));
     }
 

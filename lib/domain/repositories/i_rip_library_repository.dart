@@ -15,6 +15,7 @@ abstract interface class IRipLibraryRepository {
   Future<void> linkToMediaItem(String ripAlbumId, String mediaItemId);
   Future<void> unlinkFromMediaItem(String ripAlbumId);
   Future<List<RipAlbum>> getAllNonDeleted();
+  Future<void> updateTrackTitle(String trackId, String? title);
   Future<void> updateTrackQuality(
     String trackId, {
     String? arStatus,

@@ -13,6 +13,7 @@ class FlacMetadata {
     this.barcode,
     this.totalTracks,
     this.durationMs,
+    this.rawTags = const {},
   });
 
   final String? artist;
@@ -24,6 +25,9 @@ class FlacMetadata {
   final String? barcode;
   final int? totalTracks;
   final int? durationMs;
+
+  /// All Vorbis Comment tags as uppercase key → value pairs.
+  final Map<String, String> rawTags;
 
   /// The effective artist — ALBUMARTIST takes precedence over ARTIST.
   String? get effectiveArtist => albumArtist ?? artist;
@@ -273,6 +277,7 @@ class FlacReader {
       totalTracks:
           _parseInt(tags?['TOTALTRACKS']) ?? _parseInt(tags?['TRACKTOTAL']),
       durationMs: durationMs,
+      rawTags: tags ?? const {},
     );
   }
 

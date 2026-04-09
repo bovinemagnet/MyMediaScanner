@@ -98,14 +98,14 @@ test/
 **Files:**
 - Create: `lib/domain/entities/sync_conflict.dart`
 
-- [ ] **Step 1: Create SyncConflict Freezed model**
+- [x] **Step 1: Create SyncConflict Freezed model**
 
 Define a `SyncConflict` entity with fields: `entityType` (String), `entityId` (String), `fieldName` (String), `localValue` (dynamic), `remoteValue` (dynamic), `localUpdatedAt` (int), `remoteUpdatedAt` (int). Also define `ConflictResolution` enum: `keepLocal`, `keepRemote`, `keepBoth`.
 
-- [ ] **Step 2: Run build_runner**
-- [ ] **Step 3: Write unit tests** in `test/unit/domain/sync_conflict_test.dart`
-- [ ] **Step 4: Run tests**
-- [ ] **Step 5: Commit**
+- [x] **Step 2: Run build_runner**
+- [x] **Step 3: Write unit tests** in `test/unit/domain/sync_conflict_test.dart`
+- [x] **Step 4: Run tests**
+- [x] **Step 5: Commit**
 
 ---
 
@@ -115,11 +115,11 @@ Define a `SyncConflict` entity with fields: `entityType` (String), `entityId` (S
 - Modify: `lib/data/remote/sync/sync_strategy.dart`
 - Modify: `test/unit/data/sync/sync_strategy_test.dart`
 
-- [ ] **Step 1: Add `detectConflicts` method** — returns `List<SyncConflict>` for fields where values differ and timestamps are within a configurable threshold (default 60s)
-- [ ] **Step 2: Add `mergeWithResolutions` method** — accepts user choices and applies them to the merged record
-- [ ] **Step 3: Write tests** (no conflict when timestamps far apart, conflict when close + different values, no conflict when values identical, multiple field conflicts)
-- [ ] **Step 4: Run tests**
-- [ ] **Step 5: Commit**
+- [x] **Step 1: Add `detectConflicts` method** — returns `List<SyncConflict>` for fields where values differ and timestamps are within a configurable threshold (default 60s)
+- [x] **Step 2: Add `mergeWithResolutions` method** — accepts user choices and applies them to the merged record
+- [x] **Step 3: Write tests** (no conflict when timestamps far apart, conflict when close + different values, no conflict when values identical, multiple field conflicts)
+- [x] **Step 4: Run tests**
+- [x] **Step 5: Commit**
 
 ---
 
@@ -130,11 +130,11 @@ Define a `SyncConflict` entity with fields: `entityType` (String), `entityId` (S
 - Modify: `lib/data/local/dao/sync_log_dao.dart`
 - Modify: `lib/data/local/database/app_database.dart`
 
-- [ ] **Step 1: Add nullable columns** — `errorMessage` (Text), `durationMs` (Integer), `direction` (Text: push/pull), `resolvedBy` (Text: auto/user)
-- [ ] **Step 2: Bump schema version 5 → 6**, add ALTER TABLE migration
-- [ ] **Step 3: Add DAO methods** — `watchAll()`, `getHistory({limit, offset})`, `purgeOlderThan(epochMs)`, `getFailedEntries()`
-- [ ] **Step 4: Run build_runner**
-- [ ] **Step 5: Commit**
+- [x] **Step 1: Add nullable columns** — `errorMessage` (Text), `durationMs` (Integer), `direction` (Text: push/pull), `resolvedBy` (Text: auto/user)
+- [x] **Step 2: Bump schema version 5 → 6**, add ALTER TABLE migration
+- [x] **Step 3: Add DAO methods** — `watchAll()`, `getHistory({limit, offset})`, `purgeOlderThan(epochMs)`, `getFailedEntries()`
+- [x] **Step 4: Run build_runner**
+- [x] **Step 5: Commit**
 
 ---
 
@@ -144,16 +144,16 @@ Define a `SyncConflict` entity with fields: `entityType` (String), `entityId` (S
 - Modify: `lib/domain/repositories/i_sync_repository.dart`
 - Modify: `lib/data/repositories/sync_repository_impl.dart`
 
-- [ ] **Step 1: Extend ISyncRepository** — add `Stream<SyncProgress> watchSyncProgress()`, `Future<List<SyncConflict>> getConflicts()`, `Future<void> resolveConflicts(...)`, `Future<List<SyncLogTableData>> getSyncHistory(...)`, `Future<void> purgeSyncHistory(...)`
-- [ ] **Step 2: Add SyncProgress class** — `phase` (push/pull/idle), `current`, `total`, `currentEntityType`, `fraction` getter
-- [ ] **Step 3: Implement progress reporting** — emit `SyncProgress` events per record in push/pull
-- [ ] **Step 4: Implement conflict detection in pullChanges()** — store conflicts in `_pendingConflicts`, pause sync for those items
-- [ ] **Step 5: Fix TODO stubs** — insert new remote items locally, persist merged results
-- [ ] **Step 6: Fix lastSyncedAt** — store in SharedPreferences, only update on successful completion
-- [ ] **Step 7: Enrich sync log entries** — populate direction, durationMs, errorMessage, resolvedBy
-- [ ] **Step 8: Implement getSyncHistory and purgeSyncHistory**
-- [ ] **Step 9: Write tests**
-- [ ] **Step 10: Commit**
+- [x] **Step 1: Extend ISyncRepository** — add `Stream<SyncProgress> watchSyncProgress()`, `Future<List<SyncConflict>> getConflicts()`, `Future<void> resolveConflicts(...)`, `Future<List<SyncLogTableData>> getSyncHistory(...)`, `Future<void> purgeSyncHistory(...)`
+- [x] **Step 2: Add SyncProgress class** — `phase` (push/pull/idle), `current`, `total`, `currentEntityType`, `fraction` getter
+- [x] **Step 3: Implement progress reporting** — emit `SyncProgress` events per record in push/pull
+- [x] **Step 4: Implement conflict detection in pullChanges()** — store conflicts in `_pendingConflicts`, pause sync for those items
+- [x] **Step 5: Fix TODO stubs** — insert new remote items locally, persist merged results
+- [x] **Step 6: Fix lastSyncedAt** — store in SharedPreferences, only update on successful completion
+- [x] **Step 7: Enrich sync log entries** — populate direction, durationMs, errorMessage, resolvedBy
+- [x] **Step 8: Implement getSyncHistory and purgeSyncHistory**
+- [x] **Step 9: Write tests**
+- [x] **Step 10: Commit**
 
 ---
 
@@ -163,10 +163,10 @@ Define a `SyncConflict` entity with fields: `entityType` (String), `entityId` (S
 - Modify: `lib/data/remote/sync/postgres_sync_client.dart`
 - Create: `lib/presentation/providers/connection_health_provider.dart`
 
-- [ ] **Step 1: Add `ping()` method** — `SELECT 1` with 5s timeout, returns `ConnectionHealth` enum (connected/disconnected/timeout/unconfigured)
-- [ ] **Step 2: Create connection health provider** — StreamNotifier pinging every 60s, pauses when backgrounded, pings on resume
-- [ ] **Step 3: Write tests**
-- [ ] **Step 4: Commit**
+- [x] **Step 1: Add `ping()` method** — `SELECT 1` with 5s timeout, returns `ConnectionHealth` enum (connected/disconnected/timeout/unconfigured)
+- [x] **Step 2: Create connection health provider** — StreamNotifier pinging every 60s, pauses when backgrounded, pings on resume
+- [x] **Step 3: Write tests**
+- [x] **Step 4: Commit**
 
 ---
 
@@ -175,9 +175,9 @@ Define a `SyncConflict` entity with fields: `entityType` (String), `entityId` (S
 **Files:**
 - Modify: `lib/presentation/providers/sync_provider.dart`
 
-- [ ] **Step 1: Add providers** — `syncProgressProvider`, `syncConflictsProvider`, `syncHistoryProvider` (family by page), `connectionHealthProvider`
-- [ ] **Step 2: Add syncTriggerProvider** — AsyncNotifier exposing `triggerSync()`, tracks loading/data/error, returns summary (pushed/pulled/conflicts)
-- [ ] **Step 3: Commit**
+- [x] **Step 1: Add providers** — `syncProgressProvider`, `syncConflictsProvider`, `syncHistoryProvider` (family by page), `connectionHealthProvider`
+- [x] **Step 2: Add syncTriggerProvider** — AsyncNotifier exposing `triggerSync()`, tracks loading/data/error, returns summary (pushed/pulled/conflicts)
+- [x] **Step 3: Commit**
 
 ---
 
@@ -186,12 +186,12 @@ Define a `SyncConflict` entity with fields: `entityType` (String), `entityId` (S
 **Files:**
 - Modify: `lib/presentation/screens/settings/widgets/sync_status_tile.dart`
 
-- [ ] **Step 1: Add progress bar** — `LinearProgressIndicator` when syncing, text like "Pushing 3/12 media items..."
-- [ ] **Step 2: Format last sync time** — relative (e.g. "2 minutes ago", "Yesterday at 14:32")
-- [ ] **Step 3: Add completion feedback** — SnackBar with summary on sync complete/fail
-- [ ] **Step 4: Add connection health badge** — coloured dot (green/amber/red) next to sync icon
-- [ ] **Step 5: Write widget tests**
-- [ ] **Step 6: Commit**
+- [x] **Step 1: Add progress bar** — `LinearProgressIndicator` when syncing, text like "Pushing 3/12 media items..."
+- [x] **Step 2: Format last sync time** — relative (e.g. "2 minutes ago", "Yesterday at 14:32")
+- [x] **Step 3: Add completion feedback** — SnackBar with summary on sync complete/fail
+- [x] **Step 4: Add connection health badge** — coloured dot (green/amber/red) next to sync icon
+- [x] **Step 5: Write widget tests**
+- [x] **Step 6: Commit**
 
 ---
 
@@ -200,10 +200,10 @@ Define a `SyncConflict` entity with fields: `entityType` (String), `entityId` (S
 **Files:**
 - Create: `lib/presentation/screens/settings/widgets/sync_conflict_dialog.dart`
 
-- [ ] **Step 1: Create SyncConflictDialog** — modal showing each conflict with field name, local/remote values, timestamps, radio toggles per field, bulk "Apply all local/remote" buttons, "Resolve" action
-- [ ] **Step 2: Integrate with sync flow** — show dialog automatically when conflicts detected post-pull
-- [ ] **Step 3: Write widget tests**
-- [ ] **Step 4: Commit**
+- [x] **Step 1: Create SyncConflictDialog** — modal showing each conflict with field name, local/remote values, timestamps, radio toggles per field, bulk "Apply all local/remote" buttons, "Resolve" action
+- [x] **Step 2: Integrate with sync flow** — show dialog automatically when conflicts detected post-pull
+- [x] **Step 3: Write widget tests**
+- [x] **Step 4: Commit**
 
 ---
 
@@ -214,11 +214,11 @@ Define a `SyncConflict` entity with fields: `entityType` (String), `entityId` (S
 - Modify: `lib/presentation/screens/settings/settings_screen.dart`
 - Modify: `lib/app/router.dart`
 
-- [ ] **Step 1: Create SyncLogViewer screen** — scrollable list with direction icon, entity type, timestamp, status chip, error expansion, retry button, clear history action. Paginated (50 per page).
-- [ ] **Step 2: Add `/settings/sync-log` route**
-- [ ] **Step 3: Add "Sync History" tile** in Settings sync section
-- [ ] **Step 4: Write widget tests**
-- [ ] **Step 5: Commit**
+- [x] **Step 1: Create SyncLogViewer screen** — scrollable list with direction icon, entity type, timestamp, status chip, error expansion, retry button, clear history action. Paginated (50 per page).
+- [x] **Step 2: Add `/settings/sync-log` route**
+- [x] **Step 3: Add "Sync History" tile** in Settings sync section
+- [x] **Step 4: Write widget tests**
+- [x] **Step 5: Commit**
 
 ---
 
@@ -228,19 +228,19 @@ Define a `SyncConflict` entity with fields: `entityType` (String), `entityId` (S
 - Create: `lib/presentation/widgets/sync_badge.dart`
 - Modify: `lib/presentation/widgets/app_scaffold.dart`
 
-- [ ] **Step 1: Create SyncBadge widget** — green dot (connected/idle), animated sync icon (active), amber dot (pending changes), red dot (disconnected/error), tooltip with summary
-- [ ] **Step 2: Add to app scaffold** — desktop sidebar footer and mobile bottom nav area, only when sync is configured
-- [ ] **Step 3: Write widget tests**
-- [ ] **Step 4: Commit**
+- [x] **Step 1: Create SyncBadge widget** — green dot (connected/idle), animated sync icon (active), amber dot (pending changes), red dot (disconnected/error), tooltip with summary
+- [x] **Step 2: Add to app scaffold** — desktop sidebar footer and mobile bottom nav area, only when sync is configured
+- [x] **Step 3: Write widget tests**
+- [x] **Step 4: Commit**
 
 ---
 
 ## Task 11: Integration Testing & Final Verification
 
-- [ ] **Step 1: Run full test suite** — `flutter test`, verify no regressions
-- [ ] **Step 2: Run static analysis** — `flutter analyze`, verify no issues
-- [ ] **Step 3: Manual smoke test** — configure Postgres, verify health indicator, add item, trigger sync, check progress bar and snackbar, open sync log, simulate conflict, resolve, disconnect/reconnect
-- [ ] **Step 4: Final commit**
+- [x] **Step 1: Run full test suite** — `flutter test`, verify no regressions
+- [x] **Step 2: Run static analysis** — `flutter analyze`, verify no issues
+- [x] **Step 3: Manual smoke test** — configure Postgres, verify health indicator, add item, trigger sync, check progress bar and snackbar, open sync log, simulate conflict, resolve, disconnect/reconnect
+- [x] **Step 4: Final commit**
 
 ---
 

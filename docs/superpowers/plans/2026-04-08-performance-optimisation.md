@@ -1,6 +1,6 @@
 # Performance Optimisation Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Optimise database queries, sync operations, statistics computation, and table rendering to support 1000+ item collections without sluggishness.
 
@@ -16,7 +16,7 @@
 - Modify: `lib/data/local/database/app_database.dart:72-126`
 - Test: `test/unit/data/dao/media_items_dao_test.dart` (existing tests still pass)
 
-- [ ] **Step 1: Bump schema version and add migration**
+- [x] **Step 1: Bump schema version and add migration**
 
 In `lib/data/local/database/app_database.dart`, change `schemaVersion` from 7 to 8, then add the index creation block inside `onUpgrade`:
 
@@ -65,16 +65,16 @@ onCreate: (m) async {
 
 Extract a `_createIndexes()` method containing the 7 `customStatement` calls, and call it from both `onCreate` and the `from < 8` migration block.
 
-- [ ] **Step 2: Run tests to verify migration doesn't break existing tests**
+- [x] **Step 2: Run tests to verify migration doesn't break existing tests**
 
 Run: `flutter test test/unit/data/dao/`
 Expected: All existing DAO tests pass (they use in-memory databases that run `onCreate`).
 
-- [ ] **Step 3: Update CLAUDE.md schema version**
+- [x] **Step 3: Update CLAUDE.md schema version**
 
 In `CLAUDE.md`, change "Current schema version is 7" to "Current schema version is 8".
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add lib/data/local/database/app_database.dart CLAUDE.md
@@ -89,7 +89,7 @@ git commit -m "perf: add database indexes for common queries (schema v8)"
 - Modify: `lib/data/local/dao/media_items_dao.dart:12-18`
 - Test: `test/unit/data/dao/media_items_dao_test.dart` (add new tests)
 
-- [ ] **Step 1: Write failing tests for sorted and filtered watchAll**
+- [x] **Step 1: Write failing tests for sorted and filtered watchAll**
 
 Add to `test/unit/data/dao/media_items_dao_test.dart`:
 
@@ -131,12 +131,12 @@ test('watchAll filters by mediaType', () async {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `flutter test test/unit/data/dao/media_items_dao_test.dart --name "watchAll returns items sorted"`
 Expected: FAIL — `watchAll` doesn't accept `sortBy`/`mediaType` yet.
 
-- [ ] **Step 3: Implement sorted and filtered watchAll**
+- [x] **Step 3: Implement sorted and filtered watchAll**
 
 Update `lib/data/local/dao/media_items_dao.dart`:
 
@@ -175,12 +175,12 @@ Stream<List<MediaItemsTableData>> watchAll({
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `flutter test test/unit/data/dao/media_items_dao_test.dart`
 Expected: All tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/data/local/dao/media_items_dao.dart test/unit/data/dao/media_items_dao_test.dart
@@ -195,7 +195,7 @@ git commit -m "perf: add SQL-level sorting and mediaType filtering to DAO"
 - Modify: `lib/data/repositories/media_item_repository_impl.dart:24-49`
 - Modify: `lib/presentation/providers/collection_provider.dart:92-115`
 
-- [ ] **Step 1: Update repository to pass sort/filter params to DAO**
+- [x] **Step 1: Update repository to pass sort/filter params to DAO**
 
 In `lib/data/repositories/media_item_repository_impl.dart`, update `watchAll`:
 
@@ -238,16 +238,16 @@ Stream<List<MediaItem>> watchAll({
 
 Note: When `useFts` is false and `mediaType` is passed to the DAO, the in-memory `.where` for mediaType becomes redundant. The DAO now handles it. The in-memory filter is kept as a safety net for the FTS path (which doesn't filter by type).
 
-- [ ] **Step 2: Remove redundant in-memory mediaType filtering for non-FTS path**
+- [x] **Step 2: Remove redundant in-memory mediaType filtering for non-FTS path**
 
 The above code already handles this — when `useFts` is false, mediaType is passed to the DAO. When `useFts` is true, the in-memory filter still runs since FTS doesn't filter by type. This is correct.
 
-- [ ] **Step 3: Run full test suite**
+- [x] **Step 3: Run full test suite**
 
 Run: `flutter test`
 Expected: All tests pass.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add lib/data/repositories/media_item_repository_impl.dart lib/presentation/providers/collection_provider.dart
@@ -262,7 +262,7 @@ git commit -m "perf: wire SQL sorting and filtering through repository layer"
 - Modify: `lib/data/remote/sync/postgres_sync_client.dart:63-89`
 - Test: `test/unit/data/sync/postgres_sync_client_test.dart` (create)
 
-- [ ] **Step 1: Write test for batch upsert**
+- [x] **Step 1: Write test for batch upsert**
 
 Create `test/unit/data/sync/postgres_sync_client_test.dart`:
 
@@ -305,12 +305,12 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `flutter test test/unit/data/sync/postgres_sync_client_test.dart`
 Expected: FAIL — `buildBatchUpsertSql` doesn't exist yet.
 
-- [ ] **Step 3: Add batch SQL builder and rewrite upsertRecords**
+- [x] **Step 3: Add batch SQL builder and rewrite upsertRecords**
 
 In `lib/data/remote/sync/postgres_sync_client.dart`, add a static method and rewrite `upsertRecords`:
 
@@ -371,17 +371,17 @@ Future<void> upsertRecords(
 }
 ```
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 Run: `flutter test test/unit/data/sync/postgres_sync_client_test.dart`
 Expected: PASS.
 
-- [ ] **Step 5: Run full test suite for regressions**
+- [x] **Step 5: Run full test suite for regressions**
 
 Run: `flutter test`
 Expected: All tests pass.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add lib/data/remote/sync/postgres_sync_client.dart test/unit/data/sync/postgres_sync_client_test.dart
@@ -396,7 +396,7 @@ git commit -m "perf: batch PostgreSQL sync with multi-row INSERT"
 - Modify: `lib/presentation/providers/statistics_provider.dart:90-224`
 - Test: `test/unit/presentation/providers/statistics_provider_test.dart` (existing)
 
-- [ ] **Step 1: Add debounced insights provider**
+- [x] **Step 1: Add debounced insights provider**
 
 Replace the `insightsProvider` at the bottom of `lib/presentation/providers/statistics_provider.dart` with a debounced version:
 
@@ -443,21 +443,21 @@ final insightsProvider =
 
 Keep the old `statisticsProvider` (StreamProvider) as-is — it's used by the collection screen and is already efficient enough for just `CollectionStatistics`.
 
-- [ ] **Step 2: Update insights screen to use the new provider**
+- [x] **Step 2: Update insights screen to use the new provider**
 
 Check `lib/presentation/screens/collection/statistics_screen.dart` — it should already watch `insightsProvider`. Since we kept the same provider name, no changes needed.
 
-- [ ] **Step 3: Run existing statistics tests**
+- [x] **Step 3: Run existing statistics tests**
 
 Run: `flutter test test/unit/presentation/providers/statistics_provider_test.dart`
 Expected: All pass (the `computeInsightsData` function is unchanged).
 
-- [ ] **Step 4: Run full test suite**
+- [x] **Step 4: Run full test suite**
 
 Run: `flutter test`
 Expected: All tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/presentation/providers/statistics_provider.dart
@@ -471,7 +471,7 @@ git commit -m "perf: debounce insights computation to reduce recomputation"
 **Files:**
 - Modify: `lib/presentation/screens/collection/widgets/collection_table_view.dart`
 
-- [ ] **Step 1: Convert to PaginatedDataTable2 with DataTableSource**
+- [x] **Step 1: Convert to PaginatedDataTable2 with DataTableSource**
 
 Replace the current `DataTable2` with `PaginatedDataTable2`. The `CollectionTableView` needs to become a `ConsumerStatefulWidget` to hold the `DataTableSource`.
 
@@ -710,12 +710,12 @@ class _CollectionDataSource extends DataTableSource {
 }
 ```
 
-- [ ] **Step 2: Run existing table view tests**
+- [x] **Step 2: Run existing table view tests**
 
 Run: `flutter test`
 Expected: All tests pass. Widget tests for `CollectionTableView` may need updating if they look for `DataTable2` specifically — check and update finders to `PaginatedDataTable2` if needed.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add lib/presentation/screens/collection/widgets/collection_table_view.dart
@@ -726,17 +726,17 @@ git commit -m "perf: virtualise collection table with PaginatedDataTable2"
 
 ### Task 7: Final Verification
 
-- [ ] **Step 1: Run flutter analyse**
+- [x] **Step 1: Run flutter analyse**
 
 Run: `flutter analyze`
 Expected: No new errors (pre-existing info/warnings are acceptable).
 
-- [ ] **Step 2: Run full test suite**
+- [x] **Step 2: Run full test suite**
 
 Run: `flutter test`
 Expected: All 667+ tests pass.
 
-- [ ] **Step 3: Push to remote**
+- [x] **Step 3: Push to remote**
 
 ```bash
 git push origin main

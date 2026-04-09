@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mymediascanner/presentation/screens/rips/widgets/playlist_view.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/rip_coverage_view.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/rip_library_view.dart';
 import 'package:mymediascanner/presentation/widgets/screen_header.dart';
@@ -14,7 +15,7 @@ class RipsScreen extends ConsumerStatefulWidget {
   ConsumerState<RipsScreen> createState() => _RipsScreenState();
 }
 
-enum _RipsSegment { library, coverage }
+enum _RipsSegment { library, coverage, playlists }
 
 class _RipsScreenState extends ConsumerState<RipsScreen> {
   _RipsSegment _selected = _RipsSegment.library;
@@ -45,6 +46,11 @@ class _RipsScreenState extends ConsumerState<RipsScreen> {
                   label: Text('Coverage'),
                   icon: Icon(Icons.check_circle_outline),
                 ),
+                ButtonSegment(
+                  value: _RipsSegment.playlists,
+                  label: Text('Playlists'),
+                  icon: Icon(Icons.playlist_play),
+                ),
               ],
               selected: {_selected},
               onSelectionChanged: (selection) {
@@ -56,9 +62,11 @@ class _RipsScreenState extends ConsumerState<RipsScreen> {
           ),
           const SizedBox(height: 8),
           Expanded(
-            child: _selected == _RipsSegment.library
-                ? const RipLibraryView()
-                : const RipCoverageView(),
+            child: switch (_selected) {
+              _RipsSegment.library => const RipLibraryView(),
+              _RipsSegment.coverage => const RipCoverageView(),
+              _RipsSegment.playlists => const PlaylistView(),
+            },
           ),
         ],
       ),

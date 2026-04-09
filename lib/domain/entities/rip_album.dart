@@ -14,6 +14,7 @@ sealed class RipAlbum with _$RipAlbum {
     @Default(1) int discCount,
     required int totalSizeBytes,
     String? mediaItemId,
+    String? cueFilePath,
     required int lastScannedAt,
     required int updatedAt,
     @Default(false) bool deleted,

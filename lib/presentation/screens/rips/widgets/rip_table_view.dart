@@ -2,6 +2,7 @@ import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
+import 'package:mymediascanner/presentation/providers/audio_player_provider.dart';
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
 import 'package:mymediascanner/presentation/providers/selected_rip_album_provider.dart';
 import 'package:mymediascanner/presentation/widgets/table_keyboard_navigation.dart';
@@ -66,6 +67,9 @@ class _RipTableViewState extends ConsumerState<RipTableView> {
   @override
   Widget build(BuildContext context) {
     final selectedId = ref.watch(selectedRipAlbumProvider);
+    final nowPlayingAlbumId = ref.watch(
+      nowPlayingProvider.select((s) => s.album?.id),
+    );
     final albumIds = _sorted.map((a) => a.id).toList();
 
     return TableKeyboardNavigation(
@@ -142,6 +146,10 @@ class _RipTableViewState extends ConsumerState<RipTableView> {
 
         return DataRow2(
           selected: album.id == selectedId,
+          color: album.id == nowPlayingAlbumId
+              ? WidgetStatePropertyAll(
+                  Theme.of(context).colorScheme.primary.withValues(alpha: 0.08))
+              : null,
           onTap: () => widget.onAlbumTap(album),
           cells: [
             DataCell(Text(

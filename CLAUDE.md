@@ -10,7 +10,7 @@ Cross-platform Flutter/Dart application for scanning barcodes on physical media 
 
 - Lending tracker (borrowers and loans management)
 - Critic scores from TMDB, Discogs, and Google Books
-- FLAC rip library scanner with coverage comparison against physical collection
+- FLAC/MP3 rip library scanner with CUE sheet support and coverage comparison against physical collection
 - Audio quality analysis (AccurateRip verification + click/pop detection)
 - Insights & analytics dashboard with CSV/JSON export
 - Camera + Bluetooth/USB scanner support on mobile; webcam scanning on all desktop platforms
@@ -73,7 +73,7 @@ flutter build macos --debug
 
 ## Testing
 
-The project has ~709 tests: ~683 unit/widget tests covering domain logic, data layer, presentation providers, and widget tests, plus ~26 integration tests covering full-app user flows. Run `flutter test` to execute the unit/widget suite. Integration tests run individually per file: `flutter test integration_test/<file>.dart -d linux`. Tests use `mocktail` for mocking and `ProviderContainer` with overrides for provider testing.
+The project has ~729 tests: ~683 unit/widget tests covering domain logic, data layer, presentation providers, and widget tests, plus ~46 integration tests covering full-app user flows. Run `flutter test` to execute the unit/widget suite. Integration tests run individually per file: `flutter test integration_test/<file>.dart -d linux`. Tests use `mocktail` for mocking and `ProviderContainer` with overrides for provider testing.
 
 ## Architecture
 
@@ -153,7 +153,7 @@ Design principles: "no-line" rule (tonal shifts instead of borders), glassmorphi
 - Metadata lookup follows a tiered strategy: cache check → barcode type detection → specialist API → UPCitemdb fallback
 - Sync uses last-write-wins per-field conflict resolution based on `updated_at` timestamps, with user-facing conflict resolution UI for concurrent edits within a configurable threshold
 - Database schema changes require a new migration in `AppDatabase`
-- Current schema version is 8 with 13 tables: `media_items`, `tags`, `media_item_tags`, `shelves`, `shelf_items`, `barcode_cache`, `sync_log`, `borrowers`, `loans`, `rip_albums`, `rip_tracks`, `batch_sessions`, `batch_queue_items`
+- Current schema version is 9 with 13 tables: `media_items`, `tags`, `media_item_tags`, `shelves`, `shelf_items`, `barcode_cache`, `sync_log`, `borrowers`, `loans`, `rip_albums`, `rip_tracks`, `batch_sessions`, `batch_queue_items`
 - Desktop screens use inline `ScreenHeader` widget instead of AppBar; mobile screens keep AppBar for back navigation
 - Sections use tonal containers (`surfaceContainerHigh`) with uppercase label headers, not dividers
 
