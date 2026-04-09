@@ -13,7 +13,7 @@ import 'package:mymediascanner/presentation/providers/audio_player_provider.dart
 import 'package:mymediascanner/presentation/widgets/mini_player_bar.dart';
 
 void main() {
-  final testAlbum = RipAlbum(
+  const testAlbum = RipAlbum(
     id: 'album-1',
     libraryPath: '/music/test',
     artist: 'Test Artist',
@@ -75,7 +75,7 @@ void main() {
           (ref) => Stream.value(currentIndex ?? 0),
         ),
         playerStateProvider.overrideWith(
-          (ref) => Stream<Never>.empty(),
+          (ref) => const Stream<Never>.empty(),
         ),
       ],
       child: MaterialApp(

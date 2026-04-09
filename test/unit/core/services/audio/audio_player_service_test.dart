@@ -15,7 +15,7 @@ void main() {
   late MockAudioPlayer mockPlayer;
   late AudioPlayerService service;
 
-  final testAlbum = RipAlbum(
+  const testAlbum = RipAlbum(
     id: 'album-1',
     libraryPath: '/music/artist/album',
     artist: 'Test Artist',
@@ -27,7 +27,7 @@ void main() {
   );
 
   final testTracks = [
-    RipTrack(
+    const RipTrack(
       id: 'track-1',
       ripAlbumId: 'album-1',
       trackNumber: 1,
@@ -37,7 +37,7 @@ void main() {
       updatedAt: 1000,
       durationMs: 180000,
     ),
-    RipTrack(
+    const RipTrack(
       id: 'track-2',
       ripAlbumId: 'album-1',
       trackNumber: 2,
@@ -47,7 +47,7 @@ void main() {
       updatedAt: 1000,
       durationMs: 200000,
     ),
-    RipTrack(
+    const RipTrack(
       id: 'track-3',
       ripAlbumId: 'album-1',
       trackNumber: 3,

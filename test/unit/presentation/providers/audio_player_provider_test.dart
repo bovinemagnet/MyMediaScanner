@@ -19,7 +19,7 @@ class MockAudioPlayerService extends Mock implements AudioPlayerService {}
 
 void main() {
   setUpAll(() {
-    registerFallbackValue(RipAlbum(
+    registerFallbackValue(const RipAlbum(
       id: '',
       libraryPath: '',
       trackCount: 0,
@@ -34,7 +34,7 @@ void main() {
 
   late MockAudioPlayerService mockService;
 
-  final testAlbum = RipAlbum(
+  const testAlbum = RipAlbum(
     id: 'album-1',
     libraryPath: '/music/album1',
     trackCount: 2,
@@ -44,7 +44,7 @@ void main() {
   );
 
   final testTracks = [
-    RipTrack(
+    const RipTrack(
       id: 'track-1',
       ripAlbumId: 'album-1',
       trackNumber: 1,
@@ -53,7 +53,7 @@ void main() {
       fileSizeBytes: 50000,
       updatedAt: 1000,
     ),
-    RipTrack(
+    const RipTrack(
       id: 'track-2',
       ripAlbumId: 'album-1',
       trackNumber: 2,
