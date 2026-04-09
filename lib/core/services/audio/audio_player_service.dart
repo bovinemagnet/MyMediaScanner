@@ -53,6 +53,12 @@ class AudioPlayerService {
   Stream<SequenceState?> get sequenceStateStream =>
       _player.sequenceStateStream;
 
+  /// Stream of playback events, useful for monitoring errors.
+  /// Individual track load failures in a [ConcatenatingAudioSource] will
+  /// emit errors here; the player auto-advances to the next track.
+  Stream<PlaybackEvent> get playbackEventStream =>
+      _player.playbackEventStream;
+
   /// Loads and plays an album from the given [tracks], starting at
   /// [startIndex].
   ///
