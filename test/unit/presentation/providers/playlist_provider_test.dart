@@ -37,7 +37,7 @@ void main() {
   Future<List<PlaylistsTableData>> readPlaylists(
       ProviderContainer container) async {
     // Subscribing via listen ensures the StreamProvider is active.
-    container.listen(allPlaylistsProvider, (_, __) {});
+    container.listen(allPlaylistsProvider, (_, _) {});
     for (var i = 0; i < 100; i++) {
       await Future<void>.delayed(const Duration(milliseconds: 20));
       final asyncVal = container.read(allPlaylistsProvider);
