@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/data/local/database/app_database.dart';
 import 'package:mymediascanner/presentation/providers/playlist_provider.dart';
+import 'package:mymediascanner/presentation/screens/rips/widgets/playback_widgets.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/playlist_detail.dart';
 import 'package:mymediascanner/presentation/widgets/master_detail_layout.dart';
 
@@ -186,7 +187,7 @@ class _PlaylistGrid extends ConsumerWidget {
 // Playlist card
 // ---------------------------------------------------------------------------
 
-class _PlaylistCard extends StatelessWidget {
+class _PlaylistCard extends ConsumerWidget {
   const _PlaylistCard({
     required this.playlist,
     required this.isSelected,
@@ -198,7 +199,7 @@ class _PlaylistCard extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
@@ -207,6 +208,10 @@ class _PlaylistCard extends StatelessWidget {
         '${created.day.toString().padLeft(2, '0')}/'
         '${created.month.toString().padLeft(2, '0')}/'
         '${created.year}';
+
+    final tracksAsync = ref.watch(playlistTracksProvider(playlist.id));
+    final trackCount = tracksAsync.value?.length ?? 0;
+    final trackCountStr = trackCount == 1 ? '1 track' : '$trackCount tracks';
 
     return GestureDetector(
       onTap: onTap,
@@ -227,22 +232,24 @@ class _PlaylistCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Cover art placeholder
+            // Cover art (or placeholder icon)
             Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: colors.surfaceContainerHighest,
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(11),
-                  ),
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(11),
                 ),
-                child: Icon(
-                  Icons.playlist_play,
-                  size: 56,
-                  color: isSelected
-                      ? colors.primary.withValues(alpha: 0.8)
-                      : colors.onSurfaceVariant.withValues(alpha: 0.4),
-                ),
+                child: playlist.coverAlbumId != null
+                    ? AlbumCoverArt(albumId: playlist.coverAlbumId!, size: 140)
+                    : Container(
+                        color: colors.surfaceContainerHighest,
+                        child: Icon(
+                          Icons.playlist_play,
+                          size: 56,
+                          color: isSelected
+                              ? colors.primary.withValues(alpha: 0.8)
+                              : colors.onSurfaceVariant.withValues(alpha: 0.4),
+                        ),
+                      ),
               ),
             ),
 
@@ -262,12 +269,28 @@ class _PlaylistCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    dateStr,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colors.onSurfaceVariant.withValues(alpha: 0.7),
-                      fontSize: 11,
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          trackCountStr,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color:
+                                colors.onSurfaceVariant.withValues(alpha: 0.7),
+                            fontSize: 11,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Text(
+                        dateStr,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color:
+                              colors.onSurfaceVariant.withValues(alpha: 0.5),
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

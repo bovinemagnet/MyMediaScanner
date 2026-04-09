@@ -10,7 +10,9 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/data/local/database/app_database.dart';
+import 'package:mymediascanner/domain/entities/queue_item.dart';
 import 'package:mymediascanner/domain/entities/rip_track.dart';
+import 'package:mymediascanner/presentation/providers/audio_player_provider.dart';
 import 'package:mymediascanner/presentation/providers/playlist_provider.dart';
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/playback_widgets.dart';
@@ -92,7 +94,7 @@ class _PlaylistDetailContent extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // Header
-        _buildHeader(context, ref, theme, colors, trackCount),
+        _buildHeader(context, ref, theme, colors, trackCount, trackLookup),
 
         // Track listing
         Expanded(
@@ -145,8 +147,14 @@ class _PlaylistDetailContent extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context, WidgetRef ref, ThemeData theme,
-      ColorScheme colors, int trackCount) {
+  Widget _buildHeader(
+    BuildContext context,
+    WidgetRef ref,
+    ThemeData theme,
+    ColorScheme colors,
+    int trackCount,
+    Map<String, (RipTrack, String)> trackLookup,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -231,7 +239,40 @@ class _PlaylistDetailContent extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
           FilledButton.icon(
-            onPressed: trackCount == 0 ? null : () {},
+            onPressed: trackCount == 0
+                ? null
+                : () async {
+                    final ptList =
+                        ref.read(playlistTracksProvider(playlist.id)).value ??
+                            [];
+                    if (ptList.isEmpty) return;
+
+                    // Build QueueItems from the resolved track lookup.
+                    // Tracks that have not yet resolved are skipped.
+                    final items = ptList
+                        .map((pt) => trackLookup[pt.ripTrackId])
+                        .whereType<(RipTrack, String)>()
+                        .map((entry) {
+                      final (track, albumId) = entry;
+                      // Look up the RipAlbum from the allRipAlbumsProvider.
+                      final albums =
+                          ref.read(allRipAlbumsProvider).value ?? [];
+                      final album = albums
+                          .where((a) => a.id == albumId)
+                          .firstOrNull;
+                      if (album == null) return null;
+                      return QueueItem(
+                        album: album,
+                        track: track,
+                        source: QueueItemSource.playlist,
+                      );
+                    }).whereType<QueueItem>().toList();
+
+                    if (items.isEmpty) return;
+                    await ref
+                        .read(playbackActionProvider.notifier)
+                        .playPlaylist(items);
+                  },
             icon: const Icon(Icons.play_arrow, size: 18),
             label: const Text('Play All'),
             style: FilledButton.styleFrom(

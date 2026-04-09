@@ -83,6 +83,30 @@ class AudioPlayerService {
     await _player.play();
   }
 
+  /// Loads and plays a flat list of [tracks] that may span multiple albums.
+  ///
+  /// [album] is used only for metadata (e.g. now-playing display); the actual
+  /// audio sources are built from the individual track file paths. Use this
+  /// when playing a cross-album playlist.
+  Future<void> playTracks({
+    required RipAlbum album,
+    required List<RipTrack> tracks,
+    int startIndex = 0,
+  }) async {
+    _currentAlbum = album;
+    _currentTracks = List<RipTrack>.from(tracks);
+
+    final source = ConcatenatingAudioSource(
+      useLazyPreparation: true,
+      children: tracks
+          .map((track) => AudioSource.file(track.filePath, tag: track.title))
+          .toList(),
+    );
+
+    await _player.setAudioSource(source, initialIndex: startIndex);
+    await _player.play();
+  }
+
   /// Resumes playback if paused.
   Future<void> resume() async {
     await _player.play();

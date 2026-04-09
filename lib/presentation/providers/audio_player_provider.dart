@@ -15,6 +15,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:mymediascanner/core/services/audio/audio_player_service.dart';
 import 'package:mymediascanner/core/services/audio/replay_gain_service.dart';
+import 'package:mymediascanner/domain/entities/queue_item.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
 import 'package:mymediascanner/domain/entities/rip_track.dart';
 import 'package:mymediascanner/presentation/providers/playback_speed_provider.dart';
@@ -201,6 +202,52 @@ class PlaybackActionNotifier extends Notifier<void> {
           tracks: albumTracks,
         );
     await _service.seekToIndex(albumTracks.indexOf(item.track));
+  }
+
+  /// Loads and plays a cross-album playlist from [items].
+  ///
+  /// Each [QueueItem] carries its own [RipTrack] and [RipAlbum]. The queue is
+  /// replaced with all items and the first album is used for now-playing
+  /// display metadata. Playback starts from the first item.
+  Future<void> playPlaylist(List<QueueItem> items) async {
+    if (items.isEmpty) return;
+
+    final firstItem = items.first;
+    final allTracks = items.map((i) => i.track).toList();
+    final queueNotifier = ref.read(queueProvider.notifier);
+
+    // Group items by album (preserving playlist order) then load them into the
+    // queue — replaceQueue for the first album, addAlbumToQueue for the rest.
+    final seen = <String>{};
+    final albumGroups = <(RipAlbum, List<RipTrack>)>[];
+    for (final item in items) {
+      if (seen.add(item.album.id)) {
+        albumGroups.add((
+          item.album,
+          items
+              .where((i) => i.album.id == item.album.id)
+              .map((i) => i.track)
+              .toList(),
+        ));
+      }
+    }
+
+    final (firstAlbum, firstTracks) = albumGroups.first;
+    queueNotifier.replaceQueue(firstAlbum, firstTracks, startIndex: 0);
+    for (var idx = 1; idx < albumGroups.length; idx++) {
+      final (album, tracks) = albumGroups[idx];
+      queueNotifier.addAlbumToQueue(album, tracks);
+    }
+
+    ref.read(nowPlayingProvider.notifier).set(
+          album: firstItem.album,
+          tracks: allTracks,
+        );
+
+    await _service.playTracks(
+      album: firstItem.album,
+      tracks: allTracks,
+    );
   }
 
   /// Pauses playback.
