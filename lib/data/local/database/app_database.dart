@@ -23,6 +23,8 @@ import 'package:mymediascanner/data/local/dao/rip_library_dao.dart';
 import 'package:mymediascanner/data/local/dao/batch_session_dao.dart';
 import 'package:mymediascanner/data/local/database/tables/batch_sessions_table.dart';
 import 'package:mymediascanner/data/local/database/tables/batch_queue_items_table.dart';
+import 'package:mymediascanner/data/local/database/tables/playlists_table.dart';
+import 'package:mymediascanner/data/local/database/tables/playlist_tracks_table.dart';
 
 part 'app_database.g.dart';
 
@@ -41,6 +43,8 @@ part 'app_database.g.dart';
     RipTracksTable,
     BatchSessionsTable,
     BatchQueueItemsTable,
+    PlaylistsTable,
+    PlaylistTracksTable,
   ],
   daos: [
     MediaItemsDao,
@@ -70,7 +74,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -129,6 +133,10 @@ class AppDatabase extends _$AppDatabase {
           if (from < 9) {
             await m.addColumn(
                 ripAlbumsTable, ripAlbumsTable.cueFilePath);
+          }
+          if (from < 10) {
+            await m.createTable(playlistsTable);
+            await m.createTable(playlistTracksTable);
           }
         },
       );
