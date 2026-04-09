@@ -51,7 +51,7 @@ void main() {
       );
     });
 
-    testWidgets('displays Library and Coverage segment toggle',
+    testWidgets('displays Library, Coverage, and Playlists segment toggle',
         (tester) async {
       await setUpWideScreen(tester);
       await tester.pumpTestApp();
@@ -60,9 +60,10 @@ void main() {
       await tester.tap(find.text('Rips').first);
       await tester.pumpAndSettle(const Duration(seconds: 1));
 
-      // Segmented button should show both options
+      // Segmented button should show all three options
       expect(find.text('Library'), findsWidgets); // sidebar + segment
       expect(find.text('Coverage'), findsOneWidget);
+      expect(find.text('Playlists'), findsOneWidget);
     });
   });
 }

@@ -11,6 +11,12 @@ const _uuid = Uuid();
 
 final _mediaTypes = ['film', 'book', 'music', 'game', 'tv'];
 
+final _sampleAlbums = [
+  ('Miles Davis', 'Kind of Blue'),
+  ('Dave Brubeck', 'Time Out'),
+  ('John Coltrane', 'A Love Supreme'),
+];
+
 final _sampleTitles = [
   'The Shawshank Redemption',
   'To Kill a Mockingbird',
@@ -85,4 +91,80 @@ Future<List<String>> seedShelves(
     ids.add(id);
   }
   return ids;
+}
+
+/// Seed a rip album with tracks. Returns the album ID.
+Future<String> seedRipAlbum(
+  AppDatabase db, {
+  String? artist,
+  String? albumTitle,
+  int trackCount = 3,
+  String? mediaItemId,
+}) async {
+  final albumId = _uuid.v4();
+  final now = DateTime.now().millisecondsSinceEpoch;
+  final a = artist ?? _sampleAlbums[0].$1;
+  final t = albumTitle ?? _sampleAlbums[0].$2;
+
+  await db.ripLibraryDao.insertAlbum(
+    RipAlbumsTableCompanion.insert(
+      id: albumId,
+      libraryPath: '/test/music/$a/$t',
+      artist: Value(a),
+      albumTitle: Value(t),
+      trackCount: trackCount,
+      totalSizeBytes: trackCount * 30000000,
+      lastScannedAt: now,
+      updatedAt: now,
+      mediaItemId: Value(mediaItemId),
+    ),
+  );
+
+  final trackCompanions = List.generate(trackCount, (i) {
+    return RipTracksTableCompanion.insert(
+      id: _uuid.v4(),
+      ripAlbumId: albumId,
+      trackNumber: i + 1,
+      title: Value('Track ${i + 1}'),
+      filePath: '/test/music/$a/$t/track${i + 1}.flac',
+      fileSizeBytes: 30000000,
+      updatedAt: now,
+    );
+  });
+  await db.ripLibraryDao.insertTracks(trackCompanions);
+
+  return albumId;
+}
+
+/// Seed a playlist with tracks from a rip album. Returns the playlist ID.
+Future<String> seedPlaylist(
+  AppDatabase db, {
+  required String name,
+  required String ripAlbumId,
+}) async {
+  final playlistId = _uuid.v4();
+  final now = DateTime.now().millisecondsSinceEpoch;
+
+  await db.playlistDao.insertPlaylist(
+    PlaylistsTableCompanion.insert(
+      id: playlistId,
+      name: name,
+      createdAt: now,
+      updatedAt: now,
+    ),
+  );
+
+  final tracks = await db.ripLibraryDao.getTracksForAlbum(ripAlbumId);
+  final ptCompanions = tracks.asMap().entries.map((entry) {
+    return PlaylistTracksTableCompanion.insert(
+      id: _uuid.v4(),
+      playlistId: playlistId,
+      ripTrackId: entry.value.id,
+      sortOrder: entry.key,
+      addedAt: now,
+    );
+  }).toList();
+  await db.playlistDao.insertPlaylistTracks(ptCompanions);
+
+  return playlistId;
 }

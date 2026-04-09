@@ -36,6 +36,13 @@ class RipLibraryView extends ConsumerStatefulWidget {
 
 class _RipLibraryViewState extends ConsumerState<RipLibraryView> {
   String _searchQuery = '';
+  final _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   void _onAlbumTap(BuildContext context, RipAlbum album) {
     final width = MediaQuery.sizeOf(context).width;
@@ -79,6 +86,7 @@ class _RipLibraryViewState extends ConsumerState<RipLibraryView> {
             children: [
               Expanded(
                 child: SearchBar(
+                  controller: _searchController,
                   hintText: 'Search by artist or album...',
                   leading: const Icon(Icons.search),
                   onChanged: (query) {
