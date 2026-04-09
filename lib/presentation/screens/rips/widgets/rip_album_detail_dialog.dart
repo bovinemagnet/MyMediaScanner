@@ -542,6 +542,7 @@ class _TrackTile extends ConsumerWidget {
         ],
       ),
       onTap: () {
+        if (!ref.read(playOnSelectProvider)) return;
         final nowPlaying = ref.read(nowPlayingProvider);
         final actions = ref.read(playbackActionProvider.notifier);
         if (nowPlaying.album?.id == album.id) {

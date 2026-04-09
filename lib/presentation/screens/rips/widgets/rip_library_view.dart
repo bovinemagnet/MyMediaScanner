@@ -118,7 +118,7 @@ class _RipLibraryViewState extends ConsumerState<RipLibraryView> {
               ),
               const SizedBox(width: 8),
               Tooltip(
-                message: 'Auto-play album on select',
+                message: 'Auto Play',
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -701,6 +701,7 @@ class _RipAlbumDetailPanelState extends ConsumerState<_RipAlbumDetailPanel> {
                       ),
                     ),
                     onTap: () {
+                      if (!ref.read(playOnSelectProvider)) return;
                       final np = ref.read(nowPlayingProvider);
                       final actions =
                           ref.read(playbackActionProvider.notifier);
