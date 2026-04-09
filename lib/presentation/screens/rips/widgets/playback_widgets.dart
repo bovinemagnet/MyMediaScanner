@@ -15,6 +15,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
 import 'package:mymediascanner/presentation/providers/audio_player_provider.dart';
+import 'package:mymediascanner/presentation/providers/queue_provider.dart';
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
 
 /// Formats a [Duration] as `m:ss`.
@@ -216,6 +217,21 @@ class InlinePlayerControls extends ConsumerWidget {
                         .read(playbackActionProvider.notifier)
                         .setLoopMode(next);
                   },
+                ),
+                // Queue toggle
+                IconButton(
+                  icon: Icon(
+                    Icons.queue_music,
+                    size: 20,
+                    color: ref.watch(queueVisibleProvider)
+                        ? colors.primary
+                        : null,
+                  ),
+                  tooltip: ref.watch(queueVisibleProvider)
+                      ? 'Hide queue'
+                      : 'Show queue',
+                  onPressed: () =>
+                      ref.read(queueVisibleProvider.notifier).toggle(),
                 ),
               ],
             ),

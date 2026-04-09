@@ -11,8 +11,10 @@ import 'package:mymediascanner/presentation/providers/audio_player_provider.dart
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
 import 'package:mymediascanner/presentation/providers/selected_rip_album_provider.dart';
 import 'package:mymediascanner/presentation/providers/rip_view_mode_provider.dart';
+import 'package:mymediascanner/presentation/providers/queue_provider.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/playback_widgets.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/quality_widgets.dart';
+import 'package:mymediascanner/presentation/screens/rips/widgets/queue_panel.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/rip_album_detail_dialog.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/rip_table_view.dart';
 import 'package:mymediascanner/presentation/widgets/empty_state.dart';
@@ -212,9 +214,17 @@ class _RipLibraryViewState extends ConsumerState<RipLibraryView> {
       }
     }
 
-    return MasterDetailLayout(
-      master: masterContent,
-      detail: detailPanel,
+    final showQueue = ref.watch(queueVisibleProvider);
+    return Row(
+      children: [
+        Expanded(
+          child: MasterDetailLayout(
+            master: masterContent,
+            detail: detailPanel,
+          ),
+        ),
+        if (showQueue) const QueuePanel(),
+      ],
     );
   }
 
