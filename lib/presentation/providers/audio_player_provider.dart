@@ -16,6 +16,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:mymediascanner/core/services/audio/audio_player_service.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
 import 'package:mymediascanner/domain/entities/rip_track.dart';
+import 'package:mymediascanner/presentation/providers/queue_provider.dart';
 
 // ------------------------------------------------------------------
 // AudioPlayerService singleton
@@ -160,18 +161,42 @@ class PlaybackActionNotifier extends Notifier<void> {
 
   AudioPlayerService get _service => ref.read(audioPlayerServiceProvider);
 
-  /// Loads and plays an album, updating the now-playing state first.
+  /// Loads and plays an album, updating the now-playing state and queue first.
   Future<void> playAlbum({
     required RipAlbum album,
     required List<RipTrack> tracks,
     int startIndex = 0,
   }) async {
     ref.read(nowPlayingProvider.notifier).set(album: album, tracks: tracks);
+    ref.read(queueProvider.notifier).replaceQueue(album, tracks, startIndex: startIndex);
     await _service.playAlbum(
       album: album,
       tracks: tracks,
       startIndex: startIndex,
     );
+  }
+
+  /// Plays the track at [index] in the current queue.
+  ///
+  /// Updates the queue's current index, sets the now-playing state to reflect
+  /// the queued item's album and its sibling tracks, and seeks the audio engine
+  /// to the corresponding track.
+  Future<void> playFromQueue(int index) async {
+    final queueState = ref.read(queueProvider);
+    if (index < 0 || index >= queueState.items.length) return;
+
+    ref.read(queueProvider.notifier).setCurrentIndex(index);
+    final item = queueState.items[index];
+    final albumTracks = queueState.items
+        .where((i) => i.album.id == item.album.id)
+        .map((i) => i.track)
+        .toList();
+
+    ref.read(nowPlayingProvider.notifier).set(
+          album: item.album,
+          tracks: albumTracks,
+        );
+    await _service.seekToIndex(albumTracks.indexOf(item.track));
   }
 
   /// Pauses playback.
