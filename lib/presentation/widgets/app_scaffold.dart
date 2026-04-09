@@ -6,6 +6,7 @@ import 'package:mymediascanner/app/theme/app_theme_extensions.dart';
 import 'package:mymediascanner/core/constants/app_constants.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
 import 'package:mymediascanner/presentation/widgets/desktop_shortcuts.dart';
+import 'package:mymediascanner/presentation/widgets/mini_player_bar.dart';
 import 'package:mymediascanner/presentation/widgets/sync_badge.dart';
 
 class AppScaffold extends StatelessWidget {
@@ -90,7 +91,14 @@ class AppScaffold extends StatelessWidget {
                 showRips: isDesktop,
                 isExpanded: width >= AppConstants.expandedBreakpoint,
               ),
-              Expanded(child: navigationShell),
+              Expanded(
+                child: Column(
+                  children: [
+                    Expanded(child: navigationShell),
+                    const MiniPlayerBar(),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -123,7 +131,12 @@ class AppScaffold extends StatelessWidget {
               isExpanded: true,
             ),
           ),
-          body: navigationShell,
+          body: Column(
+            children: [
+              Expanded(child: navigationShell),
+              const MiniPlayerBar(),
+            ],
+          ),
         ),
       );
     }
@@ -143,7 +156,12 @@ class AppScaffold extends StatelessWidget {
     return wrapWithShortcuts(
       Scaffold(
         extendBody: true,
-        body: navigationShell,
+        body: Column(
+          children: [
+            Expanded(child: navigationShell),
+            const MiniPlayerBar(),
+          ],
+        ),
         bottomNavigationBar: ClipRect(
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: glassBlur, sigmaY: glassBlur),
