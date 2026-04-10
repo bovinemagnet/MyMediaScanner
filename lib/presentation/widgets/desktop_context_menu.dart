@@ -33,36 +33,45 @@ class DesktopContextMenu extends StatelessWidget {
     }
 
     return GestureDetector(
-      onSecondaryTapUp: (details) => _showMenu(context, details.globalPosition),
+      onSecondaryTapUp: (details) =>
+          showDesktopContextMenu(context, details.globalPosition, actions),
       child: child,
     );
   }
+}
 
-  void _showMenu(BuildContext context, Offset position) {
-    final overlay =
-        Overlay.of(context).context.findRenderObject() as RenderBox?;
-    if (overlay == null) return;
+/// Shows a desktop right-click context menu at [position] with the given
+/// [actions]. Safe to call from any widget — it's a no-op if [actions] is
+/// empty or no overlay is available.
+void showDesktopContextMenu(
+  BuildContext context,
+  Offset position,
+  List<ContextMenuAction> actions,
+) {
+  if (actions.isEmpty) return;
+  final overlay =
+      Overlay.of(context).context.findRenderObject() as RenderBox?;
+  if (overlay == null) return;
 
-    showMenu<void>(
-      context: context,
-      position: RelativeRect.fromRect(
-        position & const Size(1, 1),
-        Offset.zero & overlay.size,
-      ),
-      items: actions
-          .map(
-            (action) => PopupMenuItem<void>(
-              onTap: action.onTap,
-              child: Row(
-                children: [
-                  Icon(action.icon, size: 18),
-                  const SizedBox(width: 12),
-                  Text(action.label),
-                ],
-              ),
+  showMenu<void>(
+    context: context,
+    position: RelativeRect.fromRect(
+      position & const Size(1, 1),
+      Offset.zero & overlay.size,
+    ),
+    items: actions
+        .map(
+          (action) => PopupMenuItem<void>(
+            onTap: action.onTap,
+            child: Row(
+              children: [
+                Icon(action.icon, size: 18),
+                const SizedBox(width: 12),
+                Text(action.label),
+              ],
             ),
-          )
-          .toList(),
-    );
-  }
+          ),
+        )
+        .toList(),
+  );
 }
