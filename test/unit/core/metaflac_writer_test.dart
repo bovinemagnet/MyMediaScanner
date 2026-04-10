@@ -3,57 +3,81 @@
 // Author: Paul Snow
 // Since: 0.0.0
 
+import 'dart:io';
+
+import 'package:dart_metaflac/dart_metaflac.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mymediascanner/core/utils/metaflac_writer.dart';
 
+const _fixturePath = 'test/fixtures/with_tags.flac';
+
 void main() {
-  group('deriveMetaflacPath', () {
-    test('returns metaflac when null', () {
-      expect(deriveMetaflacPath(null), equals('metaflac'));
-    });
-
-    test('returns metaflac when empty string', () {
-      expect(deriveMetaflacPath(''), equals('metaflac'));
-    });
-
-    test('derives from /usr/bin/flac', () {
-      expect(deriveMetaflacPath('/usr/bin/flac'), equals('/usr/bin/metaflac'));
-    });
-
-    test('derives from /opt/homebrew/bin/flac', () {
-      expect(
-        deriveMetaflacPath('/opt/homebrew/bin/flac'),
-        equals('/opt/homebrew/bin/metaflac'),
-      );
-    });
-  });
-
   group('MetaflacWriter', () {
-    test('binaryPath getter returns configured path', () {
-      const customPath = '/usr/local/bin/metaflac';
-      final writer = MetaflacWriter(binaryPath: customPath);
-      expect(writer.binaryPath, equals(customPath));
+    late Directory tempDir;
+    late String workingFile;
+
+    setUp(() async {
+      tempDir = await Directory.systemTemp.createTemp('metaflac_writer_test_');
+      workingFile = '${tempDir.path}/with_tags.flac';
+      await File(_fixturePath).copy(workingFile);
     });
 
-    test('isAvailable returns false for nonexistent binary', () async {
-      final writer = MetaflacWriter(binaryPath: '/nonexistent/metaflac');
-      expect(await writer.isAvailable(), isFalse);
+    tearDown(() async {
+      if (await tempDir.exists()) {
+        await tempDir.delete(recursive: true);
+      }
     });
 
-    test('setTags throws MetaflacWriteException for nonexistent binary',
-        () async {
-      final writer = MetaflacWriter(binaryPath: '/nonexistent/metaflac');
+    List<String> readTag(String key) {
+      final bytes = File(workingFile).readAsBytesSync();
+      final doc = FlacMetadataDocument.readFromBytes(bytes);
+      return doc.vorbisComment?.comments.valuesOf(key) ?? const [];
+    }
+
+    test('setTags writes and replaces a Vorbis comment', () async {
+      const writer = MetaflacWriter();
+
+      await writer.setTags(workingFile, {
+        'ARTIST': 'New Artist',
+        'ALBUM': 'New Album',
+      });
+
+      expect(readTag('ARTIST'), equals(['New Artist']));
+      expect(readTag('ALBUM'), equals(['New Album']));
+    });
+
+    test('setTags with empty map is a no-op', () async {
+      const writer = MetaflacWriter();
+      final before = File(workingFile).readAsBytesSync();
+
+      await writer.setTags(workingFile, {});
+
+      final after = File(workingFile).readAsBytesSync();
+      expect(after, equals(before));
+    });
+
+    test('removeTag drops the tag', () async {
+      const writer = MetaflacWriter();
+      expect(readTag('ARTIST'), isNotEmpty);
+
+      await writer.removeTag(workingFile, 'ARTIST');
+
+      expect(readTag('ARTIST'), isEmpty);
+    });
+
+    test('setTags throws MetaflacWriteException for a missing file', () async {
+      const writer = MetaflacWriter();
       expect(
-        () => writer.setTags('/tmp/test.flac', {'TITLE': 'Test'}),
+        () => writer.setTags('/nonexistent/path/file.flac', {'TITLE': 'x'}),
         throwsA(isA<MetaflacWriteException>()),
       );
     });
 
-    test('removeTag throws MetaflacWriteException for nonexistent binary',
+    test('removeTag throws MetaflacWriteException for a missing file',
         () async {
-      final writer = MetaflacWriter(binaryPath: '/nonexistent/metaflac');
+      const writer = MetaflacWriter();
       expect(
-        () => writer.removeTag('/tmp/test.flac', 'TITLE'),
+        () => writer.removeTag('/nonexistent/path/file.flac', 'TITLE'),
         throwsA(isA<MetaflacWriteException>()),
       );
     });

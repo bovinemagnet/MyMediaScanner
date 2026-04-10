@@ -334,12 +334,12 @@ class QualityAnalysisNotifier extends Notifier<QualityAnalysisState> {
 // Metadata editing providers
 // ---------------------------------------------------------------------------
 
-/// Provider for the MetaflacWriter instance, derived from the flac binary path.
-final metaflacWriterProvider = Provider<MetaflacWriter>((ref) {
-  final flacOverride = ref.watch(flacBinaryPathOverrideProvider).value;
-  return MetaflacWriter(
-      binaryPath: deriveMetaflacPath(flacOverride));
-});
+/// Provider for the [MetaflacWriter] instance.
+///
+/// Uses the pure-Dart `dart_metaflac` package, so no external binary is
+/// required.
+final metaflacWriterProvider =
+    Provider<MetaflacWriter>((ref) => const MetaflacWriter());
 
 /// State for rip metadata editing operations.
 enum RipMetadataEditStatus { idle, saving, saved, error }

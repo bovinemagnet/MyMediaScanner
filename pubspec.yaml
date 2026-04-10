@@ -68,6 +68,7 @@ dependencies:
   just_audio: ^0.9.43
   just_audio_media_kit: ^2.1.0
   ffi: ^2.2.0
+  dart_metaflac: ^0.0.1
 
 dev_dependencies:
   flutter_test:
