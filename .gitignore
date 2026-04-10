@@ -9,6 +9,7 @@ local-antora-playbook-search.yml
 # Miscellaneous
 *.class
 *.log
+*.pnm
 *.pyc
 *.swp
 .DS_Store
