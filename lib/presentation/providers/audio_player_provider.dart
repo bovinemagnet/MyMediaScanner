@@ -11,6 +11,8 @@ library;
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:dart_metaflac/dart_metaflac.dart';
+import 'package:dart_metaflac/io.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:mymediascanner/core/services/audio/audio_player_service.dart';
@@ -426,72 +428,21 @@ final albumCoverArtProvider =
   return null;
 });
 
-/// Extracts the first PICTURE block (type 6) from a FLAC file.
+/// Extracts embedded cover art from a FLAC file.
 ///
-/// Returns raw image bytes or null if no picture block is found.
+/// Prefers a PICTURE block marked as [PictureType.frontCover]; falls back
+/// to the first picture of any type. Returns `null` if the file cannot be
+/// read, is not a valid FLAC, or contains no pictures.
 Future<Uint8List?> _extractFlacPicture(String filePath) async {
   try {
-    final file = File(filePath);
-    if (!await file.exists()) return null;
-
-    final raf = await file.open(mode: FileMode.read);
-    try {
-      // Read FLAC magic bytes ('fLaC')
-      final magic = await raf.read(4);
-      if (magic.length < 4 || magic[0] != 0x66 || magic[1] != 0x4C ||
-          magic[2] != 0x61 || magic[3] != 0x43) {
-        return null;
-      }
-
-      var isLastBlock = false;
-      while (!isLastBlock) {
-        final header = await raf.read(4);
-        if (header.length < 4) break;
-
-        isLastBlock = (header[0] & 0x80) != 0;
-        final blockType = header[0] & 0x7F;
-        final blockLength =
-            (header[1] << 16) | (header[2] << 8) | header[3];
-
-        if (blockType == 6) {
-          // PICTURE block
-          final data = await raf.read(blockLength);
-          if (data.length < 32) return null;
-
-          // Parse PICTURE block structure:
-          // 4 bytes: picture type
-          var offset = 4;
-          // 4 bytes: MIME string length + MIME string
-          final mimeLen = (data[offset] << 24) | (data[offset + 1] << 16) |
-              (data[offset + 2] << 8) | data[offset + 3];
-          offset += 4 + mimeLen;
-
-          // 4 bytes: description length + description string
-          if (offset + 4 > data.length) return null;
-          final descLen = (data[offset] << 24) | (data[offset + 1] << 16) |
-              (data[offset + 2] << 8) | data[offset + 3];
-          offset += 4 + descLen;
-
-          // 16 bytes: width, height, colour depth, indexed colours
-          offset += 16;
-
-          // 4 bytes: picture data length
-          if (offset + 4 > data.length) return null;
-          final picLen = (data[offset] << 24) | (data[offset + 1] << 16) |
-              (data[offset + 2] << 8) | data[offset + 3];
-          offset += 4;
-
-          if (offset + picLen > data.length) return null;
-          return Uint8List.sublistView(
-            Uint8List.fromList(data), offset, offset + picLen,
-          );
-        } else {
-          await raf.setPosition(await raf.position() + blockLength);
-        }
-      }
-    } finally {
-      await raf.close();
-    }
-  } catch (_) {}
-  return null;
+    final doc = await FlacFileEditor.readFile(filePath);
+    if (doc.pictures.isEmpty) return null;
+    final front = doc.pictures.firstWhere(
+      (p) => p.pictureType == PictureType.frontCover,
+      orElse: () => doc.pictures.first,
+    );
+    return front.data;
+  } catch (_) {
+    return null;
+  }
 }
