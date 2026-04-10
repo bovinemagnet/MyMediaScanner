@@ -15,7 +15,7 @@
 **Files:**
 - Modify: `pubspec.yaml:67` (after `flutter_tesseract_ocr`)
 
-- [ ] **Step 1: Add just_audio to pubspec.yaml**
+- [x] **Step 1: Add just_audio to pubspec.yaml**
 
 In `pubspec.yaml`, after line 67 (`flutter_tesseract_ocr: ^0.4.30`), add:
 
@@ -23,12 +23,12 @@ In `pubspec.yaml`, after line 67 (`flutter_tesseract_ocr: ^0.4.30`), add:
   just_audio: ^0.9.43
 ```
 
-- [ ] **Step 2: Run pub get**
+- [x] **Step 2: Run pub get**
 
 Run: `flutter pub get`
 Expected: Dependencies resolve successfully, `just_audio` appears in `pubspec.lock`
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add pubspec.yaml pubspec.lock
@@ -43,7 +43,7 @@ git commit -m "deps: add just_audio for rip library playback"
 - Create: `lib/core/services/audio/audio_player_service.dart`
 - Create: `test/unit/core/services/audio/audio_player_service_test.dart`
 
-- [ ] **Step 1: Write failing tests for AudioPlayerService**
+- [x] **Step 1: Write failing tests for AudioPlayerService**
 
 Create `test/unit/core/services/audio/audio_player_service_test.dart`:
 
@@ -235,12 +235,12 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `flutter test test/unit/core/services/audio/audio_player_service_test.dart`
 Expected: FAIL — `audio_player_service.dart` does not exist yet
 
-- [ ] **Step 3: Implement AudioPlayerService**
+- [x] **Step 3: Implement AudioPlayerService**
 
 Create `lib/core/services/audio/audio_player_service.dart`:
 
@@ -327,12 +327,12 @@ class AudioPlayerService {
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `flutter test test/unit/core/services/audio/audio_player_service_test.dart`
 Expected: All tests PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/core/services/audio/audio_player_service.dart test/unit/core/services/audio/audio_player_service_test.dart
@@ -347,7 +347,7 @@ git commit -m "feat: add AudioPlayerService wrapping just_audio for album playba
 - Create: `lib/presentation/providers/audio_player_provider.dart`
 - Create: `test/unit/presentation/providers/audio_player_provider_test.dart`
 
-- [ ] **Step 1: Write failing tests for providers**
+- [x] **Step 1: Write failing tests for providers**
 
 Create `test/unit/presentation/providers/audio_player_provider_test.dart`:
 
@@ -502,12 +502,12 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `flutter test test/unit/presentation/providers/audio_player_provider_test.dart`
 Expected: FAIL — `audio_player_provider.dart` does not exist yet
 
-- [ ] **Step 3: Implement audio playback providers**
+- [x] **Step 3: Implement audio playback providers**
 
 Create `lib/presentation/providers/audio_player_provider.dart`:
 
@@ -621,12 +621,12 @@ final playbackActionProvider =
         () => PlaybackActionNotifier());
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `flutter test test/unit/presentation/providers/audio_player_provider_test.dart`
 Expected: All tests PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/presentation/providers/audio_player_provider.dart test/unit/presentation/providers/audio_player_provider_test.dart
@@ -641,7 +641,7 @@ git commit -m "feat: add Riverpod providers for audio playback state"
 - Create: `lib/presentation/widgets/mini_player_bar.dart`
 - Create: `test/widget/presentation/widgets/mini_player_bar_test.dart`
 
-- [ ] **Step 1: Write failing widget tests**
+- [x] **Step 1: Write failing widget tests**
 
 Create `test/widget/presentation/widgets/mini_player_bar_test.dart`:
 
@@ -830,12 +830,12 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `flutter test test/widget/presentation/widgets/mini_player_bar_test.dart`
 Expected: FAIL — `mini_player_bar.dart` does not exist yet
 
-- [ ] **Step 3: Implement MiniPlayerBar widget**
+- [x] **Step 3: Implement MiniPlayerBar widget**
 
 Create `lib/presentation/widgets/mini_player_bar.dart`:
 
@@ -961,12 +961,12 @@ class MiniPlayerBar extends ConsumerWidget {
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `flutter test test/widget/presentation/widgets/mini_player_bar_test.dart`
 Expected: All tests PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/presentation/widgets/mini_player_bar.dart test/widget/presentation/widgets/mini_player_bar_test.dart
@@ -980,7 +980,7 @@ git commit -m "feat: add persistent mini player bar widget"
 **Files:**
 - Modify: `lib/presentation/widgets/app_scaffold.dart`
 
-- [ ] **Step 1: Convert AppScaffold to ConsumerWidget and add mini player**
+- [x] **Step 1: Convert AppScaffold to ConsumerWidget and add mini player**
 
 In `lib/presentation/widgets/app_scaffold.dart`:
 
@@ -1039,12 +1039,12 @@ body: Column(
 ),
 ```
 
-- [ ] **Step 2: Run existing tests to verify no regressions**
+- [x] **Step 2: Run existing tests to verify no regressions**
 
 Run: `flutter test`
 Expected: All existing tests pass (the scaffold isn't directly widget-tested, but ensure no compilation errors)
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add lib/presentation/widgets/app_scaffold.dart
@@ -1058,7 +1058,7 @@ git commit -m "feat: integrate mini player bar into app scaffold"
 **Files:**
 - Modify: `lib/presentation/screens/rips/widgets/rip_album_detail_dialog.dart`
 
-- [ ] **Step 1: Add imports to detail dialog**
+- [x] **Step 1: Add imports to detail dialog**
 
 At the top of `rip_album_detail_dialog.dart`, add after line 11 (`quality_widgets.dart` import):
 
@@ -1067,7 +1067,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:mymediascanner/presentation/providers/audio_player_provider.dart';
 ```
 
-- [ ] **Step 2: Add "Play All" button to dialog header**
+- [x] **Step 2: Add "Play All" button to dialog header**
 
 In the header `Row` (around line 183), after the existing edit/close buttons block (line 257), add a play button. Replace the `else` block at line 247-257:
 
@@ -1086,7 +1086,7 @@ In the header `Row` (around line 183), after the existing edit/close buttons blo
                   ],
 ```
 
-- [ ] **Step 3: Add inline player controls section**
+- [x] **Step 3: Add inline player controls section**
 
 After the quality analysis section (after line 292 `const SizedBox(height: 12),`), before the "TRACKS" header, insert:
 
@@ -1095,7 +1095,7 @@ After the quality analysis section (after line 292 `const SizedBox(height: 12),`
               _InlinePlayerControls(album: widget.album),
 ```
 
-- [ ] **Step 4: Add play button to each track tile**
+- [x] **Step 4: Add play button to each track tile**
 
 Modify `_TrackTile` (line 467-529) to add a tap-to-play action and a play icon for the current track. Replace the `_TrackTile` class entirely:
 
@@ -1192,7 +1192,7 @@ class _TrackTile extends ConsumerWidget {
 }
 ```
 
-- [ ] **Step 5: Add helper widgets at end of file**
+- [x] **Step 5: Add helper widgets at end of file**
 
 Add these private widgets at the end of `rip_album_detail_dialog.dart` (before final closing):
 
@@ -1344,12 +1344,12 @@ class _InlinePlayerControls extends ConsumerWidget {
 }
 ```
 
-- [ ] **Step 6: Run tests to verify no regressions**
+- [x] **Step 6: Run tests to verify no regressions**
 
 Run: `flutter test`
 Expected: All existing tests pass
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add lib/presentation/screens/rips/widgets/rip_album_detail_dialog.dart
@@ -1364,7 +1364,7 @@ git commit -m "feat: add play controls and track highlighting to rip detail dial
 - Modify: `lib/presentation/screens/rips/widgets/rip_library_view.dart`
 - Modify: `lib/presentation/screens/rips/widgets/rip_table_view.dart`
 
-- [ ] **Step 1: Add now-playing highlight to album grid cards**
+- [x] **Step 1: Add now-playing highlight to album grid cards**
 
 In `rip_library_view.dart`, add import at top:
 
@@ -1395,7 +1395,7 @@ Then modify the card decoration to include a border when playing:
 
 Also add a small playing icon indicator (e.g. `Icons.volume_up`) to the card when playing.
 
-- [ ] **Step 2: Add now-playing highlight to table rows**
+- [x] **Step 2: Add now-playing highlight to table rows**
 
 In `rip_table_view.dart`, add import at top:
 
@@ -1419,12 +1419,12 @@ In the row building section (around line 143), add a colour to the row when play
         : null,
 ```
 
-- [ ] **Step 3: Run tests to verify no regressions**
+- [x] **Step 3: Run tests to verify no regressions**
 
 Run: `flutter test`
 Expected: All existing tests pass
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add lib/presentation/screens/rips/widgets/rip_library_view.dart lib/presentation/screens/rips/widgets/rip_table_view.dart
@@ -1438,11 +1438,11 @@ git commit -m "feat: highlight now-playing album in rip library and table views"
 **Files:**
 - Modify: `lib/presentation/widgets/desktop_shortcuts.dart`
 
-- [ ] **Step 1: Check existing desktop_shortcuts.dart structure**
+- [x] **Step 1: Check existing desktop_shortcuts.dart structure**
 
 Read `lib/presentation/widgets/desktop_shortcuts.dart` to understand current keyboard shortcut registration.
 
-- [ ] **Step 2: Add playback keyboard shortcuts**
+- [x] **Step 2: Add playback keyboard shortcuts**
 
 Add imports for audio player providers:
 
@@ -1459,12 +1459,12 @@ The implementation depends on the existing structure of `desktop_shortcuts.dart`
 
 Note: `Space` conflicts with text input. Only handle it when a `nowPlayingProvider.album` is non-null AND no text field has focus. Use `FocusNode` or check `FocusManager.instance.primaryFocus` type.
 
-- [ ] **Step 3: Run tests to verify no regressions**
+- [x] **Step 3: Run tests to verify no regressions**
 
 Run: `flutter test`
 Expected: All existing tests pass
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add lib/presentation/widgets/desktop_shortcuts.dart
@@ -1479,7 +1479,7 @@ git commit -m "feat: add keyboard shortcuts for playback controls"
 - Modify: `lib/core/services/audio/audio_player_service.dart`
 - Modify: `lib/presentation/providers/audio_player_provider.dart`
 
-- [ ] **Step 1: Write failing test for error handling**
+- [x] **Step 1: Write failing test for error handling**
 
 Add to `test/unit/core/services/audio/audio_player_service_test.dart`:
 
@@ -1494,7 +1494,7 @@ Add to `test/unit/core/services/audio/audio_player_service_test.dart`:
     });
 ```
 
-- [ ] **Step 2: Add playbackEventStream getter to AudioPlayerService**
+- [x] **Step 2: Add playbackEventStream getter to AudioPlayerService**
 
 In `audio_player_service.dart`, add:
 
@@ -1503,7 +1503,7 @@ In `audio_player_service.dart`, add:
       _player.playbackEventStream;
 ```
 
-- [ ] **Step 3: Add error handling in PlaybackActionNotifier**
+- [x] **Step 3: Add error handling in PlaybackActionNotifier**
 
 In `audio_player_provider.dart`, modify `PlaybackActionNotifier.playAlbum` to handle errors by listening for `ProcessingState.completed` in the sequence state and auto-advancing or showing a snackbar. The `just_audio` library handles missing files by emitting errors on the player state stream. Add a `StreamSubscription` in the service that listens for errors:
 
@@ -1519,12 +1519,12 @@ In `audio_player_provider.dart`, modify `PlaybackActionNotifier.playAlbum` to ha
 
 The primary error handling is that `just_audio` will throw on `setAudioSource` for individual bad files. Since we use `ConcatenatingAudioSource`, individual track failures will skip to the next track automatically.
 
-- [ ] **Step 4: Run all tests**
+- [x] **Step 4: Run all tests**
 
 Run: `flutter test`
 Expected: All tests pass
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/core/services/audio/audio_player_service.dart lib/presentation/providers/audio_player_provider.dart test/unit/core/services/audio/audio_player_service_test.dart
@@ -1538,22 +1538,22 @@ git commit -m "feat: add error stream and skip-on-failure for playback"
 **Files:**
 - All modified files
 
-- [ ] **Step 1: Run full test suite**
+- [x] **Step 1: Run full test suite**
 
 Run: `flutter test`
 Expected: All tests pass (existing + new)
 
-- [ ] **Step 2: Run flutter analyze**
+- [x] **Step 2: Run flutter analyze**
 
 Run: `flutter analyze`
 Expected: No analysis issues
 
-- [ ] **Step 3: Verify the app builds**
+- [x] **Step 3: Verify the app builds**
 
 Run: `flutter build linux --debug` (or appropriate desktop platform)
 Expected: Build succeeds
 
-- [ ] **Step 4: Manual smoke test**
+- [x] **Step 4: Manual smoke test**
 
 Run: `flutter run -d linux`
 - Navigate to Rips screen
@@ -1567,7 +1567,7 @@ Run: `flutter run -d linux`
 - Close mini player — verify playback stops
 - Test keyboard shortcuts (Ctrl+Left/Right, Space when no text field focused)
 
-- [ ] **Step 5: Commit any fixes from smoke test**
+- [x] **Step 5: Commit any fixes from smoke test**
 
 ```bash
 git add -A

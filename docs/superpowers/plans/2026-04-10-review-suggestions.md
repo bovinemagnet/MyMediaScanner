@@ -15,11 +15,11 @@
 **Files:**
 - Modify: `lib/presentation/screens/rips/widgets/rip_album_detail_dialog.dart` (add popup menu to track tiles)
 
-- [ ] **Step 1: Read the current track tile implementation**
+- [x] **Step 1: Read the current track tile implementation**
 
 Read `lib/presentation/screens/rips/widgets/rip_album_detail_dialog.dart` to understand the `_TrackTile` widget structure, particularly the `trailing` Row around line 554 and the `onTap` handler.
 
-- [ ] **Step 2: Add a PopupMenuButton to each track tile**
+- [x] **Step 2: Add a PopupMenuButton to each track tile**
 
 In the `_TrackTile` widget's `trailing` Row, add a `PopupMenuButton` with three entries before the expand/collapse button:
 
@@ -58,7 +58,7 @@ PopupMenuButton<String>(
 
 The `_TrackTile` needs access to the `RipAlbum album` — pass it through the constructor if not already available.
 
-- [ ] **Step 3: Add the "Add to Playlist" dialog helper**
+- [x] **Step 3: Add the "Add to Playlist" dialog helper**
 
 Add a top-level helper function (or method on the dialog state) that shows a dialog listing all playlists from `allPlaylistsProvider`:
 
@@ -93,7 +93,7 @@ void _showAddToPlaylistDialog(BuildContext context, WidgetRef ref, String trackI
 }
 ```
 
-- [ ] **Step 4: Add imports**
+- [x] **Step 4: Add imports**
 
 Add these imports to `rip_album_detail_dialog.dart`:
 ```dart
@@ -102,12 +102,12 @@ import 'package:mymediascanner/presentation/providers/queue_provider.dart';
 import 'package:mymediascanner/presentation/providers/playlist_provider.dart';
 ```
 
-- [ ] **Step 5: Verify**
+- [x] **Step 5: Verify**
 
 Run: `flutter analyze`
 Expected: No errors.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add lib/presentation/screens/rips/widgets/rip_album_detail_dialog.dart
@@ -123,7 +123,7 @@ git commit -m "feat: add Play Next, Add to Queue, and Add to Playlist track acti
 - Modify: `lib/presentation/screens/rips/widgets/rip_library_view.dart` (add button)
 - Test: `test/unit/data/dao/rip_library_dao_test.dart` (test new query)
 
-- [ ] **Step 1: Add DAO method to find un-analysed album IDs**
+- [x] **Step 1: Add DAO method to find un-analysed album IDs**
 
 In `lib/data/local/dao/rip_library_dao.dart`, add a method that returns album IDs where at least one track has no `qualityCheckedAt`:
 
@@ -141,11 +141,11 @@ Future<List<String>> getUnanalysedAlbumIds() async {
 }
 ```
 
-- [ ] **Step 2: Run build_runner**
+- [x] **Step 2: Run build_runner**
 
 Run: `dart run build_runner build --delete-conflicting-outputs`
 
-- [ ] **Step 3: Write test for the new DAO method**
+- [x] **Step 3: Write test for the new DAO method**
 
 Add a test to `test/unit/data/dao/rip_library_dao_test.dart`:
 
@@ -159,12 +159,12 @@ test('getUnanalysedAlbumIds returns albums with unchecked tracks', () async {
 
 Read the existing test file to follow the setup pattern (in-memory DB, seed albums and tracks).
 
-- [ ] **Step 4: Run test**
+- [x] **Step 4: Run test**
 
 Run: `flutter test test/unit/data/dao/rip_library_dao_test.dart`
 Expected: PASS.
 
-- [ ] **Step 5: Add "Analyse All" button to library view toolbar**
+- [x] **Step 5: Add "Analyse All" button to library view toolbar**
 
 In `lib/presentation/screens/rips/widgets/rip_library_view.dart`, in the toolbar area (after the "Scan Library" button, before the view mode toggle), add:
 
@@ -192,12 +192,12 @@ FilledButton.tonal(
 
 This button should be visible when NOT in selection mode. Add the necessary imports and watch `batchAnalysisProvider` for the `batchState`.
 
-- [ ] **Step 6: Verify**
+- [x] **Step 6: Verify**
 
 Run: `flutter analyze`
 Expected: No errors.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add lib/data/local/dao/rip_library_dao.dart \
@@ -216,7 +216,7 @@ git commit -m "feat: add Analyse All button for un-analysed albums"
 - Modify: `lib/presentation/providers/batch_analysis_provider.dart` (BatchAnalysisState → @freezed)
 - Modify: `lib/presentation/providers/batch_metadata_edit_provider.dart` (BatchMetadataEditState → @freezed)
 
-- [ ] **Step 1: Convert QueueState to Freezed**
+- [x] **Step 1: Convert QueueState to Freezed**
 
 In `lib/presentation/providers/queue_provider.dart`:
 
@@ -237,7 +237,7 @@ sealed class QueueState with _$QueueState {
 
 4. Remove the manual `copyWith` method.
 
-- [ ] **Step 2: Convert BatchAnalysisState to Freezed**
+- [x] **Step 2: Convert BatchAnalysisState to Freezed**
 
 In `lib/presentation/providers/batch_analysis_provider.dart`:
 
@@ -254,7 +254,7 @@ sealed class BatchAnalysisState with _$BatchAnalysisState {
 }
 ```
 
-- [ ] **Step 3: Convert BatchMetadataEditState to Freezed**
+- [x] **Step 3: Convert BatchMetadataEditState to Freezed**
 
 In `lib/presentation/providers/batch_metadata_edit_provider.dart`:
 
@@ -275,17 +275,17 @@ sealed class BatchMetadataEditState with _$BatchMetadataEditState {
 }
 ```
 
-- [ ] **Step 4: Run build_runner**
+- [x] **Step 4: Run build_runner**
 
 Run: `dart run build_runner build --delete-conflicting-outputs`
 Expected: Generates `.freezed.dart` files for all three.
 
-- [ ] **Step 5: Run all tests**
+- [x] **Step 5: Run all tests**
 
 Run: `flutter test`
 Expected: All tests pass — Freezed's generated `copyWith` is API-compatible with the manual one.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add lib/presentation/providers/queue_provider.dart \
@@ -304,11 +304,11 @@ git commit -m "refactor: convert state classes to Freezed for consistency"
 **Files:**
 - Modify: `test/unit/presentation/providers/collection_rip_status_provider_test.dart`
 
-- [ ] **Step 1: Read current tests and provider logic**
+- [x] **Step 1: Read current tests and provider logic**
 
 Read `test/unit/presentation/providers/collection_rip_status_provider_test.dart` and `lib/presentation/providers/collection_rip_status_provider.dart` to understand what's tested vs what needs testing.
 
-- [ ] **Step 2: Add functional tests**
+- [x] **Step 2: Add functional tests**
 
 Expand the test file with these test groups:
 
@@ -358,12 +358,12 @@ group('CollectionRipStats', () {
 
 The `RipStatusFilterNotifier` tests need a `ProviderContainer` — follow the pattern from the queue provider tests. The `CollectionRipStats` tests are pure unit tests on the data class.
 
-- [ ] **Step 3: Run tests**
+- [x] **Step 3: Run tests**
 
 Run: `flutter test test/unit/presentation/providers/collection_rip_status_provider_test.dart`
 Expected: All tests PASS.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add test/unit/presentation/providers/collection_rip_status_provider_test.dart
@@ -379,7 +379,7 @@ git commit -m "test: add functional tests for rip status filter and stats"
 - Modify: `lib/presentation/providers/playlist_provider.dart` (use new DAO method)
 - Test: `test/unit/data/dao/playlist_dao_test.dart` (test transactional reorder)
 
-- [ ] **Step 1: Add transactional reorder method to PlaylistDao**
+- [x] **Step 1: Add transactional reorder method to PlaylistDao**
 
 In `lib/data/local/dao/playlist_dao.dart`, add:
 
@@ -399,7 +399,7 @@ Future<void> reorderTracks(
 }
 ```
 
-- [ ] **Step 2: Update PlaylistCrudNotifier to use the new method**
+- [x] **Step 2: Update PlaylistCrudNotifier to use the new method**
 
 In `lib/presentation/providers/playlist_provider.dart`, modify `reorderPlaylistTracks()` to call the new DAO method instead of calling `clearPlaylistTracks()` + `insertPlaylistTracks()` separately:
 
@@ -427,7 +427,7 @@ Future<void> reorderPlaylistTracks(
 }
 ```
 
-- [ ] **Step 3: Add test for transactional reorder**
+- [x] **Step 3: Add test for transactional reorder**
 
 Add to `test/unit/data/dao/playlist_dao_test.dart`:
 
@@ -440,13 +440,13 @@ test('reorderTracks atomically clears and re-inserts', () async {
 });
 ```
 
-- [ ] **Step 4: Run build_runner and tests**
+- [x] **Step 4: Run build_runner and tests**
 
 Run: `dart run build_runner build --delete-conflicting-outputs`
 Run: `flutter test test/unit/data/dao/playlist_dao_test.dart`
 Expected: All tests PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/data/local/dao/playlist_dao.dart \
@@ -462,6 +462,6 @@ git commit -m "fix: wrap playlist reorder in Drift transaction for atomicity"
 
 After all 5 tasks:
 
-- [ ] `flutter analyze` — no errors
-- [ ] `flutter test` — all tests pass
-- [ ] `dart run build_runner build --delete-conflicting-outputs` — no generation errors
+- [x] `flutter analyze` — no errors
+- [x] `flutter test` — all tests pass
+- [x] `dart run build_runner build --delete-conflicting-outputs` — no generation errors

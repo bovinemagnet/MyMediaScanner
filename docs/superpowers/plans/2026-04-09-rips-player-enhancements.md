@@ -18,7 +18,7 @@
 - Modify: `lib/data/local/database/app_database.dart` (schema v10, register tables, migration)
 - Test: `test/unit/data/dao/playlist_dao_test.dart` (created in Task 3, but migration tested here)
 
-- [ ] **Step 1: Create playlists table definition**
+- [x] **Step 1: Create playlists table definition**
 
 Create `lib/data/local/database/tables/playlists_table.dart`:
 
@@ -42,7 +42,7 @@ class PlaylistsTable extends Table {
 }
 ```
 
-- [ ] **Step 2: Create playlist_tracks table definition**
+- [x] **Step 2: Create playlist_tracks table definition**
 
 Create `lib/data/local/database/tables/playlist_tracks_table.dart`:
 
@@ -68,7 +68,7 @@ class PlaylistTracksTable extends Table {
 }
 ```
 
-- [ ] **Step 3: Register tables in AppDatabase and add migration**
+- [x] **Step 3: Register tables in AppDatabase and add migration**
 
 Modify `lib/data/local/database/app_database.dart`:
 
@@ -84,19 +84,19 @@ if (from < 10) {
 }
 ```
 
-- [ ] **Step 4: Run build_runner to generate Drift code**
+- [x] **Step 4: Run build_runner to generate Drift code**
 
 Run: `dart run build_runner build --delete-conflicting-outputs`
 
 Expected: Successful code generation with no errors. New generated files for the tables.
 
-- [ ] **Step 5: Verify app compiles**
+- [x] **Step 5: Verify app compiles**
 
 Run: `flutter analyze`
 
 Expected: No analysis errors related to the new tables.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add lib/data/local/database/tables/playlists_table.dart \
@@ -115,7 +115,7 @@ git commit -m "feat: add playlists and playlist_tracks tables (schema v10)"
 - Create: `lib/domain/entities/playlist_track.dart`
 - Create: `lib/domain/entities/queue_item.dart`
 
-- [ ] **Step 1: Create Playlist entity**
+- [x] **Step 1: Create Playlist entity**
 
 Create `lib/domain/entities/playlist.dart`:
 
@@ -138,7 +138,7 @@ sealed class Playlist with _$Playlist {
 }
 ```
 
-- [ ] **Step 2: Create PlaylistTrack entity**
+- [x] **Step 2: Create PlaylistTrack entity**
 
 Create `lib/domain/entities/playlist_track.dart`:
 
@@ -159,7 +159,7 @@ sealed class PlaylistTrack with _$PlaylistTrack {
 }
 ```
 
-- [ ] **Step 3: Create QueueItem entity**
+- [x] **Step 3: Create QueueItem entity**
 
 Create `lib/domain/entities/queue_item.dart`:
 
@@ -182,13 +182,13 @@ sealed class QueueItem with _$QueueItem {
 }
 ```
 
-- [ ] **Step 4: Run build_runner**
+- [x] **Step 4: Run build_runner**
 
 Run: `dart run build_runner build --delete-conflicting-outputs`
 
 Expected: Generates `.freezed.dart` files for all three entities.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/domain/entities/playlist.dart \
@@ -209,7 +209,7 @@ git commit -m "feat: add Playlist, PlaylistTrack, and QueueItem entities"
 - Modify: `lib/data/local/database/app_database.dart` (register DAO)
 - Test: `test/unit/data/dao/playlist_dao_test.dart`
 
-- [ ] **Step 1: Write failing tests for PlaylistDao**
+- [x] **Step 1: Write failing tests for PlaylistDao**
 
 Create `test/unit/data/dao/playlist_dao_test.dart`:
 
@@ -413,13 +413,13 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `flutter test test/unit/data/dao/playlist_dao_test.dart`
 
 Expected: FAIL — `PlaylistDao` class doesn't exist yet.
 
-- [ ] **Step 3: Implement PlaylistDao**
+- [x] **Step 3: Implement PlaylistDao**
 
 Create `lib/data/local/dao/playlist_dao.dart`:
 
@@ -507,23 +507,23 @@ class PlaylistDao extends DatabaseAccessor<AppDatabase>
 }
 ```
 
-- [ ] **Step 4: Register PlaylistDao in AppDatabase**
+- [x] **Step 4: Register PlaylistDao in AppDatabase**
 
 Modify `lib/data/local/database/app_database.dart`:
 
 Add `PlaylistDao` import and add it to the `daos: [...]` list in `@DriftDatabase`.
 
-- [ ] **Step 5: Run build_runner**
+- [x] **Step 5: Run build_runner**
 
 Run: `dart run build_runner build --delete-conflicting-outputs`
 
-- [ ] **Step 6: Run tests to verify they pass**
+- [x] **Step 6: Run tests to verify they pass**
 
 Run: `flutter test test/unit/data/dao/playlist_dao_test.dart`
 
 Expected: All 5 tests PASS.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add lib/data/local/dao/playlist_dao.dart \
@@ -543,7 +543,7 @@ git commit -m "feat: add PlaylistDao with CRUD and track management"
 - Modify: `lib/presentation/providers/audio_player_provider.dart` (integrate queue with playback)
 - Test: `test/unit/presentation/providers/queue_provider_test.dart`
 
-- [ ] **Step 1: Write failing tests for QueueNotifier**
+- [x] **Step 1: Write failing tests for QueueNotifier**
 
 Create `test/unit/presentation/providers/queue_provider_test.dart`:
 
@@ -774,13 +774,13 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `flutter test test/unit/presentation/providers/queue_provider_test.dart`
 
 Expected: FAIL — `queueProvider` doesn't exist.
 
-- [ ] **Step 3: Implement QueueNotifier**
+- [x] **Step 3: Implement QueueNotifier**
 
 Create `lib/presentation/providers/queue_provider.dart`:
 
@@ -925,13 +925,13 @@ final queueVisibleProvider =
     NotifierProvider<QueueVisibleNotifier, bool>(() => QueueVisibleNotifier());
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `flutter test test/unit/presentation/providers/queue_provider_test.dart`
 
 Expected: All 9 tests PASS.
 
-- [ ] **Step 5: Integrate queue with PlaybackActionNotifier**
+- [x] **Step 5: Integrate queue with PlaybackActionNotifier**
 
 Modify `lib/presentation/providers/audio_player_provider.dart`:
 
@@ -956,13 +956,13 @@ Future<void> playFromQueue(int index) async {
 
 3. Listen for track completion in the service's `playbackEventStream` and call `queueProvider.notifier.advanceToNext()` when a track ends naturally. This can be done by adding a listener setup method or integrating with existing stream handling.
 
-- [ ] **Step 6: Run all audio player tests**
+- [x] **Step 6: Run all audio player tests**
 
 Run: `flutter test test/unit/presentation/providers/audio_player_provider_test.dart test/unit/presentation/providers/queue_provider_test.dart`
 
 Expected: All tests PASS.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add lib/presentation/providers/queue_provider.dart \
@@ -980,7 +980,7 @@ git commit -m "feat: add play queue with history, play-next, and reorder"
 - Modify: `lib/presentation/screens/rips/widgets/rip_library_view.dart` (overlay queue panel)
 - Modify: `lib/presentation/screens/rips/widgets/playback_widgets.dart` (add queue toggle button)
 
-- [ ] **Step 1: Create QueuePanel widget**
+- [x] **Step 1: Create QueuePanel widget**
 
 Create `lib/presentation/screens/rips/widgets/queue_panel.dart`:
 
@@ -1252,7 +1252,7 @@ class _QueueTrackTile extends StatelessWidget {
 }
 ```
 
-- [ ] **Step 2: Add queue toggle button to InlinePlayerControls**
+- [x] **Step 2: Add queue toggle button to InlinePlayerControls**
 
 Modify `lib/presentation/screens/rips/widgets/playback_widgets.dart`:
 
@@ -1273,7 +1273,7 @@ IconButton(
 ),
 ```
 
-- [ ] **Step 3: Overlay queue panel in the library view**
+- [x] **Step 3: Overlay queue panel in the library view**
 
 Modify `lib/presentation/screens/rips/widgets/rip_library_view.dart`:
 
@@ -1295,13 +1295,13 @@ return Row(
 );
 ```
 
-- [ ] **Step 4: Verify UI compiles**
+- [x] **Step 4: Verify UI compiles**
 
 Run: `flutter analyze`
 
 Expected: No analysis errors.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/presentation/screens/rips/widgets/queue_panel.dart \
@@ -1319,7 +1319,7 @@ git commit -m "feat: add queue panel UI with drag-reorder and history"
 - Modify: `lib/data/local/dao/playlist_dao.dart` (add mapper helpers if needed)
 - Test: `test/unit/presentation/providers/playlist_provider_test.dart`
 
-- [ ] **Step 1: Write failing tests for playlist providers**
+- [x] **Step 1: Write failing tests for playlist providers**
 
 Create `test/unit/presentation/providers/playlist_provider_test.dart`:
 
@@ -1393,13 +1393,13 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `flutter test test/unit/presentation/providers/playlist_provider_test.dart`
 
 Expected: FAIL — providers don't exist.
 
-- [ ] **Step 3: Implement playlist providers**
+- [x] **Step 3: Implement playlist providers**
 
 Create `lib/presentation/providers/playlist_provider.dart`:
 
@@ -1549,13 +1549,13 @@ final playlistCrudProvider =
         () => PlaylistCrudNotifier());
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `flutter test test/unit/presentation/providers/playlist_provider_test.dart`
 
 Expected: All 3 tests PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/presentation/providers/playlist_provider.dart \
@@ -1573,7 +1573,7 @@ git commit -m "feat: add playlist CRUD providers with DAO integration"
 - Modify: `lib/presentation/screens/rips/rips_screen.dart` (add Playlists segment)
 - Modify: `lib/presentation/screens/rips/widgets/queue_panel.dart` (connect Save as Playlist)
 
-- [ ] **Step 1: Add Playlists segment to rips screen**
+- [x] **Step 1: Add Playlists segment to rips screen**
 
 Modify `lib/presentation/screens/rips/rips_screen.dart`:
 
@@ -1599,7 +1599,7 @@ Expanded(
 ),
 ```
 
-- [ ] **Step 2: Create PlaylistView widget**
+- [x] **Step 2: Create PlaylistView widget**
 
 Create `lib/presentation/screens/rips/widgets/playlist_view.dart`:
 
@@ -1827,7 +1827,7 @@ class _PlaylistCard extends ConsumerWidget {
 }
 ```
 
-- [ ] **Step 3: Create PlaylistDetail widget**
+- [x] **Step 3: Create PlaylistDetail widget**
 
 Create `lib/presentation/screens/rips/widgets/playlist_detail.dart`:
 
@@ -2069,7 +2069,7 @@ class _PlaylistTrackTile extends ConsumerWidget {
 }
 ```
 
-- [ ] **Step 4: Connect "Save as Playlist" in queue panel**
+- [x] **Step 4: Connect "Save as Playlist" in queue panel**
 
 Modify `lib/presentation/screens/rips/widgets/queue_panel.dart`:
 
@@ -2123,13 +2123,13 @@ void _saveAsPlaylist(BuildContext context, WidgetRef ref) {
 }
 ```
 
-- [ ] **Step 5: Verify compilation**
+- [x] **Step 5: Verify compilation**
 
 Run: `flutter analyze`
 
 Expected: No analysis errors.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add lib/presentation/screens/rips/widgets/playlist_view.dart \
@@ -2151,7 +2151,7 @@ git commit -m "feat: add playlists tab with grid view, detail panel, and save-fr
 - Test: `test/unit/core/services/audio/replay_gain_service_test.dart`
 - Test: `test/unit/presentation/providers/replay_gain_provider_test.dart`
 
-- [ ] **Step 1: Write failing tests for ReplayGainService**
+- [x] **Step 1: Write failing tests for ReplayGainService**
 
 Create `test/unit/core/services/audio/replay_gain_service_test.dart`:
 
@@ -2296,13 +2296,13 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `flutter test test/unit/core/services/audio/replay_gain_service_test.dart`
 
 Expected: FAIL — class doesn't exist.
 
-- [ ] **Step 3: Implement ReplayGainService**
+- [x] **Step 3: Implement ReplayGainService**
 
 Create `lib/core/services/audio/replay_gain_service.dart`:
 
@@ -2382,13 +2382,13 @@ class ReplayGainService {
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `flutter test test/unit/core/services/audio/replay_gain_service_test.dart`
 
 Expected: All 9 tests PASS.
 
-- [ ] **Step 5: Write ReplayGain provider tests**
+- [x] **Step 5: Write ReplayGain provider tests**
 
 Create `test/unit/presentation/providers/replay_gain_provider_test.dart`:
 
@@ -2454,7 +2454,7 @@ void main() {
 }
 ```
 
-- [ ] **Step 6: Implement ReplayGain providers**
+- [x] **Step 6: Implement ReplayGain providers**
 
 Create `lib/presentation/providers/replay_gain_provider.dart`:
 
@@ -2563,13 +2563,13 @@ final replayGainServiceProvider = Provider<ReplayGainService>((ref) {
 });
 ```
 
-- [ ] **Step 7: Run provider tests**
+- [x] **Step 7: Run provider tests**
 
 Run: `flutter test test/unit/presentation/providers/replay_gain_provider_test.dart`
 
 Expected: All 5 tests PASS.
 
-- [ ] **Step 8: Integrate ReplayGain into PlaybackActionNotifier**
+- [x] **Step 8: Integrate ReplayGain into PlaybackActionNotifier**
 
 Modify `lib/presentation/providers/audio_player_provider.dart`:
 
@@ -2612,7 +2612,7 @@ Future<double> _calculateEffectiveVolume(double userVolume) async {
 
 Also add a method to recalculate volume on track change, and call it when the current track index changes.
 
-- [ ] **Step 9: Add Playback section to Settings screen**
+- [x] **Step 9: Add Playback section to Settings screen**
 
 Modify `lib/presentation/screens/settings/settings_screen.dart`:
 
@@ -2672,13 +2672,13 @@ _SectionCard(
 const SizedBox(height: 16),
 ```
 
-- [ ] **Step 10: Run all related tests**
+- [x] **Step 10: Run all related tests**
 
 Run: `flutter test test/unit/core/services/audio/replay_gain_service_test.dart test/unit/presentation/providers/replay_gain_provider_test.dart`
 
 Expected: All tests PASS.
 
-- [ ] **Step 11: Commit**
+- [x] **Step 11: Commit**
 
 ```bash
 git add lib/core/services/audio/replay_gain_service.dart \
@@ -2702,7 +2702,7 @@ git commit -m "feat: add ReplayGain volume normalisation with settings UI"
 - Modify: `lib/presentation/screens/rips/widgets/playback_widgets.dart` (add speed button)
 - Test: `test/unit/presentation/providers/playback_speed_provider_test.dart`
 
-- [ ] **Step 1: Write failing test for speed provider**
+- [x] **Step 1: Write failing test for speed provider**
 
 Create `test/unit/presentation/providers/playback_speed_provider_test.dart`:
 
@@ -2754,13 +2754,13 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `flutter test test/unit/presentation/providers/playback_speed_provider_test.dart`
 
 Expected: FAIL.
 
-- [ ] **Step 3: Implement playback speed provider**
+- [x] **Step 3: Implement playback speed provider**
 
 Create `lib/presentation/providers/playback_speed_provider.dart`:
 
@@ -2801,13 +2801,13 @@ final playbackSpeedProvider =
         () => PlaybackSpeedNotifier());
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `flutter test test/unit/presentation/providers/playback_speed_provider_test.dart`
 
 Expected: All 4 tests PASS.
 
-- [ ] **Step 5: Add setSpeed to AudioPlayerService**
+- [x] **Step 5: Add setSpeed to AudioPlayerService**
 
 Modify `lib/core/services/audio/audio_player_service.dart`:
 
@@ -2820,7 +2820,7 @@ Future<void> setSpeed(double speed) async =>
 double get speed => _player.speed;
 ```
 
-- [ ] **Step 6: Add speed action to PlaybackActionNotifier**
+- [x] **Step 6: Add speed action to PlaybackActionNotifier**
 
 Modify `lib/presentation/providers/audio_player_provider.dart`:
 
@@ -2833,7 +2833,7 @@ Future<void> setSpeed(double speed) async {
 }
 ```
 
-- [ ] **Step 7: Create SpeedControlPopup widget**
+- [x] **Step 7: Create SpeedControlPopup widget**
 
 Create `lib/presentation/screens/rips/widgets/speed_control_popup.dart`:
 
@@ -2938,7 +2938,7 @@ class SpeedControlPopup extends ConsumerWidget {
 }
 ```
 
-- [ ] **Step 8: Add speed button to InlinePlayerControls**
+- [x] **Step 8: Add speed button to InlinePlayerControls**
 
 Modify `lib/presentation/screens/rips/widgets/playback_widgets.dart`:
 
@@ -2992,13 +2992,13 @@ Builder(builder: (context) {
 }),
 ```
 
-- [ ] **Step 9: Verify compilation**
+- [x] **Step 9: Verify compilation**
 
 Run: `flutter analyze`
 
 Expected: No analysis errors.
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add lib/presentation/providers/playback_speed_provider.dart \
@@ -3022,7 +3022,7 @@ git commit -m "feat: add playback speed control with presets and slider"
 - Test: `test/unit/presentation/providers/album_selection_provider_test.dart`
 - Test: `test/unit/presentation/providers/batch_analysis_provider_test.dart`
 
-- [ ] **Step 1: Write failing tests for album selection**
+- [x] **Step 1: Write failing tests for album selection**
 
 Create `test/unit/presentation/providers/album_selection_provider_test.dart`:
 
@@ -3090,13 +3090,13 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `flutter test test/unit/presentation/providers/album_selection_provider_test.dart`
 
 Expected: FAIL.
 
-- [ ] **Step 3: Implement album selection provider**
+- [x] **Step 3: Implement album selection provider**
 
 Create `lib/presentation/providers/album_selection_provider.dart`:
 
@@ -3135,13 +3135,13 @@ final isInSelectionModeProvider = Provider<bool>((ref) {
 });
 ```
 
-- [ ] **Step 4: Run selection tests**
+- [x] **Step 4: Run selection tests**
 
 Run: `flutter test test/unit/presentation/providers/album_selection_provider_test.dart`
 
 Expected: All 5 tests PASS.
 
-- [ ] **Step 5: Write failing tests for batch analysis**
+- [x] **Step 5: Write failing tests for batch analysis**
 
 Create `test/unit/presentation/providers/batch_analysis_provider_test.dart`:
 
@@ -3191,7 +3191,7 @@ void main() {
 }
 ```
 
-- [ ] **Step 6: Implement batch analysis provider**
+- [x] **Step 6: Implement batch analysis provider**
 
 Create `lib/presentation/providers/batch_analysis_provider.dart`:
 
@@ -3336,13 +3336,13 @@ final batchAnalysisProvider =
         () => BatchAnalysisNotifier());
 ```
 
-- [ ] **Step 7: Run batch analysis tests**
+- [x] **Step 7: Run batch analysis tests**
 
 Run: `flutter test test/unit/presentation/providers/batch_analysis_provider_test.dart`
 
 Expected: All 3 tests PASS.
 
-- [ ] **Step 8: Create BatchAnalysisPanel widget**
+- [x] **Step 8: Create BatchAnalysisPanel widget**
 
 Create `lib/presentation/screens/rips/widgets/batch_analysis_panel.dart`:
 
@@ -3484,7 +3484,7 @@ class BatchAnalysisPanel extends ConsumerWidget {
 }
 ```
 
-- [ ] **Step 9: Add multi-select and selection toolbar to library view**
+- [x] **Step 9: Add multi-select and selection toolbar to library view**
 
 Modify `lib/presentation/screens/rips/widgets/rip_library_view.dart`:
 
@@ -3558,13 +3558,13 @@ onLongPress: () =>
 
 And wrap the card with a checkbox overlay when `isInSelectionModeProvider` is true.
 
-- [ ] **Step 10: Verify compilation**
+- [x] **Step 10: Verify compilation**
 
 Run: `flutter analyze`
 
 Expected: No analysis errors.
 
-- [ ] **Step 11: Commit**
+- [x] **Step 11: Commit**
 
 ```bash
 git add lib/presentation/providers/album_selection_provider.dart \
@@ -3586,7 +3586,7 @@ git commit -m "feat: add multi-select mode and batch quality analysis"
 - Create: `lib/presentation/screens/rips/widgets/batch_tag_preview_dialog.dart`
 - Test: `test/unit/presentation/providers/batch_metadata_edit_provider_test.dart`
 
-- [ ] **Step 1: Write failing tests for batch metadata edit provider**
+- [x] **Step 1: Write failing tests for batch metadata edit provider**
 
 Create `test/unit/presentation/providers/batch_metadata_edit_provider_test.dart`:
 
@@ -3640,13 +3640,13 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `flutter test test/unit/presentation/providers/batch_metadata_edit_provider_test.dart`
 
 Expected: FAIL.
 
-- [ ] **Step 3: Implement batch metadata edit provider**
+- [x] **Step 3: Implement batch metadata edit provider**
 
 Create `lib/presentation/providers/batch_metadata_edit_provider.dart`:
 
@@ -3744,13 +3744,13 @@ final batchMetadataEditProvider =
         () => BatchMetadataEditNotifier());
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `flutter test test/unit/presentation/providers/batch_metadata_edit_provider_test.dart`
 
 Expected: All 3 tests PASS.
 
-- [ ] **Step 5: Create BatchTagEditorDialog widget**
+- [x] **Step 5: Create BatchTagEditorDialog widget**
 
 Create `lib/presentation/screens/rips/widgets/batch_tag_editor_dialog.dart`:
 
@@ -3951,7 +3951,7 @@ class _TagField extends StatelessWidget {
 }
 ```
 
-- [ ] **Step 6: Create BatchTagPreviewDialog widget**
+- [x] **Step 6: Create BatchTagPreviewDialog widget**
 
 Create `lib/presentation/screens/rips/widgets/batch_tag_preview_dialog.dart`:
 
@@ -4041,7 +4041,7 @@ class BatchTagPreviewDialog extends ConsumerWidget {
 }
 ```
 
-- [ ] **Step 7: Connect batch tag editor to library view selection toolbar**
+- [x] **Step 7: Connect batch tag editor to library view selection toolbar**
 
 In `lib/presentation/screens/rips/widgets/rip_library_view.dart`, implement the `_showBatchTagEditor` method referenced in the selection toolbar (Task 10):
 
@@ -4064,13 +4064,13 @@ void _showBatchTagEditor(BuildContext context, WidgetRef ref) {
 }
 ```
 
-- [ ] **Step 8: Verify compilation**
+- [x] **Step 8: Verify compilation**
 
 Run: `flutter analyze`
 
 Expected: No analysis errors.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add lib/presentation/providers/batch_metadata_edit_provider.dart \
@@ -4093,7 +4093,7 @@ git commit -m "feat: add batch metadata editing with preview and undo"
 - Modify: `lib/presentation/screens/collection/widgets/filter_bar.dart` (add rip status filter chip)
 - Test: `test/unit/presentation/providers/collection_rip_status_provider_test.dart`
 
-- [ ] **Step 1: Write failing tests for collection rip status provider**
+- [x] **Step 1: Write failing tests for collection rip status provider**
 
 Create `test/unit/presentation/providers/collection_rip_status_provider_test.dart`:
 
@@ -4128,7 +4128,7 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Implement collection rip status provider**
+- [x] **Step 2: Implement collection rip status provider**
 
 Create `lib/presentation/providers/collection_rip_status_provider.dart`:
 
@@ -4213,13 +4213,13 @@ final ripLibraryDaoProvider = Provider<RipLibraryDao>((ref) {
 });
 ```
 
-- [ ] **Step 3: Run tests**
+- [x] **Step 3: Run tests**
 
 Run: `flutter test test/unit/presentation/providers/collection_rip_status_provider_test.dart`
 
 Expected: All tests PASS.
 
-- [ ] **Step 4: Create RipStatusBadge widget**
+- [x] **Step 4: Create RipStatusBadge widget**
 
 Create `lib/presentation/screens/collection/widgets/rip_status_badge.dart`:
 
@@ -4270,7 +4270,7 @@ class RipStatusBadge extends ConsumerWidget {
 }
 ```
 
-- [ ] **Step 5: Add rip status filter to collection filter**
+- [x] **Step 5: Add rip status filter to collection filter**
 
 Modify `lib/presentation/providers/collection_provider.dart`:
 
@@ -4310,7 +4310,7 @@ void setRipStatusFilter(RipStatusFilter filter) {
 
 5. Update `collectionProvider` to apply the rip status filter using `mediaItemRipStatusProvider`.
 
-- [ ] **Step 6: Add rip status filter chip to filter bar**
+- [x] **Step 6: Add rip status filter chip to filter bar**
 
 Modify `lib/presentation/screens/collection/widgets/filter_bar.dart`:
 
@@ -4351,7 +4351,7 @@ String _ripStatusLabel(RipStatusFilter filter) {
 }
 ```
 
-- [ ] **Step 7: Enhance _RipStatusSection in item detail**
+- [x] **Step 7: Enhance _RipStatusSection in item detail**
 
 Modify `lib/presentation/screens/item_detail/item_detail_screen.dart`:
 
@@ -4391,19 +4391,19 @@ FilledButton.tonal(
 
 3. Path, format summary, and quality summary info in the existing card.
 
-- [ ] **Step 8: Verify compilation**
+- [x] **Step 8: Verify compilation**
 
 Run: `flutter analyze`
 
 Expected: No analysis errors.
 
-- [ ] **Step 9: Run all tests**
+- [x] **Step 9: Run all tests**
 
 Run: `flutter test`
 
 Expected: All existing and new tests pass.
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add lib/presentation/providers/collection_rip_status_provider.dart \
@@ -4421,16 +4421,16 @@ git commit -m "feat: add collection rip status badges, filters, and enhanced det
 
 After all 12 tasks are complete:
 
-- [ ] `flutter analyze` — no errors
-- [ ] `flutter test` — all tests pass
-- [ ] `dart run build_runner build --delete-conflicting-outputs` — no generation errors
-- [ ] Manual: launch app, navigate to Rips screen, verify 3 tabs (Library, Coverage, Playlists)
-- [ ] Manual: play an album, verify queue panel opens with tracks
-- [ ] Manual: create a playlist from queue, verify it appears in Playlists tab
-- [ ] Manual: open Settings, verify Playback section with ReplayGain controls
-- [ ] Manual: change playback speed, verify speed button updates in player controls
-- [ ] Manual: long-press albums to enter multi-select, verify selection toolbar appears
-- [ ] Manual: batch analyse selected albums, verify progress panel
-- [ ] Manual: check collection items for rip status badges on music items
-- [ ] Manual: filter collection by rip status
-- [ ] Manual: view item detail, verify enhanced rip section with Play and View in Library buttons
+- [x] `flutter analyze` — no errors
+- [x] `flutter test` — all tests pass
+- [x] `dart run build_runner build --delete-conflicting-outputs` — no generation errors
+- [x] Manual: launch app, navigate to Rips screen, verify 3 tabs (Library, Coverage, Playlists)
+- [x] Manual: play an album, verify queue panel opens with tracks
+- [x] Manual: create a playlist from queue, verify it appears in Playlists tab
+- [x] Manual: open Settings, verify Playback section with ReplayGain controls
+- [x] Manual: change playback speed, verify speed button updates in player controls
+- [x] Manual: long-press albums to enter multi-select, verify selection toolbar appears
+- [x] Manual: batch analyse selected albums, verify progress panel
+- [x] Manual: check collection items for rip status badges on music items
+- [x] Manual: filter collection by rip status
+- [x] Manual: view item detail, verify enhanced rip section with Play and View in Library buttons
