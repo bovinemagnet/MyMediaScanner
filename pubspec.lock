@@ -321,6 +321,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.9"
+  dart_accuraterip:
+    dependency: "direct main"
+    description:
+      name: dart_accuraterip
+      sha256: ab618d541e4677713d44947cf044ee41c413627402a23941c10df033dca232a3
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.3"
   dart_metaflac:
     dependency: "direct main"
     description:

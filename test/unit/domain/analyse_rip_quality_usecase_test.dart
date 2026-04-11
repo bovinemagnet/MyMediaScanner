@@ -3,7 +3,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:mymediascanner/core/utils/flac_decoder.dart';
-import 'package:mymediascanner/data/remote/api/accuraterip/accuraterip_client.dart';
+import 'package:dart_accuraterip/dart_accuraterip.dart';
 import 'package:mymediascanner/domain/entities/rip_track.dart';
 import 'package:mymediascanner/domain/repositories/i_rip_library_repository.dart';
 import 'package:mymediascanner/domain/usecases/analyse_rip_quality_usecase.dart';

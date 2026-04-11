@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:typed_data';
 
+import 'package:dart_accuraterip/dart_accuraterip.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/core/utils/flac_decoder.dart';
@@ -7,7 +9,6 @@ import 'package:mymediascanner/core/utils/flac_reader.dart';
 import 'package:mymediascanner/core/utils/metaflac_writer.dart';
 import 'package:mymediascanner/core/utils/mp3_reader.dart';
 import 'package:mymediascanner/domain/usecases/edit_rip_metadata_usecase.dart';
-import 'package:mymediascanner/data/remote/api/accuraterip/accuraterip_client.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
 import 'package:mymediascanner/domain/entities/rip_track.dart';
 import 'package:mymediascanner/domain/usecases/analyse_rip_quality_usecase.dart';
@@ -195,12 +196,26 @@ final flacDecoderProvider = Provider<FlacDecoder>((ref) {
 });
 
 /// Provider for the AccurateRip HTTP client.
+///
+/// The `dart_accuraterip` package has zero HTTP dependencies; we
+/// supply a fetcher closure that runs the request through Dio, so
+/// connection timeouts and the rest of the app's HTTP configuration
+/// continue to apply.
 final accurateRipClientProvider = Provider<AccurateRipClient>((ref) {
   final dio = Dio(BaseOptions(
     connectTimeout: const Duration(seconds: 15),
     receiveTimeout: const Duration(seconds: 15),
+    responseType: ResponseType.bytes,
   ));
-  return AccurateRipClient(dio: dio);
+  return AccurateRipClient(
+    fetch: (uri) async {
+      final response = await dio.getUri<List<int>>(uri);
+      if (response.statusCode == 404 || response.data == null) {
+        return Uint8List(0);
+      }
+      return Uint8List.fromList(response.data!);
+    },
+  );
 });
 
 /// FLAC binary path override, stored in secure storage.

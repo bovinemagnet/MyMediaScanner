@@ -14,12 +14,11 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:typed_data';
 
-import 'package:mymediascanner/core/utils/accuraterip_crc.dart' as ar_crc;
+import 'package:dart_accuraterip/dart_accuraterip.dart' as ar;
 import 'package:mymediascanner/core/utils/click_detector.dart' as click;
 import 'package:mymediascanner/core/utils/flac_decoder.dart';
 import 'package:mymediascanner/core/utils/flac_reader.dart';
 import 'package:mymediascanner/core/utils/rip_log_parser.dart';
-import 'package:mymediascanner/data/remote/api/accuraterip/accuraterip_client.dart';
 import 'package:mymediascanner/domain/entities/rip_track.dart';
 import 'package:mymediascanner/domain/repositories/i_rip_library_repository.dart';
 
@@ -41,7 +40,7 @@ class AnalyseRipQualityUseCase {
   AnalyseRipQualityUseCase({
     required IRipLibraryRepository repository,
     required FlacDecoder flacDecoder,
-    required AccurateRipClient accurateRipClient,
+    required ar.AccurateRipClient accurateRipClient,
     this.clickThreshold = 8.0,
   })  : _repository = repository,
         _flacDecoder = flacDecoder,
@@ -49,7 +48,7 @@ class AnalyseRipQualityUseCase {
 
   final IRipLibraryRepository _repository;
   final FlacDecoder _flacDecoder;
-  final AccurateRipClient _arClient;
+  final ar.AccurateRipClient _arClient;
   final double clickThreshold;
 
   /// Execute the analysis pipeline for the given album.
@@ -135,7 +134,7 @@ class AnalyseRipQualityUseCase {
     }
 
     // Compute disc ID and query AccurateRip (once for all tracks)
-    AccurateRipDiscResult? arResult;
+    ar.AccurateRipDiscResult? arResult;
     if (sampleCounts.every((c) => c > 0)) {
       yield QualityAnalysisProgress(
         currentTrack: 0,
@@ -144,7 +143,8 @@ class AnalyseRipQualityUseCase {
       );
 
       try {
-        final discId = AccurateRipDiscId.computeDiscId(sampleCounts);
+        final discId =
+            ar.AccurateRipDiscId.fromTrackSampleCounts(sampleCounts);
         arResult = await _arClient.queryDisc(discId);
       } catch (_) {
         // AccurateRip query failed — continue with click detection
@@ -185,9 +185,9 @@ class AnalyseRipQualityUseCase {
       );
 
       final crcResults = await Isolate.run(() {
-        final v1 = ar_crc.computeArV1(pcmData,
+        final v1 = ar.computeArV1(pcmData,
             isFirstTrack: isFirst, isLastTrack: isLast);
-        final v2 = ar_crc.computeArV2(pcmData,
+        final v2 = ar.computeArV2(pcmData,
             isFirstTrack: isFirst, isLastTrack: isLast);
         return (v1, v2);
       });
@@ -202,16 +202,10 @@ class AnalyseRipQualityUseCase {
             .firstOrNull;
 
         if (arTrack != null) {
-          // Check v2 first (more reliable), then v1
-          AccurateRipEntry? match;
-          for (final entry in arTrack.entries) {
-            if (entry.crcV2 == crcV2) {
-              match = entry;
-              break;
-            }
-          }
-          match ??= arTrack.entries
-              .where((e) => e.crcV1 == crcV1)
+          // AccurateRip entries carry a single CRC without a v1/v2 label;
+          // let the entry match itself against both locally computed CRCs.
+          final match = arTrack.entries
+              .where((e) => e.matches(computedV1: crcV1, computedV2: crcV2))
               .firstOrNull;
 
           if (match != null) {

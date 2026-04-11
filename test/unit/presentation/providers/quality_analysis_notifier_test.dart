@@ -14,7 +14,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:mymediascanner/core/utils/flac_decoder.dart';
-import 'package:mymediascanner/data/remote/api/accuraterip/accuraterip_client.dart';
+import 'package:dart_accuraterip/dart_accuraterip.dart';
 import 'package:mymediascanner/domain/repositories/i_rip_library_repository.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
