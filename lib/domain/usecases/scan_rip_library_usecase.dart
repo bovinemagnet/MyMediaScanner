@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'dart:isolate';
 
+import 'package:dart_cue/dart_cue.dart';
 import 'package:mymediascanner/core/utils/audio_metadata_reader.dart';
-import 'package:mymediascanner/core/utils/cue_parser.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
 import 'package:mymediascanner/domain/entities/rip_track.dart';
 import 'package:mymediascanner/domain/repositories/i_rip_library_repository.dart';
@@ -277,20 +277,24 @@ class ScanRipLibraryUseCase {
       // Check if this directory has a CUE file — enrich/override album metadata
       final cueFile = cueByDir[dirPath];
       if (cueFile != null) {
-        final cueSheet = await CueParser.parse(cueFile.path);
-        if (cueSheet != null && cueSheet.tracks.isNotEmpty) {
+        final cueSheet = await parseCueFile(cueFile.path);
+        final cueTracksList = cueSheet?.files
+                .expand((f) => f.tracks)
+                .toList() ??
+            const [];
+        if (cueSheet != null && cueTracksList.isNotEmpty) {
           final cueArtist = cueSheet.performer ?? firstTrackMeta?.effectiveArtist;
           final cueTitle = cueSheet.title ?? firstTrackMeta?.album;
           final cueBarcode = cueSheet.barcode ?? firstTrackMeta?.barcode;
 
           final cueTracks = <_TrackScanResult>[];
-          for (final cueTrack in cueSheet.tracks) {
+          for (final cueTrack in cueTracksList) {
             cueTracks.add(_TrackScanResult(
               filePath: files.isNotEmpty ? files.first.path : '',
               discNumber: cueSheet.discNumber ?? 1,
               trackNumber: cueTrack.trackNumber,
               title: cueTrack.title,
-              durationMs: cueTrack.durationMs,
+              durationMs: cueTrack.duration?.inMilliseconds,
               fileSizeBytes: 0,
             ));
           }
@@ -321,8 +325,12 @@ class ScanRipLibraryUseCase {
     for (final entry in cueByDir.entries) {
       final dirPath = entry.key;
       final cueFile = entry.value;
-      final cueSheet = await CueParser.parse(cueFile.path);
-      if (cueSheet == null || cueSheet.tracks.isEmpty) continue;
+      final cueSheet = await parseCueFile(cueFile.path);
+      final cueTracksList = cueSheet?.files
+              .expand((f) => f.tracks)
+              .toList() ??
+          const [];
+      if (cueSheet == null || cueTracksList.isEmpty) continue;
 
       final relativePath = dirPath.startsWith(rootPath)
           ? dirPath.substring(rootPath.length).replaceAll(RegExp(r'^[/\\]'), '')
@@ -330,21 +338,24 @@ class ScanRipLibraryUseCase {
 
       String audioFilePath = '';
       int totalSize = 0;
-      if (cueSheet.fileName != null) {
-        final audioFile = File('$dirPath/${cueSheet.fileName}');
+      final cueFilename = cueSheet.files.isNotEmpty
+          ? cueSheet.files.first.filename
+          : null;
+      if (cueFilename != null) {
+        final audioFile = File('$dirPath/$cueFilename');
         if (await audioFile.exists()) {
           audioFilePath = audioFile.path;
           totalSize = (await audioFile.stat()).size;
         }
       }
 
-      final cueTracks = cueSheet.tracks
+      final cueTracks = cueTracksList
           .map((t) => _TrackScanResult(
                 filePath: audioFilePath,
                 discNumber: cueSheet.discNumber ?? 1,
                 trackNumber: t.trackNumber,
                 title: t.title,
-                durationMs: t.durationMs,
+                durationMs: t.duration?.inMilliseconds,
                 fileSizeBytes: 0,
               ))
           .toList();

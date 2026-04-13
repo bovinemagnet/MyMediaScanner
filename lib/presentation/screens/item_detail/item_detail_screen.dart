@@ -742,8 +742,10 @@ class _TrackQualityRow extends StatelessWidget {
                 Text(
                     'Track quality: ${(track.trackQuality! * 100).toStringAsFixed(1)}%'),
               if (track.copyCrc != null) Text('Copy CRC: ${track.copyCrc}'),
-              if (track.accurateRipCrc != null)
-                Text('AR CRC: ${track.accurateRipCrc}'),
+              if (track.accurateRipCrcV1 != null)
+                Text('AR CRC v1: ${track.accurateRipCrcV1}'),
+              if (track.accurateRipCrcV2 != null)
+                Text('AR CRC v2: ${track.accurateRipCrcV2}'),
               if (track.clickCount != null)
                 Text('Clicks: ${track.clickCount}'),
             ],

@@ -5581,12 +5581,23 @@ class $RipTracksTableTable extends RipTracksTable
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _accurateripCrcMeta = const VerificationMeta(
-    'accurateripCrc',
+  static const VerificationMeta _accurateripCrcV1Meta = const VerificationMeta(
+    'accurateripCrcV1',
   );
   @override
-  late final GeneratedColumn<String> accurateripCrc = GeneratedColumn<String>(
-    'accuraterip_crc',
+  late final GeneratedColumn<String> accurateripCrcV1 = GeneratedColumn<String>(
+    'accuraterip_crc_v1',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _accurateripCrcV2Meta = const VerificationMeta(
+    'accurateripCrcV2',
+  );
+  @override
+  late final GeneratedColumn<String> accurateripCrcV2 = GeneratedColumn<String>(
+    'accuraterip_crc_v2',
     aliasedName,
     true,
     type: DriftSqlType.string,
@@ -5671,7 +5682,8 @@ class $RipTracksTableTable extends RipTracksTable
     updatedAt,
     accurateripStatus,
     accurateripConfidence,
-    accurateripCrc,
+    accurateripCrcV1,
+    accurateripCrcV2,
     peakLevel,
     trackQuality,
     copyCrc,
@@ -5781,12 +5793,21 @@ class $RipTracksTableTable extends RipTracksTable
         ),
       );
     }
-    if (data.containsKey('accuraterip_crc')) {
+    if (data.containsKey('accuraterip_crc_v1')) {
       context.handle(
-        _accurateripCrcMeta,
-        accurateripCrc.isAcceptableOrUnknown(
-          data['accuraterip_crc']!,
-          _accurateripCrcMeta,
+        _accurateripCrcV1Meta,
+        accurateripCrcV1.isAcceptableOrUnknown(
+          data['accuraterip_crc_v1']!,
+          _accurateripCrcV1Meta,
+        ),
+      );
+    }
+    if (data.containsKey('accuraterip_crc_v2')) {
+      context.handle(
+        _accurateripCrcV2Meta,
+        accurateripCrcV2.isAcceptableOrUnknown(
+          data['accuraterip_crc_v2']!,
+          _accurateripCrcV2Meta,
         ),
       );
     }
@@ -5888,9 +5909,13 @@ class $RipTracksTableTable extends RipTracksTable
         DriftSqlType.int,
         data['${effectivePrefix}accuraterip_confidence'],
       ),
-      accurateripCrc: attachedDatabase.typeMapping.read(
+      accurateripCrcV1: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}accuraterip_crc'],
+        data['${effectivePrefix}accuraterip_crc_v1'],
+      ),
+      accurateripCrcV2: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}accuraterip_crc_v2'],
       ),
       peakLevel: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
@@ -5938,7 +5963,8 @@ class RipTracksTableData extends DataClass
   final int updatedAt;
   final String? accurateripStatus;
   final int? accurateripConfidence;
-  final String? accurateripCrc;
+  final String? accurateripCrcV1;
+  final String? accurateripCrcV2;
   final double? peakLevel;
   final double? trackQuality;
   final String? copyCrc;
@@ -5957,7 +5983,8 @@ class RipTracksTableData extends DataClass
     required this.updatedAt,
     this.accurateripStatus,
     this.accurateripConfidence,
-    this.accurateripCrc,
+    this.accurateripCrcV1,
+    this.accurateripCrcV2,
     this.peakLevel,
     this.trackQuality,
     this.copyCrc,
@@ -5987,8 +6014,11 @@ class RipTracksTableData extends DataClass
     if (!nullToAbsent || accurateripConfidence != null) {
       map['accuraterip_confidence'] = Variable<int>(accurateripConfidence);
     }
-    if (!nullToAbsent || accurateripCrc != null) {
-      map['accuraterip_crc'] = Variable<String>(accurateripCrc);
+    if (!nullToAbsent || accurateripCrcV1 != null) {
+      map['accuraterip_crc_v1'] = Variable<String>(accurateripCrcV1);
+    }
+    if (!nullToAbsent || accurateripCrcV2 != null) {
+      map['accuraterip_crc_v2'] = Variable<String>(accurateripCrcV2);
     }
     if (!nullToAbsent || peakLevel != null) {
       map['peak_level'] = Variable<double>(peakLevel);
@@ -6032,9 +6062,12 @@ class RipTracksTableData extends DataClass
       accurateripConfidence: accurateripConfidence == null && nullToAbsent
           ? const Value.absent()
           : Value(accurateripConfidence),
-      accurateripCrc: accurateripCrc == null && nullToAbsent
+      accurateripCrcV1: accurateripCrcV1 == null && nullToAbsent
           ? const Value.absent()
-          : Value(accurateripCrc),
+          : Value(accurateripCrcV1),
+      accurateripCrcV2: accurateripCrcV2 == null && nullToAbsent
+          ? const Value.absent()
+          : Value(accurateripCrcV2),
       peakLevel: peakLevel == null && nullToAbsent
           ? const Value.absent()
           : Value(peakLevel),
@@ -6077,7 +6110,8 @@ class RipTracksTableData extends DataClass
       accurateripConfidence: serializer.fromJson<int?>(
         json['accurateripConfidence'],
       ),
-      accurateripCrc: serializer.fromJson<String?>(json['accurateripCrc']),
+      accurateripCrcV1: serializer.fromJson<String?>(json['accurateripCrcV1']),
+      accurateripCrcV2: serializer.fromJson<String?>(json['accurateripCrcV2']),
       peakLevel: serializer.fromJson<double?>(json['peakLevel']),
       trackQuality: serializer.fromJson<double?>(json['trackQuality']),
       copyCrc: serializer.fromJson<String?>(json['copyCrc']),
@@ -6101,7 +6135,8 @@ class RipTracksTableData extends DataClass
       'updatedAt': serializer.toJson<int>(updatedAt),
       'accurateripStatus': serializer.toJson<String?>(accurateripStatus),
       'accurateripConfidence': serializer.toJson<int?>(accurateripConfidence),
-      'accurateripCrc': serializer.toJson<String?>(accurateripCrc),
+      'accurateripCrcV1': serializer.toJson<String?>(accurateripCrcV1),
+      'accurateripCrcV2': serializer.toJson<String?>(accurateripCrcV2),
       'peakLevel': serializer.toJson<double?>(peakLevel),
       'trackQuality': serializer.toJson<double?>(trackQuality),
       'copyCrc': serializer.toJson<String?>(copyCrc),
@@ -6123,7 +6158,8 @@ class RipTracksTableData extends DataClass
     int? updatedAt,
     Value<String?> accurateripStatus = const Value.absent(),
     Value<int?> accurateripConfidence = const Value.absent(),
-    Value<String?> accurateripCrc = const Value.absent(),
+    Value<String?> accurateripCrcV1 = const Value.absent(),
+    Value<String?> accurateripCrcV2 = const Value.absent(),
     Value<double?> peakLevel = const Value.absent(),
     Value<double?> trackQuality = const Value.absent(),
     Value<String?> copyCrc = const Value.absent(),
@@ -6146,9 +6182,12 @@ class RipTracksTableData extends DataClass
     accurateripConfidence: accurateripConfidence.present
         ? accurateripConfidence.value
         : this.accurateripConfidence,
-    accurateripCrc: accurateripCrc.present
-        ? accurateripCrc.value
-        : this.accurateripCrc,
+    accurateripCrcV1: accurateripCrcV1.present
+        ? accurateripCrcV1.value
+        : this.accurateripCrcV1,
+    accurateripCrcV2: accurateripCrcV2.present
+        ? accurateripCrcV2.value
+        : this.accurateripCrcV2,
     peakLevel: peakLevel.present ? peakLevel.value : this.peakLevel,
     trackQuality: trackQuality.present ? trackQuality.value : this.trackQuality,
     copyCrc: copyCrc.present ? copyCrc.value : this.copyCrc,
@@ -6185,9 +6224,12 @@ class RipTracksTableData extends DataClass
       accurateripConfidence: data.accurateripConfidence.present
           ? data.accurateripConfidence.value
           : this.accurateripConfidence,
-      accurateripCrc: data.accurateripCrc.present
-          ? data.accurateripCrc.value
-          : this.accurateripCrc,
+      accurateripCrcV1: data.accurateripCrcV1.present
+          ? data.accurateripCrcV1.value
+          : this.accurateripCrcV1,
+      accurateripCrcV2: data.accurateripCrcV2.present
+          ? data.accurateripCrcV2.value
+          : this.accurateripCrcV2,
       peakLevel: data.peakLevel.present ? data.peakLevel.value : this.peakLevel,
       trackQuality: data.trackQuality.present
           ? data.trackQuality.value
@@ -6219,7 +6261,8 @@ class RipTracksTableData extends DataClass
           ..write('updatedAt: $updatedAt, ')
           ..write('accurateripStatus: $accurateripStatus, ')
           ..write('accurateripConfidence: $accurateripConfidence, ')
-          ..write('accurateripCrc: $accurateripCrc, ')
+          ..write('accurateripCrcV1: $accurateripCrcV1, ')
+          ..write('accurateripCrcV2: $accurateripCrcV2, ')
           ..write('peakLevel: $peakLevel, ')
           ..write('trackQuality: $trackQuality, ')
           ..write('copyCrc: $copyCrc, ')
@@ -6243,7 +6286,8 @@ class RipTracksTableData extends DataClass
     updatedAt,
     accurateripStatus,
     accurateripConfidence,
-    accurateripCrc,
+    accurateripCrcV1,
+    accurateripCrcV2,
     peakLevel,
     trackQuality,
     copyCrc,
@@ -6266,7 +6310,8 @@ class RipTracksTableData extends DataClass
           other.updatedAt == this.updatedAt &&
           other.accurateripStatus == this.accurateripStatus &&
           other.accurateripConfidence == this.accurateripConfidence &&
-          other.accurateripCrc == this.accurateripCrc &&
+          other.accurateripCrcV1 == this.accurateripCrcV1 &&
+          other.accurateripCrcV2 == this.accurateripCrcV2 &&
           other.peakLevel == this.peakLevel &&
           other.trackQuality == this.trackQuality &&
           other.copyCrc == this.copyCrc &&
@@ -6287,7 +6332,8 @@ class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
   final Value<int> updatedAt;
   final Value<String?> accurateripStatus;
   final Value<int?> accurateripConfidence;
-  final Value<String?> accurateripCrc;
+  final Value<String?> accurateripCrcV1;
+  final Value<String?> accurateripCrcV2;
   final Value<double?> peakLevel;
   final Value<double?> trackQuality;
   final Value<String?> copyCrc;
@@ -6307,7 +6353,8 @@ class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
     this.updatedAt = const Value.absent(),
     this.accurateripStatus = const Value.absent(),
     this.accurateripConfidence = const Value.absent(),
-    this.accurateripCrc = const Value.absent(),
+    this.accurateripCrcV1 = const Value.absent(),
+    this.accurateripCrcV2 = const Value.absent(),
     this.peakLevel = const Value.absent(),
     this.trackQuality = const Value.absent(),
     this.copyCrc = const Value.absent(),
@@ -6328,7 +6375,8 @@ class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
     required int updatedAt,
     this.accurateripStatus = const Value.absent(),
     this.accurateripConfidence = const Value.absent(),
-    this.accurateripCrc = const Value.absent(),
+    this.accurateripCrcV1 = const Value.absent(),
+    this.accurateripCrcV2 = const Value.absent(),
     this.peakLevel = const Value.absent(),
     this.trackQuality = const Value.absent(),
     this.copyCrc = const Value.absent(),
@@ -6354,7 +6402,8 @@ class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
     Expression<int>? updatedAt,
     Expression<String>? accurateripStatus,
     Expression<int>? accurateripConfidence,
-    Expression<String>? accurateripCrc,
+    Expression<String>? accurateripCrcV1,
+    Expression<String>? accurateripCrcV2,
     Expression<double>? peakLevel,
     Expression<double>? trackQuality,
     Expression<String>? copyCrc,
@@ -6376,7 +6425,8 @@ class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
       if (accurateripStatus != null) 'accuraterip_status': accurateripStatus,
       if (accurateripConfidence != null)
         'accuraterip_confidence': accurateripConfidence,
-      if (accurateripCrc != null) 'accuraterip_crc': accurateripCrc,
+      if (accurateripCrcV1 != null) 'accuraterip_crc_v1': accurateripCrcV1,
+      if (accurateripCrcV2 != null) 'accuraterip_crc_v2': accurateripCrcV2,
       if (peakLevel != null) 'peak_level': peakLevel,
       if (trackQuality != null) 'track_quality': trackQuality,
       if (copyCrc != null) 'copy_crc': copyCrc,
@@ -6399,7 +6449,8 @@ class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
     Value<int>? updatedAt,
     Value<String?>? accurateripStatus,
     Value<int?>? accurateripConfidence,
-    Value<String?>? accurateripCrc,
+    Value<String?>? accurateripCrcV1,
+    Value<String?>? accurateripCrcV2,
     Value<double?>? peakLevel,
     Value<double?>? trackQuality,
     Value<String?>? copyCrc,
@@ -6421,7 +6472,8 @@ class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
       accurateripStatus: accurateripStatus ?? this.accurateripStatus,
       accurateripConfidence:
           accurateripConfidence ?? this.accurateripConfidence,
-      accurateripCrc: accurateripCrc ?? this.accurateripCrc,
+      accurateripCrcV1: accurateripCrcV1 ?? this.accurateripCrcV1,
+      accurateripCrcV2: accurateripCrcV2 ?? this.accurateripCrcV2,
       peakLevel: peakLevel ?? this.peakLevel,
       trackQuality: trackQuality ?? this.trackQuality,
       copyCrc: copyCrc ?? this.copyCrc,
@@ -6470,8 +6522,11 @@ class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
         accurateripConfidence.value,
       );
     }
-    if (accurateripCrc.present) {
-      map['accuraterip_crc'] = Variable<String>(accurateripCrc.value);
+    if (accurateripCrcV1.present) {
+      map['accuraterip_crc_v1'] = Variable<String>(accurateripCrcV1.value);
+    }
+    if (accurateripCrcV2.present) {
+      map['accuraterip_crc_v2'] = Variable<String>(accurateripCrcV2.value);
     }
     if (peakLevel.present) {
       map['peak_level'] = Variable<double>(peakLevel.value);
@@ -6511,7 +6566,8 @@ class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
           ..write('updatedAt: $updatedAt, ')
           ..write('accurateripStatus: $accurateripStatus, ')
           ..write('accurateripConfidence: $accurateripConfidence, ')
-          ..write('accurateripCrc: $accurateripCrc, ')
+          ..write('accurateripCrcV1: $accurateripCrcV1, ')
+          ..write('accurateripCrcV2: $accurateripCrcV2, ')
           ..write('peakLevel: $peakLevel, ')
           ..write('trackQuality: $trackQuality, ')
           ..write('copyCrc: $copyCrc, ')
@@ -12781,7 +12837,8 @@ typedef $$RipTracksTableTableCreateCompanionBuilder =
       required int updatedAt,
       Value<String?> accurateripStatus,
       Value<int?> accurateripConfidence,
-      Value<String?> accurateripCrc,
+      Value<String?> accurateripCrcV1,
+      Value<String?> accurateripCrcV2,
       Value<double?> peakLevel,
       Value<double?> trackQuality,
       Value<String?> copyCrc,
@@ -12803,7 +12860,8 @@ typedef $$RipTracksTableTableUpdateCompanionBuilder =
       Value<int> updatedAt,
       Value<String?> accurateripStatus,
       Value<int?> accurateripConfidence,
-      Value<String?> accurateripCrc,
+      Value<String?> accurateripCrcV1,
+      Value<String?> accurateripCrcV2,
       Value<double?> peakLevel,
       Value<double?> trackQuality,
       Value<String?> copyCrc,
@@ -12935,8 +12993,13 @@ class $$RipTracksTableTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get accurateripCrc => $composableBuilder(
-    column: $table.accurateripCrc,
+  ColumnFilters<String> get accurateripCrcV1 => $composableBuilder(
+    column: $table.accurateripCrcV1,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get accurateripCrcV2 => $composableBuilder(
+    column: $table.accurateripCrcV2,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -13078,8 +13141,13 @@ class $$RipTracksTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get accurateripCrc => $composableBuilder(
-    column: $table.accurateripCrc,
+  ColumnOrderings<String> get accurateripCrcV1 => $composableBuilder(
+    column: $table.accurateripCrcV1,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get accurateripCrcV2 => $composableBuilder(
+    column: $table.accurateripCrcV2,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -13188,8 +13256,13 @@ class $$RipTracksTableTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<String> get accurateripCrc => $composableBuilder(
-    column: $table.accurateripCrc,
+  GeneratedColumn<String> get accurateripCrcV1 => $composableBuilder(
+    column: $table.accurateripCrcV1,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get accurateripCrcV2 => $composableBuilder(
+    column: $table.accurateripCrcV2,
     builder: (column) => column,
   );
 
@@ -13313,7 +13386,8 @@ class $$RipTracksTableTableTableManager
                 Value<int> updatedAt = const Value.absent(),
                 Value<String?> accurateripStatus = const Value.absent(),
                 Value<int?> accurateripConfidence = const Value.absent(),
-                Value<String?> accurateripCrc = const Value.absent(),
+                Value<String?> accurateripCrcV1 = const Value.absent(),
+                Value<String?> accurateripCrcV2 = const Value.absent(),
                 Value<double?> peakLevel = const Value.absent(),
                 Value<double?> trackQuality = const Value.absent(),
                 Value<String?> copyCrc = const Value.absent(),
@@ -13333,7 +13407,8 @@ class $$RipTracksTableTableTableManager
                 updatedAt: updatedAt,
                 accurateripStatus: accurateripStatus,
                 accurateripConfidence: accurateripConfidence,
-                accurateripCrc: accurateripCrc,
+                accurateripCrcV1: accurateripCrcV1,
+                accurateripCrcV2: accurateripCrcV2,
                 peakLevel: peakLevel,
                 trackQuality: trackQuality,
                 copyCrc: copyCrc,
@@ -13355,7 +13430,8 @@ class $$RipTracksTableTableTableManager
                 required int updatedAt,
                 Value<String?> accurateripStatus = const Value.absent(),
                 Value<int?> accurateripConfidence = const Value.absent(),
-                Value<String?> accurateripCrc = const Value.absent(),
+                Value<String?> accurateripCrcV1 = const Value.absent(),
+                Value<String?> accurateripCrcV2 = const Value.absent(),
                 Value<double?> peakLevel = const Value.absent(),
                 Value<double?> trackQuality = const Value.absent(),
                 Value<String?> copyCrc = const Value.absent(),
@@ -13375,7 +13451,8 @@ class $$RipTracksTableTableTableManager
                 updatedAt: updatedAt,
                 accurateripStatus: accurateripStatus,
                 accurateripConfidence: accurateripConfidence,
-                accurateripCrc: accurateripCrc,
+                accurateripCrcV1: accurateripCrcV1,
+                accurateripCrcV2: accurateripCrcV2,
                 peakLevel: peakLevel,
                 trackQuality: trackQuality,
                 copyCrc: copyCrc,

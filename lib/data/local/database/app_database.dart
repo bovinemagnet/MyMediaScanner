@@ -76,7 +76,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -107,8 +107,10 @@ class AppDatabase extends _$AppDatabase {
                 ripTracksTable, ripTracksTable.accurateripStatus);
             await m.addColumn(
                 ripTracksTable, ripTracksTable.accurateripConfidence);
+            // accurate_rip_crc was added here historically; the v11 migration
+            // splits it into v1/v2, so add the v1 column directly.
             await m.addColumn(
-                ripTracksTable, ripTracksTable.accurateripCrc);
+                ripTracksTable, ripTracksTable.accurateripCrcV1);
             await m.addColumn(ripTracksTable, ripTracksTable.peakLevel);
             await m.addColumn(ripTracksTable, ripTracksTable.trackQuality);
             await m.addColumn(ripTracksTable, ripTracksTable.copyCrc);
@@ -139,6 +141,16 @@ class AppDatabase extends _$AppDatabase {
           if (from < 10) {
             await m.createTable(playlistsTable);
             await m.createTable(playlistTracksTable);
+          }
+          if (from < 11) {
+            // Split accurate_rip_crc into v1 and v2 columns.
+            // Rename existing column to v1 (it held XLD v1 values or
+            // EAC's single captured CRC), and add a new v2 column.
+            await customStatement(
+                'ALTER TABLE rip_tracks '
+                'RENAME COLUMN accurate_rip_crc TO accurate_rip_crc_v1');
+            await m.addColumn(
+                ripTracksTable, ripTracksTable.accurateripCrcV2);
           }
         },
       );

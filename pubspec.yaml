@@ -70,6 +70,9 @@ dependencies:
   ffi: ^2.2.0
   dart_metaflac: ^0.0.1
   dart_accuraterip: ^0.0.3
+  audio_defect_detector: ^0.0.2
+  dart_rip_log: ^0.0.1
+  dart_cue: ^0.0.1
 
 dev_dependencies:
   flutter_test:

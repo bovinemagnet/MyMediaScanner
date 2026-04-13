@@ -49,6 +49,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.13.1"
+  audio_defect_detector:
+    dependency: "direct main"
+    description:
+      name: audio_defect_detector
+      sha256: ac085bfc7f9fc6e01df2954dc2ec0ca46c2a4c9e1490c06699558c583b353b16
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.2"
   audio_session:
     dependency: transitive
     description:
@@ -329,6 +337,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.0.3"
+  dart_cue:
+    dependency: "direct main"
+    description:
+      name: dart_cue
+      sha256: f49a5c3ad459cf466ff784adbbfd92b9f1bdadbbe7c3c7221a531c7e5f893491
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.1"
   dart_metaflac:
     dependency: "direct main"
     description:
@@ -337,6 +353,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.0.2"
+  dart_rip_log:
+    dependency: "direct main"
+    description:
+      name: dart_rip_log
+      sha256: "16c601fca0475a78d95ab4c510c5425ca56a47658ba1e4fc0a86ceb16df6b3b1"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.1"
   dart_style:
     dependency: transitive
     description:

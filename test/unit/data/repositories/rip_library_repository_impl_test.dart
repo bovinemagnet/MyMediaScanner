@@ -68,7 +68,8 @@ RipTracksTableData _makeTrackRow({
   int updatedAt = 1700000001000,
   String? accurateripStatus,
   int? accurateripConfidence,
-  String? accurateripCrc,
+  String? accurateripCrcV1,
+  String? accurateripCrcV2,
   double? peakLevel,
   double? trackQuality,
   String? copyCrc,
@@ -88,7 +89,8 @@ RipTracksTableData _makeTrackRow({
       updatedAt: updatedAt,
       accurateripStatus: accurateripStatus,
       accurateripConfidence: accurateripConfidence,
-      accurateripCrc: accurateripCrc,
+      accurateripCrcV1: accurateripCrcV1,
+      accurateripCrcV2: accurateripCrcV2,
       peakLevel: peakLevel,
       trackQuality: trackQuality,
       copyCrc: copyCrc,
@@ -228,7 +230,8 @@ void main() {
           updatedAt: 1700000002000,
           accurateripStatus: 'verified',
           accurateripConfidence: 42,
-          accurateripCrc: 'ABCD1234',
+          accurateripCrcV1: 'ABCD1234',
+          accurateripCrcV2: 'ABCD5678',
           peakLevel: -0.5,
           trackQuality: 98.7,
           copyCrc: 'EFGH5678',
@@ -254,7 +257,8 @@ void main() {
         expect(track.updatedAt, 1700000002000);
         expect(track.accurateRipStatus, 'verified');
         expect(track.accurateRipConfidence, 42);
-        expect(track.accurateRipCrc, 'ABCD1234');
+        expect(track.accurateRipCrcV1, 'ABCD1234');
+        expect(track.accurateRipCrcV2, 'ABCD5678');
         expect(track.peakLevel, -0.5);
         expect(track.trackQuality, 98.7);
         expect(track.copyCrc, 'EFGH5678');
@@ -270,7 +274,8 @@ void main() {
         final row = _makeTrackRow(
           accurateripStatus: null,
           accurateripConfidence: null,
-          accurateripCrc: null,
+          accurateripCrcV1: null,
+          accurateripCrcV2: null,
           peakLevel: null,
           trackQuality: null,
           copyCrc: null,
@@ -286,7 +291,8 @@ void main() {
         final track = tracks.first;
         expect(track.accurateRipStatus, isNull);
         expect(track.accurateRipConfidence, isNull);
-        expect(track.accurateRipCrc, isNull);
+        expect(track.accurateRipCrcV1, isNull);
+        expect(track.accurateRipCrcV2, isNull);
         expect(track.peakLevel, isNull);
         expect(track.trackQuality, isNull);
         expect(track.copyCrc, isNull);
@@ -371,7 +377,8 @@ void main() {
             updatedAt: 1700000001000,
             accurateRipStatus: 'ok',
             accurateRipConfidence: 10,
-            accurateRipCrc: 'CRC1',
+            accurateRipCrcV1: 'CRC1',
+            accurateRipCrcV2: 'CRC2',
             peakLevel: -1.0,
             trackQuality: 99.0,
             copyCrc: 'CCRC1',
@@ -409,7 +416,8 @@ void main() {
         expect(first.fileSizeBytes.value, 40000000);
         expect(first.accurateripStatus.value, 'ok');
         expect(first.accurateripConfidence.value, 10);
-        expect(first.accurateripCrc.value, 'CRC1');
+        expect(first.accurateripCrcV1.value, 'CRC1');
+        expect(first.accurateripCrcV2.value, 'CRC2');
         expect(first.peakLevel.value, -1.0);
         expect(first.trackQuality.value, 99.0);
         expect(first.copyCrc.value, 'CCRC1');
@@ -488,7 +496,8 @@ void main() {
             any(),
             arStatus: any(named: 'arStatus'),
             arConfidence: any(named: 'arConfidence'),
-            arCrc: any(named: 'arCrc'),
+            arCrcV1: any(named: 'arCrcV1'),
+            arCrcV2: any(named: 'arCrcV2'),
             peakLevel: any(named: 'peakLevel'),
             trackQuality: any(named: 'trackQuality'),
             copyCrc: any(named: 'copyCrc'),
@@ -502,7 +511,8 @@ void main() {
           'track-7',
           arStatus: 'verified',
           arConfidence: 5,
-          arCrc: 'DEADBEEF',
+          arCrcV1: 'DEADBEEF',
+          arCrcV2: 'BEEFDEAD',
           peakLevel: -0.1,
           trackQuality: 97.3,
           copyCrc: 'CAFEBABE',
@@ -516,7 +526,8 @@ void main() {
             'track-7',
             arStatus: 'verified',
             arConfidence: 5,
-            arCrc: 'DEADBEEF',
+            arCrcV1: 'DEADBEEF',
+            arCrcV2: 'BEEFDEAD',
             peakLevel: -0.1,
             trackQuality: 97.3,
             copyCrc: 'CAFEBABE',
@@ -536,7 +547,8 @@ void main() {
             any(),
             arStatus: any(named: 'arStatus'),
             arConfidence: any(named: 'arConfidence'),
-            arCrc: any(named: 'arCrc'),
+            arCrcV1: any(named: 'arCrcV1'),
+            arCrcV2: any(named: 'arCrcV2'),
             peakLevel: any(named: 'peakLevel'),
             trackQuality: any(named: 'trackQuality'),
             copyCrc: any(named: 'copyCrc'),
@@ -553,7 +565,8 @@ void main() {
             'track-8',
             arStatus: null,
             arConfidence: null,
-            arCrc: null,
+            arCrcV1: null,
+            arCrcV2: null,
             peakLevel: null,
             trackQuality: null,
             copyCrc: null,

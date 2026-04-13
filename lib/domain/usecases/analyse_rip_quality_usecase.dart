@@ -15,10 +15,10 @@ import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:dart_accuraterip/dart_accuraterip.dart' as ar;
-import 'package:mymediascanner/core/utils/click_detector.dart' as click;
+import 'package:audio_defect_detector/audio_defect_detector.dart' as add;
+import 'package:dart_rip_log/dart_rip_log.dart' as rl;
 import 'package:mymediascanner/core/utils/flac_decoder.dart';
 import 'package:mymediascanner/core/utils/flac_reader.dart';
-import 'package:mymediascanner/core/utils/rip_log_parser.dart';
 import 'package:mymediascanner/domain/entities/rip_track.dart';
 import 'package:mymediascanner/domain/repositories/i_rip_library_repository.dart';
 
@@ -41,7 +41,7 @@ class AnalyseRipQualityUseCase {
     required IRipLibraryRepository repository,
     required FlacDecoder flacDecoder,
     required ar.AccurateRipClient accurateRipClient,
-    this.clickThreshold = 8.0,
+    this.sensitivity = add.Sensitivity.medium,
   })  : _repository = repository,
         _flacDecoder = flacDecoder,
         _arClient = accurateRipClient;
@@ -49,7 +49,7 @@ class AnalyseRipQualityUseCase {
   final IRipLibraryRepository _repository;
   final FlacDecoder _flacDecoder;
   final ar.AccurateRipClient _arClient;
-  final double clickThreshold;
+  final add.Sensitivity sensitivity;
 
   /// Execute the analysis pipeline for the given album.
   ///
@@ -77,16 +77,18 @@ class AnalyseRipQualityUseCase {
           ?.where((r) => r.trackNumber == track.trackNumber)
           .firstOrNull;
 
-      if (logResult != null && logResult.accuratelyRipped) {
+      if (logResult != null &&
+          logResult.accurateRipStatus == rl.AccurateRipStatus.verified) {
         await _repository.updateTrackQuality(
           track.id,
           arStatus: 'verified',
-          arConfidence: logResult.arConfidence,
-          arCrc: logResult.accurateRipCrc,
+          arConfidence: logResult.accurateRipConfidence,
+          arCrcV1: logResult.accurateRipCrcV1,
+          arCrcV2: logResult.accurateRipCrcV2,
           peakLevel: logResult.peakLevel,
           trackQuality: logResult.trackQuality,
           copyCrc: logResult.copyCrc,
-          ripLogSource: logResult.logSource,
+          ripLogSource: logResult.logFormat.name.toUpperCase(),
           qualityCheckedAt: now,
         );
       } else if (logResult != null) {
@@ -96,7 +98,7 @@ class AnalyseRipQualityUseCase {
           peakLevel: logResult.peakLevel,
           trackQuality: logResult.trackQuality,
           copyCrc: logResult.copyCrc,
-          ripLogSource: logResult.logSource,
+          ripLogSource: logResult.logFormat.name.toUpperCase(),
         );
         tracksNeedingAnalysis.add(track);
       } else {
@@ -208,12 +210,18 @@ class AnalyseRipQualityUseCase {
               .where((e) => e.matches(computedV1: crcV1, computedV2: crcV2))
               .firstOrNull;
 
+          final v1Hex =
+              crcV1.toRadixString(16).padLeft(8, '0').toUpperCase();
+          final v2Hex =
+              crcV2.toRadixString(16).padLeft(8, '0').toUpperCase();
+
           if (match != null) {
             await _repository.updateTrackQuality(
               track.id,
               arStatus: 'verified',
               arConfidence: match.confidence,
-              arCrc: crcV2.toRadixString(16).padLeft(8, '0').toUpperCase(),
+              arCrcV1: v1Hex,
+              arCrcV2: v2Hex,
               qualityCheckedAt: now,
             );
             continue;
@@ -222,7 +230,8 @@ class AnalyseRipQualityUseCase {
             await _repository.updateTrackQuality(
               track.id,
               arStatus: 'mismatch',
-              arCrc: crcV2.toRadixString(16).padLeft(8, '0').toUpperCase(),
+              arCrcV1: v1Hex,
+              arCrcV2: v2Hex,
               qualityCheckedAt: now,
             );
             continue;
@@ -238,21 +247,28 @@ class AnalyseRipQualityUseCase {
       );
 
       final clickResult = await Isolate.run(() {
-        return click.detectClicks(pcmData, threshold: clickThreshold);
+        return add.analysePcm(
+          pcmData,
+          format: const add.PcmFormat(
+            sampleRate: 44100,
+            bitDepth: 16,
+            channels: 2,
+          ),
+          config: add.DetectorConfig(sensitivity: sensitivity),
+        );
       });
 
       await _repository.updateTrackQuality(
         track.id,
         arStatus: 'not_found',
-        peakLevel: clickResult.peakLevel,
-        clickCount: clickResult.clickCount,
+        clickCount: clickResult.defects.length,
         qualityCheckedAt: now,
       );
     }
   }
 
   /// Try to find and parse a rip log file in the album directory.
-  Future<List<RipLogTrackResult>?> _tryParseLog(List<RipTrack> tracks) async {
+  Future<List<rl.RipLogTrack>?> _tryParseLog(List<RipTrack> tracks) async {
     if (tracks.isEmpty) return null;
 
     // Get the album directory from the first track's path
@@ -264,8 +280,8 @@ class AnalyseRipQualityUseCase {
       for (final entry in entries) {
         if (entry is File && entry.path.toLowerCase().endsWith('.log')) {
           final content = await entry.readAsString();
-          final results = RipLogParser.parse(content);
-          if (results.isNotEmpty) return results;
+          final log = rl.parseRipLog(content);
+          if (log.tracks.isNotEmpty) return log.tracks;
         }
       }
     } catch (_) {
