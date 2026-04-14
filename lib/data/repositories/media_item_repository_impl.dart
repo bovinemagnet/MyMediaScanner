@@ -4,8 +4,10 @@ import 'package:drift/drift.dart';
 import 'package:mymediascanner/data/local/dao/media_items_dao.dart';
 import 'package:mymediascanner/data/local/dao/sync_log_dao.dart';
 import 'package:mymediascanner/data/local/database/app_database.dart';
+import 'package:mymediascanner/domain/entities/item_condition.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
+import 'package:mymediascanner/domain/entities/ownership_status.dart';
 import 'package:mymediascanner/domain/repositories/i_media_item_repository.dart';
 import 'package:uuid/uuid.dart';
 
@@ -123,6 +125,11 @@ class MediaItemRepositoryImpl implements IMediaItemRepository {
       userReview: row.userReview,
       criticScore: row.criticScore,
       criticSource: row.criticSource,
+      ownershipStatus: OwnershipStatus.fromString(row.ownershipStatus),
+      condition: ItemCondition.fromString(row.condition),
+      pricePaid: row.pricePaid,
+      acquiredAt: row.acquiredAt,
+      retailer: row.retailer,
       dateAdded: row.dateAdded,
       dateScanned: row.dateScanned,
       updatedAt: row.updatedAt,
@@ -162,6 +169,11 @@ class MediaItemRepositoryImpl implements IMediaItemRepository {
       userReview: Value(item.userReview),
       criticScore: Value(item.criticScore),
       criticSource: Value(item.criticSource),
+      ownershipStatus: Value(item.ownershipStatus.name),
+      condition: Value(item.condition?.name),
+      pricePaid: Value(item.pricePaid),
+      acquiredAt: Value(item.acquiredAt),
+      retailer: Value(item.retailer),
       dateAdded: Value(item.dateAdded),
       dateScanned: Value(item.dateScanned),
       updatedAt: Value(item.updatedAt),
