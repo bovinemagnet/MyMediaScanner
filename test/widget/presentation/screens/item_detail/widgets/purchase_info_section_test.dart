@@ -12,7 +12,7 @@ import 'package:mymediascanner/presentation/screens/item_detail/widgets/purchase
 
 void main() {
   group('PurchaseInfoSection', () {
-    final baseItem = MediaItem(
+    const baseItem = MediaItem(
       id: 'i1',
       barcode: '123',
       barcodeType: 'ean13',

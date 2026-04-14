@@ -65,7 +65,7 @@ void main() {
     'editing condition persists through media item repository',
     (tester) async {
       final fake = _FakeMediaItemRepository();
-      final item = MediaItem(
+      const item = MediaItem(
         id: 'i1',
         barcode: '123',
         barcodeType: 'ean13',
@@ -81,7 +81,7 @@ void main() {
           overrides: [
             mediaItemRepositoryProvider.overrideWithValue(fake),
           ],
-          child: _HarnessWidget(initial: item),
+          child: const _HarnessWidget(initial: item),
         ),
       );
 
