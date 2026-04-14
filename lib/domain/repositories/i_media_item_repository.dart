@@ -15,6 +15,9 @@ abstract interface class IMediaItemRepository {
 
   Future<MediaItem?> getById(String id);
   Future<bool> barcodeExists(String barcode);
+  Future<int> countByBarcode(String barcode);
+  Future<List<MediaItem>> findByBarcode(String barcode);
+  Future<List<MediaItem>> findByTitleYear(String title, int? year);
   Future<void> save(MediaItem item);
   Future<void> update(MediaItem item);
   Future<void> softDelete(String id);

@@ -58,4 +58,35 @@ void main() {
         await repo.watchByStatus(OwnershipStatus.wishlist).first;
     expect(list.map((e) => e.id).toList(), ['w2']);
   });
+
+  test('countByBarcode counts non-deleted matches', () async {
+    await repo.save(baseItem(id: '1').copyWith(barcode: '123'));
+    await repo.save(baseItem(id: '2').copyWith(barcode: '123'));
+    await repo.save(baseItem(id: '3').copyWith(barcode: '456'));
+    await repo.softDelete('2');
+    expect(await repo.countByBarcode('123'), 1);
+  });
+
+  test('findByBarcode returns non-deleted matches', () async {
+    await repo.save(baseItem(id: '1').copyWith(barcode: '999'));
+    await repo.save(baseItem(id: '2').copyWith(barcode: '999'));
+    await repo.softDelete('1');
+    final m = await repo.findByBarcode('999');
+    expect(m.map((e) => e.id).toList(), ['2']);
+  });
+
+  test('findByTitleYear returns candidates with same year', () async {
+    await repo.save(baseItem(id: '1').copyWith(title: 'Dune', year: 1984));
+    await repo.save(baseItem(id: '2').copyWith(title: 'Dune', year: 2021));
+    await repo.save(baseItem(id: '3').copyWith(title: 'Other', year: 2021));
+    final m = await repo.findByTitleYear('Dune', 2021);
+    expect(m.map((e) => e.id).toList(), ['2']);
+  });
+
+  test('findByTitleYear ignores deleted items', () async {
+    await repo.save(baseItem(id: '1').copyWith(title: 'Foo', year: 2000));
+    await repo.softDelete('1');
+    final m = await repo.findByTitleYear('Foo', 2000);
+    expect(m, isEmpty);
+  });
 }

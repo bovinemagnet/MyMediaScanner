@@ -56,6 +56,38 @@ class MediaItemsDao extends DatabaseAccessor<AppDatabase>
         .getSingleOrNull();
   }
 
+  Future<int> countByBarcode(String barcode) async {
+    final countExp = mediaItemsTable.id.count();
+    final query = selectOnly(mediaItemsTable)
+      ..addColumns([countExp])
+      ..where(mediaItemsTable.barcode.equals(barcode) &
+          mediaItemsTable.deleted.equals(0));
+    final row = await query.getSingle();
+    return row.read(countExp) ?? 0;
+  }
+
+  Future<List<MediaItemsTableData>> findByBarcode(String barcode) {
+    return (select(mediaItemsTable)
+          ..where((t) => t.barcode.equals(barcode) & t.deleted.equals(0))
+          ..orderBy([(t) => OrderingTerm.desc(t.dateAdded)]))
+        .get();
+  }
+
+  Future<List<MediaItemsTableData>> findByTitleYear(
+      String title, int? year) {
+    final query = select(mediaItemsTable)
+      ..where((t) =>
+          t.title.lower().equals(title.toLowerCase()) &
+          t.deleted.equals(0));
+    if (year != null) {
+      query.where((t) => t.year.equals(year));
+    } else {
+      query.where((t) => t.year.isNull());
+    }
+    query.orderBy([(t) => OrderingTerm.desc(t.dateAdded)]);
+    return query.get();
+  }
+
   Future<bool> barcodeExists(String barcode) async {
     final query = select(mediaItemsTable)
       ..where((t) => t.barcode.equals(barcode))

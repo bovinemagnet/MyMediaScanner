@@ -76,6 +76,23 @@ class MediaItemRepositoryImpl implements IMediaItemRepository {
   }
 
   @override
+  Future<int> countByBarcode(String barcode) {
+    return _mediaItemsDao.countByBarcode(barcode);
+  }
+
+  @override
+  Future<List<MediaItem>> findByBarcode(String barcode) async {
+    final rows = await _mediaItemsDao.findByBarcode(barcode);
+    return rows.map(_fromRow).toList();
+  }
+
+  @override
+  Future<List<MediaItem>> findByTitleYear(String title, int? year) async {
+    final rows = await _mediaItemsDao.findByTitleYear(title, year);
+    return rows.map(_fromRow).toList();
+  }
+
+  @override
   Future<void> save(MediaItem item) async {
     await _mediaItemsDao.insertItem(_toCompanion(item));
     await _logSync('media_item', item.id, 'insert', item);
