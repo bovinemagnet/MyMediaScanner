@@ -27,15 +27,17 @@ class RandomPickNotifier extends AsyncNotifier<MediaItem?> {
   }
 
   Future<void> roll() async {
-    state = const AsyncLoading<MediaItem?>();
+    // On the very first roll, show a loading indicator. On subsequent
+    // re-rolls keep the previous result visible to avoid a flash while
+    // the new pick is computed.
+    final hadValue = state.hasValue && state.value != null;
+    if (!hadValue) {
+      state = const AsyncLoading<MediaItem?>();
+    }
     state = await AsyncValue.guard<MediaItem?>(() async {
       final uc = ref.read(randomPickUsecaseProvider);
       return uc(_filter);
     });
-  }
-
-  void clear() {
-    state = const AsyncData<MediaItem?>(null);
   }
 }
 
