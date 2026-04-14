@@ -15,7 +15,7 @@ void main() {
   testWidgets('WishlistScreen shows items and convert button',
       (tester) async {
     final repo = MockMediaItemRepository();
-    final item = MediaItem(
+    const item = MediaItem(
       id: 'w1',
       barcode: 'bc',
       barcodeType: 'isbn13',
