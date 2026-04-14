@@ -314,6 +314,12 @@ class SyncRepositoryImpl implements ISyncRepository {
       userReview: Value(data['user_review'] as String?),
       criticScore: Value(data['critic_score'] as double?),
       criticSource: Value(data['critic_source'] as String?),
+      ownershipStatus:
+          Value(data['ownership_status'] as String? ?? 'owned'),
+      condition: Value(data['condition'] as String?),
+      pricePaid: Value(data['price_paid'] as double?),
+      acquiredAt: Value(data['acquired_at'] as int?),
+      retailer: Value(data['retailer'] as String?),
       dateAdded: Value(data['date_added'] as int? ?? 0),
       dateScanned: Value(data['date_scanned'] as int? ?? 0),
       updatedAt: Value(data['updated_at'] as int? ?? 0),
