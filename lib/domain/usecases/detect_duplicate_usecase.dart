@@ -17,7 +17,7 @@ class DetectDuplicateUsecase {
 
   Future<DuplicateMatch> call({
     required String barcode,
-    required String title,
+    required String? title,
     int? year,
     String? excludeId,
   }) async {
@@ -25,6 +25,12 @@ class DetectDuplicateUsecase {
     final exact = byBarcode.where((e) => e.id != excludeId).toList();
     if (exact.isNotEmpty) {
       return DuplicateMatch(DuplicateKind.exactBarcode, exact);
+    }
+    // Skip fuzzy matching when no real title is available — otherwise a
+    // placeholder like "Unknown" would false-positive against existing
+    // "Unknown"-titled items.
+    if (title == null || title.isEmpty) {
+      return const DuplicateMatch(DuplicateKind.none, []);
     }
     final candidates = await _repo.findByTitleYear(title, year);
     final fuzzy = candidates.where((c) {
