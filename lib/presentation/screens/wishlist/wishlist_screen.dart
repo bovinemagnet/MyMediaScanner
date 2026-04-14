@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mymediascanner/core/constants/app_constants.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/presentation/providers/wishlist_provider.dart';
@@ -76,6 +77,7 @@ class _WishlistTile extends ConsumerWidget {
       color: colors.surfaceContainerHigh,
       elevation: 0,
       child: ListTile(
+        onTap: () => context.go('/collection/item/${item.id}'),
         leading: item.coverUrl != null
             ? AspectRatio(
                 aspectRatio: 2 / 3,
