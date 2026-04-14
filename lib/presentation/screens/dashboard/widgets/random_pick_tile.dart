@@ -29,7 +29,7 @@ class RandomPickTile extends StatelessWidget {
             Icon(Icons.casino_outlined, color: colors.primary),
             const SizedBox(height: 12),
             Text(
-              'PICK SOMETHING FOR ME',
+              'Pick something for me',
               style: theme.textTheme.labelSmall?.copyWith(
                 color: colors.onSurfaceVariant,
                 letterSpacing: 0.8,

@@ -71,7 +71,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(RandomPickSheet), findsOneWidget);
-    expect(find.text('Pick something for me'), findsOneWidget);
+    // Title appears on both the tile and the sheet header.
+    expect(find.text('Pick something for me'), findsNWidgets(2));
   });
 
   testWidgets('tapping Roll shows a result card with the item title',
