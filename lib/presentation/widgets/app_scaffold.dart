@@ -92,6 +92,7 @@ class AppScaffold extends StatelessWidget {
                 currentIndex: navigationShell.currentIndex,
                 onDestinationSelected: _onDestinationSelected,
                 showRips: isDesktop,
+                showWishlist: isDesktop,
                 isExpanded: width >= AppConstants.expandedBreakpoint,
               ),
               Expanded(
@@ -130,7 +131,8 @@ class AppScaffold extends StatelessWidget {
                 Navigator.of(context).pop(); // close drawer
                 _onDestinationSelected(index);
               },
-              showRips: true,
+              showRips: isDesktop,
+              showWishlist: isDesktop,
               isExpanded: true,
             ),
           ),
@@ -211,12 +213,14 @@ class _DesktopSidebar extends StatelessWidget {
     required this.currentIndex,
     required this.onDestinationSelected,
     required this.showRips,
+    required this.showWishlist,
     required this.isExpanded,
   });
 
   final int currentIndex;
   final ValueChanged<int> onDestinationSelected;
   final bool showRips;
+  final bool showWishlist;
   final bool isExpanded;
 
   @override
@@ -228,7 +232,7 @@ class _DesktopSidebar extends StatelessWidget {
     final items = [
       ...AppScaffold._sidebarItems,
       if (showRips) AppScaffold._ripsSidebarItem,
-      if (showRips) AppScaffold._wishlistSidebarItem,
+      if (showWishlist) AppScaffold._wishlistSidebarItem,
     ];
 
     // Sidebar and shell branch indices are now 1:1.
