@@ -27,7 +27,7 @@ class RandomPickNotifier extends AsyncNotifier<MediaItem?> {
   }
 
   Future<void> roll() async {
-    state = const AsyncLoading<MediaItem?>().copyWithPrevious(state);
+    state = const AsyncLoading<MediaItem?>();
     state = await AsyncValue.guard<MediaItem?>(() async {
       final uc = ref.read(randomPickUsecaseProvider);
       return uc(_filter);
