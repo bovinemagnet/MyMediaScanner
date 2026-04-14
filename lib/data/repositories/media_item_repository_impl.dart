@@ -125,7 +125,8 @@ class MediaItemRepositoryImpl implements IMediaItemRepository {
       userReview: row.userReview,
       criticScore: row.criticScore,
       criticSource: row.criticSource,
-      ownershipStatus: OwnershipStatus.fromString(row.ownershipStatus),
+      ownershipStatus: OwnershipStatus.fromString(row.ownershipStatus) ??
+          OwnershipStatus.owned,
       condition: ItemCondition.fromString(row.condition),
       pricePaid: row.pricePaid,
       acquiredAt: row.acquiredAt,
