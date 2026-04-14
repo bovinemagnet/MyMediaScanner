@@ -146,6 +146,7 @@ class _PurchaseInfoSectionState extends State<PurchaseInfoSection> {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final dateFormat = DateFormat.yMMMd();
+    final currencySymbol = NumberFormat.simpleCurrency().currencySymbol;
     final acquiredLabel = widget.item.acquiredAt != null
         ? dateFormat.format(
             DateTime.fromMillisecondsSinceEpoch(widget.item.acquiredAt!))
@@ -198,11 +199,11 @@ class _PurchaseInfoSectionState extends State<PurchaseInfoSection> {
             key: const Key('price-paid-field'),
             controller: _priceController,
             focusNode: _priceFocusNode,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Price paid',
-              border: OutlineInputBorder(),
+              border: const OutlineInputBorder(),
               isDense: true,
-              prefixText: '\u00A4 ',
+              prefixText: '$currencySymbol ',
             ),
             keyboardType:
                 const TextInputType.numberWithOptions(decimal: true),

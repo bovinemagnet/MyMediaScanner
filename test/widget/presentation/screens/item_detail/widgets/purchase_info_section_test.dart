@@ -5,6 +5,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/intl.dart';
 import 'package:mymediascanner/domain/entities/item_condition.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
@@ -45,6 +46,15 @@ void main() {
       expect(find.byKey(const Key('price-paid-field')), findsOneWidget);
       expect(find.byKey(const Key('retailer-field')), findsOneWidget);
       expect(find.byKey(const Key('acquired-at-tile')), findsOneWidget);
+    });
+
+    testWidgets('uses locale currency symbol as price prefix', (tester) async {
+      await tester.pumpWidget(harness(baseItem, (_) {}));
+
+      final expected = '${NumberFormat.simpleCurrency().currencySymbol} ';
+      expect(find.text(expected), findsOneWidget);
+      // Must not show the generic currency placeholder.
+      expect(find.text('\u00A4 '), findsNothing);
     });
 
     testWidgets('condition dropdown emits onChanged with selected value',
