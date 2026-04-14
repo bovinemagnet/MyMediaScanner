@@ -384,17 +384,28 @@ class _BatchPlaceholderScreenState
     final state = ref.read(batchEditorProvider).requireValue;
     for (final item in state.items) {
       if (item.metadata == null) continue;
-      if (item.status.name != 'confirmed') continue;
+      if (item.status != BatchItemStatus.confirmed) continue;
       final md = item.metadata!;
       final proceed = await confirmSaveOrSkipIfDuplicate(
         context: context,
         repository: repository,
         barcode: md.barcode,
-        title: md.title ?? 'Unknown',
+        title: md.title,
         year: md.year,
       );
       if (!context.mounted) return;
-      if (!proceed) return;
+      if (!proceed) {
+        final cancelledTitle = md.title ?? 'Untitled item';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "Bulk save cancelled at '$cancelledTitle'. "
+              'Remove or edit that entry and try again.',
+            ),
+          ),
+        );
+        return;
+      }
     }
     await ref.read(batchEditorProvider.notifier).saveAllConfirmed();
     if (context.mounted) {
@@ -417,7 +428,7 @@ class _BatchPlaceholderScreenState
         context: context,
         repository: repository,
         barcode: md.barcode,
-        title: md.title ?? 'Unknown',
+        title: md.title,
         year: md.year,
       );
       if (!context.mounted) return;
