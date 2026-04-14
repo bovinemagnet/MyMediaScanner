@@ -256,6 +256,62 @@ class $MediaItemsTableTable extends MediaItemsTable
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _ownershipStatusMeta = const VerificationMeta(
+    'ownershipStatus',
+  );
+  @override
+  late final GeneratedColumn<String> ownershipStatus = GeneratedColumn<String>(
+    'ownership_status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('owned'),
+  );
+  static const VerificationMeta _conditionMeta = const VerificationMeta(
+    'condition',
+  );
+  @override
+  late final GeneratedColumn<String> condition = GeneratedColumn<String>(
+    'condition',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _pricePaidMeta = const VerificationMeta(
+    'pricePaid',
+  );
+  @override
+  late final GeneratedColumn<double> pricePaid = GeneratedColumn<double>(
+    'price_paid',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _acquiredAtMeta = const VerificationMeta(
+    'acquiredAt',
+  );
+  @override
+  late final GeneratedColumn<int> acquiredAt = GeneratedColumn<int>(
+    'acquired_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _retailerMeta = const VerificationMeta(
+    'retailer',
+  );
+  @override
+  late final GeneratedColumn<String> retailer = GeneratedColumn<String>(
+    'retailer',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -281,6 +337,11 @@ class $MediaItemsTableTable extends MediaItemsTable
     updatedAt,
     syncedAt,
     deleted,
+    ownershipStatus,
+    condition,
+    pricePaid,
+    acquiredAt,
+    retailer,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -463,6 +524,39 @@ class $MediaItemsTableTable extends MediaItemsTable
         deleted.isAcceptableOrUnknown(data['deleted']!, _deletedMeta),
       );
     }
+    if (data.containsKey('ownership_status')) {
+      context.handle(
+        _ownershipStatusMeta,
+        ownershipStatus.isAcceptableOrUnknown(
+          data['ownership_status']!,
+          _ownershipStatusMeta,
+        ),
+      );
+    }
+    if (data.containsKey('condition')) {
+      context.handle(
+        _conditionMeta,
+        condition.isAcceptableOrUnknown(data['condition']!, _conditionMeta),
+      );
+    }
+    if (data.containsKey('price_paid')) {
+      context.handle(
+        _pricePaidMeta,
+        pricePaid.isAcceptableOrUnknown(data['price_paid']!, _pricePaidMeta),
+      );
+    }
+    if (data.containsKey('acquired_at')) {
+      context.handle(
+        _acquiredAtMeta,
+        acquiredAt.isAcceptableOrUnknown(data['acquired_at']!, _acquiredAtMeta),
+      );
+    }
+    if (data.containsKey('retailer')) {
+      context.handle(
+        _retailerMeta,
+        retailer.isAcceptableOrUnknown(data['retailer']!, _retailerMeta),
+      );
+    }
     return context;
   }
 
@@ -564,6 +658,26 @@ class $MediaItemsTableTable extends MediaItemsTable
         DriftSqlType.int,
         data['${effectivePrefix}deleted'],
       )!,
+      ownershipStatus: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}ownership_status'],
+      )!,
+      condition: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}condition'],
+      ),
+      pricePaid: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}price_paid'],
+      ),
+      acquiredAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}acquired_at'],
+      ),
+      retailer: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}retailer'],
+      ),
     );
   }
 
@@ -598,6 +712,11 @@ class MediaItemsTableData extends DataClass
   final int updatedAt;
   final int? syncedAt;
   final int deleted;
+  final String ownershipStatus;
+  final String? condition;
+  final double? pricePaid;
+  final int? acquiredAt;
+  final String? retailer;
   const MediaItemsTableData({
     required this.id,
     required this.barcode,
@@ -622,6 +741,11 @@ class MediaItemsTableData extends DataClass
     required this.updatedAt,
     this.syncedAt,
     required this.deleted,
+    required this.ownershipStatus,
+    this.condition,
+    this.pricePaid,
+    this.acquiredAt,
+    this.retailer,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -671,6 +795,19 @@ class MediaItemsTableData extends DataClass
       map['synced_at'] = Variable<int>(syncedAt);
     }
     map['deleted'] = Variable<int>(deleted);
+    map['ownership_status'] = Variable<String>(ownershipStatus);
+    if (!nullToAbsent || condition != null) {
+      map['condition'] = Variable<String>(condition);
+    }
+    if (!nullToAbsent || pricePaid != null) {
+      map['price_paid'] = Variable<double>(pricePaid);
+    }
+    if (!nullToAbsent || acquiredAt != null) {
+      map['acquired_at'] = Variable<int>(acquiredAt);
+    }
+    if (!nullToAbsent || retailer != null) {
+      map['retailer'] = Variable<String>(retailer);
+    }
     return map;
   }
 
@@ -719,6 +856,19 @@ class MediaItemsTableData extends DataClass
           ? const Value.absent()
           : Value(syncedAt),
       deleted: Value(deleted),
+      ownershipStatus: Value(ownershipStatus),
+      condition: condition == null && nullToAbsent
+          ? const Value.absent()
+          : Value(condition),
+      pricePaid: pricePaid == null && nullToAbsent
+          ? const Value.absent()
+          : Value(pricePaid),
+      acquiredAt: acquiredAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(acquiredAt),
+      retailer: retailer == null && nullToAbsent
+          ? const Value.absent()
+          : Value(retailer),
     );
   }
 
@@ -751,6 +901,11 @@ class MediaItemsTableData extends DataClass
       updatedAt: serializer.fromJson<int>(json['updatedAt']),
       syncedAt: serializer.fromJson<int?>(json['syncedAt']),
       deleted: serializer.fromJson<int>(json['deleted']),
+      ownershipStatus: serializer.fromJson<String>(json['ownershipStatus']),
+      condition: serializer.fromJson<String?>(json['condition']),
+      pricePaid: serializer.fromJson<double?>(json['pricePaid']),
+      acquiredAt: serializer.fromJson<int?>(json['acquiredAt']),
+      retailer: serializer.fromJson<String?>(json['retailer']),
     );
   }
   @override
@@ -780,6 +935,11 @@ class MediaItemsTableData extends DataClass
       'updatedAt': serializer.toJson<int>(updatedAt),
       'syncedAt': serializer.toJson<int?>(syncedAt),
       'deleted': serializer.toJson<int>(deleted),
+      'ownershipStatus': serializer.toJson<String>(ownershipStatus),
+      'condition': serializer.toJson<String?>(condition),
+      'pricePaid': serializer.toJson<double?>(pricePaid),
+      'acquiredAt': serializer.toJson<int?>(acquiredAt),
+      'retailer': serializer.toJson<String?>(retailer),
     };
   }
 
@@ -807,6 +967,11 @@ class MediaItemsTableData extends DataClass
     int? updatedAt,
     Value<int?> syncedAt = const Value.absent(),
     int? deleted,
+    String? ownershipStatus,
+    Value<String?> condition = const Value.absent(),
+    Value<double?> pricePaid = const Value.absent(),
+    Value<int?> acquiredAt = const Value.absent(),
+    Value<String?> retailer = const Value.absent(),
   }) => MediaItemsTableData(
     id: id ?? this.id,
     barcode: barcode ?? this.barcode,
@@ -831,6 +996,11 @@ class MediaItemsTableData extends DataClass
     updatedAt: updatedAt ?? this.updatedAt,
     syncedAt: syncedAt.present ? syncedAt.value : this.syncedAt,
     deleted: deleted ?? this.deleted,
+    ownershipStatus: ownershipStatus ?? this.ownershipStatus,
+    condition: condition.present ? condition.value : this.condition,
+    pricePaid: pricePaid.present ? pricePaid.value : this.pricePaid,
+    acquiredAt: acquiredAt.present ? acquiredAt.value : this.acquiredAt,
+    retailer: retailer.present ? retailer.value : this.retailer,
   );
   MediaItemsTableData copyWithCompanion(MediaItemsTableCompanion data) {
     return MediaItemsTableData(
@@ -875,6 +1045,15 @@ class MediaItemsTableData extends DataClass
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       syncedAt: data.syncedAt.present ? data.syncedAt.value : this.syncedAt,
       deleted: data.deleted.present ? data.deleted.value : this.deleted,
+      ownershipStatus: data.ownershipStatus.present
+          ? data.ownershipStatus.value
+          : this.ownershipStatus,
+      condition: data.condition.present ? data.condition.value : this.condition,
+      pricePaid: data.pricePaid.present ? data.pricePaid.value : this.pricePaid,
+      acquiredAt: data.acquiredAt.present
+          ? data.acquiredAt.value
+          : this.acquiredAt,
+      retailer: data.retailer.present ? data.retailer.value : this.retailer,
     );
   }
 
@@ -903,7 +1082,12 @@ class MediaItemsTableData extends DataClass
           ..write('dateScanned: $dateScanned, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('syncedAt: $syncedAt, ')
-          ..write('deleted: $deleted')
+          ..write('deleted: $deleted, ')
+          ..write('ownershipStatus: $ownershipStatus, ')
+          ..write('condition: $condition, ')
+          ..write('pricePaid: $pricePaid, ')
+          ..write('acquiredAt: $acquiredAt, ')
+          ..write('retailer: $retailer')
           ..write(')'))
         .toString();
   }
@@ -933,6 +1117,11 @@ class MediaItemsTableData extends DataClass
     updatedAt,
     syncedAt,
     deleted,
+    ownershipStatus,
+    condition,
+    pricePaid,
+    acquiredAt,
+    retailer,
   ]);
   @override
   bool operator ==(Object other) =>
@@ -960,7 +1149,12 @@ class MediaItemsTableData extends DataClass
           other.dateScanned == this.dateScanned &&
           other.updatedAt == this.updatedAt &&
           other.syncedAt == this.syncedAt &&
-          other.deleted == this.deleted);
+          other.deleted == this.deleted &&
+          other.ownershipStatus == this.ownershipStatus &&
+          other.condition == this.condition &&
+          other.pricePaid == this.pricePaid &&
+          other.acquiredAt == this.acquiredAt &&
+          other.retailer == this.retailer);
 }
 
 class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
@@ -987,6 +1181,11 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
   final Value<int> updatedAt;
   final Value<int?> syncedAt;
   final Value<int> deleted;
+  final Value<String> ownershipStatus;
+  final Value<String?> condition;
+  final Value<double?> pricePaid;
+  final Value<int?> acquiredAt;
+  final Value<String?> retailer;
   final Value<int> rowid;
   const MediaItemsTableCompanion({
     this.id = const Value.absent(),
@@ -1012,6 +1211,11 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
     this.updatedAt = const Value.absent(),
     this.syncedAt = const Value.absent(),
     this.deleted = const Value.absent(),
+    this.ownershipStatus = const Value.absent(),
+    this.condition = const Value.absent(),
+    this.pricePaid = const Value.absent(),
+    this.acquiredAt = const Value.absent(),
+    this.retailer = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   MediaItemsTableCompanion.insert({
@@ -1038,6 +1242,11 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
     required int updatedAt,
     this.syncedAt = const Value.absent(),
     this.deleted = const Value.absent(),
+    this.ownershipStatus = const Value.absent(),
+    this.condition = const Value.absent(),
+    this.pricePaid = const Value.absent(),
+    this.acquiredAt = const Value.absent(),
+    this.retailer = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        barcode = Value(barcode),
@@ -1071,6 +1280,11 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
     Expression<int>? updatedAt,
     Expression<int>? syncedAt,
     Expression<int>? deleted,
+    Expression<String>? ownershipStatus,
+    Expression<String>? condition,
+    Expression<double>? pricePaid,
+    Expression<int>? acquiredAt,
+    Expression<String>? retailer,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1097,6 +1311,11 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
       if (updatedAt != null) 'updated_at': updatedAt,
       if (syncedAt != null) 'synced_at': syncedAt,
       if (deleted != null) 'deleted': deleted,
+      if (ownershipStatus != null) 'ownership_status': ownershipStatus,
+      if (condition != null) 'condition': condition,
+      if (pricePaid != null) 'price_paid': pricePaid,
+      if (acquiredAt != null) 'acquired_at': acquiredAt,
+      if (retailer != null) 'retailer': retailer,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1125,6 +1344,11 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
     Value<int>? updatedAt,
     Value<int?>? syncedAt,
     Value<int>? deleted,
+    Value<String>? ownershipStatus,
+    Value<String?>? condition,
+    Value<double?>? pricePaid,
+    Value<int?>? acquiredAt,
+    Value<String?>? retailer,
     Value<int>? rowid,
   }) {
     return MediaItemsTableCompanion(
@@ -1151,6 +1375,11 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
       updatedAt: updatedAt ?? this.updatedAt,
       syncedAt: syncedAt ?? this.syncedAt,
       deleted: deleted ?? this.deleted,
+      ownershipStatus: ownershipStatus ?? this.ownershipStatus,
+      condition: condition ?? this.condition,
+      pricePaid: pricePaid ?? this.pricePaid,
+      acquiredAt: acquiredAt ?? this.acquiredAt,
+      retailer: retailer ?? this.retailer,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1227,6 +1456,21 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
     if (deleted.present) {
       map['deleted'] = Variable<int>(deleted.value);
     }
+    if (ownershipStatus.present) {
+      map['ownership_status'] = Variable<String>(ownershipStatus.value);
+    }
+    if (condition.present) {
+      map['condition'] = Variable<String>(condition.value);
+    }
+    if (pricePaid.present) {
+      map['price_paid'] = Variable<double>(pricePaid.value);
+    }
+    if (acquiredAt.present) {
+      map['acquired_at'] = Variable<int>(acquiredAt.value);
+    }
+    if (retailer.present) {
+      map['retailer'] = Variable<String>(retailer.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1259,6 +1503,11 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
           ..write('updatedAt: $updatedAt, ')
           ..write('syncedAt: $syncedAt, ')
           ..write('deleted: $deleted, ')
+          ..write('ownershipStatus: $ownershipStatus, ')
+          ..write('condition: $condition, ')
+          ..write('pricePaid: $pricePaid, ')
+          ..write('acquiredAt: $acquiredAt, ')
+          ..write('retailer: $retailer, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -8470,6 +8719,11 @@ typedef $$MediaItemsTableTableCreateCompanionBuilder =
       required int updatedAt,
       Value<int?> syncedAt,
       Value<int> deleted,
+      Value<String> ownershipStatus,
+      Value<String?> condition,
+      Value<double?> pricePaid,
+      Value<int?> acquiredAt,
+      Value<String?> retailer,
       Value<int> rowid,
     });
 typedef $$MediaItemsTableTableUpdateCompanionBuilder =
@@ -8497,6 +8751,11 @@ typedef $$MediaItemsTableTableUpdateCompanionBuilder =
       Value<int> updatedAt,
       Value<int?> syncedAt,
       Value<int> deleted,
+      Value<String> ownershipStatus,
+      Value<String?> condition,
+      Value<double?> pricePaid,
+      Value<int?> acquiredAt,
+      Value<String?> retailer,
       Value<int> rowid,
     });
 
@@ -8730,6 +8989,31 @@ class $$MediaItemsTableTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get ownershipStatus => $composableBuilder(
+    column: $table.ownershipStatus,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get condition => $composableBuilder(
+    column: $table.condition,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get pricePaid => $composableBuilder(
+    column: $table.pricePaid,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get acquiredAt => $composableBuilder(
+    column: $table.acquiredAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get retailer => $composableBuilder(
+    column: $table.retailer,
+    builder: (column) => ColumnFilters(column),
+  );
+
   Expression<bool> mediaItemTagsTableRefs(
     Expression<bool> Function($$MediaItemTagsTableTableFilterComposer f) f,
   ) {
@@ -8954,6 +9238,31 @@ class $$MediaItemsTableTableOrderingComposer
     column: $table.deleted,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get ownershipStatus => $composableBuilder(
+    column: $table.ownershipStatus,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get condition => $composableBuilder(
+    column: $table.condition,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get pricePaid => $composableBuilder(
+    column: $table.pricePaid,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get acquiredAt => $composableBuilder(
+    column: $table.acquiredAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get retailer => $composableBuilder(
+    column: $table.retailer,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$MediaItemsTableTableAnnotationComposer
@@ -9051,6 +9360,25 @@ class $$MediaItemsTableTableAnnotationComposer
 
   GeneratedColumn<int> get deleted =>
       $composableBuilder(column: $table.deleted, builder: (column) => column);
+
+  GeneratedColumn<String> get ownershipStatus => $composableBuilder(
+    column: $table.ownershipStatus,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get condition =>
+      $composableBuilder(column: $table.condition, builder: (column) => column);
+
+  GeneratedColumn<double> get pricePaid =>
+      $composableBuilder(column: $table.pricePaid, builder: (column) => column);
+
+  GeneratedColumn<int> get acquiredAt => $composableBuilder(
+    column: $table.acquiredAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get retailer =>
+      $composableBuilder(column: $table.retailer, builder: (column) => column);
 
   Expression<T> mediaItemTagsTableRefs<T extends Object>(
     Expression<T> Function($$MediaItemTagsTableTableAnnotationComposer a) f,
@@ -9212,6 +9540,11 @@ class $$MediaItemsTableTableTableManager
                 Value<int> updatedAt = const Value.absent(),
                 Value<int?> syncedAt = const Value.absent(),
                 Value<int> deleted = const Value.absent(),
+                Value<String> ownershipStatus = const Value.absent(),
+                Value<String?> condition = const Value.absent(),
+                Value<double?> pricePaid = const Value.absent(),
+                Value<int?> acquiredAt = const Value.absent(),
+                Value<String?> retailer = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => MediaItemsTableCompanion(
                 id: id,
@@ -9237,6 +9570,11 @@ class $$MediaItemsTableTableTableManager
                 updatedAt: updatedAt,
                 syncedAt: syncedAt,
                 deleted: deleted,
+                ownershipStatus: ownershipStatus,
+                condition: condition,
+                pricePaid: pricePaid,
+                acquiredAt: acquiredAt,
+                retailer: retailer,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -9264,6 +9602,11 @@ class $$MediaItemsTableTableTableManager
                 required int updatedAt,
                 Value<int?> syncedAt = const Value.absent(),
                 Value<int> deleted = const Value.absent(),
+                Value<String> ownershipStatus = const Value.absent(),
+                Value<String?> condition = const Value.absent(),
+                Value<double?> pricePaid = const Value.absent(),
+                Value<int?> acquiredAt = const Value.absent(),
+                Value<String?> retailer = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => MediaItemsTableCompanion.insert(
                 id: id,
@@ -9289,6 +9632,11 @@ class $$MediaItemsTableTableTableManager
                 updatedAt: updatedAt,
                 syncedAt: syncedAt,
                 deleted: deleted,
+                ownershipStatus: ownershipStatus,
+                condition: condition,
+                pricePaid: pricePaid,
+                acquiredAt: acquiredAt,
+                retailer: retailer,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
