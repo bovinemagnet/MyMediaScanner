@@ -105,8 +105,16 @@ class _WishlistTile extends ConsumerWidget {
         trailing: IconButton(
           tooltip: 'Mark owned',
           icon: const Icon(Icons.check_circle_outline),
-          onPressed: () {
-            // Wired up in task 1.5 via convertWishlistToOwnedProvider.
+          onPressed: () async {
+            final usecase = ref.read(convertWishlistToOwnedProvider);
+            await usecase(item.id);
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('${item.title} added to your collection'),
+                ),
+              );
+            }
           },
         ),
       ),
