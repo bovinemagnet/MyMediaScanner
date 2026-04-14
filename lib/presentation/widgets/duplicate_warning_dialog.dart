@@ -13,6 +13,7 @@ Future<bool?> showDuplicateWarningDialog(
 ) {
   return showDialog<bool>(
     context: context,
+    barrierDismissible: false,
     builder: (ctx) => DuplicateWarningDialog(match: match),
   );
 }
@@ -23,9 +24,11 @@ class DuplicateWarningDialog extends StatelessWidget {
   final DuplicateMatch match;
 
   String get _heading => switch (match.kind) {
-        DuplicateKind.exactBarcode => 'Possible duplicate',
-        DuplicateKind.fuzzyTitle => 'Possible duplicate',
-        DuplicateKind.none => 'Possible duplicate',
+        DuplicateKind.exactBarcode => 'Barcode already in your library',
+        DuplicateKind.fuzzyTitle => 'Similar title already in your library',
+        DuplicateKind.none =>
+          throw StateError('DuplicateWarningDialog must not be shown for '
+              'DuplicateKind.none'),
       };
 
   String get _subhead => switch (match.kind) {
@@ -33,15 +36,17 @@ class DuplicateWarningDialog extends StatelessWidget {
           'An item with the same barcode is already in your collection.',
         DuplicateKind.fuzzyTitle =>
           'An item with a very similar title and year already exists.',
-        DuplicateKind.none => '',
+        DuplicateKind.none =>
+          throw StateError('DuplicateWarningDialog must not be shown for '
+              'DuplicateKind.none'),
       };
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(_heading),
-      content: SizedBox(
-        width: 420,
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 420),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,

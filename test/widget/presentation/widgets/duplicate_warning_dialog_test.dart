@@ -96,6 +96,14 @@ void main() {
   testWidgets('heading differs for exact vs fuzzy', (tester) async {
     await _showDialog(
         tester, DuplicateMatch(DuplicateKind.exactBarcode, [_item('a')]));
-    expect(find.textContaining('barcode'), findsOneWidget);
+    expect(find.textContaining('Barcode'), findsOneWidget);
+    expect(find.textContaining('Similar title'), findsNothing);
+  });
+
+  testWidgets('fuzzy heading says Similar title', (tester) async {
+    await _showDialog(
+        tester, DuplicateMatch(DuplicateKind.fuzzyTitle, [_item('a')]));
+    expect(find.textContaining('Similar title'), findsOneWidget);
+    expect(find.textContaining('Barcode already'), findsNothing);
   });
 }
