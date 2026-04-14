@@ -9,6 +9,7 @@ import 'package:mymediascanner/domain/entities/metadata_result.dart';
 import 'package:mymediascanner/domain/entities/scan_result.dart';
 import 'package:mymediascanner/presentation/screens/metadata_confirm/widgets/editable_metadata_form.dart';
 import 'package:mymediascanner/presentation/screens/metadata_confirm/widgets/title_search_field.dart';
+import 'package:mymediascanner/presentation/widgets/duplicate_check_helper.dart';
 import 'package:mymediascanner/presentation/widgets/ocr_confidence_indicator.dart';
 
 class MetadataConfirmScreen extends ConsumerWidget {
@@ -159,9 +160,17 @@ class MetadataConfirmScreen extends ConsumerWidget {
               EditableMetadataForm(
                 initial: effectiveMetadata!,
                 onSave: (edited) async {
-                  final useCase = SaveMediaItemUseCase(
-                    repository: ref.read(mediaItemRepositoryProvider),
+                  final repository = ref.read(mediaItemRepositoryProvider);
+                  final proceed = await confirmSaveOrSkipIfDuplicate(
+                    context: context,
+                    repository: repository,
+                    barcode: edited.barcode,
+                    title: edited.title ?? 'Unknown',
+                    year: edited.year,
                   );
+                  if (!proceed) return;
+                  final useCase =
+                      SaveMediaItemUseCase(repository: repository);
                   await useCase.execute(edited);
 
                   final scanner = ref.read(scannerProvider.notifier);
@@ -188,9 +197,17 @@ class MetadataConfirmScreen extends ConsumerWidget {
                   }
                 },
                 onSaveToWishlist: (edited) async {
-                  final useCase = SaveMediaItemUseCase(
-                    repository: ref.read(mediaItemRepositoryProvider),
+                  final repository = ref.read(mediaItemRepositoryProvider);
+                  final proceed = await confirmSaveOrSkipIfDuplicate(
+                    context: context,
+                    repository: repository,
+                    barcode: edited.barcode,
+                    title: edited.title ?? 'Unknown',
+                    year: edited.year,
                   );
+                  if (!proceed) return;
+                  final useCase =
+                      SaveMediaItemUseCase(repository: repository);
                   await useCase.execute(
                     edited,
                     ownershipStatus: OwnershipStatus.wishlist,

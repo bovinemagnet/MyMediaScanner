@@ -84,7 +84,7 @@ class _CandidateCard extends StatelessWidget {
             child: item.coverUrl != null && item.coverUrl!.isNotEmpty
                 ? Image.network(item.coverUrl!,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) =>
+                    errorBuilder: (_, _, _) =>
                         Container(color: theme.colorScheme.surfaceContainerHigh))
                 : Container(color: theme.colorScheme.surfaceContainerHigh),
           ),
