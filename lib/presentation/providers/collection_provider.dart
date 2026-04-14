@@ -115,9 +115,14 @@ final collectionProvider = StreamProvider<List<MediaItem>>((ref) {
   final repo = ref.watch(mediaItemRepositoryProvider);
   final useCase = GetCollectionUseCase(repository: repo);
 
-  // When no search/mediaType filters are active, use watchByStatus directly
-  // so wishlist items stay out of the collection. For search we still route
-  // through the usecase (FTS path) and filter in memory.
+  // Two branches with deliberately different semantics:
+  //   * no-search path: delegates filtering/ordering to the DAO via
+  //     watchByStatus, then applies media-type and sort in memory. This is
+  //     the common case and keeps wishlist items out of the stream at the
+  //     SQL layer.
+  //   * search path: routes through the usecase so FTS5 relevance ordering
+  //     (ORDER BY rank) is preserved; the wishlist exclusion is applied in
+  //     memory here because the FTS query does not know about ownership.
   final Stream<List<MediaItem>> baseStream = (filter.search == null ||
               filter.search!.trim().isEmpty)
       ? repo.watchByStatus(OwnershipStatus.owned).map((items) {
