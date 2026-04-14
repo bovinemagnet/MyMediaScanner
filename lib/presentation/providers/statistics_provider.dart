@@ -11,6 +11,7 @@ import 'package:mymediascanner/domain/entities/insights_data.dart';
 import 'package:mymediascanner/domain/entities/loan.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
+import 'package:mymediascanner/domain/entities/ownership_status.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
 import 'package:mymediascanner/presentation/providers/loan_provider.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
@@ -171,6 +172,18 @@ InsightsData computeInsightsData({
   final musicItemsWithRips =
       musicItems.where((i) => rippedItemIds.contains(i.id)).length;
 
+  // ── Collection value ──────────────────────────────────────────────
+  // Sum of pricePaid over owned items, ignoring nulls. `null` when no
+  // owned item has a recorded price, so UI can render "—".
+  final ownedPrices = activeItems
+      .where((i) => i.ownershipStatus == OwnershipStatus.owned)
+      .map((i) => i.pricePaid)
+      .whereType<double>()
+      .toList();
+  final double? totalValue = ownedPrices.isEmpty
+      ? null
+      : ownedPrices.fold<double>(0, (sum, p) => sum + p);
+
   return InsightsData(
     totalItems: stats.totalItems,
     byMediaType: stats.byMediaType,
@@ -190,6 +203,7 @@ InsightsData computeInsightsData({
     totalRipSizeBytes: totalSizeBytes,
     musicItemsWithRips: musicItemsWithRips,
     totalMusicItems: musicItems.length,
+    totalValue: totalValue,
   );
 }
 

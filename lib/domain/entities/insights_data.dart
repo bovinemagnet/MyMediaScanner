@@ -45,5 +45,10 @@ sealed class InsightsData with _$InsightsData {
 
     /// Total music items in collection
     required int totalMusicItems,
+
+    // ── Collection value ────────────────────────
+    /// Sum of `pricePaid` over owned items, ignoring nulls. `null` when
+    /// no owned item has a recorded price.
+    double? totalValue,
   }) = _InsightsData;
 }

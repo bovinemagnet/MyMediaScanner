@@ -8,6 +8,7 @@ import 'package:mymediascanner/domain/entities/borrower.dart';
 import 'package:mymediascanner/domain/entities/loan.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
+import 'package:mymediascanner/domain/entities/ownership_status.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
 import 'package:mymediascanner/presentation/providers/statistics_provider.dart';
 
@@ -26,6 +27,8 @@ void main() {
       int? year,
       List<String> genres = const [],
       double? userRating,
+      double? pricePaid,
+      OwnershipStatus ownershipStatus = OwnershipStatus.owned,
     }) {
       return MediaItem(
         id: id,
@@ -39,6 +42,8 @@ void main() {
         year: year,
         genres: genres,
         userRating: userRating,
+        pricePaid: pricePaid,
+        ownershipStatus: ownershipStatus,
       );
     }
 
@@ -269,6 +274,66 @@ void main() {
       );
 
       expect(result.totalItems, 1);
+    });
+
+    group('totalValue', () {
+      test('sums pricePaid over owned items, ignoring nulls', () {
+        final items = [
+          makeItem(id: 'i1', pricePaid: 10.5),
+          makeItem(id: 'i2', pricePaid: 4.25),
+          makeItem(id: 'i3'), // null pricePaid
+        ];
+
+        final result = computeInsightsData(
+          items: items,
+          activeLoans: [],
+          allLoans: [],
+          borrowers: [],
+          ripAlbums: [],
+          rippedItemIds: {},
+        );
+
+        expect(result.totalValue, closeTo(14.75, 1e-9));
+      });
+
+      test('excludes wishlist items from total value', () {
+        final items = [
+          makeItem(id: 'i1', pricePaid: 10.0),
+          makeItem(
+              id: 'i2',
+              pricePaid: 99.0,
+              ownershipStatus: OwnershipStatus.wishlist),
+        ];
+
+        final result = computeInsightsData(
+          items: items,
+          activeLoans: [],
+          allLoans: [],
+          borrowers: [],
+          ripAlbums: [],
+          rippedItemIds: {},
+        );
+
+        expect(result.totalValue, 10.0);
+      });
+
+      test('returns null when no owned item has a price', () {
+        final items = [
+          makeItem(id: 'i1'),
+          makeItem(id: 'i2'),
+        ];
+
+        final result = computeInsightsData(
+          items: items,
+          activeLoans: [],
+          allLoans: [],
+          borrowers: [],
+          ripAlbums: [],
+          rippedItemIds: {},
+        );
+
+        expect(result.totalValue, isNull);
+      });
     });
 
     test('deleted rip albums are excluded', () {
