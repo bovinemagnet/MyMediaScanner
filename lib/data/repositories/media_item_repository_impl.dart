@@ -60,7 +60,7 @@ class MediaItemRepositoryImpl implements IMediaItemRepository {
   @override
   Stream<List<MediaItem>> watchByStatus(OwnershipStatus status) {
     return _mediaItemsDao
-        .watchByStatus(status.name)
+        .watchByStatus(status)
         .map((rows) => rows.map(_fromRow).toList());
   }
 

@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:mymediascanner/data/local/database/app_database.dart';
 import 'package:mymediascanner/data/local/database/tables/media_items_table.dart';
+import 'package:mymediascanner/domain/entities/ownership_status.dart';
 
 part 'media_items_dao.g.dart';
 
@@ -42,10 +43,10 @@ class MediaItemsDao extends DatabaseAccessor<AppDatabase>
     return query.watch();
   }
 
-  Stream<List<MediaItemsTableData>> watchByStatus(String status) {
+  Stream<List<MediaItemsTableData>> watchByStatus(OwnershipStatus status) {
     return (select(mediaItemsTable)
           ..where((t) =>
-              t.ownershipStatus.equals(status) & t.deleted.equals(0))
+              t.ownershipStatus.equals(status.dbValue) & t.deleted.equals(0))
           ..orderBy([(t) => OrderingTerm.desc(t.dateAdded)]))
         .watch();
   }
