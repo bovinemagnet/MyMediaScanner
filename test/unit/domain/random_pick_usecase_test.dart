@@ -129,6 +129,51 @@ void main() {
     expect(result!.id, 'slim');
   });
 
+  test('genre filter is case-insensitive', () async {
+    final repo = MockMediaItemRepository();
+    final items = [
+      _item('a', genres: const ['Science Fiction']),
+      _item('b', genres: const ['Comedy']),
+    ];
+    when(() => repo.watchByStatus(OwnershipStatus.owned))
+        .thenAnswer((_) => Stream.value(items));
+
+    final uc = RandomPickUsecase(repo, rng: Random(1));
+    final result =
+        await uc(const RandomPickFilter(genre: 'science fiction'));
+    expect(result!.id, 'a');
+  });
+
+  test('maxRuntimeMinutes coerces numeric (double) runtime values', () async {
+    final repo = MockMediaItemRepository();
+    final items = [
+      _item('short', extraMetadata: const {'runtime_minutes': 90.0}),
+      _item('long', extraMetadata: const {'runtime_minutes': 200.0}),
+    ];
+    when(() => repo.watchByStatus(OwnershipStatus.owned))
+        .thenAnswer((_) => Stream.value(items));
+
+    final uc = RandomPickUsecase(repo, rng: Random(1));
+    final result =
+        await uc(const RandomPickFilter(maxRuntimeMinutes: 120));
+    expect(result!.id, 'short');
+  });
+
+  test('maxPageCount coerces numeric (double) page counts', () async {
+    final repo = MockMediaItemRepository();
+    final items = [
+      _item('slim', extraMetadata: const {'page_count': 150.0}),
+      _item('tome', extraMetadata: const {'page_count': 900.0}),
+    ];
+    when(() => repo.watchByStatus(OwnershipStatus.owned))
+        .thenAnswer((_) => Stream.value(items));
+
+    final uc = RandomPickUsecase(repo, rng: Random(1));
+    final result =
+        await uc(const RandomPickFilter(maxPageCount: 300));
+    expect(result!.id, 'slim');
+  });
+
   test('only considers owned items (watchByStatus called with owned)',
       () async {
     final repo = MockMediaItemRepository();

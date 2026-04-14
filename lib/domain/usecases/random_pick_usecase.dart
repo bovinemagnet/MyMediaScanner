@@ -20,16 +20,24 @@ class RandomPickUsecase {
     final owned = await _repo.watchByStatus(OwnershipStatus.owned).first;
     final filtered = owned.where((i) {
       if (f.mediaType != null && i.mediaType != f.mediaType) return false;
-      if (f.genre != null && !i.genres.contains(f.genre)) return false;
+      if (f.genre != null) {
+        final needle = f.genre!.trim().toLowerCase();
+        if (needle.isNotEmpty) {
+          final match = i.genres.any((g) => g.toLowerCase() == needle);
+          if (!match) return false;
+        }
+      }
       if (f.unratedOnly && i.userRating != null) return false;
       final runtime = i.extraMetadata['runtime_minutes'];
       if (f.maxRuntimeMinutes != null &&
-          runtime is int &&
-          runtime > f.maxRuntimeMinutes!) {
+          runtime is num &&
+          runtime.toInt() > f.maxRuntimeMinutes!) {
         return false;
       }
       final pages = i.extraMetadata['page_count'];
-      if (f.maxPageCount != null && pages is int && pages > f.maxPageCount!) {
+      if (f.maxPageCount != null &&
+          pages is num &&
+          pages.toInt() > f.maxPageCount!) {
         return false;
       }
       // shelfId handled via a repo join if needed; YAGNI for v1.
