@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
+import 'package:mymediascanner/domain/entities/ownership_status.dart';
 import 'package:mymediascanner/domain/usecases/get_collection_usecase.dart';
 import 'package:mymediascanner/presentation/providers/collection_rip_status_provider.dart';
 import 'package:mymediascanner/presentation/providers/loan_provider.dart';
@@ -111,15 +112,56 @@ final collectionFilterProvider =
 
 final collectionProvider = StreamProvider<List<MediaItem>>((ref) {
   final filter = ref.watch(collectionFilterProvider);
-  final useCase = GetCollectionUseCase(
-    repository: ref.watch(mediaItemRepositoryProvider),
-  );
-  final stream = useCase.execute(
-    mediaType: filter.mediaType,
-    searchQuery: filter.search,
-    sortBy: filter.sortBy,
-    ascending: filter.ascending,
-  );
+  final repo = ref.watch(mediaItemRepositoryProvider);
+  final useCase = GetCollectionUseCase(repository: repo);
+
+  // When no search/mediaType filters are active, use watchByStatus directly
+  // so wishlist items stay out of the collection. For search we still route
+  // through the usecase (FTS path) and filter in memory.
+  final Stream<List<MediaItem>> baseStream = (filter.search == null ||
+              filter.search!.trim().isEmpty)
+      ? repo.watchByStatus(OwnershipStatus.owned).map((items) {
+          final filtered = filter.mediaType == null
+              ? items
+              : items
+                  .where((i) => i.mediaType == filter.mediaType)
+                  .toList();
+          final sortBy = filter.sortBy ?? 'dateAdded';
+          final sorted = [...filtered]..sort((a, b) {
+              int cmp;
+              switch (sortBy) {
+                case 'title':
+                  cmp = a.title.toLowerCase().compareTo(b.title.toLowerCase());
+                  break;
+                case 'year':
+                  cmp = (a.year ?? 0).compareTo(b.year ?? 0);
+                  break;
+                case 'userRating':
+                  cmp = (a.userRating ?? 0).compareTo(b.userRating ?? 0);
+                  break;
+                case 'mediaType':
+                  cmp = a.mediaType.name.compareTo(b.mediaType.name);
+                  break;
+                case 'dateAdded':
+                default:
+                  cmp = a.dateAdded.compareTo(b.dateAdded);
+              }
+              return filter.ascending ? cmp : -cmp;
+            });
+          return sorted;
+        })
+      : useCase
+          .execute(
+            mediaType: filter.mediaType,
+            searchQuery: filter.search,
+            sortBy: filter.sortBy,
+            ascending: filter.ascending,
+          )
+          .map((items) => items
+              .where((i) => i.ownershipStatus == OwnershipStatus.owned)
+              .toList());
+
+  final stream = baseStream;
 
   final needsLentFilter = filter.lentOnly;
   final needsRippedFilter =
