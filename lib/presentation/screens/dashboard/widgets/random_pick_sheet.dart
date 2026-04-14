@@ -5,6 +5,7 @@
 // Since: 0.0.0
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
@@ -99,15 +100,23 @@ class _RandomPickSheetState extends ConsumerState<RandomPickSheet> {
             TextField(
               controller: _runtimeCtl,
               keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              maxLength: 5,
               decoration: const InputDecoration(
                 labelText: 'Max runtime (minutes)',
+                counterText: '',
               ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _pagesCtl,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Max pages'),
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              maxLength: 5,
+              decoration: const InputDecoration(
+                labelText: 'Max pages',
+                counterText: '',
+              ),
             ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
