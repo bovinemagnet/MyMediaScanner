@@ -76,7 +76,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 11;
+  int get schemaVersion => 12;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -151,6 +151,19 @@ class AppDatabase extends _$AppDatabase {
                 'RENAME COLUMN accurate_rip_crc TO accurate_rip_crc_v1');
             await m.addColumn(
                 ripTracksTable, ripTracksTable.accurateripCrcV2);
+          }
+          if (from < 12) {
+            await m.addColumn(
+                mediaItemsTable, mediaItemsTable.ownershipStatus);
+            await m.addColumn(mediaItemsTable, mediaItemsTable.condition);
+            await m.addColumn(mediaItemsTable, mediaItemsTable.pricePaid);
+            await m.addColumn(mediaItemsTable, mediaItemsTable.acquiredAt);
+            await m.addColumn(mediaItemsTable, mediaItemsTable.retailer);
+            // Backfill acquiredAt from dateAdded where null (column defaults
+            // apply to new rows; existing rows keep NULL without this).
+            await customStatement(
+                'UPDATE media_items '
+                "SET acquired_at = date_added WHERE acquired_at IS NULL");
           }
         },
       );
