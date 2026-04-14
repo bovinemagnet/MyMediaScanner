@@ -11,7 +11,7 @@ Future<bool> confirmSaveOrSkipIfDuplicate({
   required BuildContext context,
   required IMediaItemRepository repository,
   required String barcode,
-  required String title,
+  required String? title,
   int? year,
   String? excludeId,
 }) async {

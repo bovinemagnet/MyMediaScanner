@@ -165,7 +165,7 @@ class MetadataConfirmScreen extends ConsumerWidget {
                     context: context,
                     repository: repository,
                     barcode: edited.barcode,
-                    title: edited.title ?? 'Unknown',
+                    title: edited.title,
                     year: edited.year,
                   );
                   if (!proceed) return;
@@ -202,7 +202,7 @@ class MetadataConfirmScreen extends ConsumerWidget {
                     context: context,
                     repository: repository,
                     barcode: edited.barcode,
-                    title: edited.title ?? 'Unknown',
+                    title: edited.title,
                     year: edited.year,
                   );
                   if (!proceed) return;
