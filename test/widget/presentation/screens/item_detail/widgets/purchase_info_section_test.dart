@@ -103,6 +103,21 @@ void main() {
       expect(captured?.pricePaid, 12.50);
     });
 
+    testWidgets('price field ignores unparseable "1.2.3" on blur',
+        (tester) async {
+      final emissions = <MediaItem>[];
+      final itemWithPrice = baseItem.copyWith(pricePaid: 5.0);
+      await tester.pumpWidget(harness(itemWithPrice, emissions.add));
+
+      await tester.enterText(
+          find.byKey(const Key('price-paid-field')), '1.2.3');
+      await tester.tap(find.byKey(const Key('outside-sink')));
+      await tester.pump();
+
+      // Unparseable — must not emit a null-price change that wipes the value.
+      expect(emissions, isEmpty);
+    });
+
     testWidgets('empty price field commits null on blur', (tester) async {
       MediaItem? captured;
       final itemWithPrice = baseItem.copyWith(pricePaid: 5.0);

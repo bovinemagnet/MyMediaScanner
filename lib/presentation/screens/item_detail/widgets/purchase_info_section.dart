@@ -95,9 +95,23 @@ class _PurchaseInfoSectionState extends State<PurchaseInfoSection> {
     }
   }
 
+  /// Parse and emit the current price-field value.
+  ///
+  /// Empty text becomes an explicit null emission. Non-empty but unparseable
+  /// input (e.g. `"1.2.3"` or a negative number) is silently ignored so that
+  /// a typo does not wipe out a previously stored price.
   void _commitPrice() {
     final text = _priceController.text.trim();
-    final parsed = text.isEmpty ? null : double.tryParse(text);
+    if (text.isEmpty) {
+      if (widget.item.pricePaid != null) {
+        _emit(widget.item.copyWith(pricePaid: null));
+      }
+      return;
+    }
+    final parsed = double.tryParse(text);
+    if (parsed == null || parsed < 0) {
+      return; // preserve prior value, do not emit
+    }
     if (parsed != widget.item.pricePaid) {
       _emit(widget.item.copyWith(pricePaid: parsed));
     }
