@@ -22,6 +22,7 @@ import 'package:mymediascanner/presentation/screens/collection/widgets/shelf_pic
 import 'package:mymediascanner/presentation/screens/item_detail/widgets/borrower_picker_dialog.dart';
 import 'package:mymediascanner/presentation/screens/item_detail/widgets/cover_art_hero.dart';
 import 'package:mymediascanner/presentation/screens/item_detail/widgets/metadata_section.dart';
+import 'package:mymediascanner/presentation/screens/item_detail/widgets/purchase_info_section.dart';
 import 'package:mymediascanner/presentation/screens/item_detail/widgets/star_rating_widget.dart';
 import 'package:mymediascanner/presentation/screens/item_detail/widgets/tag_chips.dart';
 import 'package:mymediascanner/presentation/widgets/error_state.dart';
@@ -162,6 +163,29 @@ class ItemDetailScreen extends ConsumerWidget {
                     ),
                   ),
                 ],
+                const SizedBox(height: 16),
+                PurchaseInfoSection(
+                  item: item,
+                  onChanged: (updated) async {
+                    try {
+                      await ref
+                          .read(mediaItemRepositoryProvider)
+                          .update(updated.copyWith(
+                            updatedAt:
+                                DateTime.now().millisecondsSinceEpoch,
+                          ));
+                      ref.invalidate(mediaItemProvider(itemId));
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content:
+                                  Text('Failed to save purchase info: $e')),
+                        );
+                      }
+                    }
+                  },
+                ),
                 const SizedBox(height: 16),
                 _LendingSection(mediaItemId: item.id),
                 if (item.mediaType == MediaType.music) ...[
