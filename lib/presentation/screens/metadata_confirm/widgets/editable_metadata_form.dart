@@ -9,10 +9,16 @@ class EditableMetadataForm extends StatefulWidget {
     super.key,
     required this.initial,
     required this.onSave,
+    this.onSaveToWishlist,
   });
 
   final MetadataResult initial;
   final Future<void> Function(MetadataResult edited) onSave;
+
+  /// Optional alternative action that saves the edited metadata to the
+  /// wishlist instead of the main collection. When non-null, a secondary
+  /// "Save to Wishlist" button is rendered below the primary Save button.
+  final Future<void> Function(MetadataResult edited)? onSaveToWishlist;
 
   @override
   State<EditableMetadataForm> createState() => _EditableMetadataFormState();
@@ -57,11 +63,7 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
 
   bool _saving = false;
 
-  Future<void> _save() async {
-    if (_saving) return;
-    setState(() => _saving = true);
-    try {
-      await widget.onSave(widget.initial.copyWith(
+  MetadataResult _buildEdited() => widget.initial.copyWith(
         title: _titleController.text.isEmpty ? null : _titleController.text,
         subtitle:
             _subtitleController.text.isEmpty ? null : _subtitleController.text,
@@ -75,7 +77,30 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
         format:
             _formatController.text.isEmpty ? null : _formatController.text,
         mediaType: _mediaType,
-      ));
+      );
+
+  Future<void> _save() async {
+    if (_saving) return;
+    setState(() => _saving = true);
+    try {
+      await widget.onSave(_buildEdited());
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to save: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  Future<void> _saveToWishlist() async {
+    final callback = widget.onSaveToWishlist;
+    if (callback == null || _saving) return;
+    setState(() => _saving = true);
+    try {
+      await callback(_buildEdited());
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -269,6 +294,18 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
             ],
           ),
         ),
+        if (widget.onSaveToWishlist != null) ...[
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: _saving ? null : _saveToWishlist,
+            icon: const Icon(Icons.favorite_border, size: 18),
+            label: const Text('Save to Wishlist'),
+            style: OutlinedButton.styleFrom(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            ),
+          ),
+        ],
       ],
     );
   }

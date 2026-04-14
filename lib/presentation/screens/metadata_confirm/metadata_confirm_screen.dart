@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mymediascanner/domain/entities/ownership_status.dart';
 import 'package:mymediascanner/domain/usecases/save_media_item_usecase.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/scanner_provider.dart';
@@ -184,6 +185,26 @@ class MetadataConfirmScreen extends ConsumerWidget {
                       );
                       context.go('/');
                     }
+                  }
+                },
+                onSaveToWishlist: (edited) async {
+                  final useCase = SaveMediaItemUseCase(
+                    repository: ref.read(mediaItemRepositoryProvider),
+                  );
+                  await useCase.execute(
+                    edited,
+                    ownershipStatus: OwnershipStatus.wishlist,
+                  );
+
+                  ref.read(scannerProvider.notifier).reset();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                            '${edited.title ?? "Item"} added to wishlist'),
+                      ),
+                    );
+                    context.go('/wishlist');
                   }
                 },
               ),

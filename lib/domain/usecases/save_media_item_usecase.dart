@@ -1,6 +1,7 @@
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/domain/entities/metadata_result.dart';
+import 'package:mymediascanner/domain/entities/ownership_status.dart';
 import 'package:mymediascanner/domain/repositories/i_media_item_repository.dart';
 import 'package:uuid/uuid.dart';
 
@@ -11,7 +12,10 @@ class SaveMediaItemUseCase {
   final IMediaItemRepository _repo;
   static const _uuid = Uuid();
 
-  Future<MediaItem> execute(MetadataResult metadata) async {
+  Future<MediaItem> execute(
+    MetadataResult metadata, {
+    OwnershipStatus ownershipStatus = OwnershipStatus.owned,
+  }) async {
     final now = DateTime.now().millisecondsSinceEpoch;
     final item = MediaItem(
       id: _uuid.v7(),
@@ -30,6 +34,10 @@ class SaveMediaItemUseCase {
       sourceApis: metadata.sourceApis,
       criticScore: metadata.criticScore,
       criticSource: metadata.criticSource,
+      ownershipStatus: ownershipStatus,
+      // Only stamp acquiredAt when the item actually enters the collection.
+      acquiredAt:
+          ownershipStatus == OwnershipStatus.owned ? now : null,
       dateAdded: now,
       dateScanned: now,
       updatedAt: now,
