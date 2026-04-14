@@ -15,6 +15,7 @@ import 'package:mymediascanner/presentation/screens/settings/widgets/postgres_co
 import 'package:mymediascanner/presentation/screens/settings/widgets/sync_log_viewer.dart';
 import 'package:mymediascanner/presentation/screens/shelves/shelf_detail_screen.dart';
 import 'package:mymediascanner/presentation/screens/shelves/shelves_screen.dart';
+import 'package:mymediascanner/presentation/screens/wishlist/wishlist_screen.dart';
 import 'package:mymediascanner/presentation/screens/about/about_screen.dart';
 import 'package:mymediascanner/presentation/screens/borrowers/borrowers_screen.dart';
 import 'package:mymediascanner/presentation/screens/borrowers/borrower_detail_screen.dart';
@@ -57,6 +58,7 @@ final _rootNavigatorKey = GlobalKey<NavigatorState>();
 ///   5 = Insights       (desktop sidebar + mobile bottom nav)
 ///   6 = Settings       (desktop sidebar only)
 ///   7 = Rips           (desktop sidebar only)
+///   8 = Wishlist       (desktop sidebar only)
 final router = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: '/',
@@ -221,6 +223,16 @@ final router = GoRouter(
             GoRoute(
               path: '/rips',
               builder: (context, state) => const RipsScreen(),
+            ),
+          ],
+        ),
+
+        // 8 — Wishlist (desktop sidebar only)
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/wishlist',
+              builder: (context, state) => const WishlistScreen(),
             ),
           ],
         ),

@@ -35,6 +35,9 @@ class AppScaffold extends StatelessWidget {
   static const _ripsSidebarItem =
       _SidebarDestination(Icons.album_outlined, Icons.album, 'Rips');
 
+  static const _wishlistSidebarItem = _SidebarDestination(
+      Icons.favorite_border, Icons.favorite, 'Wishlist');
+
   // ── Mobile bottom nav destinations ─────────────────────────────────
   static const _mobileDestinations = [
     NavigationDestination(
@@ -225,11 +228,12 @@ class _DesktopSidebar extends StatelessWidget {
     final items = [
       ...AppScaffold._sidebarItems,
       if (showRips) AppScaffold._ripsSidebarItem,
+      if (showRips) AppScaffold._wishlistSidebarItem,
     ];
 
     // Sidebar and shell branch indices are now 1:1.
     // Both: Dashboard(0), Library(1), Scanner(2), Shelves(3), Batch(4),
-    //       Insights(5), Settings(6), Rips(7)
+    //       Insights(5), Settings(6), Rips(7), Wishlist(8)
     int sidebarToShellIndex(int sidebarIndex) => sidebarIndex;
 
     int shellToSidebarIndex(int shellIndex) => shellIndex;
