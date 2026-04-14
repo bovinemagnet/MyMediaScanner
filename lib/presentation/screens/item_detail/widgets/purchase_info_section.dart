@@ -12,8 +12,10 @@ import 'package:mymediascanner/domain/entities/media_item.dart';
 
 /// Editor section for purchase / ownership metadata.
 ///
-/// Emits a mutated [MediaItem] via [onChanged] on every field change. The
-/// parent widget is responsible for persisting the updated item.
+/// Discrete fields (condition dropdown, acquired-at date picker) emit a
+/// mutated [MediaItem] immediately. Text fields (price paid, retailer)
+/// commit on blur or when editing is completed, to avoid a per-keystroke
+/// write-through to SQLite and the re-render / IME churn that entails.
 class PurchaseInfoSection extends StatefulWidget {
   const PurchaseInfoSection({
     super.key,
@@ -31,6 +33,8 @@ class PurchaseInfoSection extends StatefulWidget {
 class _PurchaseInfoSectionState extends State<PurchaseInfoSection> {
   late final TextEditingController _priceController;
   late final TextEditingController _retailerController;
+  late final FocusNode _priceFocusNode;
+  late final FocusNode _retailerFocusNode;
 
   @override
   void initState() {
@@ -41,33 +45,71 @@ class _PurchaseInfoSectionState extends State<PurchaseInfoSection> {
           : '',
     );
     _retailerController = TextEditingController(text: widget.item.retailer ?? '');
+    _priceFocusNode = FocusNode()..addListener(_handlePriceFocusChange);
+    _retailerFocusNode = FocusNode()..addListener(_handleRetailerFocusChange);
   }
 
   @override
   void didUpdateWidget(covariant PurchaseInfoSection oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Only sync external changes that didn't originate here.
-    final newPrice = widget.item.pricePaid;
-    final currentPriceText = _priceController.text;
-    final parsedCurrent =
-        currentPriceText.isEmpty ? null : double.tryParse(currentPriceText);
-    if (newPrice != parsedCurrent) {
-      _priceController.text =
-          newPrice != null ? newPrice.toStringAsFixed(2) : '';
+    // Only sync external changes that didn't originate here, and only when
+    // the field is not currently being edited (otherwise we clobber the user).
+    if (!_priceFocusNode.hasFocus) {
+      final newPrice = widget.item.pricePaid;
+      final currentPriceText = _priceController.text;
+      final parsedCurrent =
+          currentPriceText.isEmpty ? null : double.tryParse(currentPriceText);
+      if (newPrice != parsedCurrent) {
+        _priceController.text =
+            newPrice != null ? newPrice.toStringAsFixed(2) : '';
+      }
     }
-    if ((widget.item.retailer ?? '') != _retailerController.text) {
+    if (!_retailerFocusNode.hasFocus &&
+        (widget.item.retailer ?? '') != _retailerController.text) {
       _retailerController.text = widget.item.retailer ?? '';
     }
   }
 
   @override
   void dispose() {
+    _priceFocusNode.removeListener(_handlePriceFocusChange);
+    _retailerFocusNode.removeListener(_handleRetailerFocusChange);
     _priceController.dispose();
     _retailerController.dispose();
+    _priceFocusNode.dispose();
+    _retailerFocusNode.dispose();
     super.dispose();
   }
 
   void _emit(MediaItem updated) => widget.onChanged(updated);
+
+  void _handlePriceFocusChange() {
+    if (!_priceFocusNode.hasFocus) {
+      _commitPrice();
+    }
+  }
+
+  void _handleRetailerFocusChange() {
+    if (!_retailerFocusNode.hasFocus) {
+      _commitRetailer();
+    }
+  }
+
+  void _commitPrice() {
+    final text = _priceController.text.trim();
+    final parsed = text.isEmpty ? null : double.tryParse(text);
+    if (parsed != widget.item.pricePaid) {
+      _emit(widget.item.copyWith(pricePaid: parsed));
+    }
+  }
+
+  void _commitRetailer() {
+    final trimmed = _retailerController.text.trim();
+    final next = trimmed.isEmpty ? null : trimmed;
+    if (next != widget.item.retailer) {
+      _emit(widget.item.copyWith(retailer: next));
+    }
+  }
 
   Future<void> _pickAcquiredDate(BuildContext context) async {
     final initial = widget.item.acquiredAt != null
@@ -141,6 +183,7 @@ class _PurchaseInfoSectionState extends State<PurchaseInfoSection> {
           TextField(
             key: const Key('price-paid-field'),
             controller: _priceController,
+            focusNode: _priceFocusNode,
             decoration: const InputDecoration(
               labelText: 'Price paid',
               border: OutlineInputBorder(),
@@ -152,24 +195,26 @@ class _PurchaseInfoSectionState extends State<PurchaseInfoSection> {
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
             ],
-            onChanged: (value) {
-              final parsed = value.trim().isEmpty ? null : double.tryParse(value);
-              _emit(widget.item.copyWith(pricePaid: parsed));
+            textInputAction: TextInputAction.done,
+            onEditingComplete: () {
+              _commitPrice();
+              _priceFocusNode.unfocus();
             },
           ),
           const SizedBox(height: 12),
           TextField(
             key: const Key('retailer-field'),
             controller: _retailerController,
+            focusNode: _retailerFocusNode,
             decoration: const InputDecoration(
               labelText: 'Retailer',
               border: OutlineInputBorder(),
               isDense: true,
             ),
-            onChanged: (value) {
-              final trimmed = value.trim();
-              _emit(widget.item
-                  .copyWith(retailer: trimmed.isEmpty ? null : trimmed));
+            textInputAction: TextInputAction.done,
+            onEditingComplete: () {
+              _commitRetailer();
+              _retailerFocusNode.unfocus();
             },
           ),
           const SizedBox(height: 12),
