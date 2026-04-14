@@ -42,6 +42,14 @@ class MediaItemsDao extends DatabaseAccessor<AppDatabase>
     return query.watch();
   }
 
+  Stream<List<MediaItemsTableData>> watchByStatus(String status) {
+    return (select(mediaItemsTable)
+          ..where((t) =>
+              t.ownershipStatus.equals(status) & t.deleted.equals(0))
+          ..orderBy([(t) => OrderingTerm.desc(t.dateAdded)]))
+        .watch();
+  }
+
   Future<MediaItemsTableData?> getById(String id) {
     return (select(mediaItemsTable)..where((t) => t.id.equals(id)))
         .getSingleOrNull();

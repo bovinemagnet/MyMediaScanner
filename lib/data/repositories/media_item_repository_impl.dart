@@ -58,6 +58,13 @@ class MediaItemRepositoryImpl implements IMediaItemRepository {
   }
 
   @override
+  Stream<List<MediaItem>> watchByStatus(OwnershipStatus status) {
+    return _mediaItemsDao
+        .watchByStatus(status.name)
+        .map((rows) => rows.map(_fromRow).toList());
+  }
+
+  @override
   Future<MediaItem?> getById(String id) async {
     final row = await _mediaItemsDao.getById(id);
     return row != null ? _fromRow(row) : null;

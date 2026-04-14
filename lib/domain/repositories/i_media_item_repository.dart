@@ -1,5 +1,6 @@
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
+import 'package:mymediascanner/domain/entities/ownership_status.dart';
 
 abstract interface class IMediaItemRepository {
   Stream<List<MediaItem>> watchAll({
@@ -9,6 +10,8 @@ abstract interface class IMediaItemRepository {
     String? sortBy,
     bool ascending = true,
   });
+
+  Stream<List<MediaItem>> watchByStatus(OwnershipStatus status);
 
   Future<MediaItem?> getById(String id);
   Future<bool> barcodeExists(String barcode);
