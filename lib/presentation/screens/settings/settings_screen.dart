@@ -70,6 +70,24 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
 
+          // Import section — bulk-import collections from external services
+          _SectionCard(
+            title: 'Import',
+            colors: colors,
+            theme: theme,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.upload_file),
+                title: const Text('Import from external collection'),
+                subtitle:
+                    const Text('Goodreads, Discogs, Letterboxd or Trakt'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.go('/settings/import'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
           // FLAC Library section (desktop only)
           if (isDesktop) ...[
             _SectionCard(

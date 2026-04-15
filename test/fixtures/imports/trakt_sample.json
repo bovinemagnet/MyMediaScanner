@@ -1,0 +1,40 @@
+[
+  {
+    "plays": 1,
+    "last_watched_at": "2024-03-15T00:00:00.000Z",
+    "movie": {
+      "title": "Dune",
+      "year": 2021,
+      "ids": {
+        "trakt": 123,
+        "slug": "dune-2021",
+        "imdb": "tt1160419",
+        "tmdb": 438631
+      }
+    }
+  },
+  {
+    "plays": 5,
+    "last_watched_at": "2024-03-20T00:00:00.000Z",
+    "show": {
+      "title": "Severance",
+      "year": 2022,
+      "ids": {
+        "trakt": 456,
+        "slug": "severance",
+        "imdb": "tt11280740",
+        "tmdb": 95396
+      }
+    }
+  },
+  {
+    "plays": 1,
+    "movie": {
+      "title": "Unknown Film",
+      "year": 1999,
+      "ids": {
+        "trakt": 999
+      }
+    }
+  }
+]

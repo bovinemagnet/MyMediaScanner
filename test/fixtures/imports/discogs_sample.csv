@@ -1,0 +1,4 @@
+Catalog#,Artist,Title,Label,Format,Rating,Released,release_id,CollectionFolder,Date Added,Collection Media Condition,Collection Sleeve Condition,Collection Notes
+"ABC123","Pink Floyd","The Dark Side of the Moon","Harvest","LP, Album, Gatefold",5,1973,12345,Uncategorized,2024-01-01 10:00:00,"Very Good Plus (VG+)","Near Mint (NM or M-)",""
+"XYZ789","Radiohead","OK Computer","Parlophone","CD, Album",4,1997,67890,Uncategorized,2024-02-01 10:00:00,"Mint (M)","Mint (M)",""
+"","Various","No Catalog Number Here","Warp",LP,0,,11111,Uncategorized,2024-03-01 10:00:00,,,
