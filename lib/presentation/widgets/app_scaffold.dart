@@ -46,6 +46,11 @@ class AppScaffold extends StatelessWidget {
       Icons.collections_bookmark,
       'Series');
 
+  static const _wishlistSuggestionsSidebarItem = _SidebarDestination(
+      Icons.tips_and_updates_outlined,
+      Icons.tips_and_updates,
+      'Suggestions');
+
   // ── Mobile bottom nav destinations ─────────────────────────────────
   static const _mobileDestinations = [
     NavigationDestination(
@@ -103,6 +108,7 @@ class AppScaffold extends StatelessWidget {
                 showWishlist: isDesktop,
                 showLocations: isDesktop,
                 showSeries: isDesktop,
+                showSuggestions: isDesktop,
                 isExpanded: width >= AppConstants.expandedBreakpoint,
               ),
               Expanded(
@@ -145,6 +151,7 @@ class AppScaffold extends StatelessWidget {
               showWishlist: isDesktop,
               showLocations: isDesktop,
               showSeries: isDesktop,
+              showSuggestions: isDesktop,
               isExpanded: true,
             ),
           ),
@@ -228,6 +235,7 @@ class _DesktopSidebar extends StatelessWidget {
     required this.showWishlist,
     required this.showLocations,
     required this.showSeries,
+    required this.showSuggestions,
     required this.isExpanded,
   });
 
@@ -237,6 +245,7 @@ class _DesktopSidebar extends StatelessWidget {
   final bool showWishlist;
   final bool showLocations;
   final bool showSeries;
+  final bool showSuggestions;
   final bool isExpanded;
 
   @override
@@ -251,6 +260,7 @@ class _DesktopSidebar extends StatelessWidget {
       if (showWishlist) AppScaffold._wishlistSidebarItem,
       if (showLocations) AppScaffold._locationsSidebarItem,
       if (showSeries) AppScaffold._seriesSidebarItem,
+      if (showSuggestions) AppScaffold._wishlistSuggestionsSidebarItem,
     ];
 
     // Sidebar and shell branch indices are now 1:1.
