@@ -8,6 +8,7 @@ import 'package:mymediascanner/domain/entities/item_condition.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/domain/entities/ownership_status.dart';
+import 'package:mymediascanner/domain/entities/progress_unit.dart';
 import 'package:mymediascanner/domain/repositories/i_media_item_repository.dart';
 import 'package:uuid/uuid.dart';
 
@@ -61,6 +62,13 @@ class MediaItemRepositoryImpl implements IMediaItemRepository {
   Stream<List<MediaItem>> watchByStatus(OwnershipStatus status) {
     return _mediaItemsDao
         .watchByStatus(status)
+        .map((rows) => rows.map(_fromRow).toList());
+  }
+
+  @override
+  Stream<List<MediaItem>> watchInProgress() {
+    return _mediaItemsDao
+        .watchInProgress()
         .map((rows) => rows.map(_fromRow).toList());
   }
 
@@ -158,6 +166,12 @@ class MediaItemRepositoryImpl implements IMediaItemRepository {
       locationId: row.locationId,
       seriesId: row.seriesId,
       seriesPosition: row.seriesPosition,
+      progressCurrent: row.progressCurrent,
+      progressTotal: row.progressTotal,
+      progressUnit: ProgressUnit.fromString(row.progressUnit),
+      startedAt: row.startedAt,
+      completedAt: row.completedAt,
+      consumed: row.consumed == 1,
       dateAdded: row.dateAdded,
       dateScanned: row.dateScanned,
       updatedAt: row.updatedAt,
@@ -205,6 +219,12 @@ class MediaItemRepositoryImpl implements IMediaItemRepository {
       locationId: Value(item.locationId),
       seriesId: Value(item.seriesId),
       seriesPosition: Value(item.seriesPosition),
+      progressCurrent: Value(item.progressCurrent),
+      progressTotal: Value(item.progressTotal),
+      progressUnit: Value(item.progressUnit?.dbValue),
+      startedAt: Value(item.startedAt),
+      completedAt: Value(item.completedAt),
+      consumed: Value(item.consumed ? 1 : 0),
       dateAdded: Value(item.dateAdded),
       dateScanned: Value(item.dateScanned),
       updatedAt: Value(item.updatedAt),

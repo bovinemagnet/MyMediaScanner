@@ -51,6 +51,16 @@ class MediaItemsDao extends DatabaseAccessor<AppDatabase>
         .watch();
   }
 
+  Stream<List<MediaItemsTableData>> watchInProgress() {
+    return (select(mediaItemsTable)
+          ..where((t) =>
+              t.startedAt.isNotNull() &
+              t.completedAt.isNull() &
+              t.deleted.equals(0))
+          ..orderBy([(t) => OrderingTerm.desc(t.startedAt)]))
+        .watch();
+  }
+
   Future<MediaItemsTableData?> getById(String id) {
     return (select(mediaItemsTable)..where((t) => t.id.equals(id)))
         .getSingleOrNull();

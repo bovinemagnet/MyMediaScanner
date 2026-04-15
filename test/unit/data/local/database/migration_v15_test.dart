@@ -6,31 +6,30 @@ import 'package:mymediascanner/data/local/database/app_database.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 void main() {
-  test('v13 schema includes locations table and media_items.location_id',
-      () async {
+  const expectedColumns = [
+    'progress_current',
+    'progress_total',
+    'progress_unit',
+    'started_at',
+    'completed_at',
+    'consumed',
+  ];
+
+  test('v15 schema includes progress columns', () async {
     final db = AppDatabase.forTesting(NativeDatabase.memory());
     addTearDown(db.close);
     await db.customSelect('SELECT 1').get();
-
-    final tables = (await db.customSelect(
-      'SELECT name FROM sqlite_master '
-      "WHERE type='table' AND name='locations'",
-    ).get())
-        .map((r) => r.data['name'])
-        .toSet();
-    expect(tables, contains('locations'));
 
     final cols = (await db.customSelect(
       'SELECT name FROM pragma_table_info(\'media_items\')',
     ).get())
         .map((r) => r.data['name'] as String)
         .toSet();
-    expect(cols, contains('location_id'));
+    expect(cols, containsAll(expectedColumns));
   });
 
-  test('onUpgrade from v12 adds locations table and location_id column',
-      () async {
-    final tempDir = await Directory.systemTemp.createTemp('mms_mig_v13_');
+  test('onUpgrade from v14 adds the six progress columns', () async {
+    final tempDir = await Directory.systemTemp.createTemp('mms_mig_v15_');
     final dbFile = File('${tempDir.path}/app.sqlite');
     addTearDown(() async {
       if (await tempDir.exists()) {
@@ -38,7 +37,6 @@ void main() {
       }
     });
 
-    // Hand-craft a v12 media_items schema (everything before location_id).
     final raw = sqlite3.open(dbFile.path);
     raw.execute('''
       CREATE TABLE media_items (
@@ -69,10 +67,13 @@ void main() {
         condition TEXT NULL,
         price_paid REAL NULL,
         acquired_at INTEGER NULL,
-        retailer TEXT NULL
+        retailer TEXT NULL,
+        location_id TEXT NULL,
+        series_id TEXT NULL,
+        series_position INTEGER NULL
       )
     ''');
-    raw.execute('PRAGMA user_version = 12');
+    raw.execute('PRAGMA user_version = 14');
     raw.close();
 
     final db = AppDatabase.forTesting(NativeDatabase(dbFile));
@@ -84,14 +85,6 @@ void main() {
     ).get())
         .map((r) => r.data['name'] as String)
         .toSet();
-    expect(cols, contains('location_id'));
-
-    final tables = (await db.customSelect(
-      'SELECT name FROM sqlite_master '
-      "WHERE type='table' AND name='locations'",
-    ).get())
-        .map((r) => r.data['name'])
-        .toSet();
-    expect(tables, contains('locations'));
+    expect(cols, containsAll(expectedColumns));
   });
 }

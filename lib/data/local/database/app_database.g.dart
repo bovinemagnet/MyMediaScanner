@@ -345,6 +345,73 @@ class $MediaItemsTableTable extends MediaItemsTable
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _progressCurrentMeta = const VerificationMeta(
+    'progressCurrent',
+  );
+  @override
+  late final GeneratedColumn<int> progressCurrent = GeneratedColumn<int>(
+    'progress_current',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _progressTotalMeta = const VerificationMeta(
+    'progressTotal',
+  );
+  @override
+  late final GeneratedColumn<int> progressTotal = GeneratedColumn<int>(
+    'progress_total',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _progressUnitMeta = const VerificationMeta(
+    'progressUnit',
+  );
+  @override
+  late final GeneratedColumn<String> progressUnit = GeneratedColumn<String>(
+    'progress_unit',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _startedAtMeta = const VerificationMeta(
+    'startedAt',
+  );
+  @override
+  late final GeneratedColumn<int> startedAt = GeneratedColumn<int>(
+    'started_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _completedAtMeta = const VerificationMeta(
+    'completedAt',
+  );
+  @override
+  late final GeneratedColumn<int> completedAt = GeneratedColumn<int>(
+    'completed_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _consumedMeta = const VerificationMeta(
+    'consumed',
+  );
+  @override
+  late final GeneratedColumn<int> consumed = GeneratedColumn<int>(
+    'consumed',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -378,6 +445,12 @@ class $MediaItemsTableTable extends MediaItemsTable
     locationId,
     seriesId,
     seriesPosition,
+    progressCurrent,
+    progressTotal,
+    progressUnit,
+    startedAt,
+    completedAt,
+    consumed,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -614,6 +687,54 @@ class $MediaItemsTableTable extends MediaItemsTable
         ),
       );
     }
+    if (data.containsKey('progress_current')) {
+      context.handle(
+        _progressCurrentMeta,
+        progressCurrent.isAcceptableOrUnknown(
+          data['progress_current']!,
+          _progressCurrentMeta,
+        ),
+      );
+    }
+    if (data.containsKey('progress_total')) {
+      context.handle(
+        _progressTotalMeta,
+        progressTotal.isAcceptableOrUnknown(
+          data['progress_total']!,
+          _progressTotalMeta,
+        ),
+      );
+    }
+    if (data.containsKey('progress_unit')) {
+      context.handle(
+        _progressUnitMeta,
+        progressUnit.isAcceptableOrUnknown(
+          data['progress_unit']!,
+          _progressUnitMeta,
+        ),
+      );
+    }
+    if (data.containsKey('started_at')) {
+      context.handle(
+        _startedAtMeta,
+        startedAt.isAcceptableOrUnknown(data['started_at']!, _startedAtMeta),
+      );
+    }
+    if (data.containsKey('completed_at')) {
+      context.handle(
+        _completedAtMeta,
+        completedAt.isAcceptableOrUnknown(
+          data['completed_at']!,
+          _completedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('consumed')) {
+      context.handle(
+        _consumedMeta,
+        consumed.isAcceptableOrUnknown(data['consumed']!, _consumedMeta),
+      );
+    }
     return context;
   }
 
@@ -747,6 +868,30 @@ class $MediaItemsTableTable extends MediaItemsTable
         DriftSqlType.int,
         data['${effectivePrefix}series_position'],
       ),
+      progressCurrent: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}progress_current'],
+      ),
+      progressTotal: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}progress_total'],
+      ),
+      progressUnit: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}progress_unit'],
+      ),
+      startedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}started_at'],
+      ),
+      completedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}completed_at'],
+      ),
+      consumed: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}consumed'],
+      )!,
     );
   }
 
@@ -789,6 +934,12 @@ class MediaItemsTableData extends DataClass
   final String? locationId;
   final String? seriesId;
   final int? seriesPosition;
+  final int? progressCurrent;
+  final int? progressTotal;
+  final String? progressUnit;
+  final int? startedAt;
+  final int? completedAt;
+  final int consumed;
   const MediaItemsTableData({
     required this.id,
     required this.barcode,
@@ -821,6 +972,12 @@ class MediaItemsTableData extends DataClass
     this.locationId,
     this.seriesId,
     this.seriesPosition,
+    this.progressCurrent,
+    this.progressTotal,
+    this.progressUnit,
+    this.startedAt,
+    this.completedAt,
+    required this.consumed,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -892,6 +1049,22 @@ class MediaItemsTableData extends DataClass
     if (!nullToAbsent || seriesPosition != null) {
       map['series_position'] = Variable<int>(seriesPosition);
     }
+    if (!nullToAbsent || progressCurrent != null) {
+      map['progress_current'] = Variable<int>(progressCurrent);
+    }
+    if (!nullToAbsent || progressTotal != null) {
+      map['progress_total'] = Variable<int>(progressTotal);
+    }
+    if (!nullToAbsent || progressUnit != null) {
+      map['progress_unit'] = Variable<String>(progressUnit);
+    }
+    if (!nullToAbsent || startedAt != null) {
+      map['started_at'] = Variable<int>(startedAt);
+    }
+    if (!nullToAbsent || completedAt != null) {
+      map['completed_at'] = Variable<int>(completedAt);
+    }
+    map['consumed'] = Variable<int>(consumed);
     return map;
   }
 
@@ -962,6 +1135,22 @@ class MediaItemsTableData extends DataClass
       seriesPosition: seriesPosition == null && nullToAbsent
           ? const Value.absent()
           : Value(seriesPosition),
+      progressCurrent: progressCurrent == null && nullToAbsent
+          ? const Value.absent()
+          : Value(progressCurrent),
+      progressTotal: progressTotal == null && nullToAbsent
+          ? const Value.absent()
+          : Value(progressTotal),
+      progressUnit: progressUnit == null && nullToAbsent
+          ? const Value.absent()
+          : Value(progressUnit),
+      startedAt: startedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(startedAt),
+      completedAt: completedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(completedAt),
+      consumed: Value(consumed),
     );
   }
 
@@ -1002,6 +1191,12 @@ class MediaItemsTableData extends DataClass
       locationId: serializer.fromJson<String?>(json['locationId']),
       seriesId: serializer.fromJson<String?>(json['seriesId']),
       seriesPosition: serializer.fromJson<int?>(json['seriesPosition']),
+      progressCurrent: serializer.fromJson<int?>(json['progressCurrent']),
+      progressTotal: serializer.fromJson<int?>(json['progressTotal']),
+      progressUnit: serializer.fromJson<String?>(json['progressUnit']),
+      startedAt: serializer.fromJson<int?>(json['startedAt']),
+      completedAt: serializer.fromJson<int?>(json['completedAt']),
+      consumed: serializer.fromJson<int>(json['consumed']),
     );
   }
   @override
@@ -1039,6 +1234,12 @@ class MediaItemsTableData extends DataClass
       'locationId': serializer.toJson<String?>(locationId),
       'seriesId': serializer.toJson<String?>(seriesId),
       'seriesPosition': serializer.toJson<int?>(seriesPosition),
+      'progressCurrent': serializer.toJson<int?>(progressCurrent),
+      'progressTotal': serializer.toJson<int?>(progressTotal),
+      'progressUnit': serializer.toJson<String?>(progressUnit),
+      'startedAt': serializer.toJson<int?>(startedAt),
+      'completedAt': serializer.toJson<int?>(completedAt),
+      'consumed': serializer.toJson<int>(consumed),
     };
   }
 
@@ -1074,6 +1275,12 @@ class MediaItemsTableData extends DataClass
     Value<String?> locationId = const Value.absent(),
     Value<String?> seriesId = const Value.absent(),
     Value<int?> seriesPosition = const Value.absent(),
+    Value<int?> progressCurrent = const Value.absent(),
+    Value<int?> progressTotal = const Value.absent(),
+    Value<String?> progressUnit = const Value.absent(),
+    Value<int?> startedAt = const Value.absent(),
+    Value<int?> completedAt = const Value.absent(),
+    int? consumed,
   }) => MediaItemsTableData(
     id: id ?? this.id,
     barcode: barcode ?? this.barcode,
@@ -1108,6 +1315,16 @@ class MediaItemsTableData extends DataClass
     seriesPosition: seriesPosition.present
         ? seriesPosition.value
         : this.seriesPosition,
+    progressCurrent: progressCurrent.present
+        ? progressCurrent.value
+        : this.progressCurrent,
+    progressTotal: progressTotal.present
+        ? progressTotal.value
+        : this.progressTotal,
+    progressUnit: progressUnit.present ? progressUnit.value : this.progressUnit,
+    startedAt: startedAt.present ? startedAt.value : this.startedAt,
+    completedAt: completedAt.present ? completedAt.value : this.completedAt,
+    consumed: consumed ?? this.consumed,
   );
   MediaItemsTableData copyWithCompanion(MediaItemsTableCompanion data) {
     return MediaItemsTableData(
@@ -1168,6 +1385,20 @@ class MediaItemsTableData extends DataClass
       seriesPosition: data.seriesPosition.present
           ? data.seriesPosition.value
           : this.seriesPosition,
+      progressCurrent: data.progressCurrent.present
+          ? data.progressCurrent.value
+          : this.progressCurrent,
+      progressTotal: data.progressTotal.present
+          ? data.progressTotal.value
+          : this.progressTotal,
+      progressUnit: data.progressUnit.present
+          ? data.progressUnit.value
+          : this.progressUnit,
+      startedAt: data.startedAt.present ? data.startedAt.value : this.startedAt,
+      completedAt: data.completedAt.present
+          ? data.completedAt.value
+          : this.completedAt,
+      consumed: data.consumed.present ? data.consumed.value : this.consumed,
     );
   }
 
@@ -1204,7 +1435,13 @@ class MediaItemsTableData extends DataClass
           ..write('retailer: $retailer, ')
           ..write('locationId: $locationId, ')
           ..write('seriesId: $seriesId, ')
-          ..write('seriesPosition: $seriesPosition')
+          ..write('seriesPosition: $seriesPosition, ')
+          ..write('progressCurrent: $progressCurrent, ')
+          ..write('progressTotal: $progressTotal, ')
+          ..write('progressUnit: $progressUnit, ')
+          ..write('startedAt: $startedAt, ')
+          ..write('completedAt: $completedAt, ')
+          ..write('consumed: $consumed')
           ..write(')'))
         .toString();
   }
@@ -1242,6 +1479,12 @@ class MediaItemsTableData extends DataClass
     locationId,
     seriesId,
     seriesPosition,
+    progressCurrent,
+    progressTotal,
+    progressUnit,
+    startedAt,
+    completedAt,
+    consumed,
   ]);
   @override
   bool operator ==(Object other) =>
@@ -1277,7 +1520,13 @@ class MediaItemsTableData extends DataClass
           other.retailer == this.retailer &&
           other.locationId == this.locationId &&
           other.seriesId == this.seriesId &&
-          other.seriesPosition == this.seriesPosition);
+          other.seriesPosition == this.seriesPosition &&
+          other.progressCurrent == this.progressCurrent &&
+          other.progressTotal == this.progressTotal &&
+          other.progressUnit == this.progressUnit &&
+          other.startedAt == this.startedAt &&
+          other.completedAt == this.completedAt &&
+          other.consumed == this.consumed);
 }
 
 class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
@@ -1312,6 +1561,12 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
   final Value<String?> locationId;
   final Value<String?> seriesId;
   final Value<int?> seriesPosition;
+  final Value<int?> progressCurrent;
+  final Value<int?> progressTotal;
+  final Value<String?> progressUnit;
+  final Value<int?> startedAt;
+  final Value<int?> completedAt;
+  final Value<int> consumed;
   final Value<int> rowid;
   const MediaItemsTableCompanion({
     this.id = const Value.absent(),
@@ -1345,6 +1600,12 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
     this.locationId = const Value.absent(),
     this.seriesId = const Value.absent(),
     this.seriesPosition = const Value.absent(),
+    this.progressCurrent = const Value.absent(),
+    this.progressTotal = const Value.absent(),
+    this.progressUnit = const Value.absent(),
+    this.startedAt = const Value.absent(),
+    this.completedAt = const Value.absent(),
+    this.consumed = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   MediaItemsTableCompanion.insert({
@@ -1379,6 +1640,12 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
     this.locationId = const Value.absent(),
     this.seriesId = const Value.absent(),
     this.seriesPosition = const Value.absent(),
+    this.progressCurrent = const Value.absent(),
+    this.progressTotal = const Value.absent(),
+    this.progressUnit = const Value.absent(),
+    this.startedAt = const Value.absent(),
+    this.completedAt = const Value.absent(),
+    this.consumed = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        barcode = Value(barcode),
@@ -1420,6 +1687,12 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
     Expression<String>? locationId,
     Expression<String>? seriesId,
     Expression<int>? seriesPosition,
+    Expression<int>? progressCurrent,
+    Expression<int>? progressTotal,
+    Expression<String>? progressUnit,
+    Expression<int>? startedAt,
+    Expression<int>? completedAt,
+    Expression<int>? consumed,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1454,6 +1727,12 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
       if (locationId != null) 'location_id': locationId,
       if (seriesId != null) 'series_id': seriesId,
       if (seriesPosition != null) 'series_position': seriesPosition,
+      if (progressCurrent != null) 'progress_current': progressCurrent,
+      if (progressTotal != null) 'progress_total': progressTotal,
+      if (progressUnit != null) 'progress_unit': progressUnit,
+      if (startedAt != null) 'started_at': startedAt,
+      if (completedAt != null) 'completed_at': completedAt,
+      if (consumed != null) 'consumed': consumed,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1490,6 +1769,12 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
     Value<String?>? locationId,
     Value<String?>? seriesId,
     Value<int?>? seriesPosition,
+    Value<int?>? progressCurrent,
+    Value<int?>? progressTotal,
+    Value<String?>? progressUnit,
+    Value<int?>? startedAt,
+    Value<int?>? completedAt,
+    Value<int>? consumed,
     Value<int>? rowid,
   }) {
     return MediaItemsTableCompanion(
@@ -1524,6 +1809,12 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
       locationId: locationId ?? this.locationId,
       seriesId: seriesId ?? this.seriesId,
       seriesPosition: seriesPosition ?? this.seriesPosition,
+      progressCurrent: progressCurrent ?? this.progressCurrent,
+      progressTotal: progressTotal ?? this.progressTotal,
+      progressUnit: progressUnit ?? this.progressUnit,
+      startedAt: startedAt ?? this.startedAt,
+      completedAt: completedAt ?? this.completedAt,
+      consumed: consumed ?? this.consumed,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1624,6 +1915,24 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
     if (seriesPosition.present) {
       map['series_position'] = Variable<int>(seriesPosition.value);
     }
+    if (progressCurrent.present) {
+      map['progress_current'] = Variable<int>(progressCurrent.value);
+    }
+    if (progressTotal.present) {
+      map['progress_total'] = Variable<int>(progressTotal.value);
+    }
+    if (progressUnit.present) {
+      map['progress_unit'] = Variable<String>(progressUnit.value);
+    }
+    if (startedAt.present) {
+      map['started_at'] = Variable<int>(startedAt.value);
+    }
+    if (completedAt.present) {
+      map['completed_at'] = Variable<int>(completedAt.value);
+    }
+    if (consumed.present) {
+      map['consumed'] = Variable<int>(consumed.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1664,6 +1973,12 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
           ..write('locationId: $locationId, ')
           ..write('seriesId: $seriesId, ')
           ..write('seriesPosition: $seriesPosition, ')
+          ..write('progressCurrent: $progressCurrent, ')
+          ..write('progressTotal: $progressTotal, ')
+          ..write('progressUnit: $progressUnit, ')
+          ..write('startedAt: $startedAt, ')
+          ..write('completedAt: $completedAt, ')
+          ..write('consumed: $consumed, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -9810,6 +10125,12 @@ typedef $$MediaItemsTableTableCreateCompanionBuilder =
       Value<String?> locationId,
       Value<String?> seriesId,
       Value<int?> seriesPosition,
+      Value<int?> progressCurrent,
+      Value<int?> progressTotal,
+      Value<String?> progressUnit,
+      Value<int?> startedAt,
+      Value<int?> completedAt,
+      Value<int> consumed,
       Value<int> rowid,
     });
 typedef $$MediaItemsTableTableUpdateCompanionBuilder =
@@ -9845,6 +10166,12 @@ typedef $$MediaItemsTableTableUpdateCompanionBuilder =
       Value<String?> locationId,
       Value<String?> seriesId,
       Value<int?> seriesPosition,
+      Value<int?> progressCurrent,
+      Value<int?> progressTotal,
+      Value<String?> progressUnit,
+      Value<int?> startedAt,
+      Value<int?> completedAt,
+      Value<int> consumed,
       Value<int> rowid,
     });
 
@@ -10118,6 +10445,36 @@ class $$MediaItemsTableTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<int> get progressCurrent => $composableBuilder(
+    column: $table.progressCurrent,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get progressTotal => $composableBuilder(
+    column: $table.progressTotal,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get progressUnit => $composableBuilder(
+    column: $table.progressUnit,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get startedAt => $composableBuilder(
+    column: $table.startedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get completedAt => $composableBuilder(
+    column: $table.completedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get consumed => $composableBuilder(
+    column: $table.consumed,
+    builder: (column) => ColumnFilters(column),
+  );
+
   Expression<bool> mediaItemTagsTableRefs(
     Expression<bool> Function($$MediaItemTagsTableTableFilterComposer f) f,
   ) {
@@ -10382,6 +10739,36 @@ class $$MediaItemsTableTableOrderingComposer
     column: $table.seriesPosition,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get progressCurrent => $composableBuilder(
+    column: $table.progressCurrent,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get progressTotal => $composableBuilder(
+    column: $table.progressTotal,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get progressUnit => $composableBuilder(
+    column: $table.progressUnit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get startedAt => $composableBuilder(
+    column: $table.startedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get completedAt => $composableBuilder(
+    column: $table.completedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get consumed => $composableBuilder(
+    column: $table.consumed,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$MediaItemsTableTableAnnotationComposer
@@ -10511,6 +10898,32 @@ class $$MediaItemsTableTableAnnotationComposer
     column: $table.seriesPosition,
     builder: (column) => column,
   );
+
+  GeneratedColumn<int> get progressCurrent => $composableBuilder(
+    column: $table.progressCurrent,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get progressTotal => $composableBuilder(
+    column: $table.progressTotal,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get progressUnit => $composableBuilder(
+    column: $table.progressUnit,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get startedAt =>
+      $composableBuilder(column: $table.startedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get completedAt => $composableBuilder(
+    column: $table.completedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get consumed =>
+      $composableBuilder(column: $table.consumed, builder: (column) => column);
 
   Expression<T> mediaItemTagsTableRefs<T extends Object>(
     Expression<T> Function($$MediaItemTagsTableTableAnnotationComposer a) f,
@@ -10680,6 +11093,12 @@ class $$MediaItemsTableTableTableManager
                 Value<String?> locationId = const Value.absent(),
                 Value<String?> seriesId = const Value.absent(),
                 Value<int?> seriesPosition = const Value.absent(),
+                Value<int?> progressCurrent = const Value.absent(),
+                Value<int?> progressTotal = const Value.absent(),
+                Value<String?> progressUnit = const Value.absent(),
+                Value<int?> startedAt = const Value.absent(),
+                Value<int?> completedAt = const Value.absent(),
+                Value<int> consumed = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => MediaItemsTableCompanion(
                 id: id,
@@ -10713,6 +11132,12 @@ class $$MediaItemsTableTableTableManager
                 locationId: locationId,
                 seriesId: seriesId,
                 seriesPosition: seriesPosition,
+                progressCurrent: progressCurrent,
+                progressTotal: progressTotal,
+                progressUnit: progressUnit,
+                startedAt: startedAt,
+                completedAt: completedAt,
+                consumed: consumed,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -10748,6 +11173,12 @@ class $$MediaItemsTableTableTableManager
                 Value<String?> locationId = const Value.absent(),
                 Value<String?> seriesId = const Value.absent(),
                 Value<int?> seriesPosition = const Value.absent(),
+                Value<int?> progressCurrent = const Value.absent(),
+                Value<int?> progressTotal = const Value.absent(),
+                Value<String?> progressUnit = const Value.absent(),
+                Value<int?> startedAt = const Value.absent(),
+                Value<int?> completedAt = const Value.absent(),
+                Value<int> consumed = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => MediaItemsTableCompanion.insert(
                 id: id,
@@ -10781,6 +11212,12 @@ class $$MediaItemsTableTableTableManager
                 locationId: locationId,
                 seriesId: seriesId,
                 seriesPosition: seriesPosition,
+                progressCurrent: progressCurrent,
+                progressTotal: progressTotal,
+                progressUnit: progressUnit,
+                startedAt: startedAt,
+                completedAt: completedAt,
+                consumed: consumed,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

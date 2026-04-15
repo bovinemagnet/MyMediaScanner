@@ -36,6 +36,12 @@ class MediaItemsTable extends Table {
   TextColumn get locationId => text().nullable()();
   TextColumn get seriesId => text().nullable()();
   IntColumn get seriesPosition => integer().nullable()();
+  IntColumn get progressCurrent => integer().nullable()();
+  IntColumn get progressTotal => integer().nullable()();
+  TextColumn get progressUnit => text().nullable()();
+  IntColumn get startedAt => integer().nullable()();
+  IntColumn get completedAt => integer().nullable()();
+  IntColumn get consumed => integer().withDefault(const Constant(0))();
 
   @override
   Set<Column> get primaryKey => {id};

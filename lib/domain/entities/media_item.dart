@@ -2,6 +2,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:mymediascanner/domain/entities/item_condition.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/domain/entities/ownership_status.dart';
+import 'package:mymediascanner/domain/entities/progress_unit.dart';
 
 part 'media_item.freezed.dart';
 
@@ -39,5 +40,11 @@ sealed class MediaItem with _$MediaItem {
     String? locationId,
     String? seriesId,
     int? seriesPosition,
+    int? progressCurrent,
+    int? progressTotal,
+    ProgressUnit? progressUnit,
+    int? startedAt,
+    int? completedAt,
+    @Default(false) bool consumed,
   }) = _MediaItem;
 }

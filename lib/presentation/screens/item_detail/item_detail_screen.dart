@@ -24,6 +24,7 @@ import 'package:mymediascanner/presentation/screens/item_detail/widgets/cover_ar
 import 'package:mymediascanner/presentation/screens/item_detail/widgets/metadata_section.dart';
 import 'package:mymediascanner/presentation/screens/item_detail/widgets/purchase_info_section.dart';
 import 'package:mymediascanner/presentation/screens/item_detail/widgets/location_section.dart';
+import 'package:mymediascanner/presentation/screens/item_detail/widgets/progress_section.dart';
 import 'package:mymediascanner/presentation/screens/item_detail/widgets/star_rating_widget.dart';
 import 'package:mymediascanner/presentation/screens/item_detail/widgets/tag_chips.dart';
 import 'package:mymediascanner/presentation/widgets/error_state.dart';
@@ -189,6 +190,8 @@ class ItemDetailScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
                 LocationSection(item: item),
+                const SizedBox(height: 16),
+                ProgressSection(item: item),
                 const SizedBox(height: 16),
                 _LendingSection(mediaItemId: item.id),
                 if (item.mediaType == MediaType.music) ...[

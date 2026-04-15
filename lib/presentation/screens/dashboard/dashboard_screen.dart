@@ -6,7 +6,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/presentation/providers/collection_provider.dart';
+import 'package:mymediascanner/presentation/providers/progress_provider.dart';
 import 'package:mymediascanner/presentation/providers/statistics_provider.dart';
 import 'package:mymediascanner/presentation/screens/collection/widgets/media_item_card.dart';
 import 'package:mymediascanner/presentation/screens/dashboard/widgets/random_pick_tile.dart';
@@ -103,6 +105,15 @@ class DashboardScreen extends ConsumerWidget {
                   ],
                 ),
               ),
+              const SizedBox(height: 24),
+
+              // Currently reading / watching
+              _InProgressSection(
+                items: ref.watch(inProgressItemsProvider).maybeWhen(
+                      data: (items) => items,
+                      orElse: () => const <MediaItem>[],
+                    ),
+              ),
               const SizedBox(height: 32),
 
               // Recent additions
@@ -162,6 +173,87 @@ class DashboardScreen extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _InProgressSection extends StatelessWidget {
+  const _InProgressSection({required this.items});
+
+  final List<MediaItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    if (items.isEmpty) return const SizedBox.shrink();
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: colors.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'CURRENTLY READING / WATCHING',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: colors.onSurfaceVariant,
+                letterSpacing: 0.8,
+              ),
+            ),
+            const SizedBox(height: 8),
+            for (final item in items.take(5))
+              _InProgressTile(item: item),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InProgressTile extends StatelessWidget {
+  const _InProgressTile({required this.item});
+
+  final MediaItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final current = item.progressCurrent;
+    final total = item.progressTotal;
+    final unit = item.progressUnit?.label;
+    final ratio = (current != null && total != null && total > 0)
+        ? (current / total).clamp(0.0, 1.0)
+        : null;
+
+    String label;
+    if (current != null && total != null && unit != null) {
+      label = '$unit $current of $total';
+    } else if (current != null && unit != null) {
+      label = '$unit $current';
+    } else {
+      label = 'In progress';
+    }
+
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      title: Text(item.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: theme.textTheme.bodySmall),
+          const SizedBox(height: 4),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(3),
+            child: LinearProgressIndicator(value: ratio, minHeight: 4),
+          ),
+        ],
+      ),
+      onTap: () => GoRouter.of(context).go('/collection/item/${item.id}'),
     );
   }
 }

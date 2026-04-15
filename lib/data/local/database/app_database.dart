@@ -84,7 +84,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 14;
+  int get schemaVersion => 15;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -171,7 +171,7 @@ class AppDatabase extends _$AppDatabase {
             // apply to new rows; existing rows keep NULL without this).
             await customStatement(
                 'UPDATE media_items '
-                "SET acquired_at = date_added WHERE acquired_at IS NULL");
+                'SET acquired_at = date_added WHERE acquired_at IS NULL');
           }
           if (from < 13) {
             await m.createTable(locationsTable);
@@ -184,6 +184,20 @@ class AppDatabase extends _$AppDatabase {
                 mediaItemsTable, mediaItemsTable.seriesId);
             await m.addColumn(
                 mediaItemsTable, mediaItemsTable.seriesPosition);
+          }
+          if (from < 15) {
+            await m.addColumn(
+                mediaItemsTable, mediaItemsTable.progressCurrent);
+            await m.addColumn(
+                mediaItemsTable, mediaItemsTable.progressTotal);
+            await m.addColumn(
+                mediaItemsTable, mediaItemsTable.progressUnit);
+            await m.addColumn(
+                mediaItemsTable, mediaItemsTable.startedAt);
+            await m.addColumn(
+                mediaItemsTable, mediaItemsTable.completedAt);
+            await m.addColumn(
+                mediaItemsTable, mediaItemsTable.consumed);
           }
         },
       );
