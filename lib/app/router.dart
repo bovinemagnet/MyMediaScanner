@@ -17,6 +17,7 @@ import 'package:mymediascanner/presentation/screens/settings/widgets/sync_log_vi
 import 'package:mymediascanner/presentation/screens/shelves/shelf_detail_screen.dart';
 import 'package:mymediascanner/presentation/screens/shelves/shelves_screen.dart';
 import 'package:mymediascanner/presentation/screens/wishlist/wishlist_screen.dart';
+import 'package:mymediascanner/presentation/screens/locations/location_browser_screen.dart';
 import 'package:mymediascanner/presentation/screens/about/about_screen.dart';
 import 'package:mymediascanner/presentation/screens/borrowers/borrowers_screen.dart';
 import 'package:mymediascanner/presentation/screens/borrowers/borrower_detail_screen.dart';
@@ -240,6 +241,16 @@ final router = GoRouter(
             GoRoute(
               path: '/wishlist',
               builder: (context, state) => const WishlistScreen(),
+            ),
+          ],
+        ),
+
+        // 9 — Locations (desktop sidebar only)
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/locations',
+              builder: (context, state) => const LocationBrowserScreen(),
             ),
           ],
         ),
