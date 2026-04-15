@@ -6,6 +6,7 @@ import 'package:mymediascanner/presentation/screens/collection/collection_screen
 import 'package:mymediascanner/presentation/screens/collection/statistics_screen.dart';
 import 'package:mymediascanner/presentation/screens/dashboard/dashboard_screen.dart';
 import 'package:mymediascanner/presentation/screens/disambiguation/disambiguation_screen.dart';
+import 'package:mymediascanner/presentation/screens/import/import_screen.dart';
 import 'package:mymediascanner/presentation/screens/item_detail/item_detail_screen.dart';
 import 'package:mymediascanner/presentation/screens/metadata_confirm/metadata_confirm_screen.dart';
 import 'package:mymediascanner/presentation/screens/rips/rips_screen.dart';
@@ -211,6 +212,12 @@ final router = GoRouter(
                   parentNavigatorKey: _rootNavigatorKey,
                   pageBuilder: (context, state) =>
                       _fadeSlideTransition(state, const BorrowersScreen()),
+                ),
+                GoRoute(
+                  path: 'import',
+                  parentNavigatorKey: _rootNavigatorKey,
+                  pageBuilder: (context, state) =>
+                      _fadeSlideTransition(state, const ImportScreen()),
                 ),
               ],
             ),
