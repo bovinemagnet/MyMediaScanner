@@ -8,10 +8,10 @@ import 'package:mymediascanner/data/remote/api/tmdb/models/tmdb_search_result_dt
 void main() {
   group('MusicBrainz series extraction', () {
     test('promotes release-group id and title to series fields', () {
-      final dto = MusicBrainzReleaseDto(
+      const dto = MusicBrainzReleaseDto(
         id: 'rel-1',
         title: 'OK Computer',
-        releaseGroup: const MusicBrainzReleaseGroupDto(
+        releaseGroup: MusicBrainzReleaseGroupDto(
           id: 'rg-42',
           title: 'OK Computer',
           primaryType: 'Album',
@@ -25,7 +25,7 @@ void main() {
     });
 
     test('leaves series fields null when releaseGroup absent', () {
-      final dto = MusicBrainzReleaseDto(id: 'rel-1', title: 't');
+      const dto = MusicBrainzReleaseDto(id: 'rel-1', title: 't');
       final result = MusicBrainzMapper.fromRelease(dto, '123', 'EAN13');
       expect(result.seriesExternalId, isNull);
       expect(result.seriesName, isNull);

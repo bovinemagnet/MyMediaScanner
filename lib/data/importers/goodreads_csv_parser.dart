@@ -54,6 +54,10 @@ class GoodreadsCsvParser implements ImportParser {
       final title = cell(titleCol);
       if (title == null) continue;
 
+      final publisher = cell(publisherCol);
+      final fields = <String, String>{};
+      if (publisher != null) fields['publisher'] = publisher;
+
       rows.add(ImportRow(
         sourceRowId: cell(bookIdCol) ?? 'goodreads-$i',
         source: ImportSource.goodreads,
@@ -62,9 +66,7 @@ class GoodreadsCsvParser implements ImportParser {
         rawAuthor: cell(authorCol),
         rawYear: _parseYear(cell(origYearCol) ?? cell(yearCol)),
         isbn: isbn,
-        rawFields: {
-          if (cell(publisherCol) case final p?) 'publisher': p,
-        },
+        rawFields: fields,
       ));
     }
     return rows;

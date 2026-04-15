@@ -13,7 +13,7 @@ void main() {
     await db.customSelect('SELECT 1').get();
 
     final rows = await db.customSelect(
-      "SELECT name FROM pragma_table_info('media_items')",
+      'SELECT name FROM pragma_table_info(\'media_items\')',
     ).get();
     final names = rows.map((r) => r.data['name'] as String).toSet();
     expect(
@@ -71,13 +71,13 @@ void main() {
 
     const seededDateAdded = 1700000000000;
     raw.execute(
-      "INSERT INTO media_items (id, barcode, barcode_type, media_type, "
-      "title, date_added, date_scanned, updated_at) VALUES "
+      'INSERT INTO media_items (id, barcode, barcode_type, media_type, '
+      'title, date_added, date_scanned, updated_at) VALUES '
       "('seed-1', '123', 'ean13', 'cd', 'Seed Title', $seededDateAdded, "
-      "$seededDateAdded, $seededDateAdded)",
+      '$seededDateAdded, $seededDateAdded)',
     );
     raw.execute('PRAGMA user_version = 11');
-    raw.dispose();
+    raw.close();
 
     // Reopen via AppDatabase, which triggers onUpgrade from v11 -> v12.
     final db = AppDatabase.forTesting(NativeDatabase(dbFile));
@@ -86,7 +86,7 @@ void main() {
 
     // Assert the five new columns exist after migration.
     final colRows = await db.customSelect(
-      "SELECT name FROM pragma_table_info('media_items')",
+      'SELECT name FROM pragma_table_info(\'media_items\')',
     ).get();
     final names = colRows.map((r) => r.data['name'] as String).toSet();
     expect(
@@ -101,7 +101,7 @@ void main() {
 
     // Assert the seeded row was backfilled correctly.
     final seeded = await db.customSelect(
-      "SELECT acquired_at, ownership_status FROM media_items "
+      'SELECT acquired_at, ownership_status FROM media_items '
       "WHERE id = 'seed-1'",
     ).getSingle();
     expect(seeded.data['acquired_at'], seededDateAdded);

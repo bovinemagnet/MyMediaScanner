@@ -13,7 +13,7 @@ void main() {
     await db.customSelect('SELECT 1').get();
 
     final tables = (await db.customSelect(
-      "SELECT name FROM sqlite_master "
+      'SELECT name FROM sqlite_master '
       "WHERE type='table' AND name='locations'",
     ).get())
         .map((r) => r.data['name'])
@@ -21,7 +21,7 @@ void main() {
     expect(tables, contains('locations'));
 
     final cols = (await db.customSelect(
-      "SELECT name FROM pragma_table_info('media_items')",
+      'SELECT name FROM pragma_table_info(\'media_items\')',
     ).get())
         .map((r) => r.data['name'] as String)
         .toSet();
@@ -73,21 +73,21 @@ void main() {
       )
     ''');
     raw.execute('PRAGMA user_version = 12');
-    raw.dispose();
+    raw.close();
 
     final db = AppDatabase.forTesting(NativeDatabase(dbFile));
     addTearDown(db.close);
     await db.customSelect('SELECT 1').get();
 
     final cols = (await db.customSelect(
-      "SELECT name FROM pragma_table_info('media_items')",
+      'SELECT name FROM pragma_table_info(\'media_items\')',
     ).get())
         .map((r) => r.data['name'] as String)
         .toSet();
     expect(cols, contains('location_id'));
 
     final tables = (await db.customSelect(
-      "SELECT name FROM sqlite_master "
+      'SELECT name FROM sqlite_master '
       "WHERE type='table' AND name='locations'",
     ).get())
         .map((r) => r.data['name'])

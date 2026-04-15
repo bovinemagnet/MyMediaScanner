@@ -171,7 +171,7 @@ class AppDatabase extends _$AppDatabase {
             // apply to new rows; existing rows keep NULL without this).
             await customStatement(
                 'UPDATE media_items '
-                "SET acquired_at = date_added WHERE acquired_at IS NULL");
+                'SET acquired_at = date_added WHERE acquired_at IS NULL');
           }
           if (from < 13) {
             await m.createTable(locationsTable);
