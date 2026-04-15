@@ -1,0 +1,116 @@
+= Recommendations Engine
+Paul Snow
+0.0.0
+include::_attributes.adoc[]
+:description: Local, explainable, deterministic scorer that recommends what to watch, read, or listen to next from your own collection.
+
+The recommendations engine analyses your collection and suggests what to watch, read, or listen to next.
+All scoring is performed locally on-device with no external service calls.
+Results are deterministic and explainable: every recommendation is accompanied by structured reasons you can read at a glance.
+
+== Design Principles
+
+* *Local* — no data leaves the device.
+* *Explainable* — every score is the sum of labelled, weighted components; no black-box model is used.
+* *Deterministic* — the same collection state always produces the same ranked list.
+* *Opt-in signals* — the engine only uses data you have explicitly provided (ratings, genres on your items) rather than inferred behaviour.
+
+== Scoring Weights
+
+`RecommendNextUseCase` scores each candidate item using a weighted sum of five signals:
+
+[cols="2,1,4", options="header"]
+|===
+| Signal | Weight | Description
+
+| Genre overlap
+| 0.45
+| Fraction of the candidate's genres that appear in `TasteProfile.lovedGenres`.
+
+| Tag overlap
+| 0.20
+| Fraction of the candidate's tags that appear in `TasteProfile.lovedTags`.
+
+| Series collecting
+| 0.20
+| `1.0` if the candidate belongs to a series already in `TasteProfile.collectedSeriesIds`, else `0.0`.
+
+| Recency
+| 0.10
+| Linear decay from `1.0` (added today) to `0.0` (added 90 or more days ago), based on `date_added`.
+
+| Personal rating
+| 0.05
+| `(user_rating - 1.0) / 4.0` normalised to `[0, 1]` for items you have already rated. `0.0` for unrated items.
+|===
+
+The weights sum to 1.0.
+The final score is a float in `[0.0, 1.0]`.
+
+== TasteProfileBuilder
+
+`TasteProfileBuilder` derives a `TasteProfile` from your owned, non-deleted items:
+
+`lovedGenres`::
+The set of all genre strings that appear on items with `user_rating >= 4.0`.
+Each genre is weighted by how many highly-rated items carry it, but only the top 20 genres are retained.
+
+`lovedTags`::
+The set of all tag names attached to items with `user_rating >= 4.0`.
+
+`collectedSeriesIds`::
+The set of `series_id` values for series where `SeriesDao.watchSeriesWithCounts()` reports `owned_count >= 2`.
+A series appears here only when you own at least two instalments, indicating active collecting intent.
+
+`TasteProfile` is recalculated each time `RecommendNextUseCase` is invoked.
+For large collections the calculation is performed on a background isolate to keep the UI responsive.
+
+== Candidate Filtering
+
+Before scoring, `RecommendNextUseCase` filters the full `media_items` table to a candidate set.
+An item is excluded if any of the following are true:
+
+* `deleted = 1`
+* `consumed = 1` (already marked complete via progress tracking)
+* `started_at IS NOT NULL AND completed_at IS NULL` (currently in progress)
+* `ownership_status = wishlist` (not yet owned)
+* `user_rating <= 1.0` (explicitly disliked)
+
+Items that pass all filters are candidates for scoring.
+
+== RecommendationReasons
+
+Each scored candidate is returned as a `ScoredRecommendation` containing:
+
+* The `MediaItem` domain entity.
+* The total score.
+* A list of `RecommendationReason` objects, one per signal that contributed a non-zero component.
+
+`RecommendationReason` carries a `type` (an enum value such as `genreMatch`, `seriesCollecting`) and a human-readable `label` string (e.g. "Matches your love of Drama", "Part of a series you collect").
+These are rendered as chips on the Dashboard recommendation tile and on the full recommendations screen.
+
+== Dashboard Tile
+
+The *Recommended next* tile on the Dashboard shows the top three recommendations from `RecommendNextUseCase`.
+Each card displays:
+
+* Cover thumbnail.
+* Title and year.
+* Top two reason chips.
+* An *Add to Wishlist* shortcut if the item is somehow not yet in the collection (can occur when browsing series gaps; see xref:wishlist.adoc[]).
+
+Tapping a card navigates to the item detail screen.
+
+== Full Recommendations Screen
+
+The full recommendations list is accessible from the Dashboard tile's *See all* link.
+It shows up to 50 ranked candidates with all reason chips visible.
+
+Filtering controls allow you to restrict recommendations by media type.
+The list re-ranks in real time as filters change (all scoring happens in memory after the initial candidate retrieval).
+
+== Related Pages
+
+* xref:wishlist.adoc[Wishlist and Suggestions] — wishlist management and trending suggestions, which reuse `RecommendationScorer`
+* xref:series.adoc[Series and Franchise Grouping] — how `collectedSeriesIds` is derived
+* xref:progress.adoc[Reading and Watching Progress] — how `consumed` and in-progress state affect candidate filtering

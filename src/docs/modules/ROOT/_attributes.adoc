@@ -1,6 +1,6 @@
 :project-name: MyMediaScanner
 :project-version: 0.0.0
-:schema-version: 8
+:schema-version: 15
 :dart-version: 3
 :flutter-version: 3
 :author: Paul Snow

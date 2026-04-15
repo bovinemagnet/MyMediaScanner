@@ -27,7 +27,7 @@ It owns the Material 3 theme configuration (colour schemes, typography tokens, t
 
 `app/theme/`:: Custom design system — `app_colors`, `app_typography`, `app_theme`, and `app_theme_extensions`.
 `app/app.dart`:: `MaterialApp.router` entry point; reads `themeModeProvider` to switch between Obsidian Lens (dark) and Precision Editorial (light) themes.
-`app/router.dart`:: GoRouter configuration with 8 `StatefulShellBranch` routes.
+`app/router.dart`:: GoRouter configuration with 12 `StatefulShellBranch` routes.
 See xref:navigation.adoc[] for the full routing table.
 
 === core/
@@ -46,7 +46,7 @@ The infrastructure layer.
 It implements the abstract repository interfaces defined in `domain/` and manages all I/O.
 
 `data/local/`:: Drift (SQLite) database, typed table definitions, and DAOs.
-Schema version {schema-version} contains 13 tables: `media_items`, `tags`, `media_item_tags`, `shelves`, `shelf_items`, `barcode_cache`, `sync_log`, `borrowers`, `loans`, `rip_albums`, `rip_tracks`, `batch_sessions`, and `batch_queue_items`.
+Schema version {schema-version} contains 17 tables: `media_items`, `tags`, `media_item_tags`, `shelves`, `shelf_items`, `barcode_cache`, `sync_log`, `borrowers`, `loans`, `rip_albums`, `rip_tracks`, `batch_sessions`, `batch_queue_items`, `playlists`, `playlist_tracks`, `locations`, and `series`.
 `data/remote/api/`:: Retrofit API clients for TMDB, Discogs, Google Books, Open Library, and UPCitemdb.
 Users supply their own API keys stored in `flutter_secure_storage`.
 `data/remote/sync/`:: PostgreSQL sync client (direct connection via the `postgres` Dart package) with last-write-wins conflict resolution.

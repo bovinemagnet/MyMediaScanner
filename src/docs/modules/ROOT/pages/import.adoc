@@ -1,0 +1,169 @@
+= Importing External Collections
+Paul Snow
+0.0.0
+include::_attributes.adoc[]
+:description: Import your existing Goodreads, Discogs, Letterboxd, or Trakt collections into MyMediaScanner in bulk.
+
+The import feature lets you bring an existing collection catalogue into MyMediaScanner from a third-party service without scanning each item individually.
+Four source formats are supported: Goodreads CSV, Discogs collection CSV, Letterboxd `watched.csv`, and Trakt JSON exports.
+
+== Accessing the Import Flow
+
+Navigate to *Settings > Import Collection* to open the import screen.
+Select your source format, pick the exported file, and the pipeline will guide you through preview and confirmation before writing anything to the database.
+
+== Supported Formats
+
+=== Goodreads CSV
+
+Goodreads exports a CSV containing a row per book entry, using Excel-safe quoting for titles that contain commas.
+The import pipeline reads the `ISBN13` column as the primary identifier.
+
+Expected columns used by the importer:
+
+[cols="1,3", options="header"]
+|===
+| Column | Usage
+
+| `ISBN13`
+| Primary lookup key; routed through the ISBN metadata pathway.
+
+| `Title`
+| Fallback display label when the lookup returns no result.
+
+| `Author l-f`
+| Stored as supplementary metadata in `extra_metadata`.
+
+| `Bookshelves`
+| Mapped to tags on the resulting media item.
+|===
+
+Rows where `ISBN13` is empty or `0000000000000` are skipped.
+
+=== Discogs Collection CSV
+
+Discogs allows you to export your collection as a CSV from *My Collection > Export*.
+The importer reads two identifying columns:
+
+[cols="1,3", options="header"]
+|===
+| Column | Usage
+
+| `release_id`
+| Numeric Discogs release identifier; used to call the Discogs releases endpoint directly.
+
+| `Catalog#`
+| Catalogue number; used as a supplementary search hint when the release lookup fails.
+|===
+
+All other columns (`Rating`, `Notes`, `Folder`) are ignored.
+
+=== Letterboxd watched.csv
+
+Letterboxd exports a `watched.csv` from *Settings > Import & Export > Export Your Data*.
+The importer reads the `Name` and `Year` columns to construct a `searchByTitle` query against TMDB.
+
+[cols="1,3", options="header"]
+|===
+| Column | Usage
+
+| `Name`
+| Film title passed to `IMetadataRepository.searchByTitle`.
+
+| `Year`
+| Publication year used to disambiguate results when multiple TMDB matches are returned.
+
+| `Letterboxd URI`
+| Ignored; present in the CSV but not used.
+|===
+
+Because Letterboxd exports do not contain barcodes, every row goes through the `searchByTitle` fallback rather than `lookupBarcode`.
+
+=== Trakt JSON
+
+Trakt provides a full JSON export from *Settings > Export Data*.
+The importer reads movies and shows from the export structure.
+Each entry must contain an `ids.imdb` field (e.g. `tt0111161`).
+
+Entries without a valid IMDb ID are skipped with a warning logged to the preview table.
+The IMDb ID is routed through `IMetadataRepository.lookupBarcode`, which maps `tt*` values to the TMDB `/find/:external_id` endpoint.
+
+NOTE: Only `movies` and `shows` collections are read from the Trakt JSON.
+Ratings, history, and watchlist sub-objects are not imported in this release.
+
+== Import Pipeline
+
+All four sources pass through the same five-stage pipeline:
+
+=== 1. Parse
+
+The selected file is read and validated against the expected column structure for the chosen source format.
+Rows that cannot be parsed (e.g. missing required columns, encoding errors) are collected as parse errors and shown in the preview table with a *Skip* status.
+
+=== 2. Deduplicate
+
+Each row's primary identifier (ISBN-13, Discogs release ID, IMDb ID, or `Title + Year`) is checked against the `barcode_cache` table and the live `media_items` table.
+Items already present in the catalogue are flagged as *Duplicate* in the preview and are deselected by default.
+
+=== 3. Enrich via Metadata Lookup
+
+For each non-duplicate row the importer calls `IMetadataRepository`:
+
+* Rows with a barcode (ISBN-13, IMDb ID) call `lookupBarcode`.
+* Rows with only a title and year call `searchByTitle`.
+
+Lookups are rate-limited to one request every *250 ms* to respect upstream API terms of service.
+The progress indicator on the preview screen updates as each row is enriched.
+
+See xref:metadata-lookup.adoc[] for the full lookup strategy, including caching and API routing.
+
+=== 4. Preview Table
+
+Once all rows are enriched, a paginated preview table is shown.
+Each row displays:
+
+* Resolved title, year, media type, and cover thumbnail.
+* Import status: *Ready*, *Duplicate*, *Not Found*, or *Parse Error*.
+
+You may accept or reject individual rows by toggling the checkbox on each row.
+All *Ready* rows are selected by default; rows with any other status are deselected.
+
+=== 5. Bulk Save
+
+Tapping *Import Selected* calls `SaveMediaItemUseCase` for every accepted row in a single batched operation.
+Items are saved with `ownershipStatus = OwnershipStatus.owned` unless you select *Import as Wishlist* before confirming, in which case they are saved with `ownershipStatus = OwnershipStatus.wishlist`.
+
+After saving, a summary sheet reports how many items were saved, skipped, and failed.
+
+== Rate Limiting
+
+The enrichment stage enforces a 250 ms inter-request delay.
+For a Goodreads export with 500 books this equates to roughly two minutes of network activity.
+The import screen remains responsive throughout; you may navigate away and return to monitor progress.
+
+TIP: Imports resume automatically if the app is backgrounded.
+If the app is terminated mid-import, restart it and navigate to *Settings > Import Collection* to see the partially completed session.
+
+== Error Handling
+
+[cols="1,3", options="header"]
+|===
+| Error | Behaviour
+
+| Network timeout
+| The row is marked *Not Found* after three retries. It can be re-enriched from the preview table using the *Retry* action per row.
+
+| API rate-limit response (HTTP 429)
+| The pipeline pauses for 30 seconds then resumes automatically.
+
+| Duplicate barcode
+| Row is flagged *Duplicate* and deselected. It can be force-accepted if you wish to save a second copy.
+
+| Unresolvable title/year
+| Row is marked *Not Found*. You may manually assign metadata by tapping the row to open the metadata editor.
+|===
+
+== Related Pages
+
+* xref:metadata-lookup.adoc[Metadata Lookup] — how barcodes and titles are resolved to metadata
+* xref:batch-scanning.adoc[Batch Scanning] — queue-based scanning for physical barcodes

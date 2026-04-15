@@ -1,0 +1,147 @@
+= Series and Franchise Grouping
+Paul Snow
+0.0.0
+include::_attributes.adoc[]
+:description: Group media items into series and franchises, track collection completeness, and surface gaps in your collection.
+
+Series grouping lets you link individual media items to a named series or franchise — for example a film collection, a music release group, or a television run — and visualise how complete your ownership of that series is.
+
+== Overview
+
+A *series* is a named grouping of related releases identified by a qualified external ID.
+Each item in the catalogue may belong to at most one series and carries an optional `series_position` to define its order within that series.
+
+Series data is introduced in schema version {schema-version} via two additions: a new `series` table and two new columns on `media_items`.
+
+== Database Schema
+
+=== series Table
+
+[cols="2,1,4", options="header"]
+|===
+| Column | Type | Description
+
+| `id`
+| TEXT PK
+| UUID v4, generated on creation.
+
+| `external_id`
+| TEXT UNIQUE
+| Qualified external identifier, e.g. `tmdb:131635` (TMDB collection ID) or `mb:rg-42` (MusicBrainz release-group MBID). Used as the dedup key when upserting from metadata.
+
+| `name`
+| TEXT
+| Display name of the series or franchise.
+
+| `description`
+| TEXT
+| Optional synopsis or description sourced from the upstream API.
+
+| `media_type`
+| TEXT
+| Media type the series belongs to: `film`, `tv`, `music`, etc.
+
+| `total_items`
+| INTEGER
+| Total number of official releases in the series as reported by the upstream source. `NULL` if unknown.
+
+| `updated_at`
+| INTEGER
+| Unix epoch (ms) of the last local modification.
+
+| `deleted`
+| INTEGER
+| Soft-delete flag: `0` = active, `1` = deleted.
+|===
+
+=== media_items Additions
+
+Two nullable columns are added to `media_items`:
+
+[cols="2,1,4", options="header"]
+|===
+| Column | Type | Description
+
+| `series_id`
+| TEXT FK
+| References `series.id`. `NULL` when the item has no known series affiliation.
+
+| `series_position`
+| REAL
+| Numeric position within the series (e.g. `1.0`, `2.0`, `2.5` for an interquel). `NULL` if the position is unknown.
+|===
+
+The `series_position` column is `REAL` rather than `INTEGER` to accommodate supplementary entries (novelisations, special editions, side-stories) that sit between canonical instalments.
+
+== Metadata Sources
+
+Series links are resolved at save time by `ResolveSeriesUseCase`, which is invoked automatically by `saveMediaItemUseCaseProvider` after a successful metadata lookup.
+
+=== TMDB belongs_to_collection
+
+When TMDB returns a `belongs_to_collection` object on a `/movie/:id` response, `ResolveSeriesUseCase` upserts a `series` row keyed on `tmdb:<collection_id>` and sets the item's `series_id`.
+
+The `series_position` for film collections is derived from the release date ordering of the full collection, obtained via the TMDB `/collection/:id` endpoint.
+This endpoint is called once per unique collection and its result is cached for 30 days.
+
+=== MusicBrainz Release Groups
+
+MusicBrainz release group membership is promoted from `extra_metadata` for music items that were resolved via the MusicBrainz API.
+The release-group MBID is used to construct the qualified external ID `mb:<release-group-mbid>`.
+`series_position` for release groups reflects the release date ordering of the group's official releases.
+
+NOTE: Release group data is fetched from the MusicBrainz `/release-group/:mbid` endpoint.
+No MusicBrainz API key is required.
+
+== ResolveSeriesUseCase
+
+`ResolveSeriesUseCase` follows this sequence:
+
+. Extract the series hint from the resolved `MetadataResult` (TMDB collection or MusicBrainz release group).
+. If no hint is present, return without modifying the item.
+. Compute the qualified `external_id`.
+. Call `SeriesDao.upsertByExternalId` — if a matching row already exists it is updated; otherwise a new row is inserted.
+. Set `media_items.series_id` and `media_items.series_position` on the saved item.
+
+`ResolveSeriesUseCase` is idempotent: running it again on an already-linked item updates the series metadata but does not create duplicate rows.
+
+== SeriesDao
+
+`SeriesDao` exposes the following queries:
+
+`watchSeriesWithCounts()`::
+Streams a list of all non-deleted series rows, each annotated with:
++
+* `owned_count` — number of non-deleted, non-wishlist items linked to this series.
+* `wishlist_count` — number of wishlist items.
+* `completeness` — `owned_count / total_items` as a fraction from `0.0` to `1.0`, or `NULL` if `total_items` is unknown.
++
+Wishlist items are excluded from `owned_count` so that completeness reflects only items you physically own.
+
+`watchSeriesDetail(String seriesId)`::
+Streams the series row together with all linked `media_items` rows, ordered by `series_position` ascending (nulls last).
+
+`upsertByExternalId(Series series)`::
+Inserts a new row or updates an existing one, keyed on `external_id`.
+
+== Series Screen
+
+The `/series` route (desktop sidebar branch 10) shows a paginated list of all series in the collection.
+
+Each series card displays:
+
+* Series name and media type icon.
+* Completeness bar: `owned_count / total_items` as a filled progress indicator.
+  When `total_items` is `NULL` the bar is replaced by an owned-count chip.
+* Cover thumbnails for up to four owned items.
+
+Tapping a series card navigates to `/series/:id`, the series detail screen, which shows the full ordered list of instalments.
+Items you own are highlighted; items you do not own are shown as placeholders with an *Add to Wishlist* action.
+
+NOTE: The series screen is desktop-only.
+On mobile, series membership is visible in the item detail screen but there is no dedicated series browser.
+
+== Related Pages
+
+* xref:metadata-lookup.adoc[Metadata Lookup] — how TMDB and MusicBrainz data is fetched and mapped
+* xref:data-model.adoc[Data Model] — full table reference and schema conventions

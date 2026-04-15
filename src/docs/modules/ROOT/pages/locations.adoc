@@ -1,0 +1,166 @@
+= Physical Location Tracking
+Paul Snow
+0.0.0
+include::_attributes.adoc[]
+:description: Track the physical location of every item in your collection using a hierarchical Room → Shelf → Box → Slot tree.
+
+Physical location tracking lets you record exactly where each item in your collection is stored — down to the individual slot on a shelf or compartment in a box.
+This is distinct from the virtual xref:data-model.adoc#shelves[shelves] feature, which organises items into named lists for browsing purposes.
+Location tracking models the physical world: rooms, furniture, boxes, and slots.
+
+NOTE: The locations screen is accessible at the `/locations` route and appears in the desktop sidebar only (branch 9).
+Location data is stored and managed on desktop; mobile devices can view location information in item detail but cannot manage the location tree.
+
+== Location Hierarchy
+
+Locations form a four-level hierarchy, though all intermediate levels are optional:
+
+[cols="1,1,3", options="header"]
+|===
+| Level | Example | Notes
+
+| Room
+| Living room, Loft storage
+| Top-level node; has no parent.
+
+| Shelf / Unit
+| IKEA Kallax unit, Filing cabinet
+| Child of a Room.
+
+| Box / Drawer
+| Box #3, Top drawer
+| Child of a Shelf or directly of a Room.
+
+| Slot / Position
+| Row 2 Column 4, Section A
+| Leaf node; directly holds a media item.
+|===
+
+The hierarchy is implemented as a single self-referential `locations` table introduced in schema version {schema-version}.
+
+== Database Schema
+
+=== locations Table
+
+[cols="2,1,4", options="header"]
+|===
+| Column | Type | Description
+
+| `id`
+| TEXT PK
+| UUID v4, generated on creation.
+
+| `parent_id`
+| TEXT FK
+| References `locations.id` of the parent node. `NULL` for top-level (Room) nodes.
+
+| `name`
+| TEXT
+| Display name of this location node. Required.
+
+| `description`
+| TEXT
+| Optional free-text notes, e.g. physical label on the box.
+
+| `sort_order`
+| INTEGER
+| Zero-based display position among siblings. Used to control tree ordering.
+
+| `updated_at`
+| INTEGER
+| Unix epoch (ms) of the last local modification.
+
+| `deleted`
+| INTEGER
+| Soft-delete flag: `0` = active, `1` = deleted.
+|===
+
+=== media_items.location_id Column
+
+`media_items` gains a nullable `location_id` foreign key referencing `locations.id`.
+A `NULL` value means the item has no assigned location.
+This column was added in the same schema version {schema-version} migration that introduced the `locations` table.
+
+== LocationsDao
+
+`LocationsDao` exposes the following tree primitives to use cases and providers:
+
+`getChildren(String parentId)`::
+Returns the immediate children of a given node, ordered by `sort_order`.
+Passing the sentinel value `null` as `parentId` returns all top-level (Room) nodes.
+
+`getAncestors(String locationId)`::
+Returns an ordered list of ancestor nodes from the root down to (but not including) the given node.
+This list is used to render the breadcrumb trail in the tree-picker dialogue and the item-detail Location section.
+
+`wouldCreateCycle(String nodeId, String newParentId)`::
+Returns `true` if reparenting `nodeId` under `newParentId` would create a circular reference.
+This check is enforced in the UI before any reparent operation is committed.
+
+`watchItemsAtLocation(String locationId)`::
+Streams all non-deleted `media_items` rows whose `location_id` equals the given value.
+Does not include items in child locations; use `getChildren` to recurse.
+
+== Managing Locations
+
+=== Creating a Location
+
+. Open the *Locations* screen from the desktop sidebar.
+. Tap *Add Room* to create a top-level node, or tap the *+* icon beside an existing node to add a child.
+. Enter a name and optional description.
+. Tap *Save*.
+
+The new node appears in the tree at the end of its parent's children list.
+Drag rows within the same parent to reorder them; `sort_order` is updated automatically.
+
+=== Reparenting a Location
+
+. Long-press or right-click a node and select *Move*.
+. A tree-picker dialogue opens, showing the full location tree.
+. Select the new parent node.
+
+The application calls `wouldCreateCycle` before confirming.
+If moving the node would create a cycle, the target is disabled in the picker and a tooltip explains the restriction.
+
+=== Deleting a Location
+
+Locations use soft deletes only.
+Setting a node's `deleted = 1` does not cascade to its children.
+Child nodes remain in the tree and retain their original `parent_id`, but their parent is now a deleted node.
+
+CAUTION: Soft-deleting a parent node will orphan its children in the tree display.
+Reassign child nodes before deleting a parent, or delete children first.
+
+Items whose `location_id` references a deleted location node retain the foreign key.
+Their item-detail Location section will display a *Location deleted* notice until you reassign the item.
+
+== Assigning a Location to an Item
+
+=== From the Item Detail Screen
+
+. Open an item in the collection.
+. Scroll to the *Location* section.
+. Tap *Assign Location*.
+. The tree-picker dialogue opens.
+. Navigate the tree and tap the desired leaf (or any intermediate node) to select it.
+. Tap *Confirm*.
+
+The selected location path (breadcrumb) is displayed in the Location section, e.g. `Living room > Kallax unit > Row 3`.
+
+=== Bulk Assignment
+
+You may assign the same location to multiple items at once from the Locations screen:
+
+. Navigate to the desired location node in the tree.
+. Tap *Assign Items*.
+. Select items from the collection picker.
+. Tap *Confirm*.
+
+All selected items have their `location_id` updated in a single transaction.
+
+== Sync Behaviour
+
+The `locations` table and the `media_items.location_id` column participate in the standard sync strategy.
+Soft-deleted location rows are included in sync payloads so that deletions propagate to all devices.
+
+See xref:data-model.adoc[Data Model] for the full table reference and soft-delete conventions.
