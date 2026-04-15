@@ -2,11 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 import 'package:mymediascanner/data/local/dao/media_items_dao.dart';
 import 'package:mymediascanner/data/local/dao/sync_log_dao.dart';
 import 'package:mymediascanner/data/local/database/app_database.dart';
 import 'package:mymediascanner/data/remote/sync/postgres_sync_client.dart';
 import 'package:mymediascanner/data/remote/sync/sync_strategy.dart';
+import 'package:mymediascanner/domain/entities/ownership_status.dart';
 import 'package:mymediascanner/domain/entities/sync_conflict.dart';
 import 'package:mymediascanner/domain/repositories/i_sync_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -293,6 +295,20 @@ class SyncRepositoryImpl implements ISyncRepository {
     await prefs.setInt(_lastSyncedAtKey, epochMs);
   }
 
+  /// Resolve an ownership_status value received from the remote, logging a
+  /// warning and defaulting to `owned` when the value is unrecognised
+  /// (e.g. a typo or an enum variant from a newer client).
+  String _resolveOwnershipStatus(Object? raw) {
+    final value = raw as String?;
+    final parsed = OwnershipStatus.fromString(value);
+    if (parsed != null) return parsed.name;
+    if (value != null) {
+      debugPrint(
+          'Unknown ownership_status "$value" from sync - defaulting to owned');
+    }
+    return OwnershipStatus.owned.name;
+  }
+
   /// Convert a JSON map to a MediaItemsTableCompanion for insertion/update.
   MediaItemsTableCompanion _mapToCompanion(Map<String, dynamic> data) {
     return MediaItemsTableCompanion(
@@ -314,6 +330,11 @@ class SyncRepositoryImpl implements ISyncRepository {
       userReview: Value(data['user_review'] as String?),
       criticScore: Value(data['critic_score'] as double?),
       criticSource: Value(data['critic_source'] as String?),
+      ownershipStatus: Value(_resolveOwnershipStatus(data['ownership_status'])),
+      condition: Value(data['condition'] as String?),
+      pricePaid: Value(data['price_paid'] as double?),
+      acquiredAt: Value(data['acquired_at'] as int?),
+      retailer: Value(data['retailer'] as String?),
       dateAdded: Value(data['date_added'] as int? ?? 0),
       dateScanned: Value(data['date_scanned'] as int? ?? 0),
       updatedAt: Value(data['updated_at'] as int? ?? 0),

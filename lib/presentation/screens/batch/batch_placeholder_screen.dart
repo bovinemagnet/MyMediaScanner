@@ -15,6 +15,7 @@ import 'package:mymediascanner/domain/entities/metadata_result.dart';
 import 'package:mymediascanner/domain/entities/scan_result.dart';
 import 'package:mymediascanner/presentation/providers/batch_editor_provider.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
+import 'package:mymediascanner/presentation/widgets/duplicate_check_helper.dart';
 import 'package:mymediascanner/presentation/widgets/gradient_button.dart';
 import 'package:mymediascanner/presentation/widgets/screen_header.dart';
 
@@ -376,6 +377,36 @@ class _BatchPlaceholderScreenState
   }
 
   Future<void> _syncAll(BuildContext context, WidgetRef ref) async {
+    // Pre-check each confirmed item for duplicates. If the user cancels
+    // on any duplicate, abort the whole bulk save so they can revise the
+    // batch before retrying.
+    final repository = ref.read(mediaItemRepositoryProvider);
+    final state = ref.read(batchEditorProvider).requireValue;
+    for (final item in state.items) {
+      if (item.metadata == null) continue;
+      if (item.status != BatchItemStatus.confirmed) continue;
+      final md = item.metadata!;
+      final proceed = await confirmSaveOrSkipIfDuplicate(
+        context: context,
+        repository: repository,
+        barcode: md.barcode,
+        title: md.title,
+        year: md.year,
+      );
+      if (!context.mounted) return;
+      if (!proceed) {
+        final cancelledTitle = md.title ?? 'Untitled item';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "Bulk save cancelled at '$cancelledTitle'. "
+              'Remove or edit that entry and try again.',
+            ),
+          ),
+        );
+        return;
+      }
+    }
     await ref.read(batchEditorProvider.notifier).saveAllConfirmed();
     if (context.mounted) {
       final savedCount =
@@ -388,6 +419,21 @@ class _BatchPlaceholderScreenState
 
   Future<void> _saveItem(
       BuildContext context, WidgetRef ref, String id) async {
+    final repository = ref.read(mediaItemRepositoryProvider);
+    final state = ref.read(batchEditorProvider).requireValue;
+    final item = state.items.firstWhere((i) => i.id == id);
+    if (item.metadata != null) {
+      final md = item.metadata!;
+      final proceed = await confirmSaveOrSkipIfDuplicate(
+        context: context,
+        repository: repository,
+        barcode: md.barcode,
+        title: md.title,
+        year: md.year,
+      );
+      if (!context.mounted) return;
+      if (!proceed) return;
+    }
     await ref.read(batchEditorProvider.notifier).saveItem(id);
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

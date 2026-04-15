@@ -20,7 +20,8 @@ abstract interface class IRipLibraryRepository {
     String trackId, {
     String? arStatus,
     int? arConfidence,
-    String? arCrc,
+    String? arCrcV1,
+    String? arCrcV2,
     double? peakLevel,
     double? trackQuality,
     String? copyCrc,

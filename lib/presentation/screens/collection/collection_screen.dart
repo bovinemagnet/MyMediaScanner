@@ -193,6 +193,11 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                     onPressed: () => context.go('/shelves'),
                   ),
                   IconButton(
+                    icon: const Icon(Icons.favorite_border),
+                    tooltip: 'Wishlist',
+                    onPressed: () => context.go('/wishlist'),
+                  ),
+                  IconButton(
                     icon: const Icon(Icons.download),
                     tooltip: 'Export collection',
                     onPressed: () => _showExportDialog(context, ref),

@@ -256,6 +256,62 @@ class $MediaItemsTableTable extends MediaItemsTable
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _ownershipStatusMeta = const VerificationMeta(
+    'ownershipStatus',
+  );
+  @override
+  late final GeneratedColumn<String> ownershipStatus = GeneratedColumn<String>(
+    'ownership_status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('owned'),
+  );
+  static const VerificationMeta _conditionMeta = const VerificationMeta(
+    'condition',
+  );
+  @override
+  late final GeneratedColumn<String> condition = GeneratedColumn<String>(
+    'condition',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _pricePaidMeta = const VerificationMeta(
+    'pricePaid',
+  );
+  @override
+  late final GeneratedColumn<double> pricePaid = GeneratedColumn<double>(
+    'price_paid',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _acquiredAtMeta = const VerificationMeta(
+    'acquiredAt',
+  );
+  @override
+  late final GeneratedColumn<int> acquiredAt = GeneratedColumn<int>(
+    'acquired_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _retailerMeta = const VerificationMeta(
+    'retailer',
+  );
+  @override
+  late final GeneratedColumn<String> retailer = GeneratedColumn<String>(
+    'retailer',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -281,6 +337,11 @@ class $MediaItemsTableTable extends MediaItemsTable
     updatedAt,
     syncedAt,
     deleted,
+    ownershipStatus,
+    condition,
+    pricePaid,
+    acquiredAt,
+    retailer,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -463,6 +524,39 @@ class $MediaItemsTableTable extends MediaItemsTable
         deleted.isAcceptableOrUnknown(data['deleted']!, _deletedMeta),
       );
     }
+    if (data.containsKey('ownership_status')) {
+      context.handle(
+        _ownershipStatusMeta,
+        ownershipStatus.isAcceptableOrUnknown(
+          data['ownership_status']!,
+          _ownershipStatusMeta,
+        ),
+      );
+    }
+    if (data.containsKey('condition')) {
+      context.handle(
+        _conditionMeta,
+        condition.isAcceptableOrUnknown(data['condition']!, _conditionMeta),
+      );
+    }
+    if (data.containsKey('price_paid')) {
+      context.handle(
+        _pricePaidMeta,
+        pricePaid.isAcceptableOrUnknown(data['price_paid']!, _pricePaidMeta),
+      );
+    }
+    if (data.containsKey('acquired_at')) {
+      context.handle(
+        _acquiredAtMeta,
+        acquiredAt.isAcceptableOrUnknown(data['acquired_at']!, _acquiredAtMeta),
+      );
+    }
+    if (data.containsKey('retailer')) {
+      context.handle(
+        _retailerMeta,
+        retailer.isAcceptableOrUnknown(data['retailer']!, _retailerMeta),
+      );
+    }
     return context;
   }
 
@@ -564,6 +658,26 @@ class $MediaItemsTableTable extends MediaItemsTable
         DriftSqlType.int,
         data['${effectivePrefix}deleted'],
       )!,
+      ownershipStatus: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}ownership_status'],
+      )!,
+      condition: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}condition'],
+      ),
+      pricePaid: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}price_paid'],
+      ),
+      acquiredAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}acquired_at'],
+      ),
+      retailer: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}retailer'],
+      ),
     );
   }
 
@@ -598,6 +712,11 @@ class MediaItemsTableData extends DataClass
   final int updatedAt;
   final int? syncedAt;
   final int deleted;
+  final String ownershipStatus;
+  final String? condition;
+  final double? pricePaid;
+  final int? acquiredAt;
+  final String? retailer;
   const MediaItemsTableData({
     required this.id,
     required this.barcode,
@@ -622,6 +741,11 @@ class MediaItemsTableData extends DataClass
     required this.updatedAt,
     this.syncedAt,
     required this.deleted,
+    required this.ownershipStatus,
+    this.condition,
+    this.pricePaid,
+    this.acquiredAt,
+    this.retailer,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -671,6 +795,19 @@ class MediaItemsTableData extends DataClass
       map['synced_at'] = Variable<int>(syncedAt);
     }
     map['deleted'] = Variable<int>(deleted);
+    map['ownership_status'] = Variable<String>(ownershipStatus);
+    if (!nullToAbsent || condition != null) {
+      map['condition'] = Variable<String>(condition);
+    }
+    if (!nullToAbsent || pricePaid != null) {
+      map['price_paid'] = Variable<double>(pricePaid);
+    }
+    if (!nullToAbsent || acquiredAt != null) {
+      map['acquired_at'] = Variable<int>(acquiredAt);
+    }
+    if (!nullToAbsent || retailer != null) {
+      map['retailer'] = Variable<String>(retailer);
+    }
     return map;
   }
 
@@ -719,6 +856,19 @@ class MediaItemsTableData extends DataClass
           ? const Value.absent()
           : Value(syncedAt),
       deleted: Value(deleted),
+      ownershipStatus: Value(ownershipStatus),
+      condition: condition == null && nullToAbsent
+          ? const Value.absent()
+          : Value(condition),
+      pricePaid: pricePaid == null && nullToAbsent
+          ? const Value.absent()
+          : Value(pricePaid),
+      acquiredAt: acquiredAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(acquiredAt),
+      retailer: retailer == null && nullToAbsent
+          ? const Value.absent()
+          : Value(retailer),
     );
   }
 
@@ -751,6 +901,11 @@ class MediaItemsTableData extends DataClass
       updatedAt: serializer.fromJson<int>(json['updatedAt']),
       syncedAt: serializer.fromJson<int?>(json['syncedAt']),
       deleted: serializer.fromJson<int>(json['deleted']),
+      ownershipStatus: serializer.fromJson<String>(json['ownershipStatus']),
+      condition: serializer.fromJson<String?>(json['condition']),
+      pricePaid: serializer.fromJson<double?>(json['pricePaid']),
+      acquiredAt: serializer.fromJson<int?>(json['acquiredAt']),
+      retailer: serializer.fromJson<String?>(json['retailer']),
     );
   }
   @override
@@ -780,6 +935,11 @@ class MediaItemsTableData extends DataClass
       'updatedAt': serializer.toJson<int>(updatedAt),
       'syncedAt': serializer.toJson<int?>(syncedAt),
       'deleted': serializer.toJson<int>(deleted),
+      'ownershipStatus': serializer.toJson<String>(ownershipStatus),
+      'condition': serializer.toJson<String?>(condition),
+      'pricePaid': serializer.toJson<double?>(pricePaid),
+      'acquiredAt': serializer.toJson<int?>(acquiredAt),
+      'retailer': serializer.toJson<String?>(retailer),
     };
   }
 
@@ -807,6 +967,11 @@ class MediaItemsTableData extends DataClass
     int? updatedAt,
     Value<int?> syncedAt = const Value.absent(),
     int? deleted,
+    String? ownershipStatus,
+    Value<String?> condition = const Value.absent(),
+    Value<double?> pricePaid = const Value.absent(),
+    Value<int?> acquiredAt = const Value.absent(),
+    Value<String?> retailer = const Value.absent(),
   }) => MediaItemsTableData(
     id: id ?? this.id,
     barcode: barcode ?? this.barcode,
@@ -831,6 +996,11 @@ class MediaItemsTableData extends DataClass
     updatedAt: updatedAt ?? this.updatedAt,
     syncedAt: syncedAt.present ? syncedAt.value : this.syncedAt,
     deleted: deleted ?? this.deleted,
+    ownershipStatus: ownershipStatus ?? this.ownershipStatus,
+    condition: condition.present ? condition.value : this.condition,
+    pricePaid: pricePaid.present ? pricePaid.value : this.pricePaid,
+    acquiredAt: acquiredAt.present ? acquiredAt.value : this.acquiredAt,
+    retailer: retailer.present ? retailer.value : this.retailer,
   );
   MediaItemsTableData copyWithCompanion(MediaItemsTableCompanion data) {
     return MediaItemsTableData(
@@ -875,6 +1045,15 @@ class MediaItemsTableData extends DataClass
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       syncedAt: data.syncedAt.present ? data.syncedAt.value : this.syncedAt,
       deleted: data.deleted.present ? data.deleted.value : this.deleted,
+      ownershipStatus: data.ownershipStatus.present
+          ? data.ownershipStatus.value
+          : this.ownershipStatus,
+      condition: data.condition.present ? data.condition.value : this.condition,
+      pricePaid: data.pricePaid.present ? data.pricePaid.value : this.pricePaid,
+      acquiredAt: data.acquiredAt.present
+          ? data.acquiredAt.value
+          : this.acquiredAt,
+      retailer: data.retailer.present ? data.retailer.value : this.retailer,
     );
   }
 
@@ -903,7 +1082,12 @@ class MediaItemsTableData extends DataClass
           ..write('dateScanned: $dateScanned, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('syncedAt: $syncedAt, ')
-          ..write('deleted: $deleted')
+          ..write('deleted: $deleted, ')
+          ..write('ownershipStatus: $ownershipStatus, ')
+          ..write('condition: $condition, ')
+          ..write('pricePaid: $pricePaid, ')
+          ..write('acquiredAt: $acquiredAt, ')
+          ..write('retailer: $retailer')
           ..write(')'))
         .toString();
   }
@@ -933,6 +1117,11 @@ class MediaItemsTableData extends DataClass
     updatedAt,
     syncedAt,
     deleted,
+    ownershipStatus,
+    condition,
+    pricePaid,
+    acquiredAt,
+    retailer,
   ]);
   @override
   bool operator ==(Object other) =>
@@ -960,7 +1149,12 @@ class MediaItemsTableData extends DataClass
           other.dateScanned == this.dateScanned &&
           other.updatedAt == this.updatedAt &&
           other.syncedAt == this.syncedAt &&
-          other.deleted == this.deleted);
+          other.deleted == this.deleted &&
+          other.ownershipStatus == this.ownershipStatus &&
+          other.condition == this.condition &&
+          other.pricePaid == this.pricePaid &&
+          other.acquiredAt == this.acquiredAt &&
+          other.retailer == this.retailer);
 }
 
 class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
@@ -987,6 +1181,11 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
   final Value<int> updatedAt;
   final Value<int?> syncedAt;
   final Value<int> deleted;
+  final Value<String> ownershipStatus;
+  final Value<String?> condition;
+  final Value<double?> pricePaid;
+  final Value<int?> acquiredAt;
+  final Value<String?> retailer;
   final Value<int> rowid;
   const MediaItemsTableCompanion({
     this.id = const Value.absent(),
@@ -1012,6 +1211,11 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
     this.updatedAt = const Value.absent(),
     this.syncedAt = const Value.absent(),
     this.deleted = const Value.absent(),
+    this.ownershipStatus = const Value.absent(),
+    this.condition = const Value.absent(),
+    this.pricePaid = const Value.absent(),
+    this.acquiredAt = const Value.absent(),
+    this.retailer = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   MediaItemsTableCompanion.insert({
@@ -1038,6 +1242,11 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
     required int updatedAt,
     this.syncedAt = const Value.absent(),
     this.deleted = const Value.absent(),
+    this.ownershipStatus = const Value.absent(),
+    this.condition = const Value.absent(),
+    this.pricePaid = const Value.absent(),
+    this.acquiredAt = const Value.absent(),
+    this.retailer = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        barcode = Value(barcode),
@@ -1071,6 +1280,11 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
     Expression<int>? updatedAt,
     Expression<int>? syncedAt,
     Expression<int>? deleted,
+    Expression<String>? ownershipStatus,
+    Expression<String>? condition,
+    Expression<double>? pricePaid,
+    Expression<int>? acquiredAt,
+    Expression<String>? retailer,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1097,6 +1311,11 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
       if (updatedAt != null) 'updated_at': updatedAt,
       if (syncedAt != null) 'synced_at': syncedAt,
       if (deleted != null) 'deleted': deleted,
+      if (ownershipStatus != null) 'ownership_status': ownershipStatus,
+      if (condition != null) 'condition': condition,
+      if (pricePaid != null) 'price_paid': pricePaid,
+      if (acquiredAt != null) 'acquired_at': acquiredAt,
+      if (retailer != null) 'retailer': retailer,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1125,6 +1344,11 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
     Value<int>? updatedAt,
     Value<int?>? syncedAt,
     Value<int>? deleted,
+    Value<String>? ownershipStatus,
+    Value<String?>? condition,
+    Value<double?>? pricePaid,
+    Value<int?>? acquiredAt,
+    Value<String?>? retailer,
     Value<int>? rowid,
   }) {
     return MediaItemsTableCompanion(
@@ -1151,6 +1375,11 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
       updatedAt: updatedAt ?? this.updatedAt,
       syncedAt: syncedAt ?? this.syncedAt,
       deleted: deleted ?? this.deleted,
+      ownershipStatus: ownershipStatus ?? this.ownershipStatus,
+      condition: condition ?? this.condition,
+      pricePaid: pricePaid ?? this.pricePaid,
+      acquiredAt: acquiredAt ?? this.acquiredAt,
+      retailer: retailer ?? this.retailer,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1227,6 +1456,21 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
     if (deleted.present) {
       map['deleted'] = Variable<int>(deleted.value);
     }
+    if (ownershipStatus.present) {
+      map['ownership_status'] = Variable<String>(ownershipStatus.value);
+    }
+    if (condition.present) {
+      map['condition'] = Variable<String>(condition.value);
+    }
+    if (pricePaid.present) {
+      map['price_paid'] = Variable<double>(pricePaid.value);
+    }
+    if (acquiredAt.present) {
+      map['acquired_at'] = Variable<int>(acquiredAt.value);
+    }
+    if (retailer.present) {
+      map['retailer'] = Variable<String>(retailer.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1259,6 +1503,11 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
           ..write('updatedAt: $updatedAt, ')
           ..write('syncedAt: $syncedAt, ')
           ..write('deleted: $deleted, ')
+          ..write('ownershipStatus: $ownershipStatus, ')
+          ..write('condition: $condition, ')
+          ..write('pricePaid: $pricePaid, ')
+          ..write('acquiredAt: $acquiredAt, ')
+          ..write('retailer: $retailer, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -5581,12 +5830,23 @@ class $RipTracksTableTable extends RipTracksTable
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _accurateripCrcMeta = const VerificationMeta(
-    'accurateripCrc',
+  static const VerificationMeta _accurateripCrcV1Meta = const VerificationMeta(
+    'accurateripCrcV1',
   );
   @override
-  late final GeneratedColumn<String> accurateripCrc = GeneratedColumn<String>(
-    'accuraterip_crc',
+  late final GeneratedColumn<String> accurateripCrcV1 = GeneratedColumn<String>(
+    'accuraterip_crc_v1',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _accurateripCrcV2Meta = const VerificationMeta(
+    'accurateripCrcV2',
+  );
+  @override
+  late final GeneratedColumn<String> accurateripCrcV2 = GeneratedColumn<String>(
+    'accuraterip_crc_v2',
     aliasedName,
     true,
     type: DriftSqlType.string,
@@ -5671,7 +5931,8 @@ class $RipTracksTableTable extends RipTracksTable
     updatedAt,
     accurateripStatus,
     accurateripConfidence,
-    accurateripCrc,
+    accurateripCrcV1,
+    accurateripCrcV2,
     peakLevel,
     trackQuality,
     copyCrc,
@@ -5781,12 +6042,21 @@ class $RipTracksTableTable extends RipTracksTable
         ),
       );
     }
-    if (data.containsKey('accuraterip_crc')) {
+    if (data.containsKey('accuraterip_crc_v1')) {
       context.handle(
-        _accurateripCrcMeta,
-        accurateripCrc.isAcceptableOrUnknown(
-          data['accuraterip_crc']!,
-          _accurateripCrcMeta,
+        _accurateripCrcV1Meta,
+        accurateripCrcV1.isAcceptableOrUnknown(
+          data['accuraterip_crc_v1']!,
+          _accurateripCrcV1Meta,
+        ),
+      );
+    }
+    if (data.containsKey('accuraterip_crc_v2')) {
+      context.handle(
+        _accurateripCrcV2Meta,
+        accurateripCrcV2.isAcceptableOrUnknown(
+          data['accuraterip_crc_v2']!,
+          _accurateripCrcV2Meta,
         ),
       );
     }
@@ -5888,9 +6158,13 @@ class $RipTracksTableTable extends RipTracksTable
         DriftSqlType.int,
         data['${effectivePrefix}accuraterip_confidence'],
       ),
-      accurateripCrc: attachedDatabase.typeMapping.read(
+      accurateripCrcV1: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}accuraterip_crc'],
+        data['${effectivePrefix}accuraterip_crc_v1'],
+      ),
+      accurateripCrcV2: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}accuraterip_crc_v2'],
       ),
       peakLevel: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
@@ -5938,7 +6212,8 @@ class RipTracksTableData extends DataClass
   final int updatedAt;
   final String? accurateripStatus;
   final int? accurateripConfidence;
-  final String? accurateripCrc;
+  final String? accurateripCrcV1;
+  final String? accurateripCrcV2;
   final double? peakLevel;
   final double? trackQuality;
   final String? copyCrc;
@@ -5957,7 +6232,8 @@ class RipTracksTableData extends DataClass
     required this.updatedAt,
     this.accurateripStatus,
     this.accurateripConfidence,
-    this.accurateripCrc,
+    this.accurateripCrcV1,
+    this.accurateripCrcV2,
     this.peakLevel,
     this.trackQuality,
     this.copyCrc,
@@ -5987,8 +6263,11 @@ class RipTracksTableData extends DataClass
     if (!nullToAbsent || accurateripConfidence != null) {
       map['accuraterip_confidence'] = Variable<int>(accurateripConfidence);
     }
-    if (!nullToAbsent || accurateripCrc != null) {
-      map['accuraterip_crc'] = Variable<String>(accurateripCrc);
+    if (!nullToAbsent || accurateripCrcV1 != null) {
+      map['accuraterip_crc_v1'] = Variable<String>(accurateripCrcV1);
+    }
+    if (!nullToAbsent || accurateripCrcV2 != null) {
+      map['accuraterip_crc_v2'] = Variable<String>(accurateripCrcV2);
     }
     if (!nullToAbsent || peakLevel != null) {
       map['peak_level'] = Variable<double>(peakLevel);
@@ -6032,9 +6311,12 @@ class RipTracksTableData extends DataClass
       accurateripConfidence: accurateripConfidence == null && nullToAbsent
           ? const Value.absent()
           : Value(accurateripConfidence),
-      accurateripCrc: accurateripCrc == null && nullToAbsent
+      accurateripCrcV1: accurateripCrcV1 == null && nullToAbsent
           ? const Value.absent()
-          : Value(accurateripCrc),
+          : Value(accurateripCrcV1),
+      accurateripCrcV2: accurateripCrcV2 == null && nullToAbsent
+          ? const Value.absent()
+          : Value(accurateripCrcV2),
       peakLevel: peakLevel == null && nullToAbsent
           ? const Value.absent()
           : Value(peakLevel),
@@ -6077,7 +6359,8 @@ class RipTracksTableData extends DataClass
       accurateripConfidence: serializer.fromJson<int?>(
         json['accurateripConfidence'],
       ),
-      accurateripCrc: serializer.fromJson<String?>(json['accurateripCrc']),
+      accurateripCrcV1: serializer.fromJson<String?>(json['accurateripCrcV1']),
+      accurateripCrcV2: serializer.fromJson<String?>(json['accurateripCrcV2']),
       peakLevel: serializer.fromJson<double?>(json['peakLevel']),
       trackQuality: serializer.fromJson<double?>(json['trackQuality']),
       copyCrc: serializer.fromJson<String?>(json['copyCrc']),
@@ -6101,7 +6384,8 @@ class RipTracksTableData extends DataClass
       'updatedAt': serializer.toJson<int>(updatedAt),
       'accurateripStatus': serializer.toJson<String?>(accurateripStatus),
       'accurateripConfidence': serializer.toJson<int?>(accurateripConfidence),
-      'accurateripCrc': serializer.toJson<String?>(accurateripCrc),
+      'accurateripCrcV1': serializer.toJson<String?>(accurateripCrcV1),
+      'accurateripCrcV2': serializer.toJson<String?>(accurateripCrcV2),
       'peakLevel': serializer.toJson<double?>(peakLevel),
       'trackQuality': serializer.toJson<double?>(trackQuality),
       'copyCrc': serializer.toJson<String?>(copyCrc),
@@ -6123,7 +6407,8 @@ class RipTracksTableData extends DataClass
     int? updatedAt,
     Value<String?> accurateripStatus = const Value.absent(),
     Value<int?> accurateripConfidence = const Value.absent(),
-    Value<String?> accurateripCrc = const Value.absent(),
+    Value<String?> accurateripCrcV1 = const Value.absent(),
+    Value<String?> accurateripCrcV2 = const Value.absent(),
     Value<double?> peakLevel = const Value.absent(),
     Value<double?> trackQuality = const Value.absent(),
     Value<String?> copyCrc = const Value.absent(),
@@ -6146,9 +6431,12 @@ class RipTracksTableData extends DataClass
     accurateripConfidence: accurateripConfidence.present
         ? accurateripConfidence.value
         : this.accurateripConfidence,
-    accurateripCrc: accurateripCrc.present
-        ? accurateripCrc.value
-        : this.accurateripCrc,
+    accurateripCrcV1: accurateripCrcV1.present
+        ? accurateripCrcV1.value
+        : this.accurateripCrcV1,
+    accurateripCrcV2: accurateripCrcV2.present
+        ? accurateripCrcV2.value
+        : this.accurateripCrcV2,
     peakLevel: peakLevel.present ? peakLevel.value : this.peakLevel,
     trackQuality: trackQuality.present ? trackQuality.value : this.trackQuality,
     copyCrc: copyCrc.present ? copyCrc.value : this.copyCrc,
@@ -6185,9 +6473,12 @@ class RipTracksTableData extends DataClass
       accurateripConfidence: data.accurateripConfidence.present
           ? data.accurateripConfidence.value
           : this.accurateripConfidence,
-      accurateripCrc: data.accurateripCrc.present
-          ? data.accurateripCrc.value
-          : this.accurateripCrc,
+      accurateripCrcV1: data.accurateripCrcV1.present
+          ? data.accurateripCrcV1.value
+          : this.accurateripCrcV1,
+      accurateripCrcV2: data.accurateripCrcV2.present
+          ? data.accurateripCrcV2.value
+          : this.accurateripCrcV2,
       peakLevel: data.peakLevel.present ? data.peakLevel.value : this.peakLevel,
       trackQuality: data.trackQuality.present
           ? data.trackQuality.value
@@ -6219,7 +6510,8 @@ class RipTracksTableData extends DataClass
           ..write('updatedAt: $updatedAt, ')
           ..write('accurateripStatus: $accurateripStatus, ')
           ..write('accurateripConfidence: $accurateripConfidence, ')
-          ..write('accurateripCrc: $accurateripCrc, ')
+          ..write('accurateripCrcV1: $accurateripCrcV1, ')
+          ..write('accurateripCrcV2: $accurateripCrcV2, ')
           ..write('peakLevel: $peakLevel, ')
           ..write('trackQuality: $trackQuality, ')
           ..write('copyCrc: $copyCrc, ')
@@ -6243,7 +6535,8 @@ class RipTracksTableData extends DataClass
     updatedAt,
     accurateripStatus,
     accurateripConfidence,
-    accurateripCrc,
+    accurateripCrcV1,
+    accurateripCrcV2,
     peakLevel,
     trackQuality,
     copyCrc,
@@ -6266,7 +6559,8 @@ class RipTracksTableData extends DataClass
           other.updatedAt == this.updatedAt &&
           other.accurateripStatus == this.accurateripStatus &&
           other.accurateripConfidence == this.accurateripConfidence &&
-          other.accurateripCrc == this.accurateripCrc &&
+          other.accurateripCrcV1 == this.accurateripCrcV1 &&
+          other.accurateripCrcV2 == this.accurateripCrcV2 &&
           other.peakLevel == this.peakLevel &&
           other.trackQuality == this.trackQuality &&
           other.copyCrc == this.copyCrc &&
@@ -6287,7 +6581,8 @@ class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
   final Value<int> updatedAt;
   final Value<String?> accurateripStatus;
   final Value<int?> accurateripConfidence;
-  final Value<String?> accurateripCrc;
+  final Value<String?> accurateripCrcV1;
+  final Value<String?> accurateripCrcV2;
   final Value<double?> peakLevel;
   final Value<double?> trackQuality;
   final Value<String?> copyCrc;
@@ -6307,7 +6602,8 @@ class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
     this.updatedAt = const Value.absent(),
     this.accurateripStatus = const Value.absent(),
     this.accurateripConfidence = const Value.absent(),
-    this.accurateripCrc = const Value.absent(),
+    this.accurateripCrcV1 = const Value.absent(),
+    this.accurateripCrcV2 = const Value.absent(),
     this.peakLevel = const Value.absent(),
     this.trackQuality = const Value.absent(),
     this.copyCrc = const Value.absent(),
@@ -6328,7 +6624,8 @@ class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
     required int updatedAt,
     this.accurateripStatus = const Value.absent(),
     this.accurateripConfidence = const Value.absent(),
-    this.accurateripCrc = const Value.absent(),
+    this.accurateripCrcV1 = const Value.absent(),
+    this.accurateripCrcV2 = const Value.absent(),
     this.peakLevel = const Value.absent(),
     this.trackQuality = const Value.absent(),
     this.copyCrc = const Value.absent(),
@@ -6354,7 +6651,8 @@ class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
     Expression<int>? updatedAt,
     Expression<String>? accurateripStatus,
     Expression<int>? accurateripConfidence,
-    Expression<String>? accurateripCrc,
+    Expression<String>? accurateripCrcV1,
+    Expression<String>? accurateripCrcV2,
     Expression<double>? peakLevel,
     Expression<double>? trackQuality,
     Expression<String>? copyCrc,
@@ -6376,7 +6674,8 @@ class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
       if (accurateripStatus != null) 'accuraterip_status': accurateripStatus,
       if (accurateripConfidence != null)
         'accuraterip_confidence': accurateripConfidence,
-      if (accurateripCrc != null) 'accuraterip_crc': accurateripCrc,
+      if (accurateripCrcV1 != null) 'accuraterip_crc_v1': accurateripCrcV1,
+      if (accurateripCrcV2 != null) 'accuraterip_crc_v2': accurateripCrcV2,
       if (peakLevel != null) 'peak_level': peakLevel,
       if (trackQuality != null) 'track_quality': trackQuality,
       if (copyCrc != null) 'copy_crc': copyCrc,
@@ -6399,7 +6698,8 @@ class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
     Value<int>? updatedAt,
     Value<String?>? accurateripStatus,
     Value<int?>? accurateripConfidence,
-    Value<String?>? accurateripCrc,
+    Value<String?>? accurateripCrcV1,
+    Value<String?>? accurateripCrcV2,
     Value<double?>? peakLevel,
     Value<double?>? trackQuality,
     Value<String?>? copyCrc,
@@ -6421,7 +6721,8 @@ class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
       accurateripStatus: accurateripStatus ?? this.accurateripStatus,
       accurateripConfidence:
           accurateripConfidence ?? this.accurateripConfidence,
-      accurateripCrc: accurateripCrc ?? this.accurateripCrc,
+      accurateripCrcV1: accurateripCrcV1 ?? this.accurateripCrcV1,
+      accurateripCrcV2: accurateripCrcV2 ?? this.accurateripCrcV2,
       peakLevel: peakLevel ?? this.peakLevel,
       trackQuality: trackQuality ?? this.trackQuality,
       copyCrc: copyCrc ?? this.copyCrc,
@@ -6470,8 +6771,11 @@ class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
         accurateripConfidence.value,
       );
     }
-    if (accurateripCrc.present) {
-      map['accuraterip_crc'] = Variable<String>(accurateripCrc.value);
+    if (accurateripCrcV1.present) {
+      map['accuraterip_crc_v1'] = Variable<String>(accurateripCrcV1.value);
+    }
+    if (accurateripCrcV2.present) {
+      map['accuraterip_crc_v2'] = Variable<String>(accurateripCrcV2.value);
     }
     if (peakLevel.present) {
       map['peak_level'] = Variable<double>(peakLevel.value);
@@ -6511,7 +6815,8 @@ class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
           ..write('updatedAt: $updatedAt, ')
           ..write('accurateripStatus: $accurateripStatus, ')
           ..write('accurateripConfidence: $accurateripConfidence, ')
-          ..write('accurateripCrc: $accurateripCrc, ')
+          ..write('accurateripCrcV1: $accurateripCrcV1, ')
+          ..write('accurateripCrcV2: $accurateripCrcV2, ')
           ..write('peakLevel: $peakLevel, ')
           ..write('trackQuality: $trackQuality, ')
           ..write('copyCrc: $copyCrc, ')
@@ -8414,6 +8719,11 @@ typedef $$MediaItemsTableTableCreateCompanionBuilder =
       required int updatedAt,
       Value<int?> syncedAt,
       Value<int> deleted,
+      Value<String> ownershipStatus,
+      Value<String?> condition,
+      Value<double?> pricePaid,
+      Value<int?> acquiredAt,
+      Value<String?> retailer,
       Value<int> rowid,
     });
 typedef $$MediaItemsTableTableUpdateCompanionBuilder =
@@ -8441,6 +8751,11 @@ typedef $$MediaItemsTableTableUpdateCompanionBuilder =
       Value<int> updatedAt,
       Value<int?> syncedAt,
       Value<int> deleted,
+      Value<String> ownershipStatus,
+      Value<String?> condition,
+      Value<double?> pricePaid,
+      Value<int?> acquiredAt,
+      Value<String?> retailer,
       Value<int> rowid,
     });
 
@@ -8674,6 +8989,31 @@ class $$MediaItemsTableTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get ownershipStatus => $composableBuilder(
+    column: $table.ownershipStatus,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get condition => $composableBuilder(
+    column: $table.condition,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get pricePaid => $composableBuilder(
+    column: $table.pricePaid,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get acquiredAt => $composableBuilder(
+    column: $table.acquiredAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get retailer => $composableBuilder(
+    column: $table.retailer,
+    builder: (column) => ColumnFilters(column),
+  );
+
   Expression<bool> mediaItemTagsTableRefs(
     Expression<bool> Function($$MediaItemTagsTableTableFilterComposer f) f,
   ) {
@@ -8898,6 +9238,31 @@ class $$MediaItemsTableTableOrderingComposer
     column: $table.deleted,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get ownershipStatus => $composableBuilder(
+    column: $table.ownershipStatus,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get condition => $composableBuilder(
+    column: $table.condition,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get pricePaid => $composableBuilder(
+    column: $table.pricePaid,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get acquiredAt => $composableBuilder(
+    column: $table.acquiredAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get retailer => $composableBuilder(
+    column: $table.retailer,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$MediaItemsTableTableAnnotationComposer
@@ -8995,6 +9360,25 @@ class $$MediaItemsTableTableAnnotationComposer
 
   GeneratedColumn<int> get deleted =>
       $composableBuilder(column: $table.deleted, builder: (column) => column);
+
+  GeneratedColumn<String> get ownershipStatus => $composableBuilder(
+    column: $table.ownershipStatus,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get condition =>
+      $composableBuilder(column: $table.condition, builder: (column) => column);
+
+  GeneratedColumn<double> get pricePaid =>
+      $composableBuilder(column: $table.pricePaid, builder: (column) => column);
+
+  GeneratedColumn<int> get acquiredAt => $composableBuilder(
+    column: $table.acquiredAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get retailer =>
+      $composableBuilder(column: $table.retailer, builder: (column) => column);
 
   Expression<T> mediaItemTagsTableRefs<T extends Object>(
     Expression<T> Function($$MediaItemTagsTableTableAnnotationComposer a) f,
@@ -9156,6 +9540,11 @@ class $$MediaItemsTableTableTableManager
                 Value<int> updatedAt = const Value.absent(),
                 Value<int?> syncedAt = const Value.absent(),
                 Value<int> deleted = const Value.absent(),
+                Value<String> ownershipStatus = const Value.absent(),
+                Value<String?> condition = const Value.absent(),
+                Value<double?> pricePaid = const Value.absent(),
+                Value<int?> acquiredAt = const Value.absent(),
+                Value<String?> retailer = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => MediaItemsTableCompanion(
                 id: id,
@@ -9181,6 +9570,11 @@ class $$MediaItemsTableTableTableManager
                 updatedAt: updatedAt,
                 syncedAt: syncedAt,
                 deleted: deleted,
+                ownershipStatus: ownershipStatus,
+                condition: condition,
+                pricePaid: pricePaid,
+                acquiredAt: acquiredAt,
+                retailer: retailer,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -9208,6 +9602,11 @@ class $$MediaItemsTableTableTableManager
                 required int updatedAt,
                 Value<int?> syncedAt = const Value.absent(),
                 Value<int> deleted = const Value.absent(),
+                Value<String> ownershipStatus = const Value.absent(),
+                Value<String?> condition = const Value.absent(),
+                Value<double?> pricePaid = const Value.absent(),
+                Value<int?> acquiredAt = const Value.absent(),
+                Value<String?> retailer = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => MediaItemsTableCompanion.insert(
                 id: id,
@@ -9233,6 +9632,11 @@ class $$MediaItemsTableTableTableManager
                 updatedAt: updatedAt,
                 syncedAt: syncedAt,
                 deleted: deleted,
+                ownershipStatus: ownershipStatus,
+                condition: condition,
+                pricePaid: pricePaid,
+                acquiredAt: acquiredAt,
+                retailer: retailer,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -12781,7 +13185,8 @@ typedef $$RipTracksTableTableCreateCompanionBuilder =
       required int updatedAt,
       Value<String?> accurateripStatus,
       Value<int?> accurateripConfidence,
-      Value<String?> accurateripCrc,
+      Value<String?> accurateripCrcV1,
+      Value<String?> accurateripCrcV2,
       Value<double?> peakLevel,
       Value<double?> trackQuality,
       Value<String?> copyCrc,
@@ -12803,7 +13208,8 @@ typedef $$RipTracksTableTableUpdateCompanionBuilder =
       Value<int> updatedAt,
       Value<String?> accurateripStatus,
       Value<int?> accurateripConfidence,
-      Value<String?> accurateripCrc,
+      Value<String?> accurateripCrcV1,
+      Value<String?> accurateripCrcV2,
       Value<double?> peakLevel,
       Value<double?> trackQuality,
       Value<String?> copyCrc,
@@ -12935,8 +13341,13 @@ class $$RipTracksTableTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get accurateripCrc => $composableBuilder(
-    column: $table.accurateripCrc,
+  ColumnFilters<String> get accurateripCrcV1 => $composableBuilder(
+    column: $table.accurateripCrcV1,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get accurateripCrcV2 => $composableBuilder(
+    column: $table.accurateripCrcV2,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -13078,8 +13489,13 @@ class $$RipTracksTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get accurateripCrc => $composableBuilder(
-    column: $table.accurateripCrc,
+  ColumnOrderings<String> get accurateripCrcV1 => $composableBuilder(
+    column: $table.accurateripCrcV1,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get accurateripCrcV2 => $composableBuilder(
+    column: $table.accurateripCrcV2,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -13188,8 +13604,13 @@ class $$RipTracksTableTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<String> get accurateripCrc => $composableBuilder(
-    column: $table.accurateripCrc,
+  GeneratedColumn<String> get accurateripCrcV1 => $composableBuilder(
+    column: $table.accurateripCrcV1,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get accurateripCrcV2 => $composableBuilder(
+    column: $table.accurateripCrcV2,
     builder: (column) => column,
   );
 
@@ -13313,7 +13734,8 @@ class $$RipTracksTableTableTableManager
                 Value<int> updatedAt = const Value.absent(),
                 Value<String?> accurateripStatus = const Value.absent(),
                 Value<int?> accurateripConfidence = const Value.absent(),
-                Value<String?> accurateripCrc = const Value.absent(),
+                Value<String?> accurateripCrcV1 = const Value.absent(),
+                Value<String?> accurateripCrcV2 = const Value.absent(),
                 Value<double?> peakLevel = const Value.absent(),
                 Value<double?> trackQuality = const Value.absent(),
                 Value<String?> copyCrc = const Value.absent(),
@@ -13333,7 +13755,8 @@ class $$RipTracksTableTableTableManager
                 updatedAt: updatedAt,
                 accurateripStatus: accurateripStatus,
                 accurateripConfidence: accurateripConfidence,
-                accurateripCrc: accurateripCrc,
+                accurateripCrcV1: accurateripCrcV1,
+                accurateripCrcV2: accurateripCrcV2,
                 peakLevel: peakLevel,
                 trackQuality: trackQuality,
                 copyCrc: copyCrc,
@@ -13355,7 +13778,8 @@ class $$RipTracksTableTableTableManager
                 required int updatedAt,
                 Value<String?> accurateripStatus = const Value.absent(),
                 Value<int?> accurateripConfidence = const Value.absent(),
-                Value<String?> accurateripCrc = const Value.absent(),
+                Value<String?> accurateripCrcV1 = const Value.absent(),
+                Value<String?> accurateripCrcV2 = const Value.absent(),
                 Value<double?> peakLevel = const Value.absent(),
                 Value<double?> trackQuality = const Value.absent(),
                 Value<String?> copyCrc = const Value.absent(),
@@ -13375,7 +13799,8 @@ class $$RipTracksTableTableTableManager
                 updatedAt: updatedAt,
                 accurateripStatus: accurateripStatus,
                 accurateripConfidence: accurateripConfidence,
-                accurateripCrc: accurateripCrc,
+                accurateripCrcV1: accurateripCrcV1,
+                accurateripCrcV2: accurateripCrcV2,
                 peakLevel: peakLevel,
                 trackQuality: trackQuality,
                 copyCrc: copyCrc,

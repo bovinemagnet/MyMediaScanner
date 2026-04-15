@@ -35,6 +35,9 @@ class AppScaffold extends StatelessWidget {
   static const _ripsSidebarItem =
       _SidebarDestination(Icons.album_outlined, Icons.album, 'Rips');
 
+  static const _wishlistSidebarItem = _SidebarDestination(
+      Icons.favorite_border, Icons.favorite, 'Wishlist');
+
   // ── Mobile bottom nav destinations ─────────────────────────────────
   static const _mobileDestinations = [
     NavigationDestination(
@@ -89,6 +92,7 @@ class AppScaffold extends StatelessWidget {
                 currentIndex: navigationShell.currentIndex,
                 onDestinationSelected: _onDestinationSelected,
                 showRips: isDesktop,
+                showWishlist: isDesktop,
                 isExpanded: width >= AppConstants.expandedBreakpoint,
               ),
               Expanded(
@@ -127,7 +131,8 @@ class AppScaffold extends StatelessWidget {
                 Navigator.of(context).pop(); // close drawer
                 _onDestinationSelected(index);
               },
-              showRips: true,
+              showRips: isDesktop,
+              showWishlist: isDesktop,
               isExpanded: true,
             ),
           ),
@@ -208,12 +213,14 @@ class _DesktopSidebar extends StatelessWidget {
     required this.currentIndex,
     required this.onDestinationSelected,
     required this.showRips,
+    required this.showWishlist,
     required this.isExpanded,
   });
 
   final int currentIndex;
   final ValueChanged<int> onDestinationSelected;
   final bool showRips;
+  final bool showWishlist;
   final bool isExpanded;
 
   @override
@@ -225,11 +232,12 @@ class _DesktopSidebar extends StatelessWidget {
     final items = [
       ...AppScaffold._sidebarItems,
       if (showRips) AppScaffold._ripsSidebarItem,
+      if (showWishlist) AppScaffold._wishlistSidebarItem,
     ];
 
     // Sidebar and shell branch indices are now 1:1.
     // Both: Dashboard(0), Library(1), Scanner(2), Shelves(3), Batch(4),
-    //       Insights(5), Settings(6), Rips(7)
+    //       Insights(5), Settings(6), Rips(7), Wishlist(8)
     int sidebarToShellIndex(int sidebarIndex) => sidebarIndex;
 
     int shellToSidebarIndex(int shellIndex) => shellIndex;

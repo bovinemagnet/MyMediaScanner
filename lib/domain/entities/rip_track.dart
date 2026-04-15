@@ -17,7 +17,8 @@ sealed class RipTrack with _$RipTrack {
     // Audio quality analysis fields (Phase B)
     String? accurateRipStatus,
     int? accurateRipConfidence,
-    String? accurateRipCrc,
+    String? accurateRipCrcV1,
+    String? accurateRipCrcV2,
     double? peakLevel,
     double? trackQuality,
     String? copyCrc,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mymediascanner/domain/entities/ownership_status.dart';
 import 'package:mymediascanner/domain/usecases/save_media_item_usecase.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/scanner_provider.dart';
@@ -8,6 +9,7 @@ import 'package:mymediascanner/domain/entities/metadata_result.dart';
 import 'package:mymediascanner/domain/entities/scan_result.dart';
 import 'package:mymediascanner/presentation/screens/metadata_confirm/widgets/editable_metadata_form.dart';
 import 'package:mymediascanner/presentation/screens/metadata_confirm/widgets/title_search_field.dart';
+import 'package:mymediascanner/presentation/widgets/duplicate_check_helper.dart';
 import 'package:mymediascanner/presentation/widgets/ocr_confidence_indicator.dart';
 
 class MetadataConfirmScreen extends ConsumerWidget {
@@ -158,9 +160,17 @@ class MetadataConfirmScreen extends ConsumerWidget {
               EditableMetadataForm(
                 initial: effectiveMetadata!,
                 onSave: (edited) async {
-                  final useCase = SaveMediaItemUseCase(
-                    repository: ref.read(mediaItemRepositoryProvider),
+                  final repository = ref.read(mediaItemRepositoryProvider);
+                  final proceed = await confirmSaveOrSkipIfDuplicate(
+                    context: context,
+                    repository: repository,
+                    barcode: edited.barcode,
+                    title: edited.title,
+                    year: edited.year,
                   );
+                  if (!proceed) return;
+                  final useCase =
+                      SaveMediaItemUseCase(repository: repository);
                   await useCase.execute(edited);
 
                   final scanner = ref.read(scannerProvider.notifier);
@@ -184,6 +194,34 @@ class MetadataConfirmScreen extends ConsumerWidget {
                       );
                       context.go('/');
                     }
+                  }
+                },
+                onSaveToWishlist: (edited) async {
+                  final repository = ref.read(mediaItemRepositoryProvider);
+                  final proceed = await confirmSaveOrSkipIfDuplicate(
+                    context: context,
+                    repository: repository,
+                    barcode: edited.barcode,
+                    title: edited.title,
+                    year: edited.year,
+                  );
+                  if (!proceed) return;
+                  final useCase =
+                      SaveMediaItemUseCase(repository: repository);
+                  await useCase.execute(
+                    edited,
+                    ownershipStatus: OwnershipStatus.wishlist,
+                  );
+
+                  ref.read(scannerProvider.notifier).reset();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                            '${edited.title ?? "Item"} added to wishlist'),
+                      ),
+                    );
+                    context.go('/wishlist');
                   }
                 },
               ),

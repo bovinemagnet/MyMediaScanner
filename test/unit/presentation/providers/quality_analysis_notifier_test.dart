@@ -10,6 +10,7 @@ library;
 
 import 'dart:async';
 
+import 'package:audio_defect_detector/audio_defect_detector.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -31,14 +32,15 @@ class MockFlacDecoder extends Mock implements FlacDecoder {}
 /// Mocktail mock for the concrete [AccurateRipClient] class.
 class MockAccurateRipClient extends Mock implements AccurateRipClient {}
 
-/// Stub notifier that returns a fixed threshold of 8.0 synchronously.
+/// Stub notifier that returns [Sensitivity.medium] synchronously.
 ///
-/// The real [ClickDetectionThresholdNotifier] reads from secure storage, which
-/// is unavailable in unit tests. This stub returns [AsyncValue.data] immediately
-/// so that `ref.read(clickDetectionThresholdProvider).value` resolves to 8.0.
-class ClickDetectionThresholdStub extends ClickDetectionThresholdNotifier {
+/// The real [ClickDetectionSensitivityNotifier] reads from secure storage,
+/// which is unavailable in unit tests. This stub returns [AsyncValue.data]
+/// immediately so that `ref.read(clickDetectionSensitivityProvider).value`
+/// resolves to [Sensitivity.medium].
+class ClickDetectionSensitivityStub extends ClickDetectionSensitivityNotifier {
   @override
-  Future<double> build() async => 8.0;
+  Future<Sensitivity> build() async => Sensitivity.medium;
 }
 
 // ---------------------------------------------------------------------------
@@ -55,8 +57,8 @@ ProviderContainer _createContainer({
       ripLibraryRepositoryProvider.overrideWithValue(ripRepo),
       flacDecoderProvider.overrideWithValue(flacDecoder),
       accurateRipClientProvider.overrideWithValue(arClient),
-      clickDetectionThresholdProvider
-          .overrideWith(() => ClickDetectionThresholdStub()),
+      clickDetectionSensitivityProvider
+          .overrideWith(() => ClickDetectionSensitivityStub()),
     ],
   );
 }
@@ -219,12 +221,12 @@ void main() {
         expect(state.error, contains('DB failure'));
       });
 
-      test('uses default threshold of 8.0 when threshold provider is loading',
+      test('uses default sensitivity when sensitivity provider is loading',
           () async {
-        // Arrange — with our stub the threshold resolves to data(8.0) so
-        // .value returns 8.0. We verify that the notifier does not throw even
-        // when the underlying provider is in a loading state by using the
-        // null-coalescing default.
+        // Arrange — with our stub the sensitivity resolves to
+        // data(Sensitivity.medium) so .value returns medium. We verify that the
+        // notifier does not throw even when the underlying provider is in a
+        // loading state by using the null-coalescing default.
         when(() => mockRipRepo.getTracksForAlbum(any()))
             .thenAnswer((_) async => []);
 

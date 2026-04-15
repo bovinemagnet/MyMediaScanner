@@ -1,3 +1,4 @@
+import 'package:audio_defect_detector/audio_defect_detector.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:mymediascanner/core/constants/app_constants.dart';
@@ -369,7 +370,7 @@ class _FlacLibrarySectionState extends ConsumerState<_FlacLibrarySection> {
     final pathAsync = ref.watch(ripLibraryPathProvider);
     final scanState = ref.watch(ripScanNotifierProvider);
     final flacBinaryAsync = ref.watch(flacBinaryPathOverrideProvider);
-    final clickThresholdAsync = ref.watch(clickDetectionThresholdProvider);
+    final clickSensitivityAsync = ref.watch(clickDetectionSensitivityProvider);
 
     // Initialise text field from stored path
     pathAsync.whenData((path) {
@@ -506,41 +507,31 @@ class _FlacLibrarySectionState extends ConsumerState<_FlacLibrarySection> {
           ],
         ),
         const SizedBox(height: 16),
-        // Click detection threshold slider
-        Text('Click detection threshold',
+        // Click detection sensitivity
+        Text('Click detection sensitivity',
             style: Theme.of(context).textTheme.bodyMedium),
         const SizedBox(height: 4),
-        clickThresholdAsync.when(
+        clickSensitivityAsync.when(
           loading: () => const SizedBox.shrink(),
           error: (_, _) => const SizedBox.shrink(),
-          data: (threshold) => Row(
-            children: [
-              Expanded(
-                child: Slider(
-                  value: threshold,
-                  min: 4.0,
-                  max: 16.0,
-                  divisions: 24,
-                  label: threshold.toStringAsFixed(1),
-                  onChanged: (value) {
-                    ref
-                        .read(clickDetectionThresholdProvider.notifier)
-                        .setThreshold(value);
-                  },
-                ),
-              ),
-              SizedBox(
-                width: 48,
-                child: Text(
-                  threshold.toStringAsFixed(1),
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ),
+          data: (sensitivity) => SegmentedButton<Sensitivity>(
+            segments: const [
+              ButtonSegment(value: Sensitivity.low, label: Text('Low')),
+              ButtonSegment(
+                  value: Sensitivity.medium, label: Text('Medium')),
+              ButtonSegment(value: Sensitivity.high, label: Text('High')),
             ],
+            selected: {sensitivity},
+            onSelectionChanged: (selected) {
+              ref
+                  .read(clickDetectionSensitivityProvider.notifier)
+                  .setSensitivity(selected.first);
+            },
           ),
         ),
+        const SizedBox(height: 4),
         Text(
-          'Higher values reduce false positives; lower values catch more clicks.',
+          'Higher sensitivity catches more defects but may flag legitimate transients.',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.outline,
               ),

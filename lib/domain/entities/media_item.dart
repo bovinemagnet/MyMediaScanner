@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:mymediascanner/domain/entities/item_condition.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
+import 'package:mymediascanner/domain/entities/ownership_status.dart';
 
 part 'media_item.freezed.dart';
 
@@ -24,6 +26,11 @@ sealed class MediaItem with _$MediaItem {
     String? userReview,
     double? criticScore,
     String? criticSource,
+    @Default(OwnershipStatus.owned) OwnershipStatus ownershipStatus,
+    ItemCondition? condition,
+    double? pricePaid,
+    int? acquiredAt,
+    String? retailer,
     required int dateAdded,
     required int dateScanned,
     required int updatedAt,

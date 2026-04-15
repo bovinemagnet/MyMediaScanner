@@ -116,7 +116,8 @@ class RipLibraryDao extends DatabaseAccessor<AppDatabase>
     String trackId, {
     String? arStatus,
     int? arConfidence,
-    String? arCrc,
+    String? arCrcV1,
+    String? arCrcV2,
     double? peakLevel,
     double? trackQuality,
     String? copyCrc,
@@ -128,7 +129,8 @@ class RipLibraryDao extends DatabaseAccessor<AppDatabase>
       RipTracksTableCompanion(
         accurateripStatus: Value(arStatus),
         accurateripConfidence: Value(arConfidence),
-        accurateripCrc: Value(arCrc),
+        accurateripCrcV1: Value(arCrcV1),
+        accurateripCrcV2: Value(arCrcV2),
         peakLevel: Value(peakLevel),
         trackQuality: Value(trackQuality),
         copyCrc: Value(copyCrc),

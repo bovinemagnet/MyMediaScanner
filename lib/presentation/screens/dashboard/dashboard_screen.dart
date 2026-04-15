@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mymediascanner/presentation/providers/collection_provider.dart';
 import 'package:mymediascanner/presentation/providers/statistics_provider.dart';
 import 'package:mymediascanner/presentation/screens/collection/widgets/media_item_card.dart';
+import 'package:mymediascanner/presentation/screens/dashboard/widgets/random_pick_tile.dart';
 import 'package:mymediascanner/presentation/widgets/gradient_button.dart';
 import 'package:mymediascanner/presentation/widgets/screen_header.dart';
 
@@ -89,6 +90,17 @@ class DashboardScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Quick actions
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 24),
+                child: Row(
+                  children: [
+                    Expanded(child: RandomPickTile()),
+                  ],
                 ),
               ),
               const SizedBox(height: 32),

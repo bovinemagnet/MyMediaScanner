@@ -11,6 +11,7 @@ import 'package:mymediascanner/core/utils/mp3_reader.dart';
 import 'package:mymediascanner/domain/usecases/edit_rip_metadata_usecase.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
 import 'package:mymediascanner/domain/entities/rip_track.dart';
+import 'package:audio_defect_detector/audio_defect_detector.dart';
 import 'package:mymediascanner/domain/usecases/analyse_rip_quality_usecase.dart';
 import 'package:mymediascanner/domain/usecases/match_rips_usecase.dart';
 import 'package:mymediascanner/domain/usecases/scan_rip_library_usecase.dart';
@@ -183,7 +184,7 @@ class RipScanNotifier extends Notifier<RipScanState> {
 const _flacBinaryPathKey = 'flac_binary_path';
 
 /// Secure storage key for click detection threshold.
-const _clickThresholdKey = 'click_detection_threshold';
+const _clickSensitivityKey = 'click_detection_sensitivity';
 
 /// Provider for the FLAC decoder instance.
 final flacDecoderProvider = Provider<FlacDecoder>((ref) {
@@ -240,24 +241,27 @@ class FlacBinaryPathNotifier extends AsyncNotifier<String?> {
   }
 }
 
-/// Click detection threshold, stored in secure storage (default 8.0).
-final clickDetectionThresholdProvider =
-    AsyncNotifierProvider<ClickDetectionThresholdNotifier, double>(
-  ClickDetectionThresholdNotifier.new,
+/// Click detection sensitivity, stored in secure storage.
+final clickDetectionSensitivityProvider =
+    AsyncNotifierProvider<ClickDetectionSensitivityNotifier, Sensitivity>(
+  ClickDetectionSensitivityNotifier.new,
 );
 
-class ClickDetectionThresholdNotifier extends AsyncNotifier<double> {
+class ClickDetectionSensitivityNotifier extends AsyncNotifier<Sensitivity> {
   @override
-  Future<double> build() async {
+  Future<Sensitivity> build() async {
     final storage = ref.watch(secureStorageProvider);
-    final stored = await storage.read(key: _clickThresholdKey);
-    return stored != null ? (double.tryParse(stored) ?? 8.0) : 8.0;
+    final stored = await storage.read(key: _clickSensitivityKey);
+    return Sensitivity.values
+            .where((s) => s.name == stored)
+            .firstOrNull ??
+        Sensitivity.medium;
   }
 
-  Future<void> setThreshold(double value) async {
+  Future<void> setSensitivity(Sensitivity value) async {
     await ref.read(secureStorageProvider).write(
-          key: _clickThresholdKey,
-          value: value.toString(),
+          key: _clickSensitivityKey,
+          value: value.name,
         );
     ref.invalidateSelf();
   }
@@ -314,14 +318,15 @@ class QualityAnalysisNotifier extends Notifier<QualityAnalysisState> {
         status: QualityAnalysisStatus.analysing);
 
     try {
-      final threshold =
-          ref.read(clickDetectionThresholdProvider).value ?? 8.0;
+      final sensitivity =
+          ref.read(clickDetectionSensitivityProvider).value ??
+              Sensitivity.medium;
 
       final useCase = AnalyseRipQualityUseCase(
         repository: ref.read(ripLibraryRepositoryProvider),
         flacDecoder: ref.read(flacDecoderProvider),
         accurateRipClient: ref.read(accurateRipClientProvider),
-        clickThreshold: threshold,
+        sensitivity: sensitivity,
       );
 
       await for (final progress in useCase.execute(ripAlbumId)) {

@@ -27,6 +27,12 @@ class MediaItemsTable extends Table {
   IntColumn get updatedAt => integer()();
   IntColumn get syncedAt => integer().nullable()();
   IntColumn get deleted => integer().withDefault(const Constant(0))();
+  TextColumn get ownershipStatus =>
+      text().withDefault(const Constant('owned'))();
+  TextColumn get condition => text().nullable()();
+  RealColumn get pricePaid => real().nullable()();
+  IntColumn get acquiredAt => integer().nullable()();
+  TextColumn get retailer => text().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};

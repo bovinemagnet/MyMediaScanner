@@ -147,5 +147,40 @@ void main() {
       expect(find.text('TIME PERIOD'), findsOneWidget);
       expect(find.text('12 months'), findsOneWidget);
     });
+
+    testWidgets('collection value tile renders value when present',
+        (tester) async {
+      final insights = _sampleInsights.copyWith(totalValue: 123.45);
+      await tester.pumpWidget(_buildTestScreen(insights: insights));
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('collection-value-tile')),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('COLLECTION VALUE'), findsOneWidget);
+      // Currency formatting depends on locale; just ensure something like
+      // "123.45" appears in the tile's text.
+      expect(find.textContaining('123.45'), findsOneWidget);
+    });
+
+    testWidgets('collection value tile shows em dash when null',
+        (tester) async {
+      final insights = _sampleInsights.copyWith(totalValue: null);
+      await tester.pumpWidget(_buildTestScreen(insights: insights));
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('collection-value-tile')),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('—'), findsOneWidget);
+    });
   });
 }

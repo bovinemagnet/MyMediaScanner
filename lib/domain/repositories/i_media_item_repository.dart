@@ -1,5 +1,6 @@
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
+import 'package:mymediascanner/domain/entities/ownership_status.dart';
 
 abstract interface class IMediaItemRepository {
   Stream<List<MediaItem>> watchAll({
@@ -10,8 +11,13 @@ abstract interface class IMediaItemRepository {
     bool ascending = true,
   });
 
+  Stream<List<MediaItem>> watchByStatus(OwnershipStatus status);
+
   Future<MediaItem?> getById(String id);
   Future<bool> barcodeExists(String barcode);
+  Future<int> countByBarcode(String barcode);
+  Future<List<MediaItem>> findByBarcode(String barcode);
+  Future<List<MediaItem>> findByTitleYear(String title, int? year);
   Future<void> save(MediaItem item);
   Future<void> update(MediaItem item);
   Future<void> softDelete(String id);

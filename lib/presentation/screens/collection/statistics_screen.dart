@@ -9,6 +9,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
 import 'package:mymediascanner/domain/entities/insights_data.dart';
 import 'package:mymediascanner/presentation/providers/collection_provider.dart';
@@ -71,6 +72,15 @@ class StatisticsScreen extends ConsumerWidget {
 
             // ── Collection growth chart ──────────────────────────
             GrowthChart(monthlyGrowth: insights.monthlyGrowth),
+
+            const SizedBox(height: 16),
+
+            // ── Collection value tile ────────────────────────────
+            _CollectionValueTile(
+              totalValue: insights.totalValue,
+              theme: theme,
+              colors: colors,
+            ),
 
             const SizedBox(height: 16),
 
@@ -547,6 +557,65 @@ class _CompactStatCard extends StatelessWidget {
               color: colors.onSurfaceVariant,
               letterSpacing: 1.2,
               fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Collection value tile — sum of pricePaid over owned items
+// ═══════════════════════════════════════════════════════════════════════
+
+class _CollectionValueTile extends StatelessWidget {
+  const _CollectionValueTile({
+    required this.totalValue,
+    required this.theme,
+    required this.colors,
+  });
+
+  final double? totalValue;
+  final ThemeData theme;
+  final ColorScheme colors;
+
+  @override
+  Widget build(BuildContext context) {
+    final formatter = NumberFormat.simpleCurrency();
+    final display = totalValue != null ? formatter.format(totalValue) : '—';
+
+    return Container(
+      key: const Key('collection-value-tile'),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.attach_money, color: colors.primary, size: 28),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'COLLECTION VALUE',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                    letterSpacing: 1.2,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  display,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

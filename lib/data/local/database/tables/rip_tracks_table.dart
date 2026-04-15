@@ -19,7 +19,8 @@ class RipTracksTable extends Table {
   // Audio quality analysis columns (Phase B)
   TextColumn get accurateripStatus => text().nullable()();
   IntColumn get accurateripConfidence => integer().nullable()();
-  TextColumn get accurateripCrc => text().nullable()();
+  TextColumn get accurateripCrcV1 => text().nullable()();
+  TextColumn get accurateripCrcV2 => text().nullable()();
   RealColumn get peakLevel => real().nullable()();
   RealColumn get trackQuality => real().nullable()();
   TextColumn get copyCrc => text().nullable()();
