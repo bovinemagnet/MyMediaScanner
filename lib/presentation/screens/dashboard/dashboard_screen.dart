@@ -12,6 +12,7 @@ import 'package:mymediascanner/presentation/providers/progress_provider.dart';
 import 'package:mymediascanner/presentation/providers/statistics_provider.dart';
 import 'package:mymediascanner/presentation/screens/collection/widgets/media_item_card.dart';
 import 'package:mymediascanner/presentation/screens/dashboard/widgets/random_pick_tile.dart';
+import 'package:mymediascanner/presentation/screens/dashboard/widgets/recommendations_section.dart';
 import 'package:mymediascanner/presentation/widgets/gradient_button.dart';
 import 'package:mymediascanner/presentation/widgets/screen_header.dart';
 
@@ -114,6 +115,10 @@ class DashboardScreen extends ConsumerWidget {
                       orElse: () => const <MediaItem>[],
                     ),
               ),
+              const SizedBox(height: 16),
+
+              // Recommended next
+              const RecommendationsSection(),
               const SizedBox(height: 32),
 
               // Recent additions

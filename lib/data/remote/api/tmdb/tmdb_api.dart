@@ -38,4 +38,11 @@ abstract class TmdbApi {
   /// resolution. Search/find responses do not include collection refs.
   @GET('/movie/{id}')
   Future<TmdbMovieDetailDto> getMovieDetail(@Path('id') int id);
+
+  /// Trending content for the current week — used as a candidate pool
+  /// for wishlist suggestions. `mediaType` accepts `movie`, `tv` or `all`.
+  @GET('/trending/{mediaType}/week')
+  Future<TmdbSearchResponseDto> trending(
+    @Path('mediaType') String mediaType,
+  );
 }
