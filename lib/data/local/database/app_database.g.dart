@@ -323,6 +323,28 @@ class $MediaItemsTableTable extends MediaItemsTable
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _seriesIdMeta = const VerificationMeta(
+    'seriesId',
+  );
+  @override
+  late final GeneratedColumn<String> seriesId = GeneratedColumn<String>(
+    'series_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _seriesPositionMeta = const VerificationMeta(
+    'seriesPosition',
+  );
+  @override
+  late final GeneratedColumn<int> seriesPosition = GeneratedColumn<int>(
+    'series_position',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -354,6 +376,8 @@ class $MediaItemsTableTable extends MediaItemsTable
     acquiredAt,
     retailer,
     locationId,
+    seriesId,
+    seriesPosition,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -575,6 +599,21 @@ class $MediaItemsTableTable extends MediaItemsTable
         locationId.isAcceptableOrUnknown(data['location_id']!, _locationIdMeta),
       );
     }
+    if (data.containsKey('series_id')) {
+      context.handle(
+        _seriesIdMeta,
+        seriesId.isAcceptableOrUnknown(data['series_id']!, _seriesIdMeta),
+      );
+    }
+    if (data.containsKey('series_position')) {
+      context.handle(
+        _seriesPositionMeta,
+        seriesPosition.isAcceptableOrUnknown(
+          data['series_position']!,
+          _seriesPositionMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -700,6 +739,14 @@ class $MediaItemsTableTable extends MediaItemsTable
         DriftSqlType.string,
         data['${effectivePrefix}location_id'],
       ),
+      seriesId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}series_id'],
+      ),
+      seriesPosition: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}series_position'],
+      ),
     );
   }
 
@@ -740,6 +787,8 @@ class MediaItemsTableData extends DataClass
   final int? acquiredAt;
   final String? retailer;
   final String? locationId;
+  final String? seriesId;
+  final int? seriesPosition;
   const MediaItemsTableData({
     required this.id,
     required this.barcode,
@@ -770,6 +819,8 @@ class MediaItemsTableData extends DataClass
     this.acquiredAt,
     this.retailer,
     this.locationId,
+    this.seriesId,
+    this.seriesPosition,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -835,6 +886,12 @@ class MediaItemsTableData extends DataClass
     if (!nullToAbsent || locationId != null) {
       map['location_id'] = Variable<String>(locationId);
     }
+    if (!nullToAbsent || seriesId != null) {
+      map['series_id'] = Variable<String>(seriesId);
+    }
+    if (!nullToAbsent || seriesPosition != null) {
+      map['series_position'] = Variable<int>(seriesPosition);
+    }
     return map;
   }
 
@@ -899,6 +956,12 @@ class MediaItemsTableData extends DataClass
       locationId: locationId == null && nullToAbsent
           ? const Value.absent()
           : Value(locationId),
+      seriesId: seriesId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(seriesId),
+      seriesPosition: seriesPosition == null && nullToAbsent
+          ? const Value.absent()
+          : Value(seriesPosition),
     );
   }
 
@@ -937,6 +1000,8 @@ class MediaItemsTableData extends DataClass
       acquiredAt: serializer.fromJson<int?>(json['acquiredAt']),
       retailer: serializer.fromJson<String?>(json['retailer']),
       locationId: serializer.fromJson<String?>(json['locationId']),
+      seriesId: serializer.fromJson<String?>(json['seriesId']),
+      seriesPosition: serializer.fromJson<int?>(json['seriesPosition']),
     );
   }
   @override
@@ -972,6 +1037,8 @@ class MediaItemsTableData extends DataClass
       'acquiredAt': serializer.toJson<int?>(acquiredAt),
       'retailer': serializer.toJson<String?>(retailer),
       'locationId': serializer.toJson<String?>(locationId),
+      'seriesId': serializer.toJson<String?>(seriesId),
+      'seriesPosition': serializer.toJson<int?>(seriesPosition),
     };
   }
 
@@ -1005,6 +1072,8 @@ class MediaItemsTableData extends DataClass
     Value<int?> acquiredAt = const Value.absent(),
     Value<String?> retailer = const Value.absent(),
     Value<String?> locationId = const Value.absent(),
+    Value<String?> seriesId = const Value.absent(),
+    Value<int?> seriesPosition = const Value.absent(),
   }) => MediaItemsTableData(
     id: id ?? this.id,
     barcode: barcode ?? this.barcode,
@@ -1035,6 +1104,10 @@ class MediaItemsTableData extends DataClass
     acquiredAt: acquiredAt.present ? acquiredAt.value : this.acquiredAt,
     retailer: retailer.present ? retailer.value : this.retailer,
     locationId: locationId.present ? locationId.value : this.locationId,
+    seriesId: seriesId.present ? seriesId.value : this.seriesId,
+    seriesPosition: seriesPosition.present
+        ? seriesPosition.value
+        : this.seriesPosition,
   );
   MediaItemsTableData copyWithCompanion(MediaItemsTableCompanion data) {
     return MediaItemsTableData(
@@ -1091,6 +1164,10 @@ class MediaItemsTableData extends DataClass
       locationId: data.locationId.present
           ? data.locationId.value
           : this.locationId,
+      seriesId: data.seriesId.present ? data.seriesId.value : this.seriesId,
+      seriesPosition: data.seriesPosition.present
+          ? data.seriesPosition.value
+          : this.seriesPosition,
     );
   }
 
@@ -1125,7 +1202,9 @@ class MediaItemsTableData extends DataClass
           ..write('pricePaid: $pricePaid, ')
           ..write('acquiredAt: $acquiredAt, ')
           ..write('retailer: $retailer, ')
-          ..write('locationId: $locationId')
+          ..write('locationId: $locationId, ')
+          ..write('seriesId: $seriesId, ')
+          ..write('seriesPosition: $seriesPosition')
           ..write(')'))
         .toString();
   }
@@ -1161,6 +1240,8 @@ class MediaItemsTableData extends DataClass
     acquiredAt,
     retailer,
     locationId,
+    seriesId,
+    seriesPosition,
   ]);
   @override
   bool operator ==(Object other) =>
@@ -1194,7 +1275,9 @@ class MediaItemsTableData extends DataClass
           other.pricePaid == this.pricePaid &&
           other.acquiredAt == this.acquiredAt &&
           other.retailer == this.retailer &&
-          other.locationId == this.locationId);
+          other.locationId == this.locationId &&
+          other.seriesId == this.seriesId &&
+          other.seriesPosition == this.seriesPosition);
 }
 
 class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
@@ -1227,6 +1310,8 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
   final Value<int?> acquiredAt;
   final Value<String?> retailer;
   final Value<String?> locationId;
+  final Value<String?> seriesId;
+  final Value<int?> seriesPosition;
   final Value<int> rowid;
   const MediaItemsTableCompanion({
     this.id = const Value.absent(),
@@ -1258,6 +1343,8 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
     this.acquiredAt = const Value.absent(),
     this.retailer = const Value.absent(),
     this.locationId = const Value.absent(),
+    this.seriesId = const Value.absent(),
+    this.seriesPosition = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   MediaItemsTableCompanion.insert({
@@ -1290,6 +1377,8 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
     this.acquiredAt = const Value.absent(),
     this.retailer = const Value.absent(),
     this.locationId = const Value.absent(),
+    this.seriesId = const Value.absent(),
+    this.seriesPosition = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        barcode = Value(barcode),
@@ -1329,6 +1418,8 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
     Expression<int>? acquiredAt,
     Expression<String>? retailer,
     Expression<String>? locationId,
+    Expression<String>? seriesId,
+    Expression<int>? seriesPosition,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1361,6 +1452,8 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
       if (acquiredAt != null) 'acquired_at': acquiredAt,
       if (retailer != null) 'retailer': retailer,
       if (locationId != null) 'location_id': locationId,
+      if (seriesId != null) 'series_id': seriesId,
+      if (seriesPosition != null) 'series_position': seriesPosition,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1395,6 +1488,8 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
     Value<int?>? acquiredAt,
     Value<String?>? retailer,
     Value<String?>? locationId,
+    Value<String?>? seriesId,
+    Value<int?>? seriesPosition,
     Value<int>? rowid,
   }) {
     return MediaItemsTableCompanion(
@@ -1427,6 +1522,8 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
       acquiredAt: acquiredAt ?? this.acquiredAt,
       retailer: retailer ?? this.retailer,
       locationId: locationId ?? this.locationId,
+      seriesId: seriesId ?? this.seriesId,
+      seriesPosition: seriesPosition ?? this.seriesPosition,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1521,6 +1618,12 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
     if (locationId.present) {
       map['location_id'] = Variable<String>(locationId.value);
     }
+    if (seriesId.present) {
+      map['series_id'] = Variable<String>(seriesId.value);
+    }
+    if (seriesPosition.present) {
+      map['series_position'] = Variable<int>(seriesPosition.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1559,6 +1662,8 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
           ..write('acquiredAt: $acquiredAt, ')
           ..write('retailer: $retailer, ')
           ..write('locationId: $locationId, ')
+          ..write('seriesId: $seriesId, ')
+          ..write('seriesPosition: $seriesPosition, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -9087,6 +9192,521 @@ class LocationsTableCompanion extends UpdateCompanion<LocationsTableData> {
   }
 }
 
+class $SeriesTableTable extends SeriesTable
+    with TableInfo<$SeriesTableTable, SeriesTableData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SeriesTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _externalIdMeta = const VerificationMeta(
+    'externalId',
+  );
+  @override
+  late final GeneratedColumn<String> externalId = GeneratedColumn<String>(
+    'external_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _mediaTypeMeta = const VerificationMeta(
+    'mediaType',
+  );
+  @override
+  late final GeneratedColumn<String> mediaType = GeneratedColumn<String>(
+    'media_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceMeta = const VerificationMeta('source');
+  @override
+  late final GeneratedColumn<String> source = GeneratedColumn<String>(
+    'source',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _totalCountMeta = const VerificationMeta(
+    'totalCount',
+  );
+  @override
+  late final GeneratedColumn<int> totalCount = GeneratedColumn<int>(
+    'total_count',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _deletedMeta = const VerificationMeta(
+    'deleted',
+  );
+  @override
+  late final GeneratedColumn<int> deleted = GeneratedColumn<int>(
+    'deleted',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    externalId,
+    name,
+    mediaType,
+    source,
+    totalCount,
+    updatedAt,
+    deleted,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'series';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SeriesTableData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('external_id')) {
+      context.handle(
+        _externalIdMeta,
+        externalId.isAcceptableOrUnknown(data['external_id']!, _externalIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_externalIdMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('media_type')) {
+      context.handle(
+        _mediaTypeMeta,
+        mediaType.isAcceptableOrUnknown(data['media_type']!, _mediaTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_mediaTypeMeta);
+    }
+    if (data.containsKey('source')) {
+      context.handle(
+        _sourceMeta,
+        source.isAcceptableOrUnknown(data['source']!, _sourceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceMeta);
+    }
+    if (data.containsKey('total_count')) {
+      context.handle(
+        _totalCountMeta,
+        totalCount.isAcceptableOrUnknown(data['total_count']!, _totalCountMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('deleted')) {
+      context.handle(
+        _deletedMeta,
+        deleted.isAcceptableOrUnknown(data['deleted']!, _deletedMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {externalId},
+  ];
+  @override
+  SeriesTableData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SeriesTableData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      externalId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}external_id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      mediaType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}media_type'],
+      )!,
+      source: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source'],
+      )!,
+      totalCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}total_count'],
+      ),
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      deleted: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}deleted'],
+      )!,
+    );
+  }
+
+  @override
+  $SeriesTableTable createAlias(String alias) {
+    return $SeriesTableTable(attachedDatabase, alias);
+  }
+}
+
+class SeriesTableData extends DataClass implements Insertable<SeriesTableData> {
+  final String id;
+  final String externalId;
+  final String name;
+  final String mediaType;
+  final String source;
+  final int? totalCount;
+  final int updatedAt;
+  final int deleted;
+  const SeriesTableData({
+    required this.id,
+    required this.externalId,
+    required this.name,
+    required this.mediaType,
+    required this.source,
+    this.totalCount,
+    required this.updatedAt,
+    required this.deleted,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['external_id'] = Variable<String>(externalId);
+    map['name'] = Variable<String>(name);
+    map['media_type'] = Variable<String>(mediaType);
+    map['source'] = Variable<String>(source);
+    if (!nullToAbsent || totalCount != null) {
+      map['total_count'] = Variable<int>(totalCount);
+    }
+    map['updated_at'] = Variable<int>(updatedAt);
+    map['deleted'] = Variable<int>(deleted);
+    return map;
+  }
+
+  SeriesTableCompanion toCompanion(bool nullToAbsent) {
+    return SeriesTableCompanion(
+      id: Value(id),
+      externalId: Value(externalId),
+      name: Value(name),
+      mediaType: Value(mediaType),
+      source: Value(source),
+      totalCount: totalCount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(totalCount),
+      updatedAt: Value(updatedAt),
+      deleted: Value(deleted),
+    );
+  }
+
+  factory SeriesTableData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SeriesTableData(
+      id: serializer.fromJson<String>(json['id']),
+      externalId: serializer.fromJson<String>(json['externalId']),
+      name: serializer.fromJson<String>(json['name']),
+      mediaType: serializer.fromJson<String>(json['mediaType']),
+      source: serializer.fromJson<String>(json['source']),
+      totalCount: serializer.fromJson<int?>(json['totalCount']),
+      updatedAt: serializer.fromJson<int>(json['updatedAt']),
+      deleted: serializer.fromJson<int>(json['deleted']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'externalId': serializer.toJson<String>(externalId),
+      'name': serializer.toJson<String>(name),
+      'mediaType': serializer.toJson<String>(mediaType),
+      'source': serializer.toJson<String>(source),
+      'totalCount': serializer.toJson<int?>(totalCount),
+      'updatedAt': serializer.toJson<int>(updatedAt),
+      'deleted': serializer.toJson<int>(deleted),
+    };
+  }
+
+  SeriesTableData copyWith({
+    String? id,
+    String? externalId,
+    String? name,
+    String? mediaType,
+    String? source,
+    Value<int?> totalCount = const Value.absent(),
+    int? updatedAt,
+    int? deleted,
+  }) => SeriesTableData(
+    id: id ?? this.id,
+    externalId: externalId ?? this.externalId,
+    name: name ?? this.name,
+    mediaType: mediaType ?? this.mediaType,
+    source: source ?? this.source,
+    totalCount: totalCount.present ? totalCount.value : this.totalCount,
+    updatedAt: updatedAt ?? this.updatedAt,
+    deleted: deleted ?? this.deleted,
+  );
+  SeriesTableData copyWithCompanion(SeriesTableCompanion data) {
+    return SeriesTableData(
+      id: data.id.present ? data.id.value : this.id,
+      externalId: data.externalId.present
+          ? data.externalId.value
+          : this.externalId,
+      name: data.name.present ? data.name.value : this.name,
+      mediaType: data.mediaType.present ? data.mediaType.value : this.mediaType,
+      source: data.source.present ? data.source.value : this.source,
+      totalCount: data.totalCount.present
+          ? data.totalCount.value
+          : this.totalCount,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      deleted: data.deleted.present ? data.deleted.value : this.deleted,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SeriesTableData(')
+          ..write('id: $id, ')
+          ..write('externalId: $externalId, ')
+          ..write('name: $name, ')
+          ..write('mediaType: $mediaType, ')
+          ..write('source: $source, ')
+          ..write('totalCount: $totalCount, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deleted: $deleted')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    externalId,
+    name,
+    mediaType,
+    source,
+    totalCount,
+    updatedAt,
+    deleted,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SeriesTableData &&
+          other.id == this.id &&
+          other.externalId == this.externalId &&
+          other.name == this.name &&
+          other.mediaType == this.mediaType &&
+          other.source == this.source &&
+          other.totalCount == this.totalCount &&
+          other.updatedAt == this.updatedAt &&
+          other.deleted == this.deleted);
+}
+
+class SeriesTableCompanion extends UpdateCompanion<SeriesTableData> {
+  final Value<String> id;
+  final Value<String> externalId;
+  final Value<String> name;
+  final Value<String> mediaType;
+  final Value<String> source;
+  final Value<int?> totalCount;
+  final Value<int> updatedAt;
+  final Value<int> deleted;
+  final Value<int> rowid;
+  const SeriesTableCompanion({
+    this.id = const Value.absent(),
+    this.externalId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.mediaType = const Value.absent(),
+    this.source = const Value.absent(),
+    this.totalCount = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.deleted = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SeriesTableCompanion.insert({
+    required String id,
+    required String externalId,
+    required String name,
+    required String mediaType,
+    required String source,
+    this.totalCount = const Value.absent(),
+    required int updatedAt,
+    this.deleted = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       externalId = Value(externalId),
+       name = Value(name),
+       mediaType = Value(mediaType),
+       source = Value(source),
+       updatedAt = Value(updatedAt);
+  static Insertable<SeriesTableData> custom({
+    Expression<String>? id,
+    Expression<String>? externalId,
+    Expression<String>? name,
+    Expression<String>? mediaType,
+    Expression<String>? source,
+    Expression<int>? totalCount,
+    Expression<int>? updatedAt,
+    Expression<int>? deleted,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (externalId != null) 'external_id': externalId,
+      if (name != null) 'name': name,
+      if (mediaType != null) 'media_type': mediaType,
+      if (source != null) 'source': source,
+      if (totalCount != null) 'total_count': totalCount,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (deleted != null) 'deleted': deleted,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SeriesTableCompanion copyWith({
+    Value<String>? id,
+    Value<String>? externalId,
+    Value<String>? name,
+    Value<String>? mediaType,
+    Value<String>? source,
+    Value<int?>? totalCount,
+    Value<int>? updatedAt,
+    Value<int>? deleted,
+    Value<int>? rowid,
+  }) {
+    return SeriesTableCompanion(
+      id: id ?? this.id,
+      externalId: externalId ?? this.externalId,
+      name: name ?? this.name,
+      mediaType: mediaType ?? this.mediaType,
+      source: source ?? this.source,
+      totalCount: totalCount ?? this.totalCount,
+      updatedAt: updatedAt ?? this.updatedAt,
+      deleted: deleted ?? this.deleted,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (externalId.present) {
+      map['external_id'] = Variable<String>(externalId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (mediaType.present) {
+      map['media_type'] = Variable<String>(mediaType.value);
+    }
+    if (source.present) {
+      map['source'] = Variable<String>(source.value);
+    }
+    if (totalCount.present) {
+      map['total_count'] = Variable<int>(totalCount.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<int>(updatedAt.value);
+    }
+    if (deleted.present) {
+      map['deleted'] = Variable<int>(deleted.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SeriesTableCompanion(')
+          ..write('id: $id, ')
+          ..write('externalId: $externalId, ')
+          ..write('name: $name, ')
+          ..write('mediaType: $mediaType, ')
+          ..write('source: $source, ')
+          ..write('totalCount: $totalCount, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deleted: $deleted, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -9115,6 +9735,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $PlaylistTracksTableTable playlistTracksTable =
       $PlaylistTracksTableTable(this);
   late final $LocationsTableTable locationsTable = $LocationsTableTable(this);
+  late final $SeriesTableTable seriesTable = $SeriesTableTable(this);
   late final MediaItemsDao mediaItemsDao = MediaItemsDao(this as AppDatabase);
   late final TagsDao tagsDao = TagsDao(this as AppDatabase);
   late final ShelvesDao shelvesDao = ShelvesDao(this as AppDatabase);
@@ -9130,6 +9751,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   );
   late final PlaylistDao playlistDao = PlaylistDao(this as AppDatabase);
   late final LocationsDao locationsDao = LocationsDao(this as AppDatabase);
+  late final SeriesDao seriesDao = SeriesDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -9151,6 +9773,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     playlistsTable,
     playlistTracksTable,
     locationsTable,
+    seriesTable,
   ];
 }
 
@@ -9185,6 +9808,8 @@ typedef $$MediaItemsTableTableCreateCompanionBuilder =
       Value<int?> acquiredAt,
       Value<String?> retailer,
       Value<String?> locationId,
+      Value<String?> seriesId,
+      Value<int?> seriesPosition,
       Value<int> rowid,
     });
 typedef $$MediaItemsTableTableUpdateCompanionBuilder =
@@ -9218,6 +9843,8 @@ typedef $$MediaItemsTableTableUpdateCompanionBuilder =
       Value<int?> acquiredAt,
       Value<String?> retailer,
       Value<String?> locationId,
+      Value<String?> seriesId,
+      Value<int?> seriesPosition,
       Value<int> rowid,
     });
 
@@ -9481,6 +10108,16 @@ class $$MediaItemsTableTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get seriesId => $composableBuilder(
+    column: $table.seriesId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get seriesPosition => $composableBuilder(
+    column: $table.seriesPosition,
+    builder: (column) => ColumnFilters(column),
+  );
+
   Expression<bool> mediaItemTagsTableRefs(
     Expression<bool> Function($$MediaItemTagsTableTableFilterComposer f) f,
   ) {
@@ -9735,6 +10372,16 @@ class $$MediaItemsTableTableOrderingComposer
     column: $table.locationId,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get seriesId => $composableBuilder(
+    column: $table.seriesId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get seriesPosition => $composableBuilder(
+    column: $table.seriesPosition,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$MediaItemsTableTableAnnotationComposer
@@ -9854,6 +10501,14 @@ class $$MediaItemsTableTableAnnotationComposer
 
   GeneratedColumn<String> get locationId => $composableBuilder(
     column: $table.locationId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get seriesId =>
+      $composableBuilder(column: $table.seriesId, builder: (column) => column);
+
+  GeneratedColumn<int> get seriesPosition => $composableBuilder(
+    column: $table.seriesPosition,
     builder: (column) => column,
   );
 
@@ -10023,6 +10678,8 @@ class $$MediaItemsTableTableTableManager
                 Value<int?> acquiredAt = const Value.absent(),
                 Value<String?> retailer = const Value.absent(),
                 Value<String?> locationId = const Value.absent(),
+                Value<String?> seriesId = const Value.absent(),
+                Value<int?> seriesPosition = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => MediaItemsTableCompanion(
                 id: id,
@@ -10054,6 +10711,8 @@ class $$MediaItemsTableTableTableManager
                 acquiredAt: acquiredAt,
                 retailer: retailer,
                 locationId: locationId,
+                seriesId: seriesId,
+                seriesPosition: seriesPosition,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -10087,6 +10746,8 @@ class $$MediaItemsTableTableTableManager
                 Value<int?> acquiredAt = const Value.absent(),
                 Value<String?> retailer = const Value.absent(),
                 Value<String?> locationId = const Value.absent(),
+                Value<String?> seriesId = const Value.absent(),
+                Value<int?> seriesPosition = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => MediaItemsTableCompanion.insert(
                 id: id,
@@ -10118,6 +10779,8 @@ class $$MediaItemsTableTableTableManager
                 acquiredAt: acquiredAt,
                 retailer: retailer,
                 locationId: locationId,
+                seriesId: seriesId,
+                seriesPosition: seriesPosition,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -15922,6 +16585,267 @@ typedef $$LocationsTableTableProcessedTableManager =
       LocationsTableData,
       PrefetchHooks Function()
     >;
+typedef $$SeriesTableTableCreateCompanionBuilder =
+    SeriesTableCompanion Function({
+      required String id,
+      required String externalId,
+      required String name,
+      required String mediaType,
+      required String source,
+      Value<int?> totalCount,
+      required int updatedAt,
+      Value<int> deleted,
+      Value<int> rowid,
+    });
+typedef $$SeriesTableTableUpdateCompanionBuilder =
+    SeriesTableCompanion Function({
+      Value<String> id,
+      Value<String> externalId,
+      Value<String> name,
+      Value<String> mediaType,
+      Value<String> source,
+      Value<int?> totalCount,
+      Value<int> updatedAt,
+      Value<int> deleted,
+      Value<int> rowid,
+    });
+
+class $$SeriesTableTableFilterComposer
+    extends Composer<_$AppDatabase, $SeriesTableTable> {
+  $$SeriesTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get externalId => $composableBuilder(
+    column: $table.externalId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get mediaType => $composableBuilder(
+    column: $table.mediaType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get totalCount => $composableBuilder(
+    column: $table.totalCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get deleted => $composableBuilder(
+    column: $table.deleted,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$SeriesTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $SeriesTableTable> {
+  $$SeriesTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get externalId => $composableBuilder(
+    column: $table.externalId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get mediaType => $composableBuilder(
+    column: $table.mediaType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get totalCount => $composableBuilder(
+    column: $table.totalCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get deleted => $composableBuilder(
+    column: $table.deleted,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SeriesTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SeriesTableTable> {
+  $$SeriesTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get externalId => $composableBuilder(
+    column: $table.externalId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get mediaType =>
+      $composableBuilder(column: $table.mediaType, builder: (column) => column);
+
+  GeneratedColumn<String> get source =>
+      $composableBuilder(column: $table.source, builder: (column) => column);
+
+  GeneratedColumn<int> get totalCount => $composableBuilder(
+    column: $table.totalCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get deleted =>
+      $composableBuilder(column: $table.deleted, builder: (column) => column);
+}
+
+class $$SeriesTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SeriesTableTable,
+          SeriesTableData,
+          $$SeriesTableTableFilterComposer,
+          $$SeriesTableTableOrderingComposer,
+          $$SeriesTableTableAnnotationComposer,
+          $$SeriesTableTableCreateCompanionBuilder,
+          $$SeriesTableTableUpdateCompanionBuilder,
+          (
+            SeriesTableData,
+            BaseReferences<_$AppDatabase, $SeriesTableTable, SeriesTableData>,
+          ),
+          SeriesTableData,
+          PrefetchHooks Function()
+        > {
+  $$SeriesTableTableTableManager(_$AppDatabase db, $SeriesTableTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SeriesTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SeriesTableTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SeriesTableTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> externalId = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> mediaType = const Value.absent(),
+                Value<String> source = const Value.absent(),
+                Value<int?> totalCount = const Value.absent(),
+                Value<int> updatedAt = const Value.absent(),
+                Value<int> deleted = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SeriesTableCompanion(
+                id: id,
+                externalId: externalId,
+                name: name,
+                mediaType: mediaType,
+                source: source,
+                totalCount: totalCount,
+                updatedAt: updatedAt,
+                deleted: deleted,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String externalId,
+                required String name,
+                required String mediaType,
+                required String source,
+                Value<int?> totalCount = const Value.absent(),
+                required int updatedAt,
+                Value<int> deleted = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SeriesTableCompanion.insert(
+                id: id,
+                externalId: externalId,
+                name: name,
+                mediaType: mediaType,
+                source: source,
+                totalCount: totalCount,
+                updatedAt: updatedAt,
+                deleted: deleted,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$SeriesTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SeriesTableTable,
+      SeriesTableData,
+      $$SeriesTableTableFilterComposer,
+      $$SeriesTableTableOrderingComposer,
+      $$SeriesTableTableAnnotationComposer,
+      $$SeriesTableTableCreateCompanionBuilder,
+      $$SeriesTableTableUpdateCompanionBuilder,
+      (
+        SeriesTableData,
+        BaseReferences<_$AppDatabase, $SeriesTableTable, SeriesTableData>,
+      ),
+      SeriesTableData,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -15958,4 +16882,6 @@ class $AppDatabaseManager {
       $$PlaylistTracksTableTableTableManager(_db, _db.playlistTracksTable);
   $$LocationsTableTableTableManager get locationsTable =>
       $$LocationsTableTableTableManager(_db, _db.locationsTable);
+  $$SeriesTableTableTableManager get seriesTable =>
+      $$SeriesTableTableTableManager(_db, _db.seriesTable);
 }

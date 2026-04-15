@@ -18,6 +18,8 @@ import 'package:mymediascanner/presentation/screens/shelves/shelf_detail_screen.
 import 'package:mymediascanner/presentation/screens/shelves/shelves_screen.dart';
 import 'package:mymediascanner/presentation/screens/wishlist/wishlist_screen.dart';
 import 'package:mymediascanner/presentation/screens/locations/location_browser_screen.dart';
+import 'package:mymediascanner/presentation/screens/series/series_list_screen.dart';
+import 'package:mymediascanner/presentation/screens/series/series_detail_screen.dart';
 import 'package:mymediascanner/presentation/screens/about/about_screen.dart';
 import 'package:mymediascanner/presentation/screens/borrowers/borrowers_screen.dart';
 import 'package:mymediascanner/presentation/screens/borrowers/borrower_detail_screen.dart';
@@ -251,6 +253,24 @@ final router = GoRouter(
             GoRoute(
               path: '/locations',
               builder: (context, state) => const LocationBrowserScreen(),
+            ),
+          ],
+        ),
+
+        // 10 — Series (desktop sidebar only)
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/series',
+              builder: (context, state) => const SeriesListScreen(),
+              routes: [
+                GoRoute(
+                  path: ':id',
+                  builder: (context, state) => SeriesDetailScreen(
+                    seriesId: state.pathParameters['id']!,
+                  ),
+                ),
+              ],
             ),
           ],
         ),

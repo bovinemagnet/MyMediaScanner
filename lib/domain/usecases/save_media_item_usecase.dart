@@ -3,13 +3,18 @@ import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/domain/entities/metadata_result.dart';
 import 'package:mymediascanner/domain/entities/ownership_status.dart';
 import 'package:mymediascanner/domain/repositories/i_media_item_repository.dart';
+import 'package:mymediascanner/domain/usecases/resolve_series_usecase.dart';
 import 'package:uuid/uuid.dart';
 
 class SaveMediaItemUseCase {
-  const SaveMediaItemUseCase({required IMediaItemRepository repository})
-      : _repo = repository;
+  const SaveMediaItemUseCase({
+    required IMediaItemRepository repository,
+    ResolveSeriesUseCase? resolveSeries,
+  })  : _repo = repository,
+        _resolveSeries = resolveSeries;
 
   final IMediaItemRepository _repo;
+  final ResolveSeriesUseCase? _resolveSeries;
   static const _uuid = Uuid();
 
   Future<MediaItem> execute(
@@ -44,6 +49,11 @@ class SaveMediaItemUseCase {
     );
 
     await _repo.save(item);
+
+    final resolveSeries = _resolveSeries;
+    if (resolveSeries != null) {
+      return resolveSeries.execute(item, metadata);
+    }
     return item;
   }
 }

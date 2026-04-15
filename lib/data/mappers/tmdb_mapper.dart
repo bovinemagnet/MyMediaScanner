@@ -1,3 +1,4 @@
+import 'package:mymediascanner/data/remote/api/tmdb/models/tmdb_movie_detail_dto.dart';
 import 'package:mymediascanner/data/remote/api/tmdb/models/tmdb_search_result_dto.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/domain/entities/metadata_candidate.dart';
@@ -25,6 +26,21 @@ abstract final class TmdbMapper {
       sourceApis: ['tmdb'],
       criticScore: dto.voteAverage, // TMDB is already 0-10 scale
       criticSource: dto.voteAverage != null ? 'TMDB' : null,
+    );
+  }
+
+  /// Returns the input result with collection (series) fields populated
+  /// from a movie-detail response. Used after a search/find resolves to
+  /// a single movie and we have an extra round-trip budget.
+  static MetadataResult enrichWithMovieDetail(
+    MetadataResult result,
+    TmdbMovieDetailDto detail,
+  ) {
+    final collection = detail.belongsToCollection;
+    if (collection?.id == null) return result;
+    return result.copyWith(
+      seriesExternalId: 'tmdb:${collection!.id}',
+      seriesName: collection.name,
     );
   }
 

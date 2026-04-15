@@ -34,6 +34,8 @@ class MediaItemsTable extends Table {
   IntColumn get acquiredAt => integer().nullable()();
   TextColumn get retailer => text().nullable()();
   TextColumn get locationId => text().nullable()();
+  TextColumn get seriesId => text().nullable()();
+  IntColumn get seriesPosition => integer().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};
