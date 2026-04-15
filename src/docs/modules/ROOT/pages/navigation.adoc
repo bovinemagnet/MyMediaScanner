@@ -18,7 +18,7 @@ include::example$navigation-flow.mmd[]
 
 == Shell Branches
 
-The `StatefulShellRoute` contains 8 `StatefulShellBranch` entries.
+The `StatefulShellRoute` contains 12 `StatefulShellBranch` entries.
 Each branch preserves its own navigation stack independently.
 
 [cols="^1,2,3,^2,^3",options="header"]
@@ -74,6 +74,30 @@ Each branch preserves its own navigation stack independently.
 |7
 |`/rips`
 |Rips (desktop only)
+|Yes
+|No
+
+|8
+|`/wishlist`
+|Wishlist
+|Yes
+|No
+
+|9
+|`/locations`
+|Locations
+|Yes
+|No
+
+|10
+|`/series`
+|Series
+|Yes
+|No
+
+|11
+|`/wishlist-suggestions`
+|Wishlist Suggestions
 |Yes
 |No
 |===
@@ -142,8 +166,8 @@ GoRouter's shell route renders through `AppScaffold`, which inspects the current
 
 === macOS, Windows, and Linux
 
-* *Navigation rail / sidebar* shows all 8 branches, including the Scanner entry.
-Desktop-only branches (Rips) are hidden on mobile builds.
+* *Navigation rail / sidebar* shows all 12 branches, including the Scanner entry.
+Desktop-only branches (Rips, Wishlist, Locations, Series, Wishlist Suggestions) are hidden on mobile builds.
 At window widths below 600 pixels the sidebar collapses into a drawer accessible via a hamburger menu button.
 * The Scanner screen hosts a focused text field accepting keyboard-wedge and USB barcode scanner input, plus a toggle to switch to webcam-based scanning.
 Webcam scanning is available on all desktop platforms — macOS via `mobile_scanner`, Windows and Linux via `camera_desktop` with `flutter_zxing`.

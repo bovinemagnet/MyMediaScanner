@@ -36,6 +36,27 @@ Data is stored locally in SQLite with optional sync to a self-hosted PostgreSQL 
 
 | Theme Mode
 | System, light, and dark theme modes persisted to SharedPreferences, with two hand-crafted Material 3 design systems
+
+| Bulk Import
+| Import a CSV or JSON file of media items to populate the catalogue in one operation
+
+| Location Tracking
+| Assign items to hierarchical physical storage locations (room, bookcase, shelf) and browse by location
+
+| Series Grouping
+| Link related items to a named series with an explicit position, then browse the full series in one view
+
+| Progress Tracking
+| Record how far through an item you are (page, episode, track) with start and completion timestamps
+
+| Recommendations & Wishlist
+| Maintain a wishlist of items to acquire, with AI-assisted suggestions based on your existing collection
+
+| Random Pick
+| Request a random item from your collection or a shelf as a "what should I watch/read next?" prompt
+
+| Duplicate Detection
+| Identify potential duplicates in the collection based on barcode, title, and metadata similarity
 |===
 
 == Technology Stack
@@ -51,7 +72,7 @@ Data is stored locally in SQLite with optional sync to a self-hosted PostgreSQL 
 | State management using hand-written `Notifier` and `AsyncNotifier` providers
 
 | Drift (SQLite)
-| Local database with type-safe DAOs; schema version {schema-version} with 13 tables
+| Local database with type-safe DAOs; schema version {schema-version} with 17 tables
 
 | PostgreSQL
 | Optional remote sync via the `postgres` Dart package (direct connection)
@@ -71,9 +92,9 @@ Data is stored locally in SQLite with optional sync to a self-hosted PostgreSQL 
 
 == Database Schema
 
-The local SQLite database is at schema version *{schema-version}* and contains 13 tables:
+The local SQLite database is at schema version *{schema-version}* and contains 17 tables:
 
-`media_items`, `tags`, `media_item_tags`, `shelves`, `shelf_items`, `barcode_cache`, `sync_log`, `borrowers`, `loans`, `rip_albums`, `rip_tracks`, `batch_sessions`, `batch_queue_items`
+`media_items`, `tags`, `media_item_tags`, `shelves`, `shelf_items`, `barcode_cache`, `sync_log`, `borrowers`, `loans`, `rip_albums`, `rip_tracks`, `batch_sessions`, `batch_queue_items`, `playlists`, `playlist_tracks`, `locations`, `series`
 
 NOTE: Schema changes require a new Drift migration in `AppDatabase`. Soft deletes are used throughout — rows are never hard-deleted; the `deleted` flag is set to `1` instead.
 

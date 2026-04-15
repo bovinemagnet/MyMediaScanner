@@ -1,6 +1,6 @@
 = Data Model
 include::_attributes.adoc[]
-:description: Database schema and data model for MyMediaScanner, covering all 13 tables at schema version {schema-version}.
+:description: Database schema and data model for MyMediaScanner, covering all 17 tables at schema version {schema-version}.
 
 MyMediaScanner stores all collection data locally in SQLite via the Drift ORM.
 The schema is versioned and migrated automatically on startup.
@@ -15,7 +15,7 @@ include::example$database-er.mmd[]
 
 == Schema Overview
 
-Schema version {schema-version} defines 13 tables:
+Schema version {schema-version} defines 17 tables:
 
 [cols="1,2", options="header"]
 |===
@@ -59,6 +59,18 @@ Schema version {schema-version} defines 13 tables:
 
 | `batch_queue_items`
 | Individual queue entries within a batch session
+
+| `playlists`
+| User-created ordered playlists of media items
+
+| `playlist_tracks`
+| Ordered membership join between playlists and media items
+
+| `locations`
+| Hierarchical physical storage locations (e.g. shelf, room, box)
+
+| `series`
+| Named series groupings (e.g. a book series or film franchise)
 |===
 
 == Table Reference
@@ -155,6 +167,62 @@ Every physical media item scanned into the catalogue has a row here.
 | `deleted`
 | INTEGER
 | Soft-delete flag: `0` = active, `1` = deleted
+
+| `ownership_status`
+| TEXT
+| Ownership state: `owned` (default), `wished`, `sold`, `gifted`, etc.
+
+| `condition`
+| TEXT
+| Physical condition of the item, e.g. `mint`, `good`, `worn` (nullable)
+
+| `price_paid`
+| REAL
+| Amount paid for the item (nullable)
+
+| `acquired_at`
+| INTEGER
+| Unix epoch (ms) when the item was acquired (nullable)
+
+| `retailer`
+| TEXT
+| Shop or marketplace where the item was purchased (nullable)
+
+| `location_id`
+| TEXT FK
+| References `locations.id`; the physical storage location of the item (nullable)
+
+| `series_id`
+| TEXT FK
+| References `series.id`; the series this item belongs to (nullable)
+
+| `series_position`
+| INTEGER
+| Numeric position within the series, e.g. `3` for the third book (nullable)
+
+| `progress_current`
+| INTEGER
+| Current progress value, e.g. current page or episode number (nullable)
+
+| `progress_total`
+| INTEGER
+| Total progress value, e.g. total pages or episodes (nullable)
+
+| `progress_unit`
+| TEXT
+| Unit label for progress, e.g. `pages`, `episodes`, `tracks` (nullable)
+
+| `started_at`
+| INTEGER
+| Unix epoch (ms) when the user started consuming this item (nullable)
+
+| `completed_at`
+| INTEGER
+| Unix epoch (ms) when the user finished consuming this item (nullable)
+
+| `consumed`
+| INTEGER
+| `1` if the item has been fully consumed (watched, read, played), `0` otherwise
 |===
 
 NOTE: All JSON columns are stored as TEXT in SQLite.
@@ -628,6 +696,90 @@ Individual barcode scan entries within a batch session.
 | INTEGER
 | Display order within the session queue
 |===
+
+=== locations
+
+Hierarchical tree of physical storage locations.
+A location may have a parent location, enabling structures such as Room → Bookcase → Shelf.
+
+[cols="2,1,4", options="header"]
+|===
+| Column | Type | Description
+
+| `id`
+| TEXT PK
+| UUID v4
+
+| `parent_id`
+| TEXT FK
+| References `locations.id`; self-referential parent (nullable — top-level locations have no parent)
+
+| `name`
+| TEXT
+| Display name for the location, e.g. `Living Room Bookcase`
+
+| `sort_order`
+| INTEGER
+| Zero-based display position among siblings
+
+| `updated_at`
+| INTEGER
+| Unix epoch (ms) of last modification
+
+| `deleted`
+| INTEGER
+| Soft-delete flag: `0` = active, `1` = deleted
+|===
+
+=== series
+
+Named series groupings used to link related items — for example a multi-volume book series, a film franchise, or a game series.
+
+[cols="2,1,4", options="header"]
+|===
+| Column | Type | Description
+
+| `id`
+| TEXT PK
+| UUID v4
+
+| `external_id`
+| TEXT UNIQUE
+| Identifier from the originating metadata API (nullable, must be unique when present)
+
+| `name`
+| TEXT
+| Display name of the series
+
+| `media_type`
+| TEXT
+| Media type of the series, e.g. `book`, `film`, `game`
+
+| `source`
+| TEXT
+| API or source that provided the series record, e.g. `tmdb`, `openlibrary`
+
+| `total_count`
+| INTEGER
+| Total number of entries in the series (nullable — unknown for ongoing series)
+
+| `updated_at`
+| INTEGER
+| Unix epoch (ms) of last modification
+
+| `deleted`
+| INTEGER
+| Soft-delete flag: `0` = active, `1` = deleted
+|===
+
+=== Recent Migrations
+
+A brief summary of schema changes since the original 13-table baseline:
+
+v12 (Quick Wins):: Added `ownership_status`, `condition`, `price_paid`, `acquired_at`, and `retailer` to `media_items`.
+v13 (Locations):: Added the `locations` table and the `location_id` foreign key on `media_items`.
+v14 (Series):: Added the `series` table and the `series_id` / `series_position` columns on `media_items`.
+v15 (Progress):: Added `progress_current`, `progress_total`, `progress_unit`, `started_at`, `completed_at`, and `consumed` to `media_items`.
 
 == Database Indexes
 

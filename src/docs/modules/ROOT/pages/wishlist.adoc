@@ -1,0 +1,108 @@
+= Wishlist and Suggestions
+Paul Snow
+0.0.0
+include::_attributes.adoc[]
+:description: Manage a wishlist of items you want to own and browse trending suggestions ranked by your personal taste profile.
+
+The wishlist lets you track media you intend to buy.
+The suggestions surface takes that a step further by surfacing trending titles you have not yet seen, ranked by the same scorer that powers the recommendations engine.
+
+== Ownership Status
+
+Every `media_items` row carries an `ownership_status` column backed by the `OwnershipStatus` enum:
+
+[cols="1,3", options="header"]
+|===
+| Value | Meaning
+
+| `owned`
+| You physically own this item. The default for all items added via scanning or import.
+
+| `wishlist`
+| You want to own this item but do not yet possess it.
+|===
+
+Wishlist items appear throughout the app with a distinct visual indicator (an unfilled bookmark icon overlaid on the cover) so they are easily distinguished from owned items.
+
+== Wishlist Screen
+
+The wishlist is accessible at the `/wishlist` route, which appears in the desktop sidebar and as a tab in the collection screen on mobile.
+
+The wishlist screen shows all non-deleted items with `ownership_status = wishlist`, grouped by media type.
+Each item displays its cover, title, year, and a *Mark as Owned* action.
+
+=== Adding Items to the Wishlist
+
+There are three entry points for adding an item to the wishlist:
+
+Scan screen::
+On the metadata confirmation screen, tap *Add to Wishlist* instead of *Save to Collection*.
+`SaveMediaItemUseCase` is called with `ownershipStatus = OwnershipStatus.wishlist`.
+
+Series detail screen::
+Instalments you do not own are shown as placeholders with an *Add to Wishlist* button.
+Tapping it calls `SaveMediaItemUseCase` with `ownershipStatus = OwnershipStatus.wishlist` and the series metadata pre-filled.
+
+Recommendations tile::
+The *Add to Wishlist* shortcut on a recommendation card (visible when a series-gap item is surfaced).
+
+Wishlist suggestions::
+The *Add to Wishlist* button on any suggestion card (see below).
+
+=== Marking an Item as Owned
+
+. Open the wishlist screen or the item detail screen for the wishlist item.
+. Tap *Mark as Owned*.
+. `ownership_status` is updated to `owned` and `date_scanned` is set to the current time if it was previously `NULL`.
+
+== Wishlist Suggestions
+
+The wishlist suggestions surface is accessible at `/wishlist-suggestions` (linked from the wishlist screen toolbar).
+
+`WishlistSuggestionsUseCase` fetches trending titles from TMDB and ranks them using the same scorer as the recommendations engine, so the results feel consistent with your *Recommended next* tile.
+
+=== Data Source
+
+`WishlistSuggestionsUseCase` calls two TMDB endpoints on each refresh:
+
+* `/trending/movie/week` — top 20 trending films for the current week.
+* `/trending/tv/week` — top 20 trending TV series for the current week.
+
+Results are merged and deduplicated by `tmdb_id`.
+Items already present in `media_items` (whether `owned` or `wishlist`) are filtered out using a lookup against the local `tmdb_id` index.
+
+IMPORTANT: Wishlist suggestions require a TMDB API key to be configured in *Settings > API Keys*.
+When no key is present, the screen shows a prompt to configure one.
+See xref:api-configuration.adoc[API Configuration] for details.
+
+=== Ranking
+
+After deduplication, the remaining candidates are passed through `RecommendationScorer` using your current `TasteProfile`.
+This is the same scorer used by xref:recommendations.adoc[`RecommendNextUseCase`], with identical weights.
+The full ranked list is sorted by score descending.
+
+Because trending data changes weekly and your taste profile is recalculated on each invocation, the ranked suggestions list is not cached.
+Pull down to refresh at any time.
+
+=== Suggestion Cards
+
+Each card on the suggestions screen shows:
+
+* TMDB poster thumbnail.
+* Title, year, and media type.
+* Score chips showing which taste signals matched (e.g. "Matches your love of Thriller").
+* *Add to Wishlist* button.
+* *Dismiss* button — hides the suggestion from the list for 30 days without adding it to the collection.
+
+== Sync Behaviour
+
+Wishlist items are `media_items` rows and participate fully in the standard sync strategy.
+The `ownership_status` column is included in the per-field last-write-wins conflict resolution.
+
+If you mark an item as owned on one device while another device still shows it as wishlist, the device with the later `updated_at` wins on next sync.
+
+== Related Pages
+
+* xref:recommendations.adoc[Recommendations Engine] — scoring weights, `TasteProfileBuilder`, and `RecommendationReasons`
+* xref:api-configuration.adoc[API Configuration] — how to configure your TMDB key
+* xref:series.adoc[Series and Franchise Grouping] — how series gaps are surfaced in wishlist prompts
