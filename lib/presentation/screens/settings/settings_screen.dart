@@ -88,6 +88,24 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
 
+          // Printing section — QR labels for shelves, boxes, items
+          _SectionCard(
+            title: 'Printing',
+            colors: colors,
+            theme: theme,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.print_outlined),
+                title: const Text('Print labels'),
+                subtitle: const Text(
+                    'QR labels for locations or items, preview and export as PDF'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.go('/settings/labels'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
           // FLAC Library section (desktop only)
           if (isDesktop) ...[
             _SectionCard(
