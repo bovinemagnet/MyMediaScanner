@@ -84,7 +84,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 14;
+  int get schemaVersion => 15;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -184,6 +184,20 @@ class AppDatabase extends _$AppDatabase {
                 mediaItemsTable, mediaItemsTable.seriesId);
             await m.addColumn(
                 mediaItemsTable, mediaItemsTable.seriesPosition);
+          }
+          if (from < 15) {
+            await m.addColumn(
+                mediaItemsTable, mediaItemsTable.progressCurrent);
+            await m.addColumn(
+                mediaItemsTable, mediaItemsTable.progressTotal);
+            await m.addColumn(
+                mediaItemsTable, mediaItemsTable.progressUnit);
+            await m.addColumn(
+                mediaItemsTable, mediaItemsTable.startedAt);
+            await m.addColumn(
+                mediaItemsTable, mediaItemsTable.completedAt);
+            await m.addColumn(
+                mediaItemsTable, mediaItemsTable.consumed);
           }
         },
       );

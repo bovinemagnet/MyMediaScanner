@@ -13,6 +13,9 @@ abstract interface class IMediaItemRepository {
 
   Stream<List<MediaItem>> watchByStatus(OwnershipStatus status);
 
+  /// Items currently being read/watched: started but not yet completed.
+  Stream<List<MediaItem>> watchInProgress();
+
   Future<MediaItem?> getById(String id);
   Future<bool> barcodeExists(String barcode);
   Future<int> countByBarcode(String barcode);
