@@ -25,7 +25,9 @@ import 'package:mymediascanner/data/local/database/tables/batch_sessions_table.d
 import 'package:mymediascanner/data/local/database/tables/batch_queue_items_table.dart';
 import 'package:mymediascanner/data/local/database/tables/playlists_table.dart';
 import 'package:mymediascanner/data/local/database/tables/playlist_tracks_table.dart';
+import 'package:mymediascanner/data/local/database/tables/locations_table.dart';
 import 'package:mymediascanner/data/local/dao/playlist_dao.dart';
+import 'package:mymediascanner/data/local/dao/locations_dao.dart';
 
 part 'app_database.g.dart';
 
@@ -46,6 +48,7 @@ part 'app_database.g.dart';
     BatchQueueItemsTable,
     PlaylistsTable,
     PlaylistTracksTable,
+    LocationsTable,
   ],
   daos: [
     MediaItemsDao,
@@ -58,6 +61,7 @@ part 'app_database.g.dart';
     RipLibraryDao,
     BatchSessionDao,
     PlaylistDao,
+    LocationsDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -76,7 +80,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 12;
+  int get schemaVersion => 13;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -164,6 +168,11 @@ class AppDatabase extends _$AppDatabase {
             await customStatement(
                 'UPDATE media_items '
                 "SET acquired_at = date_added WHERE acquired_at IS NULL");
+          }
+          if (from < 13) {
+            await m.createTable(locationsTable);
+            await m.addColumn(
+                mediaItemsTable, mediaItemsTable.locationId);
           }
         },
       );

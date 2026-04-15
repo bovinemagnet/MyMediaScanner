@@ -33,6 +33,7 @@ class MediaItemsTable extends Table {
   RealColumn get pricePaid => real().nullable()();
   IntColumn get acquiredAt => integer().nullable()();
   TextColumn get retailer => text().nullable()();
+  TextColumn get locationId => text().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};

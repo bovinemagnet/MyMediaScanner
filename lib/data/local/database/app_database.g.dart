@@ -312,6 +312,17 @@ class $MediaItemsTableTable extends MediaItemsTable
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _locationIdMeta = const VerificationMeta(
+    'locationId',
+  );
+  @override
+  late final GeneratedColumn<String> locationId = GeneratedColumn<String>(
+    'location_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -342,6 +353,7 @@ class $MediaItemsTableTable extends MediaItemsTable
     pricePaid,
     acquiredAt,
     retailer,
+    locationId,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -557,6 +569,12 @@ class $MediaItemsTableTable extends MediaItemsTable
         retailer.isAcceptableOrUnknown(data['retailer']!, _retailerMeta),
       );
     }
+    if (data.containsKey('location_id')) {
+      context.handle(
+        _locationIdMeta,
+        locationId.isAcceptableOrUnknown(data['location_id']!, _locationIdMeta),
+      );
+    }
     return context;
   }
 
@@ -678,6 +696,10 @@ class $MediaItemsTableTable extends MediaItemsTable
         DriftSqlType.string,
         data['${effectivePrefix}retailer'],
       ),
+      locationId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}location_id'],
+      ),
     );
   }
 
@@ -717,6 +739,7 @@ class MediaItemsTableData extends DataClass
   final double? pricePaid;
   final int? acquiredAt;
   final String? retailer;
+  final String? locationId;
   const MediaItemsTableData({
     required this.id,
     required this.barcode,
@@ -746,6 +769,7 @@ class MediaItemsTableData extends DataClass
     this.pricePaid,
     this.acquiredAt,
     this.retailer,
+    this.locationId,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -808,6 +832,9 @@ class MediaItemsTableData extends DataClass
     if (!nullToAbsent || retailer != null) {
       map['retailer'] = Variable<String>(retailer);
     }
+    if (!nullToAbsent || locationId != null) {
+      map['location_id'] = Variable<String>(locationId);
+    }
     return map;
   }
 
@@ -869,6 +896,9 @@ class MediaItemsTableData extends DataClass
       retailer: retailer == null && nullToAbsent
           ? const Value.absent()
           : Value(retailer),
+      locationId: locationId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(locationId),
     );
   }
 
@@ -906,6 +936,7 @@ class MediaItemsTableData extends DataClass
       pricePaid: serializer.fromJson<double?>(json['pricePaid']),
       acquiredAt: serializer.fromJson<int?>(json['acquiredAt']),
       retailer: serializer.fromJson<String?>(json['retailer']),
+      locationId: serializer.fromJson<String?>(json['locationId']),
     );
   }
   @override
@@ -940,6 +971,7 @@ class MediaItemsTableData extends DataClass
       'pricePaid': serializer.toJson<double?>(pricePaid),
       'acquiredAt': serializer.toJson<int?>(acquiredAt),
       'retailer': serializer.toJson<String?>(retailer),
+      'locationId': serializer.toJson<String?>(locationId),
     };
   }
 
@@ -972,6 +1004,7 @@ class MediaItemsTableData extends DataClass
     Value<double?> pricePaid = const Value.absent(),
     Value<int?> acquiredAt = const Value.absent(),
     Value<String?> retailer = const Value.absent(),
+    Value<String?> locationId = const Value.absent(),
   }) => MediaItemsTableData(
     id: id ?? this.id,
     barcode: barcode ?? this.barcode,
@@ -1001,6 +1034,7 @@ class MediaItemsTableData extends DataClass
     pricePaid: pricePaid.present ? pricePaid.value : this.pricePaid,
     acquiredAt: acquiredAt.present ? acquiredAt.value : this.acquiredAt,
     retailer: retailer.present ? retailer.value : this.retailer,
+    locationId: locationId.present ? locationId.value : this.locationId,
   );
   MediaItemsTableData copyWithCompanion(MediaItemsTableCompanion data) {
     return MediaItemsTableData(
@@ -1054,6 +1088,9 @@ class MediaItemsTableData extends DataClass
           ? data.acquiredAt.value
           : this.acquiredAt,
       retailer: data.retailer.present ? data.retailer.value : this.retailer,
+      locationId: data.locationId.present
+          ? data.locationId.value
+          : this.locationId,
     );
   }
 
@@ -1087,7 +1124,8 @@ class MediaItemsTableData extends DataClass
           ..write('condition: $condition, ')
           ..write('pricePaid: $pricePaid, ')
           ..write('acquiredAt: $acquiredAt, ')
-          ..write('retailer: $retailer')
+          ..write('retailer: $retailer, ')
+          ..write('locationId: $locationId')
           ..write(')'))
         .toString();
   }
@@ -1122,6 +1160,7 @@ class MediaItemsTableData extends DataClass
     pricePaid,
     acquiredAt,
     retailer,
+    locationId,
   ]);
   @override
   bool operator ==(Object other) =>
@@ -1154,7 +1193,8 @@ class MediaItemsTableData extends DataClass
           other.condition == this.condition &&
           other.pricePaid == this.pricePaid &&
           other.acquiredAt == this.acquiredAt &&
-          other.retailer == this.retailer);
+          other.retailer == this.retailer &&
+          other.locationId == this.locationId);
 }
 
 class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
@@ -1186,6 +1226,7 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
   final Value<double?> pricePaid;
   final Value<int?> acquiredAt;
   final Value<String?> retailer;
+  final Value<String?> locationId;
   final Value<int> rowid;
   const MediaItemsTableCompanion({
     this.id = const Value.absent(),
@@ -1216,6 +1257,7 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
     this.pricePaid = const Value.absent(),
     this.acquiredAt = const Value.absent(),
     this.retailer = const Value.absent(),
+    this.locationId = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   MediaItemsTableCompanion.insert({
@@ -1247,6 +1289,7 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
     this.pricePaid = const Value.absent(),
     this.acquiredAt = const Value.absent(),
     this.retailer = const Value.absent(),
+    this.locationId = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        barcode = Value(barcode),
@@ -1285,6 +1328,7 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
     Expression<double>? pricePaid,
     Expression<int>? acquiredAt,
     Expression<String>? retailer,
+    Expression<String>? locationId,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1316,6 +1360,7 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
       if (pricePaid != null) 'price_paid': pricePaid,
       if (acquiredAt != null) 'acquired_at': acquiredAt,
       if (retailer != null) 'retailer': retailer,
+      if (locationId != null) 'location_id': locationId,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1349,6 +1394,7 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
     Value<double?>? pricePaid,
     Value<int?>? acquiredAt,
     Value<String?>? retailer,
+    Value<String?>? locationId,
     Value<int>? rowid,
   }) {
     return MediaItemsTableCompanion(
@@ -1380,6 +1426,7 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
       pricePaid: pricePaid ?? this.pricePaid,
       acquiredAt: acquiredAt ?? this.acquiredAt,
       retailer: retailer ?? this.retailer,
+      locationId: locationId ?? this.locationId,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1471,6 +1518,9 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
     if (retailer.present) {
       map['retailer'] = Variable<String>(retailer.value);
     }
+    if (locationId.present) {
+      map['location_id'] = Variable<String>(locationId.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1508,6 +1558,7 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
           ..write('pricePaid: $pricePaid, ')
           ..write('acquiredAt: $acquiredAt, ')
           ..write('retailer: $retailer, ')
+          ..write('locationId: $locationId, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -8630,6 +8681,412 @@ class PlaylistTracksTableCompanion
   }
 }
 
+class $LocationsTableTable extends LocationsTable
+    with TableInfo<$LocationsTableTable, LocationsTableData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LocationsTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _parentIdMeta = const VerificationMeta(
+    'parentId',
+  );
+  @override
+  late final GeneratedColumn<String> parentId = GeneratedColumn<String>(
+    'parent_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _deletedMeta = const VerificationMeta(
+    'deleted',
+  );
+  @override
+  late final GeneratedColumn<int> deleted = GeneratedColumn<int>(
+    'deleted',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    parentId,
+    name,
+    sortOrder,
+    updatedAt,
+    deleted,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'locations';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<LocationsTableData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('parent_id')) {
+      context.handle(
+        _parentIdMeta,
+        parentId.isAcceptableOrUnknown(data['parent_id']!, _parentIdMeta),
+      );
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('sort_order')) {
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('deleted')) {
+      context.handle(
+        _deletedMeta,
+        deleted.isAcceptableOrUnknown(data['deleted']!, _deletedMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  LocationsTableData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return LocationsTableData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      parentId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}parent_id'],
+      ),
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      deleted: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}deleted'],
+      )!,
+    );
+  }
+
+  @override
+  $LocationsTableTable createAlias(String alias) {
+    return $LocationsTableTable(attachedDatabase, alias);
+  }
+}
+
+class LocationsTableData extends DataClass
+    implements Insertable<LocationsTableData> {
+  final String id;
+  final String? parentId;
+  final String name;
+  final int sortOrder;
+  final int updatedAt;
+  final int deleted;
+  const LocationsTableData({
+    required this.id,
+    this.parentId,
+    required this.name,
+    required this.sortOrder,
+    required this.updatedAt,
+    required this.deleted,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    if (!nullToAbsent || parentId != null) {
+      map['parent_id'] = Variable<String>(parentId);
+    }
+    map['name'] = Variable<String>(name);
+    map['sort_order'] = Variable<int>(sortOrder);
+    map['updated_at'] = Variable<int>(updatedAt);
+    map['deleted'] = Variable<int>(deleted);
+    return map;
+  }
+
+  LocationsTableCompanion toCompanion(bool nullToAbsent) {
+    return LocationsTableCompanion(
+      id: Value(id),
+      parentId: parentId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(parentId),
+      name: Value(name),
+      sortOrder: Value(sortOrder),
+      updatedAt: Value(updatedAt),
+      deleted: Value(deleted),
+    );
+  }
+
+  factory LocationsTableData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return LocationsTableData(
+      id: serializer.fromJson<String>(json['id']),
+      parentId: serializer.fromJson<String?>(json['parentId']),
+      name: serializer.fromJson<String>(json['name']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
+      updatedAt: serializer.fromJson<int>(json['updatedAt']),
+      deleted: serializer.fromJson<int>(json['deleted']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'parentId': serializer.toJson<String?>(parentId),
+      'name': serializer.toJson<String>(name),
+      'sortOrder': serializer.toJson<int>(sortOrder),
+      'updatedAt': serializer.toJson<int>(updatedAt),
+      'deleted': serializer.toJson<int>(deleted),
+    };
+  }
+
+  LocationsTableData copyWith({
+    String? id,
+    Value<String?> parentId = const Value.absent(),
+    String? name,
+    int? sortOrder,
+    int? updatedAt,
+    int? deleted,
+  }) => LocationsTableData(
+    id: id ?? this.id,
+    parentId: parentId.present ? parentId.value : this.parentId,
+    name: name ?? this.name,
+    sortOrder: sortOrder ?? this.sortOrder,
+    updatedAt: updatedAt ?? this.updatedAt,
+    deleted: deleted ?? this.deleted,
+  );
+  LocationsTableData copyWithCompanion(LocationsTableCompanion data) {
+    return LocationsTableData(
+      id: data.id.present ? data.id.value : this.id,
+      parentId: data.parentId.present ? data.parentId.value : this.parentId,
+      name: data.name.present ? data.name.value : this.name,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      deleted: data.deleted.present ? data.deleted.value : this.deleted,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocationsTableData(')
+          ..write('id: $id, ')
+          ..write('parentId: $parentId, ')
+          ..write('name: $name, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deleted: $deleted')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, parentId, name, sortOrder, updatedAt, deleted);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LocationsTableData &&
+          other.id == this.id &&
+          other.parentId == this.parentId &&
+          other.name == this.name &&
+          other.sortOrder == this.sortOrder &&
+          other.updatedAt == this.updatedAt &&
+          other.deleted == this.deleted);
+}
+
+class LocationsTableCompanion extends UpdateCompanion<LocationsTableData> {
+  final Value<String> id;
+  final Value<String?> parentId;
+  final Value<String> name;
+  final Value<int> sortOrder;
+  final Value<int> updatedAt;
+  final Value<int> deleted;
+  final Value<int> rowid;
+  const LocationsTableCompanion({
+    this.id = const Value.absent(),
+    this.parentId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.deleted = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  LocationsTableCompanion.insert({
+    required String id,
+    this.parentId = const Value.absent(),
+    required String name,
+    this.sortOrder = const Value.absent(),
+    required int updatedAt,
+    this.deleted = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       name = Value(name),
+       updatedAt = Value(updatedAt);
+  static Insertable<LocationsTableData> custom({
+    Expression<String>? id,
+    Expression<String>? parentId,
+    Expression<String>? name,
+    Expression<int>? sortOrder,
+    Expression<int>? updatedAt,
+    Expression<int>? deleted,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (parentId != null) 'parent_id': parentId,
+      if (name != null) 'name': name,
+      if (sortOrder != null) 'sort_order': sortOrder,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (deleted != null) 'deleted': deleted,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  LocationsTableCompanion copyWith({
+    Value<String>? id,
+    Value<String?>? parentId,
+    Value<String>? name,
+    Value<int>? sortOrder,
+    Value<int>? updatedAt,
+    Value<int>? deleted,
+    Value<int>? rowid,
+  }) {
+    return LocationsTableCompanion(
+      id: id ?? this.id,
+      parentId: parentId ?? this.parentId,
+      name: name ?? this.name,
+      sortOrder: sortOrder ?? this.sortOrder,
+      updatedAt: updatedAt ?? this.updatedAt,
+      deleted: deleted ?? this.deleted,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (parentId.present) {
+      map['parent_id'] = Variable<String>(parentId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<int>(updatedAt.value);
+    }
+    if (deleted.present) {
+      map['deleted'] = Variable<int>(deleted.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocationsTableCompanion(')
+          ..write('id: $id, ')
+          ..write('parentId: $parentId, ')
+          ..write('name: $name, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deleted: $deleted, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -8657,6 +9114,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $PlaylistsTableTable playlistsTable = $PlaylistsTableTable(this);
   late final $PlaylistTracksTableTable playlistTracksTable =
       $PlaylistTracksTableTable(this);
+  late final $LocationsTableTable locationsTable = $LocationsTableTable(this);
   late final MediaItemsDao mediaItemsDao = MediaItemsDao(this as AppDatabase);
   late final TagsDao tagsDao = TagsDao(this as AppDatabase);
   late final ShelvesDao shelvesDao = ShelvesDao(this as AppDatabase);
@@ -8671,6 +9129,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     this as AppDatabase,
   );
   late final PlaylistDao playlistDao = PlaylistDao(this as AppDatabase);
+  late final LocationsDao locationsDao = LocationsDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -8691,6 +9150,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     batchQueueItemsTable,
     playlistsTable,
     playlistTracksTable,
+    locationsTable,
   ];
 }
 
@@ -8724,6 +9184,7 @@ typedef $$MediaItemsTableTableCreateCompanionBuilder =
       Value<double?> pricePaid,
       Value<int?> acquiredAt,
       Value<String?> retailer,
+      Value<String?> locationId,
       Value<int> rowid,
     });
 typedef $$MediaItemsTableTableUpdateCompanionBuilder =
@@ -8756,6 +9217,7 @@ typedef $$MediaItemsTableTableUpdateCompanionBuilder =
       Value<double?> pricePaid,
       Value<int?> acquiredAt,
       Value<String?> retailer,
+      Value<String?> locationId,
       Value<int> rowid,
     });
 
@@ -9014,6 +9476,11 @@ class $$MediaItemsTableTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get locationId => $composableBuilder(
+    column: $table.locationId,
+    builder: (column) => ColumnFilters(column),
+  );
+
   Expression<bool> mediaItemTagsTableRefs(
     Expression<bool> Function($$MediaItemTagsTableTableFilterComposer f) f,
   ) {
@@ -9263,6 +9730,11 @@ class $$MediaItemsTableTableOrderingComposer
     column: $table.retailer,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get locationId => $composableBuilder(
+    column: $table.locationId,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$MediaItemsTableTableAnnotationComposer
@@ -9379,6 +9851,11 @@ class $$MediaItemsTableTableAnnotationComposer
 
   GeneratedColumn<String> get retailer =>
       $composableBuilder(column: $table.retailer, builder: (column) => column);
+
+  GeneratedColumn<String> get locationId => $composableBuilder(
+    column: $table.locationId,
+    builder: (column) => column,
+  );
 
   Expression<T> mediaItemTagsTableRefs<T extends Object>(
     Expression<T> Function($$MediaItemTagsTableTableAnnotationComposer a) f,
@@ -9545,6 +10022,7 @@ class $$MediaItemsTableTableTableManager
                 Value<double?> pricePaid = const Value.absent(),
                 Value<int?> acquiredAt = const Value.absent(),
                 Value<String?> retailer = const Value.absent(),
+                Value<String?> locationId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => MediaItemsTableCompanion(
                 id: id,
@@ -9575,6 +10053,7 @@ class $$MediaItemsTableTableTableManager
                 pricePaid: pricePaid,
                 acquiredAt: acquiredAt,
                 retailer: retailer,
+                locationId: locationId,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -9607,6 +10086,7 @@ class $$MediaItemsTableTableTableManager
                 Value<double?> pricePaid = const Value.absent(),
                 Value<int?> acquiredAt = const Value.absent(),
                 Value<String?> retailer = const Value.absent(),
+                Value<String?> locationId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => MediaItemsTableCompanion.insert(
                 id: id,
@@ -9637,6 +10117,7 @@ class $$MediaItemsTableTableTableManager
                 pricePaid: pricePaid,
                 acquiredAt: acquiredAt,
                 retailer: retailer,
+                locationId: locationId,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -15216,6 +15697,231 @@ typedef $$PlaylistTracksTableTableProcessedTableManager =
       PlaylistTracksTableData,
       PrefetchHooks Function({bool playlistId, bool ripTrackId})
     >;
+typedef $$LocationsTableTableCreateCompanionBuilder =
+    LocationsTableCompanion Function({
+      required String id,
+      Value<String?> parentId,
+      required String name,
+      Value<int> sortOrder,
+      required int updatedAt,
+      Value<int> deleted,
+      Value<int> rowid,
+    });
+typedef $$LocationsTableTableUpdateCompanionBuilder =
+    LocationsTableCompanion Function({
+      Value<String> id,
+      Value<String?> parentId,
+      Value<String> name,
+      Value<int> sortOrder,
+      Value<int> updatedAt,
+      Value<int> deleted,
+      Value<int> rowid,
+    });
+
+class $$LocationsTableTableFilterComposer
+    extends Composer<_$AppDatabase, $LocationsTableTable> {
+  $$LocationsTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get parentId => $composableBuilder(
+    column: $table.parentId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get deleted => $composableBuilder(
+    column: $table.deleted,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$LocationsTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $LocationsTableTable> {
+  $$LocationsTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get parentId => $composableBuilder(
+    column: $table.parentId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get deleted => $composableBuilder(
+    column: $table.deleted,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$LocationsTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $LocationsTableTable> {
+  $$LocationsTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get parentId =>
+      $composableBuilder(column: $table.parentId, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
+  GeneratedColumn<int> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get deleted =>
+      $composableBuilder(column: $table.deleted, builder: (column) => column);
+}
+
+class $$LocationsTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $LocationsTableTable,
+          LocationsTableData,
+          $$LocationsTableTableFilterComposer,
+          $$LocationsTableTableOrderingComposer,
+          $$LocationsTableTableAnnotationComposer,
+          $$LocationsTableTableCreateCompanionBuilder,
+          $$LocationsTableTableUpdateCompanionBuilder,
+          (
+            LocationsTableData,
+            BaseReferences<
+              _$AppDatabase,
+              $LocationsTableTable,
+              LocationsTableData
+            >,
+          ),
+          LocationsTableData,
+          PrefetchHooks Function()
+        > {
+  $$LocationsTableTableTableManager(
+    _$AppDatabase db,
+    $LocationsTableTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$LocationsTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$LocationsTableTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$LocationsTableTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String?> parentId = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<int> updatedAt = const Value.absent(),
+                Value<int> deleted = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LocationsTableCompanion(
+                id: id,
+                parentId: parentId,
+                name: name,
+                sortOrder: sortOrder,
+                updatedAt: updatedAt,
+                deleted: deleted,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                Value<String?> parentId = const Value.absent(),
+                required String name,
+                Value<int> sortOrder = const Value.absent(),
+                required int updatedAt,
+                Value<int> deleted = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LocationsTableCompanion.insert(
+                id: id,
+                parentId: parentId,
+                name: name,
+                sortOrder: sortOrder,
+                updatedAt: updatedAt,
+                deleted: deleted,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$LocationsTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $LocationsTableTable,
+      LocationsTableData,
+      $$LocationsTableTableFilterComposer,
+      $$LocationsTableTableOrderingComposer,
+      $$LocationsTableTableAnnotationComposer,
+      $$LocationsTableTableCreateCompanionBuilder,
+      $$LocationsTableTableUpdateCompanionBuilder,
+      (
+        LocationsTableData,
+        BaseReferences<_$AppDatabase, $LocationsTableTable, LocationsTableData>,
+      ),
+      LocationsTableData,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -15250,4 +15956,6 @@ class $AppDatabaseManager {
       $$PlaylistsTableTableTableManager(_db, _db.playlistsTable);
   $$PlaylistTracksTableTableTableManager get playlistTracksTable =>
       $$PlaylistTracksTableTableTableManager(_db, _db.playlistTracksTable);
+  $$LocationsTableTableTableManager get locationsTable =>
+      $$LocationsTableTableTableManager(_db, _db.locationsTable);
 }
