@@ -42,6 +42,10 @@ abstract final class MusicBrainzMapper {
             [],
       },
       sourceApis: ['musicbrainz'],
+      seriesExternalId: dto.releaseGroupId != null
+          ? 'mb:${dto.releaseGroupId}'
+          : null,
+      seriesName: dto.releaseGroup?.title,
     );
   }
 

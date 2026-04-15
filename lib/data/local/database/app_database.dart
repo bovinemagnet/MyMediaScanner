@@ -26,8 +26,10 @@ import 'package:mymediascanner/data/local/database/tables/batch_queue_items_tabl
 import 'package:mymediascanner/data/local/database/tables/playlists_table.dart';
 import 'package:mymediascanner/data/local/database/tables/playlist_tracks_table.dart';
 import 'package:mymediascanner/data/local/database/tables/locations_table.dart';
+import 'package:mymediascanner/data/local/database/tables/series_table.dart';
 import 'package:mymediascanner/data/local/dao/playlist_dao.dart';
 import 'package:mymediascanner/data/local/dao/locations_dao.dart';
+import 'package:mymediascanner/data/local/dao/series_dao.dart';
 
 part 'app_database.g.dart';
 
@@ -49,6 +51,7 @@ part 'app_database.g.dart';
     PlaylistsTable,
     PlaylistTracksTable,
     LocationsTable,
+    SeriesTable,
   ],
   daos: [
     MediaItemsDao,
@@ -62,6 +65,7 @@ part 'app_database.g.dart';
     BatchSessionDao,
     PlaylistDao,
     LocationsDao,
+    SeriesDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -80,7 +84,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 13;
+  int get schemaVersion => 14;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -173,6 +177,13 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(locationsTable);
             await m.addColumn(
                 mediaItemsTable, mediaItemsTable.locationId);
+          }
+          if (from < 14) {
+            await m.createTable(seriesTable);
+            await m.addColumn(
+                mediaItemsTable, mediaItemsTable.seriesId);
+            await m.addColumn(
+                mediaItemsTable, mediaItemsTable.seriesPosition);
           }
         },
       );

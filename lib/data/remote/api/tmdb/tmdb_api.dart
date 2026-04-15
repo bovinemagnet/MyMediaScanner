@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:retrofit/retrofit.dart';
 import 'package:mymediascanner/data/remote/api/tmdb/models/tmdb_find_result_dto.dart';
+import 'package:mymediascanner/data/remote/api/tmdb/models/tmdb_movie_detail_dto.dart';
 import 'package:mymediascanner/data/remote/api/tmdb/models/tmdb_search_result_dto.dart';
 
 part 'tmdb_api.g.dart';
@@ -32,4 +33,9 @@ abstract class TmdbApi {
     @Path('externalId') String externalId, {
     @Query('external_source') String externalSource = 'imdb_id',
   });
+
+  /// Movie detail — used to read `belongs_to_collection` for series
+  /// resolution. Search/find responses do not include collection refs.
+  @GET('/movie/{id}')
+  Future<TmdbMovieDetailDto> getMovieDetail(@Path('id') int id);
 }

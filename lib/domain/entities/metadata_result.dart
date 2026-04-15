@@ -21,5 +21,12 @@ sealed class MetadataResult with _$MetadataResult {
     @Default([]) List<String> sourceApis,
     double? criticScore,
     String? criticSource,
+
+    /// Qualified provider id for the series this item belongs to, e.g.
+    /// `tmdb:131635` (TMDB collection), `mb:abc-123` (MusicBrainz release
+    /// group), `gbooks:harry-potter` (Google Books series).
+    String? seriesExternalId,
+    String? seriesName,
+    int? seriesPosition,
   }) = _MetadataResult;
 }

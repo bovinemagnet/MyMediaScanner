@@ -3,6 +3,7 @@ import 'package:mymediascanner/domain/entities/metadata_result.dart';
 import 'package:mymediascanner/domain/entities/scan_result.dart';
 import 'package:mymediascanner/domain/repositories/i_media_item_repository.dart';
 import 'package:mymediascanner/domain/repositories/i_metadata_repository.dart';
+import 'package:mymediascanner/domain/usecases/resolve_series_usecase.dart';
 
 /// Use case to re-fetch metadata from the original API source and merge it
 /// into an existing [MediaItem], preserving user data.
@@ -13,11 +14,14 @@ class RefreshMetadataUseCase {
   const RefreshMetadataUseCase({
     required IMetadataRepository metadataRepository,
     required IMediaItemRepository mediaItemRepository,
+    ResolveSeriesUseCase? resolveSeries,
   })  : _metadataRepo = metadataRepository,
-        _mediaItemRepo = mediaItemRepository;
+        _mediaItemRepo = mediaItemRepository,
+        _resolveSeries = resolveSeries;
 
   final IMetadataRepository _metadataRepo;
   final IMediaItemRepository _mediaItemRepo;
+  final ResolveSeriesUseCase? _resolveSeries;
 
   /// Re-fetches metadata for [item] from the API and merges the result,
   /// preserving user data (rating, review, tags, dateAdded).
@@ -60,6 +64,11 @@ class RefreshMetadataUseCase {
     );
 
     await _mediaItemRepo.update(updated);
+
+    final resolveSeries = _resolveSeries;
+    if (resolveSeries != null) {
+      return resolveSeries.execute(updated, metadata);
+    }
     return updated;
   }
 }

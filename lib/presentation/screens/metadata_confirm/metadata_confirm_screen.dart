@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mymediascanner/domain/entities/ownership_status.dart';
-import 'package:mymediascanner/domain/usecases/save_media_item_usecase.dart';
+import 'package:mymediascanner/presentation/providers/series_provider.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/scanner_provider.dart';
 import 'package:mymediascanner/domain/entities/metadata_result.dart';
@@ -169,8 +169,7 @@ class MetadataConfirmScreen extends ConsumerWidget {
                     year: edited.year,
                   );
                   if (!proceed) return;
-                  final useCase =
-                      SaveMediaItemUseCase(repository: repository);
+                  final useCase = ref.read(saveMediaItemUseCaseProvider);
                   await useCase.execute(edited);
 
                   final scanner = ref.read(scannerProvider.notifier);
@@ -206,8 +205,7 @@ class MetadataConfirmScreen extends ConsumerWidget {
                     year: edited.year,
                   );
                   if (!proceed) return;
-                  final useCase =
-                      SaveMediaItemUseCase(repository: repository);
+                  final useCase = ref.read(saveMediaItemUseCaseProvider);
                   await useCase.execute(
                     edited,
                     ownershipStatus: OwnershipStatus.wishlist,

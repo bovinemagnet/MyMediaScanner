@@ -37,5 +37,7 @@ sealed class MediaItem with _$MediaItem {
     int? syncedAt,
     @Default(false) bool deleted,
     String? locationId,
+    String? seriesId,
+    int? seriesPosition,
   }) = _MediaItem;
 }
