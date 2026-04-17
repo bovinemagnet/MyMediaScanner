@@ -15,6 +15,7 @@ sealed class RipAlbum with _$RipAlbum {
     required int totalSizeBytes,
     String? mediaItemId,
     String? cueFilePath,
+    String? gnudbDiscId,
     required int lastScannedAt,
     required int updatedAt,
     @Default(false) bool deleted,

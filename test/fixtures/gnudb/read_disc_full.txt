@@ -1,0 +1,26 @@
+210 rock 08025603 CD database entry follows (until terminating `.')
+# xmcd
+#
+# Track frame offsets:
+#	150
+#	15000
+#	30000
+#
+# Disc length: 600 seconds
+#
+# Revision: 1
+# Processed by: cddbd v1.5.2PL0
+DISCID=08025603
+DTITLE=Example Artist / Example Album
+DYEAR=2023
+DGENRE=Rock
+TTITLE0=First Song
+TTITLE1=Second Song with a much longer title that wraps
+TTITLE1=  across two lines
+TTITLE2=Third Song
+EXTD=Album-level notes here
+EXTT0=
+EXTT1=Track 2 notes
+EXTT2=
+PLAYORDER=
+.

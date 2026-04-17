@@ -12,6 +12,7 @@ import 'package:mymediascanner/presentation/providers/playlist_provider.dart';
 import 'package:mymediascanner/presentation/providers/queue_provider.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
+import 'package:mymediascanner/presentation/screens/rips/widgets/gnudb_lookup_button.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/playback_widgets.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/quality_widgets.dart';
 import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
@@ -251,6 +252,7 @@ class _RipAlbumDetailDialogState extends ConsumerState<RipAlbumDetailDialog> {
                     ),
                   ] else ...[
                     PlayAlbumButton(album: widget.album),
+                    GnudbLookupButton(album: widget.album),
                     IconButton(
                       icon: const Icon(Icons.edit, size: 20),
                       tooltip: 'Edit metadata',

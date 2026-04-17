@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$RipAlbum {
 
- String get id; String get libraryPath; String? get artist; String? get albumTitle; String? get barcode; int get trackCount; int get discCount; int get totalSizeBytes; String? get mediaItemId; String? get cueFilePath; int get lastScannedAt; int get updatedAt; bool get deleted;
+ String get id; String get libraryPath; String? get artist; String? get albumTitle; String? get barcode; int get trackCount; int get discCount; int get totalSizeBytes; String? get mediaItemId; String? get cueFilePath; String? get gnudbDiscId; int get lastScannedAt; int get updatedAt; bool get deleted;
 /// Create a copy of RipAlbum
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $RipAlbumCopyWith<RipAlbum> get copyWith => _$RipAlbumCopyWithImpl<RipAlbum>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RipAlbum&&(identical(other.id, id) || other.id == id)&&(identical(other.libraryPath, libraryPath) || other.libraryPath == libraryPath)&&(identical(other.artist, artist) || other.artist == artist)&&(identical(other.albumTitle, albumTitle) || other.albumTitle == albumTitle)&&(identical(other.barcode, barcode) || other.barcode == barcode)&&(identical(other.trackCount, trackCount) || other.trackCount == trackCount)&&(identical(other.discCount, discCount) || other.discCount == discCount)&&(identical(other.totalSizeBytes, totalSizeBytes) || other.totalSizeBytes == totalSizeBytes)&&(identical(other.mediaItemId, mediaItemId) || other.mediaItemId == mediaItemId)&&(identical(other.cueFilePath, cueFilePath) || other.cueFilePath == cueFilePath)&&(identical(other.lastScannedAt, lastScannedAt) || other.lastScannedAt == lastScannedAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.deleted, deleted) || other.deleted == deleted));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RipAlbum&&(identical(other.id, id) || other.id == id)&&(identical(other.libraryPath, libraryPath) || other.libraryPath == libraryPath)&&(identical(other.artist, artist) || other.artist == artist)&&(identical(other.albumTitle, albumTitle) || other.albumTitle == albumTitle)&&(identical(other.barcode, barcode) || other.barcode == barcode)&&(identical(other.trackCount, trackCount) || other.trackCount == trackCount)&&(identical(other.discCount, discCount) || other.discCount == discCount)&&(identical(other.totalSizeBytes, totalSizeBytes) || other.totalSizeBytes == totalSizeBytes)&&(identical(other.mediaItemId, mediaItemId) || other.mediaItemId == mediaItemId)&&(identical(other.cueFilePath, cueFilePath) || other.cueFilePath == cueFilePath)&&(identical(other.gnudbDiscId, gnudbDiscId) || other.gnudbDiscId == gnudbDiscId)&&(identical(other.lastScannedAt, lastScannedAt) || other.lastScannedAt == lastScannedAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.deleted, deleted) || other.deleted == deleted));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,libraryPath,artist,albumTitle,barcode,trackCount,discCount,totalSizeBytes,mediaItemId,cueFilePath,lastScannedAt,updatedAt,deleted);
+int get hashCode => Object.hash(runtimeType,id,libraryPath,artist,albumTitle,barcode,trackCount,discCount,totalSizeBytes,mediaItemId,cueFilePath,gnudbDiscId,lastScannedAt,updatedAt,deleted);
 
 @override
 String toString() {
-  return 'RipAlbum(id: $id, libraryPath: $libraryPath, artist: $artist, albumTitle: $albumTitle, barcode: $barcode, trackCount: $trackCount, discCount: $discCount, totalSizeBytes: $totalSizeBytes, mediaItemId: $mediaItemId, cueFilePath: $cueFilePath, lastScannedAt: $lastScannedAt, updatedAt: $updatedAt, deleted: $deleted)';
+  return 'RipAlbum(id: $id, libraryPath: $libraryPath, artist: $artist, albumTitle: $albumTitle, barcode: $barcode, trackCount: $trackCount, discCount: $discCount, totalSizeBytes: $totalSizeBytes, mediaItemId: $mediaItemId, cueFilePath: $cueFilePath, gnudbDiscId: $gnudbDiscId, lastScannedAt: $lastScannedAt, updatedAt: $updatedAt, deleted: $deleted)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $RipAlbumCopyWith<$Res>  {
   factory $RipAlbumCopyWith(RipAlbum value, $Res Function(RipAlbum) _then) = _$RipAlbumCopyWithImpl;
 @useResult
 $Res call({
- String id, String libraryPath, String? artist, String? albumTitle, String? barcode, int trackCount, int discCount, int totalSizeBytes, String? mediaItemId, String? cueFilePath, int lastScannedAt, int updatedAt, bool deleted
+ String id, String libraryPath, String? artist, String? albumTitle, String? barcode, int trackCount, int discCount, int totalSizeBytes, String? mediaItemId, String? cueFilePath, String? gnudbDiscId, int lastScannedAt, int updatedAt, bool deleted
 });
 
 
@@ -62,7 +62,7 @@ class _$RipAlbumCopyWithImpl<$Res>
 
 /// Create a copy of RipAlbum
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? libraryPath = null,Object? artist = freezed,Object? albumTitle = freezed,Object? barcode = freezed,Object? trackCount = null,Object? discCount = null,Object? totalSizeBytes = null,Object? mediaItemId = freezed,Object? cueFilePath = freezed,Object? lastScannedAt = null,Object? updatedAt = null,Object? deleted = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? libraryPath = null,Object? artist = freezed,Object? albumTitle = freezed,Object? barcode = freezed,Object? trackCount = null,Object? discCount = null,Object? totalSizeBytes = null,Object? mediaItemId = freezed,Object? cueFilePath = freezed,Object? gnudbDiscId = freezed,Object? lastScannedAt = null,Object? updatedAt = null,Object? deleted = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,libraryPath: null == libraryPath ? _self.libraryPath : libraryPath // ignore: cast_nullable_to_non_nullable
@@ -74,6 +74,7 @@ as int,discCount: null == discCount ? _self.discCount : discCount // ignore: cas
 as int,totalSizeBytes: null == totalSizeBytes ? _self.totalSizeBytes : totalSizeBytes // ignore: cast_nullable_to_non_nullable
 as int,mediaItemId: freezed == mediaItemId ? _self.mediaItemId : mediaItemId // ignore: cast_nullable_to_non_nullable
 as String?,cueFilePath: freezed == cueFilePath ? _self.cueFilePath : cueFilePath // ignore: cast_nullable_to_non_nullable
+as String?,gnudbDiscId: freezed == gnudbDiscId ? _self.gnudbDiscId : gnudbDiscId // ignore: cast_nullable_to_non_nullable
 as String?,lastScannedAt: null == lastScannedAt ? _self.lastScannedAt : lastScannedAt // ignore: cast_nullable_to_non_nullable
 as int,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as int,deleted: null == deleted ? _self.deleted : deleted // ignore: cast_nullable_to_non_nullable
@@ -159,10 +160,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String libraryPath,  String? artist,  String? albumTitle,  String? barcode,  int trackCount,  int discCount,  int totalSizeBytes,  String? mediaItemId,  String? cueFilePath,  int lastScannedAt,  int updatedAt,  bool deleted)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String libraryPath,  String? artist,  String? albumTitle,  String? barcode,  int trackCount,  int discCount,  int totalSizeBytes,  String? mediaItemId,  String? cueFilePath,  String? gnudbDiscId,  int lastScannedAt,  int updatedAt,  bool deleted)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _RipAlbum() when $default != null:
-return $default(_that.id,_that.libraryPath,_that.artist,_that.albumTitle,_that.barcode,_that.trackCount,_that.discCount,_that.totalSizeBytes,_that.mediaItemId,_that.cueFilePath,_that.lastScannedAt,_that.updatedAt,_that.deleted);case _:
+return $default(_that.id,_that.libraryPath,_that.artist,_that.albumTitle,_that.barcode,_that.trackCount,_that.discCount,_that.totalSizeBytes,_that.mediaItemId,_that.cueFilePath,_that.gnudbDiscId,_that.lastScannedAt,_that.updatedAt,_that.deleted);case _:
   return orElse();
 
 }
@@ -180,10 +181,10 @@ return $default(_that.id,_that.libraryPath,_that.artist,_that.albumTitle,_that.b
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String libraryPath,  String? artist,  String? albumTitle,  String? barcode,  int trackCount,  int discCount,  int totalSizeBytes,  String? mediaItemId,  String? cueFilePath,  int lastScannedAt,  int updatedAt,  bool deleted)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String libraryPath,  String? artist,  String? albumTitle,  String? barcode,  int trackCount,  int discCount,  int totalSizeBytes,  String? mediaItemId,  String? cueFilePath,  String? gnudbDiscId,  int lastScannedAt,  int updatedAt,  bool deleted)  $default,) {final _that = this;
 switch (_that) {
 case _RipAlbum():
-return $default(_that.id,_that.libraryPath,_that.artist,_that.albumTitle,_that.barcode,_that.trackCount,_that.discCount,_that.totalSizeBytes,_that.mediaItemId,_that.cueFilePath,_that.lastScannedAt,_that.updatedAt,_that.deleted);}
+return $default(_that.id,_that.libraryPath,_that.artist,_that.albumTitle,_that.barcode,_that.trackCount,_that.discCount,_that.totalSizeBytes,_that.mediaItemId,_that.cueFilePath,_that.gnudbDiscId,_that.lastScannedAt,_that.updatedAt,_that.deleted);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -197,10 +198,10 @@ return $default(_that.id,_that.libraryPath,_that.artist,_that.albumTitle,_that.b
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String libraryPath,  String? artist,  String? albumTitle,  String? barcode,  int trackCount,  int discCount,  int totalSizeBytes,  String? mediaItemId,  String? cueFilePath,  int lastScannedAt,  int updatedAt,  bool deleted)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String libraryPath,  String? artist,  String? albumTitle,  String? barcode,  int trackCount,  int discCount,  int totalSizeBytes,  String? mediaItemId,  String? cueFilePath,  String? gnudbDiscId,  int lastScannedAt,  int updatedAt,  bool deleted)?  $default,) {final _that = this;
 switch (_that) {
 case _RipAlbum() when $default != null:
-return $default(_that.id,_that.libraryPath,_that.artist,_that.albumTitle,_that.barcode,_that.trackCount,_that.discCount,_that.totalSizeBytes,_that.mediaItemId,_that.cueFilePath,_that.lastScannedAt,_that.updatedAt,_that.deleted);case _:
+return $default(_that.id,_that.libraryPath,_that.artist,_that.albumTitle,_that.barcode,_that.trackCount,_that.discCount,_that.totalSizeBytes,_that.mediaItemId,_that.cueFilePath,_that.gnudbDiscId,_that.lastScannedAt,_that.updatedAt,_that.deleted);case _:
   return null;
 
 }
@@ -212,7 +213,7 @@ return $default(_that.id,_that.libraryPath,_that.artist,_that.albumTitle,_that.b
 
 
 class _RipAlbum implements RipAlbum {
-  const _RipAlbum({required this.id, required this.libraryPath, this.artist, this.albumTitle, this.barcode, required this.trackCount, this.discCount = 1, required this.totalSizeBytes, this.mediaItemId, this.cueFilePath, required this.lastScannedAt, required this.updatedAt, this.deleted = false});
+  const _RipAlbum({required this.id, required this.libraryPath, this.artist, this.albumTitle, this.barcode, required this.trackCount, this.discCount = 1, required this.totalSizeBytes, this.mediaItemId, this.cueFilePath, this.gnudbDiscId, required this.lastScannedAt, required this.updatedAt, this.deleted = false});
   
 
 @override final  String id;
@@ -225,6 +226,7 @@ class _RipAlbum implements RipAlbum {
 @override final  int totalSizeBytes;
 @override final  String? mediaItemId;
 @override final  String? cueFilePath;
+@override final  String? gnudbDiscId;
 @override final  int lastScannedAt;
 @override final  int updatedAt;
 @override@JsonKey() final  bool deleted;
@@ -239,16 +241,16 @@ _$RipAlbumCopyWith<_RipAlbum> get copyWith => __$RipAlbumCopyWithImpl<_RipAlbum>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RipAlbum&&(identical(other.id, id) || other.id == id)&&(identical(other.libraryPath, libraryPath) || other.libraryPath == libraryPath)&&(identical(other.artist, artist) || other.artist == artist)&&(identical(other.albumTitle, albumTitle) || other.albumTitle == albumTitle)&&(identical(other.barcode, barcode) || other.barcode == barcode)&&(identical(other.trackCount, trackCount) || other.trackCount == trackCount)&&(identical(other.discCount, discCount) || other.discCount == discCount)&&(identical(other.totalSizeBytes, totalSizeBytes) || other.totalSizeBytes == totalSizeBytes)&&(identical(other.mediaItemId, mediaItemId) || other.mediaItemId == mediaItemId)&&(identical(other.cueFilePath, cueFilePath) || other.cueFilePath == cueFilePath)&&(identical(other.lastScannedAt, lastScannedAt) || other.lastScannedAt == lastScannedAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.deleted, deleted) || other.deleted == deleted));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RipAlbum&&(identical(other.id, id) || other.id == id)&&(identical(other.libraryPath, libraryPath) || other.libraryPath == libraryPath)&&(identical(other.artist, artist) || other.artist == artist)&&(identical(other.albumTitle, albumTitle) || other.albumTitle == albumTitle)&&(identical(other.barcode, barcode) || other.barcode == barcode)&&(identical(other.trackCount, trackCount) || other.trackCount == trackCount)&&(identical(other.discCount, discCount) || other.discCount == discCount)&&(identical(other.totalSizeBytes, totalSizeBytes) || other.totalSizeBytes == totalSizeBytes)&&(identical(other.mediaItemId, mediaItemId) || other.mediaItemId == mediaItemId)&&(identical(other.cueFilePath, cueFilePath) || other.cueFilePath == cueFilePath)&&(identical(other.gnudbDiscId, gnudbDiscId) || other.gnudbDiscId == gnudbDiscId)&&(identical(other.lastScannedAt, lastScannedAt) || other.lastScannedAt == lastScannedAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.deleted, deleted) || other.deleted == deleted));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,libraryPath,artist,albumTitle,barcode,trackCount,discCount,totalSizeBytes,mediaItemId,cueFilePath,lastScannedAt,updatedAt,deleted);
+int get hashCode => Object.hash(runtimeType,id,libraryPath,artist,albumTitle,barcode,trackCount,discCount,totalSizeBytes,mediaItemId,cueFilePath,gnudbDiscId,lastScannedAt,updatedAt,deleted);
 
 @override
 String toString() {
-  return 'RipAlbum(id: $id, libraryPath: $libraryPath, artist: $artist, albumTitle: $albumTitle, barcode: $barcode, trackCount: $trackCount, discCount: $discCount, totalSizeBytes: $totalSizeBytes, mediaItemId: $mediaItemId, cueFilePath: $cueFilePath, lastScannedAt: $lastScannedAt, updatedAt: $updatedAt, deleted: $deleted)';
+  return 'RipAlbum(id: $id, libraryPath: $libraryPath, artist: $artist, albumTitle: $albumTitle, barcode: $barcode, trackCount: $trackCount, discCount: $discCount, totalSizeBytes: $totalSizeBytes, mediaItemId: $mediaItemId, cueFilePath: $cueFilePath, gnudbDiscId: $gnudbDiscId, lastScannedAt: $lastScannedAt, updatedAt: $updatedAt, deleted: $deleted)';
 }
 
 
@@ -259,7 +261,7 @@ abstract mixin class _$RipAlbumCopyWith<$Res> implements $RipAlbumCopyWith<$Res>
   factory _$RipAlbumCopyWith(_RipAlbum value, $Res Function(_RipAlbum) _then) = __$RipAlbumCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String libraryPath, String? artist, String? albumTitle, String? barcode, int trackCount, int discCount, int totalSizeBytes, String? mediaItemId, String? cueFilePath, int lastScannedAt, int updatedAt, bool deleted
+ String id, String libraryPath, String? artist, String? albumTitle, String? barcode, int trackCount, int discCount, int totalSizeBytes, String? mediaItemId, String? cueFilePath, String? gnudbDiscId, int lastScannedAt, int updatedAt, bool deleted
 });
 
 
@@ -276,7 +278,7 @@ class __$RipAlbumCopyWithImpl<$Res>
 
 /// Create a copy of RipAlbum
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? libraryPath = null,Object? artist = freezed,Object? albumTitle = freezed,Object? barcode = freezed,Object? trackCount = null,Object? discCount = null,Object? totalSizeBytes = null,Object? mediaItemId = freezed,Object? cueFilePath = freezed,Object? lastScannedAt = null,Object? updatedAt = null,Object? deleted = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? libraryPath = null,Object? artist = freezed,Object? albumTitle = freezed,Object? barcode = freezed,Object? trackCount = null,Object? discCount = null,Object? totalSizeBytes = null,Object? mediaItemId = freezed,Object? cueFilePath = freezed,Object? gnudbDiscId = freezed,Object? lastScannedAt = null,Object? updatedAt = null,Object? deleted = null,}) {
   return _then(_RipAlbum(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,libraryPath: null == libraryPath ? _self.libraryPath : libraryPath // ignore: cast_nullable_to_non_nullable
@@ -288,6 +290,7 @@ as int,discCount: null == discCount ? _self.discCount : discCount // ignore: cas
 as int,totalSizeBytes: null == totalSizeBytes ? _self.totalSizeBytes : totalSizeBytes // ignore: cast_nullable_to_non_nullable
 as int,mediaItemId: freezed == mediaItemId ? _self.mediaItemId : mediaItemId // ignore: cast_nullable_to_non_nullable
 as String?,cueFilePath: freezed == cueFilePath ? _self.cueFilePath : cueFilePath // ignore: cast_nullable_to_non_nullable
+as String?,gnudbDiscId: freezed == gnudbDiscId ? _self.gnudbDiscId : gnudbDiscId // ignore: cast_nullable_to_non_nullable
 as String?,lastScannedAt: null == lastScannedAt ? _self.lastScannedAt : lastScannedAt // ignore: cast_nullable_to_non_nullable
 as int,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as int,deleted: null == deleted ? _self.deleted : deleted // ignore: cast_nullable_to_non_nullable

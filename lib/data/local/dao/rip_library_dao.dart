@@ -141,6 +141,16 @@ class RipLibraryDao extends DatabaseAccessor<AppDatabase>
     );
   }
 
+  /// Update the GnuDB Disc ID on an album.
+  Future<void> updateGnudbDiscId(String ripAlbumId, String? discId) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return (update(ripAlbumsTable)..where((t) => t.id.equals(ripAlbumId)))
+        .write(RipAlbumsTableCompanion(
+      gnudbDiscId: Value(discId),
+      updatedAt: Value(now),
+    ));
+  }
+
   /// Update the title of a single track.
   Future<void> updateTrackTitle(String trackId, String? title) {
     final now = DateTime.now().millisecondsSinceEpoch;

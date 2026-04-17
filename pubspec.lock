@@ -53,10 +53,10 @@ packages:
     dependency: "direct main"
     description:
       name: audio_defect_detector
-      sha256: ac085bfc7f9fc6e01df2954dc2ec0ca46c2a4c9e1490c06699558c583b353b16
+      sha256: "0fa5d7eddf042d810071d86509b1ea621a2f81b1a904fa0b812b27451b9ee984"
       url: "https://pub.dev"
     source: hosted
-    version: "0.0.2"
+    version: "0.0.3"
   audio_session:
     dependency: transitive
     description:
@@ -205,10 +205,10 @@ packages:
     dependency: transitive
     description:
       name: camera_platform_interface
-      sha256: "98cfc9357e04bad617671b4c1f78a597f25f08003089dd94050709ae54effc63"
+      sha256: "7ac852d77699acee79f0d438b793feee26721841e50973576419ff5c6d95e9b7"
       url: "https://pub.dev"
     source: hosted
-    version: "2.12.0"
+    version: "2.13.0"
   camera_web:
     dependency: transitive
     description:
@@ -365,10 +365,10 @@ packages:
     dependency: "direct main"
     description:
       name: dart_cue
-      sha256: f49a5c3ad459cf466ff784adbbfd92b9f1bdadbbe7c3c7221a531c7e5f893491
+      sha256: b34e7d5265e841b246595ad198ca9fe6817dfc2ea5c4431150bee1b9e26a38af
       url: "https://pub.dev"
     source: hosted
-    version: "0.0.1"
+    version: "0.0.6"
   dart_metaflac:
     dependency: "direct main"
     description:
@@ -381,10 +381,10 @@ packages:
     dependency: "direct main"
     description:
       name: dart_rip_log
-      sha256: "16c601fca0475a78d95ab4c510c5425ca56a47658ba1e4fc0a86ceb16df6b3b1"
+      sha256: a13953ad961e0c4286786192129ed42261bf38cf885e8797187532176b2501ed
       url: "https://pub.dev"
     source: hosted
-    version: "0.0.1"
+    version: "0.0.5"
   dart_style:
     dependency: transitive
     description:
@@ -750,10 +750,10 @@ packages:
     dependency: "direct main"
     description:
       name: go_router
-      sha256: "48fb2f42ad057476fa4b733cb95e9f9ea7b0b010bb349ea491dca7dbdb18ffc4"
+      sha256: "5540e4a3f416dd4a93458257b908eb88353cbd0fb5b0a3d1bd7d849ba1e88735"
       url: "https://pub.dev"
     source: hosted
-    version: "17.2.0"
+    version: "17.2.1"
   google_mlkit_commons:
     dependency: transitive
     description:
@@ -1592,10 +1592,10 @@ packages:
     dependency: "direct dev"
     description:
       name: sqlite3
-      sha256: b3fe250b4ebd681a8ba20b12794c42b00c1375e5b51005568f0b8731265beb03
+      sha256: "56da3e13ed7d28a66f930aa2b2b29db6736a233f08283326e96321dd812030f5"
       url: "https://pub.dev"
     source: hosted
-    version: "3.3.0"
+    version: "3.3.1"
   sqlite3_flutter_libs:
     dependency: "direct main"
     description:
@@ -1824,10 +1824,10 @@ packages:
     dependency: transitive
     description:
       name: vm_service
-      sha256: "45caa6c5917fa127b5dbcfbd1fa60b14e583afdc08bfc96dda38886ca252eb60"
+      sha256: "046d3928e16fa4dc46e8350415661755ab759d9fc97fc21b5ab295f71e4f0499"
       url: "https://pub.dev"
     source: hosted
-    version: "15.0.2"
+    version: "15.1.0"
   watcher:
     dependency: transitive
     description:

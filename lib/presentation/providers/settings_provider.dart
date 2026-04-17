@@ -36,6 +36,37 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
 final themeModeProvider =
     NotifierProvider<ThemeModeNotifier, ThemeMode>(ThemeModeNotifier.new);
 
+// ── GnuDB username (identifier sent in the CDDB "hello" string) ──────
+
+class GnudbUsernameNotifier extends Notifier<String> {
+  static const _key = 'gnudb_username';
+  static const _default = 'mymediascanner';
+
+  @override
+  String build() {
+    _load();
+    return _default;
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final stored = prefs.getString(_key);
+    if (stored != null && stored.isNotEmpty) {
+      state = stored;
+    }
+  }
+
+  Future<void> setUsername(String value) async {
+    final trimmed = value.trim();
+    state = trimmed.isEmpty ? _default : trimmed;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_key, state);
+  }
+}
+
+final gnudbUsernameProvider =
+    NotifierProvider<GnudbUsernameNotifier, String>(GnudbUsernameNotifier.new);
+
 // ── Secure storage ───────────────────────────────────────────────────
 
 final secureStorageProvider = Provider<FlutterSecureStorage>((ref) {

@@ -9,6 +9,7 @@ import 'package:mymediascanner/core/utils/platform_utils.dart';
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
 import 'package:mymediascanner/presentation/providers/replay_gain_provider.dart';
 import 'package:mymediascanner/presentation/screens/settings/widgets/api_key_form.dart';
+import 'package:mymediascanner/presentation/screens/settings/widgets/gnudb_settings_section.dart';
 import 'package:mymediascanner/presentation/providers/settings_provider.dart';
 import 'package:mymediascanner/presentation/screens/settings/widgets/sync_status_tile.dart';
 import 'package:mymediascanner/presentation/widgets/screen_header.dart';
@@ -67,6 +68,15 @@ class SettingsScreen extends ConsumerWidget {
             colors: colors,
             theme: theme,
             children: const [ApiKeyForm()],
+          ),
+          const SizedBox(height: 16),
+
+          // GnuDB section — per-disc metadata lookup configuration
+          _SectionCard(
+            title: 'GnuDB',
+            colors: colors,
+            theme: theme,
+            children: const [GnudbSettingsSection()],
           ),
           const SizedBox(height: 16),
 
