@@ -129,6 +129,44 @@ void main() {
         expect(result.publisher, isNull);
         expect(result.genres, isEmpty);
       });
+
+      test(
+          'persists artist MBIDs, release date, country, packaging, '
+          'track count, disc count, status', () {
+        const release = MusicBrainzReleaseDto(
+          id: 'rel-1',
+          title: 'Example',
+          status: 'Official',
+          date: '2001-06-14',
+          country: 'GB',
+          packaging: 'Jewel Case',
+          artistCredit: [
+            MusicBrainzArtistCreditDto(
+              name: 'A',
+              artist: MusicBrainzArtistDto(id: 'art-1', name: 'A'),
+            ),
+            MusicBrainzArtistCreditDto(
+              name: 'B',
+              artist: MusicBrainzArtistDto(id: 'art-2', name: 'B'),
+            ),
+          ],
+          media: [
+            MusicBrainzMediaDto(format: 'CD', discCount: 2, trackCount: 12),
+          ],
+        );
+
+        final result =
+            MusicBrainzMapper.fromRelease(release, '1234', 'ean13');
+
+        expect(result.extraMetadata['musicbrainz_artist_ids'],
+            ['art-1', 'art-2']);
+        expect(result.extraMetadata['release_date'], '2001-06-14');
+        expect(result.extraMetadata['release_country'], 'GB');
+        expect(result.extraMetadata['packaging'], 'Jewel Case');
+        expect(result.extraMetadata['track_count'], 12);
+        expect(result.extraMetadata['disc_count'], 2);
+        expect(result.extraMetadata['status'], 'Official');
+      });
     });
 
     group('toCandidate', () {
@@ -152,6 +190,35 @@ void main() {
 
         expect(candidate.sourceId, '');
         expect(candidate.coverUrl, isNull);
+      });
+
+      test('carries country, label, catalogue number, track count, status',
+          () {
+        const release = MusicBrainzReleaseDto(
+          id: 'rel-2',
+          title: 'With Label',
+          status: 'Official',
+          country: 'US',
+          packaging: 'Digipak',
+          labelInfo: [
+            MusicBrainzLabelInfoDto(
+              catalogNumber: 'ABC-1',
+              label: MusicBrainzLabelDto(id: 'lab-1', name: 'Indie Records'),
+            ),
+          ],
+          media: [
+            MusicBrainzMediaDto(format: 'CD', trackCount: 10),
+          ],
+        );
+
+        final candidate = MusicBrainzMapper.toCandidate(release);
+
+        expect(candidate.country, 'US');
+        expect(candidate.label, 'Indie Records');
+        expect(candidate.catalogueNumber, 'ABC-1');
+        expect(candidate.trackCount, 10);
+        expect(candidate.status, 'Official');
+        expect(candidate.packaging, 'Digipak');
       });
     });
   });

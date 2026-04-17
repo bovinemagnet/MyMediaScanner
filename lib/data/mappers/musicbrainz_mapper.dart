@@ -9,6 +9,27 @@ abstract final class MusicBrainzMapper {
     String barcode,
     String barcodeType,
   ) {
+    final artistIds = dto.artistCredit
+            ?.map((c) => c.artist?.id)
+            .whereType<String>()
+            .toList() ??
+        const <String>[];
+    final artistNames = dto.artistCredit
+            ?.map((c) => c.name ?? c.artist?.name)
+            .whereType<String>()
+            .toList() ??
+        const <String>[];
+    final primaryMedia = dto.media?.firstOrNull;
+    final trackListing = dto.media
+            ?.expand((m) => m.tracks ?? const <MusicBrainzTrackDto>[])
+            .map((t) => <String, dynamic>{
+                  'position': t.number,
+                  'title': t.title,
+                  'duration_ms': t.length,
+                })
+            .toList() ??
+        const <Map<String, dynamic>>[];
+
     return MetadataResult(
       barcode: barcode,
       barcodeType: barcodeType,
@@ -19,37 +40,33 @@ abstract final class MusicBrainzMapper {
       year: dto.effectiveYear,
       publisher: dto.effectiveLabel,
       format: dto.effectiveFormat,
-      genres: dto.tags?.map((t) => t.name).whereType<String>().toList() ?? [],
+      genres:
+          dto.tags?.map((t) => t.name).whereType<String>().toList() ?? const [],
       extraMetadata: {
         'musicbrainz_release_id': dto.id,
         'musicbrainz_release_group_id': dto.releaseGroupId,
-        'artists': dto.artistCredit
-                ?.map((c) => c.name ?? c.artist?.name)
-                .whereType<String>()
-                .toList() ??
-            [],
+        'musicbrainz_artist_ids': artistIds,
+        'artists': artistNames,
         'catalogue_number': dto.labelInfo?.firstOrNull?.catalogNumber,
         'label': dto.effectiveLabel,
         'country': dto.country,
-        'track_listing': dto.media
-                ?.expand((m) => m.tracks ?? <MusicBrainzTrackDto>[])
-                .map((t) => {
-                      'position': t.number,
-                      'title': t.title,
-                      'duration_ms': t.length,
-                    })
-                .toList() ??
-            [],
+        'release_date': dto.date,
+        'release_country': dto.country,
+        'packaging': dto.packaging,
+        'status': dto.status,
+        'track_count': primaryMedia?.trackCount ?? dto.trackCount,
+        'disc_count': primaryMedia?.discCount,
+        'track_listing': trackListing,
       },
-      sourceApis: ['musicbrainz'],
-      seriesExternalId: dto.releaseGroupId != null
-          ? 'mb:${dto.releaseGroupId}'
-          : null,
+      sourceApis: const ['musicbrainz'],
+      seriesExternalId:
+          dto.releaseGroupId != null ? 'mb:${dto.releaseGroupId}' : null,
       seriesName: dto.releaseGroup?.title,
     );
   }
 
   static MetadataCandidate toCandidate(MusicBrainzReleaseDto dto) {
+    final primaryMedia = dto.media?.firstOrNull;
     return MetadataCandidate(
       sourceApi: 'musicbrainz',
       sourceId: dto.id ?? '',
@@ -59,6 +76,12 @@ abstract final class MusicBrainzMapper {
       year: dto.effectiveYear,
       format: dto.effectiveFormat,
       mediaType: MediaType.music,
+      country: dto.country,
+      label: dto.effectiveLabel,
+      catalogueNumber: dto.labelInfo?.firstOrNull?.catalogNumber,
+      trackCount: primaryMedia?.trackCount ?? dto.trackCount,
+      status: dto.status,
+      packaging: dto.packaging,
     );
   }
 }
