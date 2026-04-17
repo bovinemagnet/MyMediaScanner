@@ -20,6 +20,28 @@ void main() {
       });
     }
 
+    Future<void> scrollSettingsUntil(
+      WidgetTester tester,
+      Finder target,
+    ) async {
+      for (var i = 0; i < 20; i++) {
+        if (tester.any(target)) {
+          // `any` matches widgets that ListView has built ahead of
+          // the viewport via cacheExtent — they may still be off-
+          // screen. `ensureVisible` does the last-mile scroll so the
+          // widget is actually inside the viewport and tappable.
+          await tester.ensureVisible(target);
+          await tester.pumpAndSettle();
+          return;
+        }
+        await tester.drag(
+          find.byType(ListView).last,
+          const Offset(0, -300),
+        );
+        await tester.pumpAndSettle();
+      }
+    }
+
     testWidgets('renders all sections', (tester) async {
       await setWideScreen(tester);
       await tester.pumpTestApp();
@@ -32,10 +54,7 @@ void main() {
       expect(find.text('SYNC'), findsOneWidget);
       expect(find.text('API INTEGRATIONS'), findsOneWidget);
 
-      // Scroll the settings ListView to reveal sections below the fold
-      // (FLAC Library section sits between API Integrations and Preferences on desktop)
-      await tester.drag(find.byType(ListView).last, const Offset(0, -800));
-      await tester.pumpAndSettle();
+      await scrollSettingsUntil(tester, find.text('PREFERENCES'));
       expect(find.text('PREFERENCES'), findsOneWidget);
       expect(find.text('Theme'), findsOneWidget);
     });
@@ -48,9 +67,9 @@ void main() {
       await tester.tap(find.text('Settings').first);
       await tester.pumpAndSettle();
 
-      // Scroll to the Preferences section (past FLAC Library on desktop)
-      await tester.drag(find.byType(ListView).last, const Offset(0, -800));
-      await tester.pumpAndSettle();
+      // Scroll until the light-mode icon (at the bottom of the Theme
+      // tile) is on-screen and tappable.
+      await scrollSettingsUntil(tester, find.byIcon(Icons.light_mode));
 
       // Initially system default
       expect(find.text('System default'), findsOneWidget);
@@ -72,10 +91,8 @@ void main() {
       await tester.tap(find.text('Settings').first);
       await tester.pumpAndSettle();
 
-      // Scroll to find the About tile and tap it
-      await tester.drag(find.byType(ListView).last, const Offset(0, -1200));
-      await tester.pumpAndSettle();
       final aboutTile = find.text('About MyMediaScanner');
+      await scrollSettingsUntil(tester, aboutTile);
       await tester.tap(aboutTile);
       await tester.pumpAndSettle();
 

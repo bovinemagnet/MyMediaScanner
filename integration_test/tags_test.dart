@@ -73,8 +73,14 @@ void main() {
       // Verify the dialog is visible
       expect(find.text('Create Tag'), findsOneWidget);
 
-      // Enter the tag name into the single TextField in the dialog
-      await tester.enterText(find.byType(TextField).first, 'Horror');
+      // Enter the tag name into the dialog's TextField — scope by
+      // AlertDialog ancestor since the Collection screen's SearchBar
+      // also contains a TextField that `.first` would otherwise match.
+      final dialogTextField = find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.byType(TextField),
+      );
+      await tester.enterText(dialogTextField, 'Horror');
       await tester.pumpAndSettle();
 
       // Tap the Create button
