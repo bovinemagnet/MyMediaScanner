@@ -26,11 +26,24 @@ void main() {
       await tester.tap(find.text('Settings').first);
       await tester.pumpAndSettle(const Duration(seconds: 1));
 
-      // Scroll down to reveal the Borrowers list tile
-      await tester.drag(find.byType(ListView).last, const Offset(0, -800));
-      await tester.pumpAndSettle();
+      // Scroll settings until the Borrowers tile is fully on-screen.
+      // Uses a drag loop + ensureVisible rather than a fixed offset so
+      // the test tolerates new sections being inserted above.
+      final borrowersTile = find.text('Borrowers');
+      for (var i = 0; i < 20; i++) {
+        if (tester.any(borrowersTile)) {
+          await tester.ensureVisible(borrowersTile.first);
+          await tester.pumpAndSettle();
+          break;
+        }
+        await tester.drag(
+          find.byType(ListView).last,
+          const Offset(0, -300),
+        );
+        await tester.pumpAndSettle();
+      }
 
-      await tester.tap(find.text('Borrowers').first);
+      await tester.tap(borrowersTile.first);
       await tester.pumpAndSettle(const Duration(seconds: 1));
     }
 

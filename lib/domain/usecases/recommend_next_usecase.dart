@@ -25,10 +25,19 @@ class RecommendNextUseCase {
   final TasteProfileBuilder _profileBuilder;
 
   /// Returns up to [limit] recommendations ordered by descending score.
+  ///
+  /// Returns an empty list when the taste profile carries no real
+  /// signal — i.e. the user has neither rated anything highly nor shown
+  /// series-collecting behaviour. A recency-only recommendation isn't
+  /// useful and just echoes the collection chronology.
   List<Recommendation> rank(List<MediaItem> ownedItems, {int limit = 5}) {
     if (ownedItems.isEmpty) return const [];
 
     final profile = _profileBuilder.build(ownedItems);
+    final hasSignal = profile.lovedGenres.isNotEmpty ||
+        profile.lovedTags.isNotEmpty ||
+        profile.collectedSeriesIds.isNotEmpty;
+    if (!hasSignal) return const [];
 
     final candidates = ownedItems.where((item) {
       if (item.deleted) return false;

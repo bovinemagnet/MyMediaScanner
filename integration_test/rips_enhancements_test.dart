@@ -64,6 +64,24 @@ void main() {
   });
 
   group('ReplayGain settings', () {
+    Future<void> scrollSettingsUntil(
+      WidgetTester tester,
+      Finder target,
+    ) async {
+      for (var i = 0; i < 20; i++) {
+        if (tester.any(target)) {
+          await tester.ensureVisible(target);
+          await tester.pumpAndSettle();
+          return;
+        }
+        await tester.drag(
+          find.byType(ListView).last,
+          const Offset(0, -300),
+        );
+        await tester.pumpAndSettle();
+      }
+    }
+
     testWidgets('playback section appears with ReplayGain controls',
         (tester) async {
       await setUpWideScreen(tester);
@@ -73,10 +91,7 @@ void main() {
       await tester.tap(find.text('Settings').first);
       await tester.pumpAndSettle();
 
-      // Scroll to find the Playback section
-      final listView = find.byType(ListView).last;
-      await tester.drag(listView, const Offset(0, -500));
-      await tester.pumpAndSettle();
+      await scrollSettingsUntil(tester, find.text('PLAYBACK'));
 
       // PLAYBACK section header should be visible
       expect(find.text('PLAYBACK'), findsOneWidget);
@@ -94,8 +109,7 @@ void main() {
       await tester.tap(find.text('Settings').first);
       await tester.pumpAndSettle();
 
-      await tester.drag(find.byType(ListView).last, const Offset(0, -500));
-      await tester.pumpAndSettle();
+      await scrollSettingsUntil(tester, find.text('Track'));
 
       // Tap Track mode segment
       await tester.tap(find.text('Track'));

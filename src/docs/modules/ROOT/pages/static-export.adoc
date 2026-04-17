@@ -1,0 +1,106 @@
+= Static HTML Export
+Paul Snow
+0.0.0
+include::_attributes.adoc[]
+:description: Export your entire collection as a self-contained static website with a searchable grid, per-item pages, and optional bundled cover art.
+
+The static HTML export feature renders your collection as a portable website you can open in any browser, share as a folder, or host on a static file service — no app installation required.
+The output is entirely self-contained: all CSS and JavaScript are inlined, no external fonts or scripts are loaded, and the pages adapt to dark or light mode automatically via `prefers-color-scheme`.
+
+== Accessing the Feature
+
+Navigate to *Settings → Export → Static HTML export*.
+
+The export screen provides three options before writing anything to disk.
+Press *Choose folder and export* when you are ready; a system folder-picker dialog opens.
+After you select a destination folder the export begins immediately.
+
+== Options
+
+[cols="1,1,3", options="header"]
+|===
+| Option | Default | Description
+
+| *Site title*
+| `My collection`
+| Heading text shown at the top of `index.html` and in each page's `<title>` element.
+
+| *Private tag*
+| `private`
+| Items carrying this tag are excluded entirely — they do not appear on the index and no detail page is written for them.
+Rename the tag if your catalogue uses a different convention.
+
+| *Download and bundle cover art*
+| Off
+| When enabled, each cover URL is fetched via Dio and saved locally as `covers/<id>.<ext>`.
+The generated HTML references those local paths so the export remains viewable offline.
+When disabled, the HTML references the original remote hosts directly; those URLs may return 404 in future.
+|===
+
+NOTE: Cover downloads that fail (network error or non-image response) fall through silently to an empty placeholder; the rest of the export continues normally.
+
+== Export Progress
+
+A progress bar appears once the export starts.
+The counter tracks cover downloads (when bundling is enabled) plus individual file writes, so for a large collection with cover bundling enabled the bar advances as each image is downloaded and each HTML file is written.
+
+When the export completes, the path to `index.html` is shown on screen together with an *Open index.html* button that launches the file in your default browser.
+
+== Output Layout
+
+The following files are written to the folder you selected:
+
+[cols="2,3", options="header"]
+|===
+| Path | Contents
+
+| `index.html`
+| Responsive grid of all visible items.
+Includes a *Type* dropdown, a *Tag* dropdown, and a title search box.
+Filtering and search are handled by inline JavaScript — no server required.
+
+| `items/<id>.html`
+| Detail page for a single item: cover art, title, year, publisher, format, media type, barcode, genres, user rating, description, and personal review.
+A *← Back to collection* link returns to `index.html`.
+
+| `covers/<id>.<ext>`
+| Cover image for a single item.
+Only written when *Download and bundle cover art* is enabled and the download succeeds.
+The extension (`.jpg`, `.jpeg`, `.png`, `.webp`, or `.gif`) is derived from the original URL.
+|===
+
+== Privacy Model
+
+Two categories of item are excluded from every export:
+
+* *Soft-deleted items* — records with `deleted = 1` in the database are never included, regardless of settings.
+* *Privately tagged items* — any item whose tag list (stored in `extraMetadata['tags']`) contains the configured private tag is excluded.
+No detail page is written for excluded items and they do not appear as cards on the index, so their titles are not visible even in the HTML source.
+
+== Hosting the Export
+
+The output folder can be hosted on any static file service without modification.
+
+=== Local / offline
+
+Open `index.html` directly in a browser using the *Open index.html* button, or by double-clicking the file in your file manager.
+Cover images must be bundled for offline use.
+
+=== Netlify Drop
+
+Drag the export folder onto https://app.netlify.com/drop[Netlify Drop].
+The site is live immediately under a generated URL.
+
+=== GitHub Pages
+
+Commit the folder contents to a repository (or the `docs/` subdirectory of an existing one) and enable *Pages* in the repository settings.
+
+=== nginx / Apache
+
+Copy the folder to your web root.
+No server-side configuration is required; all routing is handled client-side by the inline JavaScript.
+
+== Related Pages
+
+* xref:api-configuration.adoc[API Configuration] — API keys, sync configuration, and theme options
+* xref:import.adoc[Importing External Collections] — bring in collections from Goodreads, Discogs, Letterboxd, or Trakt

@@ -10,6 +10,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mymediascanner/app/app.dart';
+import 'package:mymediascanner/app/router.dart';
 import 'package:mymediascanner/data/local/database/app_database.dart';
 import 'package:mymediascanner/data/remote/sync/postgres_sync_client.dart';
 import 'package:mymediascanner/presentation/providers/database_provider.dart';
@@ -32,6 +33,11 @@ extension IntegrationTestApp on WidgetTester {
 
     final db = AppDatabase.forTesting(NativeDatabase.memory());
     final storage = createMockSecureStorage();
+
+    // GoRouter is a top-level singleton, so navigation performed by a
+    // prior test in the same `flutter test` run leaks across setup.
+    // Reset to the dashboard before pumping the widget tree.
+    router.go('/');
 
     await pumpWidget(
       ProviderScope(
