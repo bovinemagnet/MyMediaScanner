@@ -29,6 +29,15 @@ abstract final class ApiConstants {
   // UPCitemdb
   static const upcItemDbBaseUrl = 'https://api.upcitemdb.com/prod/trial';
 
+  // GnuDB — CDDB-compatible disc metadata lookup. The service is HTTP only.
+  static const gnudbBaseUrl = 'http://gnudb.gnudb.org';
+  static const gnudbCgiPath = '/~cddb/cddb.cgi';
+  static const gnudbDefaultUser = 'mymediascanner';
+  static const gnudbClientName = 'MyMediaScanner';
+  static const gnudbClientVersion = '1.0';
+  static const gnudbUserAgent =
+      'MyMediaScanner/1.0 (https://github.com/bovinemagnet/MyMediaScanner)';
+
   // Cache
   static const cacheDurationDays = 7;
 }

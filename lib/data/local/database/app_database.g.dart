@@ -5528,6 +5528,17 @@ class $RipAlbumsTableTable extends RipAlbumsTable
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _gnudbDiscIdMeta = const VerificationMeta(
+    'gnudbDiscId',
+  );
+  @override
+  late final GeneratedColumn<String> gnudbDiscId = GeneratedColumn<String>(
+    'gnudb_disc_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _deletedMeta = const VerificationMeta(
     'deleted',
   );
@@ -5554,6 +5565,7 @@ class $RipAlbumsTableTable extends RipAlbumsTable
     lastScannedAt,
     updatedAt,
     cueFilePath,
+    gnudbDiscId,
     deleted,
   ];
   @override
@@ -5664,6 +5676,15 @@ class $RipAlbumsTableTable extends RipAlbumsTable
         ),
       );
     }
+    if (data.containsKey('gnudb_disc_id')) {
+      context.handle(
+        _gnudbDiscIdMeta,
+        gnudbDiscId.isAcceptableOrUnknown(
+          data['gnudb_disc_id']!,
+          _gnudbDiscIdMeta,
+        ),
+      );
+    }
     if (data.containsKey('deleted')) {
       context.handle(
         _deletedMeta,
@@ -5727,6 +5748,10 @@ class $RipAlbumsTableTable extends RipAlbumsTable
         DriftSqlType.string,
         data['${effectivePrefix}cue_file_path'],
       ),
+      gnudbDiscId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}gnudb_disc_id'],
+      ),
       deleted: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}deleted'],
@@ -5754,6 +5779,7 @@ class RipAlbumsTableData extends DataClass
   final int lastScannedAt;
   final int updatedAt;
   final String? cueFilePath;
+  final String? gnudbDiscId;
   final int deleted;
   const RipAlbumsTableData({
     required this.id,
@@ -5768,6 +5794,7 @@ class RipAlbumsTableData extends DataClass
     required this.lastScannedAt,
     required this.updatedAt,
     this.cueFilePath,
+    this.gnudbDiscId,
     required this.deleted,
   });
   @override
@@ -5794,6 +5821,9 @@ class RipAlbumsTableData extends DataClass
     map['updated_at'] = Variable<int>(updatedAt);
     if (!nullToAbsent || cueFilePath != null) {
       map['cue_file_path'] = Variable<String>(cueFilePath);
+    }
+    if (!nullToAbsent || gnudbDiscId != null) {
+      map['gnudb_disc_id'] = Variable<String>(gnudbDiscId);
     }
     map['deleted'] = Variable<int>(deleted);
     return map;
@@ -5823,6 +5853,9 @@ class RipAlbumsTableData extends DataClass
       cueFilePath: cueFilePath == null && nullToAbsent
           ? const Value.absent()
           : Value(cueFilePath),
+      gnudbDiscId: gnudbDiscId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(gnudbDiscId),
       deleted: Value(deleted),
     );
   }
@@ -5845,6 +5878,7 @@ class RipAlbumsTableData extends DataClass
       lastScannedAt: serializer.fromJson<int>(json['lastScannedAt']),
       updatedAt: serializer.fromJson<int>(json['updatedAt']),
       cueFilePath: serializer.fromJson<String?>(json['cueFilePath']),
+      gnudbDiscId: serializer.fromJson<String?>(json['gnudbDiscId']),
       deleted: serializer.fromJson<int>(json['deleted']),
     );
   }
@@ -5864,6 +5898,7 @@ class RipAlbumsTableData extends DataClass
       'lastScannedAt': serializer.toJson<int>(lastScannedAt),
       'updatedAt': serializer.toJson<int>(updatedAt),
       'cueFilePath': serializer.toJson<String?>(cueFilePath),
+      'gnudbDiscId': serializer.toJson<String?>(gnudbDiscId),
       'deleted': serializer.toJson<int>(deleted),
     };
   }
@@ -5881,6 +5916,7 @@ class RipAlbumsTableData extends DataClass
     int? lastScannedAt,
     int? updatedAt,
     Value<String?> cueFilePath = const Value.absent(),
+    Value<String?> gnudbDiscId = const Value.absent(),
     int? deleted,
   }) => RipAlbumsTableData(
     id: id ?? this.id,
@@ -5895,6 +5931,7 @@ class RipAlbumsTableData extends DataClass
     lastScannedAt: lastScannedAt ?? this.lastScannedAt,
     updatedAt: updatedAt ?? this.updatedAt,
     cueFilePath: cueFilePath.present ? cueFilePath.value : this.cueFilePath,
+    gnudbDiscId: gnudbDiscId.present ? gnudbDiscId.value : this.gnudbDiscId,
     deleted: deleted ?? this.deleted,
   );
   RipAlbumsTableData copyWithCompanion(RipAlbumsTableCompanion data) {
@@ -5925,6 +5962,9 @@ class RipAlbumsTableData extends DataClass
       cueFilePath: data.cueFilePath.present
           ? data.cueFilePath.value
           : this.cueFilePath,
+      gnudbDiscId: data.gnudbDiscId.present
+          ? data.gnudbDiscId.value
+          : this.gnudbDiscId,
       deleted: data.deleted.present ? data.deleted.value : this.deleted,
     );
   }
@@ -5944,6 +5984,7 @@ class RipAlbumsTableData extends DataClass
           ..write('lastScannedAt: $lastScannedAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('cueFilePath: $cueFilePath, ')
+          ..write('gnudbDiscId: $gnudbDiscId, ')
           ..write('deleted: $deleted')
           ..write(')'))
         .toString();
@@ -5963,6 +6004,7 @@ class RipAlbumsTableData extends DataClass
     lastScannedAt,
     updatedAt,
     cueFilePath,
+    gnudbDiscId,
     deleted,
   );
   @override
@@ -5981,6 +6023,7 @@ class RipAlbumsTableData extends DataClass
           other.lastScannedAt == this.lastScannedAt &&
           other.updatedAt == this.updatedAt &&
           other.cueFilePath == this.cueFilePath &&
+          other.gnudbDiscId == this.gnudbDiscId &&
           other.deleted == this.deleted);
 }
 
@@ -5997,6 +6040,7 @@ class RipAlbumsTableCompanion extends UpdateCompanion<RipAlbumsTableData> {
   final Value<int> lastScannedAt;
   final Value<int> updatedAt;
   final Value<String?> cueFilePath;
+  final Value<String?> gnudbDiscId;
   final Value<int> deleted;
   final Value<int> rowid;
   const RipAlbumsTableCompanion({
@@ -6012,6 +6056,7 @@ class RipAlbumsTableCompanion extends UpdateCompanion<RipAlbumsTableData> {
     this.lastScannedAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.cueFilePath = const Value.absent(),
+    this.gnudbDiscId = const Value.absent(),
     this.deleted = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -6028,6 +6073,7 @@ class RipAlbumsTableCompanion extends UpdateCompanion<RipAlbumsTableData> {
     required int lastScannedAt,
     required int updatedAt,
     this.cueFilePath = const Value.absent(),
+    this.gnudbDiscId = const Value.absent(),
     this.deleted = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -6049,6 +6095,7 @@ class RipAlbumsTableCompanion extends UpdateCompanion<RipAlbumsTableData> {
     Expression<int>? lastScannedAt,
     Expression<int>? updatedAt,
     Expression<String>? cueFilePath,
+    Expression<String>? gnudbDiscId,
     Expression<int>? deleted,
     Expression<int>? rowid,
   }) {
@@ -6065,6 +6112,7 @@ class RipAlbumsTableCompanion extends UpdateCompanion<RipAlbumsTableData> {
       if (lastScannedAt != null) 'last_scanned_at': lastScannedAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (cueFilePath != null) 'cue_file_path': cueFilePath,
+      if (gnudbDiscId != null) 'gnudb_disc_id': gnudbDiscId,
       if (deleted != null) 'deleted': deleted,
       if (rowid != null) 'rowid': rowid,
     });
@@ -6083,6 +6131,7 @@ class RipAlbumsTableCompanion extends UpdateCompanion<RipAlbumsTableData> {
     Value<int>? lastScannedAt,
     Value<int>? updatedAt,
     Value<String?>? cueFilePath,
+    Value<String?>? gnudbDiscId,
     Value<int>? deleted,
     Value<int>? rowid,
   }) {
@@ -6099,6 +6148,7 @@ class RipAlbumsTableCompanion extends UpdateCompanion<RipAlbumsTableData> {
       lastScannedAt: lastScannedAt ?? this.lastScannedAt,
       updatedAt: updatedAt ?? this.updatedAt,
       cueFilePath: cueFilePath ?? this.cueFilePath,
+      gnudbDiscId: gnudbDiscId ?? this.gnudbDiscId,
       deleted: deleted ?? this.deleted,
       rowid: rowid ?? this.rowid,
     );
@@ -6143,6 +6193,9 @@ class RipAlbumsTableCompanion extends UpdateCompanion<RipAlbumsTableData> {
     if (cueFilePath.present) {
       map['cue_file_path'] = Variable<String>(cueFilePath.value);
     }
+    if (gnudbDiscId.present) {
+      map['gnudb_disc_id'] = Variable<String>(gnudbDiscId.value);
+    }
     if (deleted.present) {
       map['deleted'] = Variable<int>(deleted.value);
     }
@@ -6167,6 +6220,7 @@ class RipAlbumsTableCompanion extends UpdateCompanion<RipAlbumsTableData> {
           ..write('lastScannedAt: $lastScannedAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('cueFilePath: $cueFilePath, ')
+          ..write('gnudbDiscId: $gnudbDiscId, ')
           ..write('deleted: $deleted, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -14172,6 +14226,7 @@ typedef $$RipAlbumsTableTableCreateCompanionBuilder =
       required int lastScannedAt,
       required int updatedAt,
       Value<String?> cueFilePath,
+      Value<String?> gnudbDiscId,
       Value<int> deleted,
       Value<int> rowid,
     });
@@ -14189,6 +14244,7 @@ typedef $$RipAlbumsTableTableUpdateCompanionBuilder =
       Value<int> lastScannedAt,
       Value<int> updatedAt,
       Value<String?> cueFilePath,
+      Value<String?> gnudbDiscId,
       Value<int> deleted,
       Value<int> rowid,
     });
@@ -14314,6 +14370,11 @@ class $$RipAlbumsTableTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get gnudbDiscId => $composableBuilder(
+    column: $table.gnudbDiscId,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<int> get deleted => $composableBuilder(
     column: $table.deleted,
     builder: (column) => ColumnFilters(column),
@@ -14432,6 +14493,11 @@ class $$RipAlbumsTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get gnudbDiscId => $composableBuilder(
+    column: $table.gnudbDiscId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get deleted => $composableBuilder(
     column: $table.deleted,
     builder: (column) => ColumnOrderings(column),
@@ -14512,6 +14578,11 @@ class $$RipAlbumsTableTableAnnotationComposer
 
   GeneratedColumn<String> get cueFilePath => $composableBuilder(
     column: $table.cueFilePath,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get gnudbDiscId => $composableBuilder(
+    column: $table.gnudbDiscId,
     builder: (column) => column,
   );
 
@@ -14609,6 +14680,7 @@ class $$RipAlbumsTableTableTableManager
                 Value<int> lastScannedAt = const Value.absent(),
                 Value<int> updatedAt = const Value.absent(),
                 Value<String?> cueFilePath = const Value.absent(),
+                Value<String?> gnudbDiscId = const Value.absent(),
                 Value<int> deleted = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => RipAlbumsTableCompanion(
@@ -14624,6 +14696,7 @@ class $$RipAlbumsTableTableTableManager
                 lastScannedAt: lastScannedAt,
                 updatedAt: updatedAt,
                 cueFilePath: cueFilePath,
+                gnudbDiscId: gnudbDiscId,
                 deleted: deleted,
                 rowid: rowid,
               ),
@@ -14641,6 +14714,7 @@ class $$RipAlbumsTableTableTableManager
                 required int lastScannedAt,
                 required int updatedAt,
                 Value<String?> cueFilePath = const Value.absent(),
+                Value<String?> gnudbDiscId = const Value.absent(),
                 Value<int> deleted = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => RipAlbumsTableCompanion.insert(
@@ -14656,6 +14730,7 @@ class $$RipAlbumsTableTableTableManager
                 lastScannedAt: lastScannedAt,
                 updatedAt: updatedAt,
                 cueFilePath: cueFilePath,
+                gnudbDiscId: gnudbDiscId,
                 deleted: deleted,
                 rowid: rowid,
               ),

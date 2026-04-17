@@ -42,6 +42,7 @@ class RipLibraryRepositoryImpl implements IRipLibraryRepository {
       totalSizeBytes: Value(album.totalSizeBytes),
       mediaItemId: Value(album.mediaItemId),
       cueFilePath: Value(album.cueFilePath),
+      gnudbDiscId: Value(album.gnudbDiscId),
       lastScannedAt: Value(album.lastScannedAt),
       updatedAt: Value(album.updatedAt),
     ));
@@ -60,9 +61,15 @@ class RipLibraryRepositoryImpl implements IRipLibraryRepository {
       totalSizeBytes: Value(album.totalSizeBytes),
       mediaItemId: Value(album.mediaItemId),
       cueFilePath: Value(album.cueFilePath),
+      gnudbDiscId: Value(album.gnudbDiscId),
       lastScannedAt: Value(album.lastScannedAt),
       updatedAt: Value(album.updatedAt),
     ));
+  }
+
+  @override
+  Future<void> updateGnudbDiscId(String ripAlbumId, String? discId) async {
+    await _dao.updateGnudbDiscId(ripAlbumId, discId);
   }
 
   @override
@@ -142,6 +149,7 @@ class RipLibraryRepositoryImpl implements IRipLibraryRepository {
         totalSizeBytes: row.totalSizeBytes,
         mediaItemId: row.mediaItemId,
         cueFilePath: row.cueFilePath,
+        gnudbDiscId: row.gnudbDiscId,
         lastScannedAt: row.lastScannedAt,
         updatedAt: row.updatedAt,
         deleted: row.deleted == 1,

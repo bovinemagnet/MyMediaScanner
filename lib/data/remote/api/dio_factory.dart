@@ -59,6 +59,32 @@ class DioFactory {
     );
   }
 
+  /// Creates a Dio instance configured for plain-text responses.
+  ///
+  /// Used for CDDB-style APIs like GnuDB whose wire format is plain text
+  /// rather than JSON.
+  static Dio createForPlainText({
+    required String baseUrl,
+    required String userAgent,
+  }) {
+    final dio = Dio(
+      BaseOptions(
+        baseUrl: baseUrl,
+        connectTimeout: const Duration(seconds: 15),
+        receiveTimeout: const Duration(seconds: 15),
+        responseType: ResponseType.plain,
+        headers: {'User-Agent': userAgent},
+      ),
+    );
+    if (kDebugMode) {
+      dio.interceptors.add(LogInterceptor(
+        requestBody: false,
+        responseBody: false,
+      ));
+    }
+    return dio;
+  }
+
   /// Creates a Dio instance with a Bearer token header.
   static Dio createWithBearerToken({
     required String baseUrl,

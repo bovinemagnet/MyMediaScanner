@@ -1,0 +1,19 @@
+REM GENRE "Rock"
+REM DATE "2023"
+REM DISCID 08025603
+PERFORMER "Example Artist"
+TITLE "Example Album"
+FILE "album.flac" WAVE
+  TRACK 01 AUDIO
+    TITLE "First Song"
+    PERFORMER "Example Artist"
+    INDEX 01 00:00:00
+  TRACK 02 AUDIO
+    TITLE "Second Song"
+    PERFORMER "Example Artist"
+    INDEX 00 03:18:00
+    INDEX 01 03:20:00
+  TRACK 03 AUDIO
+    TITLE "Third Song"
+    PERFORMER "Example Artist"
+    INDEX 01 06:40:00
