@@ -106,6 +106,25 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
 
+          // Export section — static HTML bundle
+          _SectionCard(
+            title: 'Export',
+            colors: colors,
+            theme: theme,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.public_outlined),
+                title: const Text('Static HTML export'),
+                subtitle: const Text(
+                    'Portable website bundle with filter controls; drop '
+                    'into any static host or open locally'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.go('/settings/export'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
           // FLAC Library section (desktop only)
           if (isDesktop) ...[
             _SectionCard(

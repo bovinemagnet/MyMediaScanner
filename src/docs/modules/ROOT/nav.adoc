@@ -20,5 +20,6 @@
 ** xref:progress.adoc[Reading and Watching Progress]
 ** xref:recommendations.adoc[Recommendations Engine]
 ** xref:wishlist.adoc[Wishlist and Suggestions]
+** xref:static-export.adoc[Static HTML Export]
 * xref:api-configuration.adoc[API Configuration]
 * xref:testing.adoc[Testing]

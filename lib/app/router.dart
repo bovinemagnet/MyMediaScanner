@@ -22,6 +22,7 @@ import 'package:mymediascanner/presentation/screens/series/series_list_screen.da
 import 'package:mymediascanner/presentation/screens/series/series_detail_screen.dart';
 import 'package:mymediascanner/presentation/screens/wishlist_suggestions/wishlist_suggestions_screen.dart';
 import 'package:mymediascanner/presentation/screens/labels/label_print_screen.dart';
+import 'package:mymediascanner/presentation/screens/export/static_export_screen.dart';
 import 'package:mymediascanner/presentation/screens/about/about_screen.dart';
 import 'package:mymediascanner/presentation/screens/borrowers/borrowers_screen.dart';
 import 'package:mymediascanner/presentation/screens/borrowers/borrower_detail_screen.dart';
@@ -229,6 +230,12 @@ final router = GoRouter(
                   parentNavigatorKey: _rootNavigatorKey,
                   pageBuilder: (context, state) =>
                       _fadeSlideTransition(state, const LabelPrintScreen()),
+                ),
+                GoRoute(
+                  path: 'export',
+                  parentNavigatorKey: _rootNavigatorKey,
+                  pageBuilder: (context, state) => _fadeSlideTransition(
+                      state, const StaticExportScreen()),
                 ),
               ],
             ),
