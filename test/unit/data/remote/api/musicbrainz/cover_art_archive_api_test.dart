@@ -103,4 +103,100 @@ void main() {
 
     expect(url, isNull);
   });
+
+  test('uses size250 thumbnail when large is missing', () async {
+    when(() => dio.get<Map<String, dynamic>>('/release/rel-1'))
+        .thenAnswer((_) async => _jsonResponse('/release/rel-1', {
+              'images': [
+                {
+                  'front': true,
+                  'image': 'https://example.com/full.jpg',
+                  'thumbnails': {
+                    '250': 'https://example.com/250.jpg',
+                  },
+                }
+              ],
+            }));
+
+    final url = await api.findFrontArtwork(
+      releaseId: 'rel-1',
+      releaseGroupId: 'rg-1',
+    );
+
+    expect(url, 'https://example.com/250.jpg');
+  });
+
+  test('falls back to full-size image when no thumbnails are present',
+      () async {
+    when(() => dio.get<Map<String, dynamic>>('/release/rel-1'))
+        .thenAnswer((_) async => _jsonResponse('/release/rel-1', {
+              'images': [
+                {
+                  'front': true,
+                  'image': 'https://example.com/full.jpg',
+                }
+              ],
+            }));
+
+    final url = await api.findFrontArtwork(
+      releaseId: 'rel-1',
+      releaseGroupId: 'rg-1',
+    );
+
+    expect(url, 'https://example.com/full.jpg');
+  });
+
+  test('skips non-front images and falls back to release group', () async {
+    when(() => dio.get<Map<String, dynamic>>('/release/rel-1'))
+        .thenAnswer((_) async => _jsonResponse('/release/rel-1', {
+              'images': [
+                {
+                  'front': false,
+                  'types': ['Back'],
+                  'image': 'https://example.com/back.jpg',
+                  'thumbnails': {
+                    'large': 'https://example.com/back-large.jpg',
+                  },
+                }
+              ],
+            }));
+    when(() => dio.get<Map<String, dynamic>>('/release-group/rg-1'))
+        .thenAnswer((_) async => _jsonResponse('/release-group/rg-1', {
+              'images': [
+                {
+                  'front': true,
+                  'image': 'https://example.com/rg.jpg',
+                  'thumbnails': {
+                    'large': 'https://example.com/rg-large.jpg',
+                  },
+                }
+              ],
+            }));
+
+    final url = await api.findFrontArtwork(
+      releaseId: 'rel-1',
+      releaseGroupId: 'rg-1',
+    );
+
+    expect(url, 'https://example.com/rg-large.jpg');
+  });
+
+  test('returns null when releaseGroupId is missing and release has no '
+      'front image', () async {
+    when(() => dio.get<Map<String, dynamic>>('/release/rel-1'))
+        .thenAnswer((_) async => _jsonResponse('/release/rel-1', {
+              'images': [
+                {
+                  'front': false,
+                  'image': 'https://example.com/back.jpg',
+                }
+              ],
+            }));
+
+    final url = await api.findFrontArtwork(releaseId: 'rel-1');
+
+    expect(url, isNull);
+    verifyNever(
+        () => dio.get<Map<String, dynamic>>(any(that: contains('release-group'))));
+  });
 }
