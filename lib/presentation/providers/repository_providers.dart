@@ -4,6 +4,7 @@ import 'package:mymediascanner/data/remote/api/dio_factory.dart';
 import 'package:mymediascanner/data/remote/api/discogs/discogs_api.dart';
 import 'package:mymediascanner/data/remote/api/fanart/fanart_api.dart';
 import 'package:mymediascanner/data/remote/api/theaudiodb/theaudiodb_api.dart';
+import 'package:mymediascanner/data/remote/api/musicbrainz/cover_art_archive_api.dart';
 import 'package:mymediascanner/data/remote/api/musicbrainz/musicbrainz_api.dart';
 import 'package:mymediascanner/data/remote/api/tvdb/tvdb_api.dart';
 import 'package:mymediascanner/data/remote/api/tvdb/tvdb_token_manager.dart';
@@ -79,6 +80,8 @@ final metadataRepositoryProvider = Provider<IMetadataRepository>((ref) {
         : null,
     // MusicBrainz is always available (free, no API key needed)
     musicBrainzApi: MusicBrainzApi(),
+    // Cover Art Archive is a sibling of MusicBrainz, also free.
+    coverArtArchiveApi: CoverArtArchiveApi(),
     tvdbApi: tvdbKey != null
         ? TvdbApi(DioFactory.createWithDynamicBearerToken(
             baseUrl: ApiConstants.tvdbBaseUrl,

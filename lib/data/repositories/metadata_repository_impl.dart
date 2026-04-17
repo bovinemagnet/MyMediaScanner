@@ -7,6 +7,7 @@ import 'package:mymediascanner/core/constants/api_constants.dart';
 import 'package:mymediascanner/core/constants/app_constants.dart';
 import 'package:mymediascanner/core/utils/api_circuit_breaker.dart';
 import 'package:mymediascanner/core/utils/barcode_utils.dart';
+import 'package:mymediascanner/core/utils/rate_limit_aware_client.dart';
 import 'package:mymediascanner/data/local/dao/barcode_cache_dao.dart';
 import 'package:mymediascanner/data/local/database/app_database.dart';
 import 'package:mymediascanner/data/mappers/discogs_mapper.dart';
@@ -20,6 +21,7 @@ import 'package:mymediascanner/data/mappers/upc_mapper.dart';
 import 'package:mymediascanner/data/remote/api/discogs/discogs_api.dart';
 import 'package:mymediascanner/data/remote/api/fanart/fanart_api.dart';
 import 'package:mymediascanner/data/remote/api/theaudiodb/theaudiodb_api.dart';
+import 'package:mymediascanner/data/remote/api/musicbrainz/cover_art_archive_api.dart';
 import 'package:mymediascanner/data/remote/api/musicbrainz/models/musicbrainz_release_dto.dart';
 import 'package:mymediascanner/data/remote/api/musicbrainz/musicbrainz_api.dart';
 import 'package:mymediascanner/data/remote/api/discogs/models/discogs_release_dto.dart';
@@ -45,6 +47,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     this.tmdbApi,
     this.discogsApi,
     this.musicBrainzApi,
+    this.coverArtArchiveApi,
     this.tvdbApi,
     this.googleBooksApi,
     this.openLibraryApi,
@@ -59,6 +62,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
   final TmdbApi? tmdbApi;
   final DiscogsApi? discogsApi;
   final MusicBrainzApi? musicBrainzApi;
+  final CoverArtArchiveApi? coverArtArchiveApi;
   final TvdbApi? tvdbApi;
   final GoogleBooksApi? googleBooksApi;
   final OpenLibraryApi? openLibraryApi;
@@ -467,8 +471,10 @@ class MetadataRepositoryImpl implements IMetadataRepository {
       if (release != null) {
         await _cacheResponse(
             barcode, 'music', 'musicbrainz', release.toJson());
-        return MusicBrainzMapper.fromRelease(release, barcode, barcodeType);
+        return _buildMusicBrainzResult(release, barcode, barcodeType);
       }
+    } on RateLimitExceededException catch (e) {
+      debugPrint('MusicBrainz rate-limited during detail fetch: $e');
     } on Exception catch (e) {
       debugPrint('MusicBrainz detail fetch failed: $e');
     }
@@ -728,18 +734,36 @@ class MetadataRepositoryImpl implements IMetadataRepository {
       final releases = response.releases;
       if (releases == null || releases.isEmpty) return null;
 
-      if (releases.length == 1) {
-        final release = releases.first;
+      final ranked = _rankMusicBrainzReleases(releases);
+      if (ranked.isEmpty) return null;
+
+      final best = ranked.first;
+      final runnerUp = ranked.length > 1 ? ranked[1] : null;
+      final autoAccept = ranked.length == 1 ||
+          _shouldAutoAccept(best: best, runnerUp: runnerUp!);
+
+      if (autoAccept) {
+        MusicBrainzReleaseDto detail = best;
+        final id = best.id;
+        if (id != null) {
+          try {
+            final fetched = await musicBrainzApi!.getRelease(id);
+            if (fetched != null) detail = fetched;
+          } on RateLimitExceededException {
+            rethrow;
+          } catch (e) {
+            // Detail fetch is best-effort; fall through to summary data.
+            debugPrint('MusicBrainz release detail fetch failed: $e');
+          }
+        }
+        final result =
+            await _buildMusicBrainzResult(detail, barcode, barcodeType);
         await _cacheResponse(
-            barcode, 'music', 'musicbrainz', release.toJson());
-        return ScanResult.single(
-          metadata: MusicBrainzMapper.fromRelease(
-              release, barcode, barcodeType),
-          isDuplicate: false,
-        );
+            barcode, 'music', 'musicbrainz', detail.toJson());
+        return ScanResult.single(metadata: result, isDuplicate: false);
       }
 
-      final candidates = releases
+      final candidates = ranked
           .take(AppConstants.maxCandidates)
           .map(MusicBrainzMapper.toCandidate)
           .toList();
@@ -748,10 +772,81 @@ class MetadataRepositoryImpl implements IMetadataRepository {
         barcode: barcode,
         barcodeType: barcodeType,
       );
+    } on RateLimitExceededException catch (e) {
+      debugPrint('MusicBrainz rate-limited: $e — falling back to Discogs');
     } on Exception catch (e) {
       debugPrint('Music lookup (MusicBrainz) failed: $e');
     }
     return null;
+  }
+
+  /// Orders MusicBrainz release candidates by descending completeness score.
+  ///
+  /// Ranking heuristics (PRD §15): Official status > bootleg; common
+  /// physical formats (CD/vinyl/cassette) preferred; presence of
+  /// label/catalogue data and non-zero track counts raise the score; the
+  /// MusicBrainz server-side `score` is added so an exact barcode match
+  /// surfaces naturally.
+  List<MusicBrainzReleaseDto> _rankMusicBrainzReleases(
+      List<MusicBrainzReleaseDto> releases) {
+    int scoreOf(MusicBrainzReleaseDto r) {
+      var score = 0;
+      if ((r.status ?? '').toLowerCase() == 'official') score += 40;
+      final format = (r.effectiveFormat ?? '').toLowerCase();
+      if (format.contains('cd') ||
+          format.contains('vinyl') ||
+          format.contains('cassette')) {
+        score += 20;
+      }
+      if (r.labelInfo?.firstOrNull?.catalogNumber != null) score += 10;
+      if (r.labelInfo?.firstOrNull?.label?.name != null) score += 10;
+      final tc = r.media?.firstOrNull?.trackCount ?? r.trackCount ?? 0;
+      if (tc > 0) score += 10;
+      if ((r.date ?? '').isNotEmpty) score += 5;
+      if ((r.country ?? '').isNotEmpty) score += 5;
+      return score + (r.score ?? 0);
+    }
+
+    final scored = releases
+        .map((r) => (release: r, score: scoreOf(r)))
+        .toList()
+      ..sort((a, b) => b.score.compareTo(a.score));
+    return scored.map((e) => e.release).toList();
+  }
+
+  bool _shouldAutoAccept({
+    required MusicBrainzReleaseDto best,
+    required MusicBrainzReleaseDto runnerUp,
+  }) {
+    final bestOfficial = (best.status ?? '').toLowerCase() == 'official';
+    final runnerOfficial =
+        (runnerUp.status ?? '').toLowerCase() == 'official';
+    if (bestOfficial && !runnerOfficial) return true;
+    final bestScore = best.score ?? 0;
+    final runnerScore = runnerUp.score ?? 0;
+    // Only accept when MusicBrainz itself says the top is clearly better.
+    return bestScore >= 95 && bestScore - runnerScore >= 20;
+  }
+
+  Future<MetadataResult> _buildMusicBrainzResult(
+    MusicBrainzReleaseDto release,
+    String barcode,
+    String barcodeType,
+  ) async {
+    final mapped =
+        MusicBrainzMapper.fromRelease(release, barcode, barcodeType);
+    final artUrl = await _resolveCoverArt(release);
+    return artUrl == null ? mapped : mapped.copyWith(coverUrl: artUrl);
+  }
+
+  Future<String?> _resolveCoverArt(MusicBrainzReleaseDto release) async {
+    final api = coverArtArchiveApi;
+    if (api == null || release.id == null) return release.coverUrl;
+    final archiveUrl = await api.findFrontArtwork(
+      releaseId: release.id!,
+      releaseGroupId: release.releaseGroupId,
+    );
+    return archiveUrl ?? release.coverUrl;
   }
 
   Future<ScanResult?> _lookupGeneral(
