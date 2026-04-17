@@ -22,9 +22,19 @@ abstract final class ApiConstants {
   // fanart.tv
   static const fanartBaseUrl = 'https://webservice.fanart.tv/v3';
 
-  // MusicBrainz
+  // MusicBrainz + Cover Art Archive
   static const musicBrainzBaseUrl = 'https://musicbrainz.org/ws/2';
-  static const musicBrainzUserAgent = 'MyMediaScanner/1.0 (https://github.com/bovinemagnet/MyMediaScanner)';
+  static const coverArtArchiveBaseUrl = 'https://coverartarchive.org';
+
+  /// App version used in outbound User-Agent strings. Updated by release
+  /// tooling; should match `pubspec.yaml`.
+  static const appVersion = '1.0.0';
+
+  /// MusicBrainz requires identifying the client in a User-Agent string
+  /// so the maintainer can be contacted about excessive traffic.
+  static String musicBrainzUserAgent() =>
+      'MyMediaScanner/$appVersion '
+      '(https://github.com/bovinemagnet/MyMediaScanner)';
 
   // UPCitemdb
   static const upcItemDbBaseUrl = 'https://api.upcitemdb.com/prod/trial';
