@@ -14,5 +14,12 @@ sealed class MetadataCandidate with _$MetadataCandidate {
     int? year,
     String? format,
     MediaType? mediaType,
+    // Music-specific disambiguation helpers (optional).
+    String? country,
+    String? label,
+    String? catalogueNumber,
+    int? trackCount,
+    String? status,
+    String? packaging,
   }) = _MetadataCandidate;
 }
