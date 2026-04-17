@@ -94,6 +94,165 @@ void main() {
       expect(tracks[1].title, 'Track Two');
     });
 
+    test('updateAlbum persists new artist and album title', () async {
+      await insertMediaItem('item-1');
+      final now = DateTime.now().millisecondsSinceEpoch;
+      await dao.insertAlbum(RipAlbumsTableCompanion(
+        id: const Value('rip-edit'),
+        libraryPath: const Value('Old Artist/Old Album'),
+        artist: const Value('Old Artist'),
+        albumTitle: const Value('Old Album'),
+        barcode: const Value('00001'),
+        trackCount: const Value(10),
+        discCount: const Value(1),
+        totalSizeBytes: const Value(100),
+        mediaItemId: const Value('item-1'),
+        lastScannedAt: Value(now),
+        updatedAt: Value(now),
+      ));
+
+      // Mirrors what RipLibraryRepositoryImpl.updateAlbum builds.
+      await dao.updateAlbum(RipAlbumsTableCompanion(
+        id: const Value('rip-edit'),
+        libraryPath: const Value('Old Artist/Old Album'),
+        artist: const Value('New Artist'),
+        albumTitle: const Value('New Album'),
+        barcode: const Value('00001'),
+        trackCount: const Value(10),
+        discCount: const Value(1),
+        totalSizeBytes: const Value(100),
+        mediaItemId: const Value('item-1'),
+        cueFilePath: const Value(null),
+        gnudbDiscId: const Value(null),
+        lastScannedAt: Value(now),
+        updatedAt: Value(now + 1000),
+      ));
+
+      final result =
+          await (db.select(db.ripAlbumsTable)
+                ..where((t) => t.id.equals('rip-edit')))
+              .getSingleOrNull();
+      expect(result, isNotNull);
+      expect(result!.artist, 'New Artist');
+      expect(result.albumTitle, 'New Album');
+      expect(result.updatedAt, now + 1000);
+    });
+
+    test('updateAlbum clears artist and album title when set to null',
+        () async {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      await dao.insertAlbum(RipAlbumsTableCompanion(
+        id: const Value('rip-clear'),
+        libraryPath: const Value('Artist/Album'),
+        artist: const Value('Some Artist'),
+        albumTitle: const Value('Some Album'),
+        trackCount: const Value(3),
+        totalSizeBytes: const Value(50),
+        lastScannedAt: Value(now),
+        updatedAt: Value(now),
+      ));
+
+      await dao.updateAlbum(RipAlbumsTableCompanion(
+        id: const Value('rip-clear'),
+        libraryPath: const Value('Artist/Album'),
+        artist: const Value(null),
+        albumTitle: const Value(null),
+        barcode: const Value(null),
+        trackCount: const Value(3),
+        discCount: const Value(1),
+        totalSizeBytes: const Value(50),
+        mediaItemId: const Value(null),
+        cueFilePath: const Value(null),
+        gnudbDiscId: const Value(null),
+        lastScannedAt: Value(now),
+        updatedAt: Value(now + 500),
+      ));
+
+      final result =
+          await (db.select(db.ripAlbumsTable)
+                ..where((t) => t.id.equals('rip-clear')))
+              .getSingleOrNull();
+      expect(result, isNotNull);
+      expect(result!.artist, isNull);
+      expect(result.albumTitle, isNull);
+    });
+
+    test('updateAlbum works when the album has no linked media item',
+        () async {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      await dao.insertAlbum(RipAlbumsTableCompanion(
+        id: const Value('rip-orphan'),
+        libraryPath: const Value('Artist/Orphan'),
+        artist: const Value('Orphan'),
+        albumTitle: const Value('Orphan Album'),
+        trackCount: const Value(1),
+        totalSizeBytes: const Value(10),
+        lastScannedAt: Value(now),
+        updatedAt: Value(now),
+        // No mediaItemId — common case for freshly scanned rips.
+      ));
+
+      await dao.updateAlbum(RipAlbumsTableCompanion(
+        id: const Value('rip-orphan'),
+        libraryPath: const Value('Artist/Orphan'),
+        artist: const Value('Edited'),
+        albumTitle: const Value('Edited Album'),
+        barcode: const Value(null),
+        trackCount: const Value(1),
+        discCount: const Value(1),
+        totalSizeBytes: const Value(10),
+        mediaItemId: const Value(null),
+        cueFilePath: const Value(null),
+        gnudbDiscId: const Value(null),
+        lastScannedAt: Value(now),
+        updatedAt: Value(now + 250),
+      ));
+
+      final result =
+          await (db.select(db.ripAlbumsTable)
+                ..where((t) => t.id.equals('rip-orphan')))
+              .getSingleOrNull();
+      expect(result, isNotNull);
+      expect(result!.artist, 'Edited');
+      expect(result.albumTitle, 'Edited Album');
+    });
+
+    test('updateTrackTitle persists a new title and clears it for null',
+        () async {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      await dao.insertAlbum(RipAlbumsTableCompanion(
+        id: const Value('rip-trk'),
+        libraryPath: const Value('Artist/Track Album'),
+        trackCount: const Value(1),
+        totalSizeBytes: const Value(10),
+        lastScannedAt: Value(now),
+        updatedAt: Value(now),
+      ));
+      await dao.insertTracks([
+        RipTracksTableCompanion(
+          id: const Value('trk-1'),
+          ripAlbumId: const Value('rip-trk'),
+          trackNumber: const Value(1),
+          title: const Value('Old Track Title'),
+          filePath: const Value('/music/trk.flac'),
+          fileSizeBytes: const Value(10),
+          updatedAt: Value(now),
+        ),
+      ]);
+
+      await dao.updateTrackTitle('trk-1', 'New Track Title');
+      var row = await (db.select(db.ripTracksTable)
+            ..where((t) => t.id.equals('trk-1')))
+          .getSingleOrNull();
+      expect(row?.title, 'New Track Title');
+
+      await dao.updateTrackTitle('trk-1', null);
+      row = await (db.select(db.ripTracksTable)
+            ..where((t) => t.id.equals('trk-1')))
+          .getSingleOrNull();
+      expect(row?.title, isNull);
+    });
+
     test('soft-delete album filters it from watchAll', () async {
       final now = DateTime.now().millisecondsSinceEpoch;
       await dao.insertAlbum(RipAlbumsTableCompanion(
