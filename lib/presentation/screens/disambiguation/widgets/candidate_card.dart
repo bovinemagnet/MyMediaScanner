@@ -70,7 +70,10 @@ class CandidateCard extends StatelessWidget {
                         ),
                       ],
                       const SizedBox(height: 6),
-                      Row(
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           if (candidate.year != null)
                             Text(
@@ -79,9 +82,6 @@ class CandidateCard extends StatelessWidget {
                                 color: colors.onSurfaceVariant,
                               ),
                             ),
-                          if (candidate.year != null &&
-                              candidate.format != null)
-                            const SizedBox(width: 8),
                           if (candidate.format != null)
                             Chip(
                               label: Text(candidate.format!),
@@ -89,19 +89,66 @@ class CandidateCard extends StatelessWidget {
                               padding: EdgeInsets.zero,
                               labelStyle: theme.textTheme.labelSmall,
                             ),
+                          if (candidate.country != null)
+                            Text(
+                              candidate.country!,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: colors.onSurfaceVariant,
+                              ),
+                            ),
+                          if (candidate.trackCount != null)
+                            Text(
+                              '${candidate.trackCount} tracks',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: colors.onSurfaceVariant,
+                              ),
+                            ),
+                          if (candidate.label != null)
+                            Text(
+                              candidate.label!,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: colors.onSurfaceVariant,
+                              ),
+                            ),
+                          if (candidate.catalogueNumber != null)
+                            Text(
+                              '#${candidate.catalogueNumber}',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: colors.onSurfaceVariant,
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          if (candidate.status != null)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: colors.secondaryContainer
+                                    .withValues(alpha: 0.4),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                candidate.status!,
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: colors.onSecondaryContainer,
+                                ),
+                              ),
+                            ),
                           const Spacer(),
                           Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
-                              color:
-                                  colors.primary.withValues(alpha: 0.1),
+                              color: colors.primary.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
                               candidate.sourceApi,
-                              style:
-                                  theme.textTheme.labelSmall?.copyWith(
+                              style: theme.textTheme.labelSmall?.copyWith(
                                 color: colors.primary,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -128,6 +175,15 @@ class CandidateCard extends StatelessWidget {
     if (candidate.subtitle != null) parts.add(candidate.subtitle!);
     if (candidate.year != null) parts.add('${candidate.year}');
     if (candidate.format != null) parts.add(candidate.format!);
+    if (candidate.country != null) parts.add(candidate.country!);
+    if (candidate.label != null) parts.add(candidate.label!);
+    if (candidate.catalogueNumber != null) {
+      parts.add('catalogue ${candidate.catalogueNumber!}');
+    }
+    if (candidate.trackCount != null) {
+      parts.add('${candidate.trackCount} tracks');
+    }
+    if (candidate.status != null) parts.add(candidate.status!);
     parts.add('from ${candidate.sourceApi}');
     return parts.join(', ');
   }
