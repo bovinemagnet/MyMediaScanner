@@ -52,10 +52,12 @@ class _ApiKeyFormState extends ConsumerState<ApiKeyForm> {
         Text('API Keys', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 8),
         const Text(
-            'Enter your own API keys. These are stored securely on-device.'),
+            'Enter your own API keys. They are stored securely on-device.'),
         const SizedBox(height: 4),
         Text(
-          'MusicBrainz, Open Library, and TheAudioDB require no keys.',
+          'Music scans use MusicBrainz by default — it is built in and '
+          'needs no key. Open Library and TheAudioDB also need no keys. '
+          'Discogs stays available as a fallback if you add a token below.',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.outline,
               ),
