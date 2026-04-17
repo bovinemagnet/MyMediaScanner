@@ -95,6 +95,21 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
     }
   }
 
+  String _formatSourceLabel(List<String> apis) {
+    const prettyNames = {
+      'musicbrainz': 'MusicBrainz',
+      'discogs': 'Discogs',
+      'tmdb': 'TMDB',
+      'tvdb': 'TVDB',
+      'google_books': 'Google Books',
+      'open_library': 'Open Library',
+      'upcitemdb': 'UPCitemdb',
+      'theaudiodb': 'TheAudioDB',
+      'fanart': 'fanart.tv',
+    };
+    return apis.map((a) => prettyNames[a] ?? a).join(' + ');
+  }
+
   Future<void> _saveToWishlist() async {
     final callback = widget.onSaveToWishlist;
     if (callback == null || _saving) return;
@@ -142,6 +157,28 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
             ),
           ),
           const SizedBox(height: 20),
+        ],
+
+        if (widget.initial.sourceApis.isNotEmpty) ...[
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: colors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                'Source: ${_formatSourceLabel(widget.initial.sourceApis)}',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: colors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
         ],
 
         // Media type selector
