@@ -106,27 +106,6 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(ripAlbumsTable);
             await m.createTable(ripTracksTable);
           }
-          if (from == 4) {
-            // Only add columns for databases created at schema 4, where
-            // rip_tracks exists but lacks the Phase B quality columns.
-            // Databases created at schema >= 5 already have these columns
-            // because createTable uses the current table definition.
-            await m.addColumn(
-                ripTracksTable, ripTracksTable.accurateripStatus);
-            await m.addColumn(
-                ripTracksTable, ripTracksTable.accurateripConfidence);
-            // accurate_rip_crc was added here historically; the v11 migration
-            // splits it into v1/v2, so add the v1 column directly.
-            await m.addColumn(
-                ripTracksTable, ripTracksTable.accurateripCrcV1);
-            await m.addColumn(ripTracksTable, ripTracksTable.peakLevel);
-            await m.addColumn(ripTracksTable, ripTracksTable.trackQuality);
-            await m.addColumn(ripTracksTable, ripTracksTable.copyCrc);
-            await m.addColumn(ripTracksTable, ripTracksTable.clickCount);
-            await m.addColumn(ripTracksTable, ripTracksTable.ripLogSource);
-            await m.addColumn(
-                ripTracksTable, ripTracksTable.qualityCheckedAt);
-          }
           if (from < 6) {
             await _createFts5Table(m);
           }
@@ -149,16 +128,6 @@ class AppDatabase extends _$AppDatabase {
           if (from < 10) {
             await m.createTable(playlistsTable);
             await m.createTable(playlistTracksTable);
-          }
-          if (from < 11) {
-            // Split accurate_rip_crc into v1 and v2 columns.
-            // Rename existing column to v1 (it held XLD v1 values or
-            // EAC's single captured CRC), and add a new v2 column.
-            await customStatement(
-                'ALTER TABLE rip_tracks '
-                'RENAME COLUMN accurate_rip_crc TO accurate_rip_crc_v1');
-            await m.addColumn(
-                ripTracksTable, ripTracksTable.accurateripCrcV2);
           }
           if (from < 12) {
             await m.addColumn(
