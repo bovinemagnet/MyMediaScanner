@@ -129,9 +129,17 @@ Keys are entered in the *Settings* screen at runtime.
 | Yes
 | Film and TV metadata; IMDb ID lookup via the `/find` endpoint
 
+| MusicBrainz
+| No
+| Primary music metadata for CDs, vinyl, and other audio releases
+
+| Cover Art Archive
+| No
+| Front-cover artwork for music releases (companion to MusicBrainz)
+
 | Discogs
-| Yes
-| Music metadata for CDs and vinyl
+| No (optional)
+| Optional music fallback and enrichment when a Discogs token is supplied
 
 | UPCitemdb
 | Yes
@@ -146,8 +154,8 @@ Keys are entered in the *Settings* screen at runtime.
 | Book metadata fallback by ISBN
 |===
 
-TIP: Google Books and Open Library require no registration.
-You can start cataloguing books immediately without configuring any API keys.
+TIP: MusicBrainz, Cover Art Archive, Google Books, and Open Library require no registration.
+You can catalogue music and books immediately without configuring any API keys.
 
 == Project Structure
 
@@ -185,7 +193,7 @@ lib/
 <4> App-wide constants and breakpoints
 <5> Platform utilities, barcode utilities, Cover OCR helper, Vision OCR method channel
 <6> Drift database, table definitions, and DAOs
-<7> Retrofit API clients for TMDB, Discogs, Google Books, Open Library, and UPCitemdb
+<7> API clients for TMDB, Discogs, MusicBrainz, Cover Art Archive, Google Books, Open Library, and UPCitemdb
 <8> PostgreSQL sync client and conflict resolution logic
 <9> DTO to domain entity converters (mappers)
 <10> Concrete implementations of domain repository interfaces

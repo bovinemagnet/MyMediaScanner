@@ -19,10 +19,20 @@ No keys are hard-coded or bundled with the application.
 | Yes (generous rate limits)
 | Yes
 
-| https://www.discogs.com/developers/[Discogs]
-| Music metadata, release details, cover art
-| Yes (rate-limited)
+| https://musicbrainz.org[MusicBrainz]
+| Music metadata, release details, track listings, canonical MBIDs
+| Yes (rate-limited, ~1 req/s)
+| No
+
+| https://coverartarchive.org[Cover Art Archive]
+| Front cover artwork for music releases
 | Yes
+| No
+
+| https://www.discogs.com/developers/[Discogs]
+| Optional music fallback and enrichment
+| Yes (rate-limited)
+| No (optional)
 
 | https://www.upcitemdb.com/[UPCitemdb]
 | General UPC/EAN fallback when specialist APIs return no result
@@ -40,14 +50,19 @@ No keys are hard-coded or bundled with the application.
 | No
 |===
 
-Google Books and Open Library are queried without authentication.
-TMDB, Discogs, and UPCitemdb all require a personal API key that you register directly with each service.
+MusicBrainz and Cover Art Archive are queried without authentication and require no registration.
+Discogs is optional — if you supply a token it is used as a music fallback and enrichment source, but the app works without it.
+Only TMDB and UPCitemdb keys are strictly required for full functionality.
+
+NOTE: MusicBrainz asks all clients to identify themselves via a `User-Agent` header containing the application name and version.
+The app sends this header automatically — no configuration is needed.
+The built-in `RateLimitAwareClient` enforces the ~1 req/s guideline so you will not be blocked under normal use.
 
 === Obtaining API Keys
 
 TMDB:: Create a free account at https://www.themoviedb.org/, then go to *Settings > API* and request a Developer API key. The v3 auth token is used.
 
-Discogs:: Register at https://www.discogs.com/settings/developers and generate a personal access token. OAuth is not required.
+Discogs:: Registration is optional. If you want Discogs as a music fallback, register at https://www.discogs.com/settings/developers and generate a personal access token. OAuth is not required.
 
 UPCitemdb:: Sign up at https://www.upcitemdb.com/ and copy the trial or paid API key from your dashboard.
 

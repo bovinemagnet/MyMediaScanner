@@ -110,7 +110,7 @@ The scan screen includes a row of media type filter toggles:
 * Book
 * Game
 
-Selecting a specific type narrows the metadata lookup to the appropriate API (for example, choosing *Music* routes EAN barcodes directly to Discogs rather than attempting a TMDB lookup first).
+Selecting a specific type narrows the metadata lookup to the appropriate API (for example, choosing *Music* routes EAN barcodes to MusicBrainz first, falling back to Discogs if needed, rather than attempting a TMDB lookup).
 The selected filter is preserved for the duration of the scanning session.
 
 == Duplicate Detection

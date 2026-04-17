@@ -356,7 +356,7 @@ A cached entry is considered fresh if it is fewer than 7 days old.
 
 | `source_api`
 | TEXT
-| Name of the API that produced the response, e.g. `tmdb`, `discogs`, `google_books`
+| Name of the API that produced the response, e.g. `tmdb`, `musicbrainz`, `discogs`, `google_books`
 
 | `cached_at`
 | INTEGER

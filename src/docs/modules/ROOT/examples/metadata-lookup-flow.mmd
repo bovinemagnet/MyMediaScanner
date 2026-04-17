@@ -18,7 +18,11 @@ flowchart TD
     IsEanUpc{"EAN / UPC\nwith type hint?"}
     TypeHint{"type hint?"}
     TmdbDisc["TMDB API\n(film / TV)"]
-    Discogs["Discogs API\n(music)"]
+
+    MusicBrainz["MusicBrainz API\n(music, primary)"]
+    MbResult{"result\nfound?"}
+    Discogs["Discogs API\n(music, fallback)"]
+    CoverArt["Cover Art Archive\n(front artwork)"]
 
     Fallback["UPCitemdb\n(fallback)"]
 
@@ -48,7 +52,11 @@ flowchart TD
     IsIsbn -- "no" --> IsEanUpc
     IsEanUpc -- "yes" --> TypeHint
     TypeHint -- "film/TV" --> TmdbDisc
-    TypeHint -- "music" --> Discogs
+    TypeHint -- "music" --> MusicBrainz
+    MusicBrainz --> MbResult
+    MbResult -- "found" --> CoverArt
+    MbResult -- "empty / 503" --> Discogs
+    CoverArt --> GotResult
     TmdbDisc --> GotResult
     Discogs --> GotResult
 
@@ -70,3 +78,5 @@ flowchart TD
     style CacheResponse fill:#1a4a3a,color:#aaffcc,stroke:#44aa88
     style MapResult fill:#1a4a3a,color:#aaffcc,stroke:#44aa88
     style Fallback fill:#4a4a1a,color:#ffeeaa,stroke:#888822
+    style MusicBrainz fill:#1a4a3a,color:#aaffcc,stroke:#44aa88
+    style CoverArt fill:#1a4a3a,color:#aaffcc,stroke:#44aa88

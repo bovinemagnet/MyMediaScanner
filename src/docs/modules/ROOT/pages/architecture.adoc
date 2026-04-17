@@ -47,7 +47,7 @@ It implements the abstract repository interfaces defined in `domain/` and manage
 
 `data/local/`:: Drift (SQLite) database, typed table definitions, and DAOs.
 Schema version {schema-version} contains 17 tables: `media_items`, `tags`, `media_item_tags`, `shelves`, `shelf_items`, `barcode_cache`, `sync_log`, `borrowers`, `loans`, `rip_albums`, `rip_tracks`, `batch_sessions`, `batch_queue_items`, `playlists`, `playlist_tracks`, `locations`, and `series`.
-`data/remote/api/`:: Retrofit API clients for TMDB, Discogs, Google Books, Open Library, and UPCitemdb.
+`data/remote/api/`:: API clients for TMDB, Discogs, MusicBrainz, Cover Art Archive, Google Books, Open Library, and UPCitemdb.
 Users supply their own API keys stored in `flutter_secure_storage`.
 `data/remote/sync/`:: PostgreSQL sync client (direct connection via the `postgres` Dart package) with last-write-wins conflict resolution.
 `data/mappers/`:: Stateless converter functions that transform API DTOs and Drift row types into domain entities.

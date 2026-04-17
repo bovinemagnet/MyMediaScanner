@@ -17,7 +17,7 @@ Data is stored locally in SQLite with optional sync to a self-hosted PostgreSQL 
 | Camera-based scanning on Android and iOS via ML Kit; USB keyboard-wedge and webcam scanning on all desktop platforms (macOS, Windows, Linux)
 
 | Tiered Metadata Lookup
-| Automatic lookup through TMDB, Discogs, Google Books, Open Library, and UPCitemdb, with a local cache to minimise API calls
+| Automatic lookup through TMDB, MusicBrainz, Cover Art Archive, Discogs, Google Books, Open Library, and UPCitemdb, with a local cache to minimise API calls
 
 | Batch Scanning
 | Queue-based review mode for scanning multiple items in sequence, with conflict resolution and bulk save
@@ -78,7 +78,7 @@ Data is stored locally in SQLite with optional sync to a self-hosted PostgreSQL 
 | Optional remote sync via the `postgres` Dart package (direct connection)
 
 | Dio + Retrofit
-| HTTP client and generated API clients for TMDB, Discogs, Google Books, Open Library, and UPCitemdb
+| HTTP client and generated API clients for TMDB, Discogs, MusicBrainz, Cover Art Archive, Google Books, Open Library, and UPCitemdb
 
 | GoRouter
 | Declarative navigation with `StatefulShellRoute`; desktop sidebar and glassmorphism mobile bottom nav

@@ -66,7 +66,7 @@ The detected type, combined with any media type hint supplied by the user on the
 
 | Music
 | EAN-13, UPC-A
-| Discogs
+| MusicBrainz → Discogs (fallback)
 
 | Books
 | ISBN-10, ISBN-13
@@ -82,8 +82,15 @@ Routing rules:
 * An **IMDb ID** (`tt*`) bypasses the type hint and calls the TMDB `/find/\{external_id}` endpoint directly.
 * An **ISBN** is sent to Google Books first; if no result is returned, Open Library is tried as a fallback.
 * An **EAN-13 or UPC-A** with a film or TV hint is routed to TMDB search.
-* An **EAN-13 or UPC-A** with a music hint is routed to Discogs search.
+* An **EAN-13 or UPC-A** with a music hint is routed to MusicBrainz first.
+If MusicBrainz returns nothing, is rate-limited, or gives only low-quality data, the repository falls back to Discogs and finally UPCitemdb.
 * An **EAN-13 or UPC-A** with a game hint is sent directly to UPCitemdb.
+
+For MusicBrainz matches, the repository ranks candidates by status (Official preferred), format (CD, vinyl, and cassette preferred over digital), completeness (label, catalogue number, track count, date, and country) and the MusicBrainz server score.
+A clearly dominant match is auto-accepted; otherwise the user sees the disambiguation screen with country, label, catalogue number, track count, and status on each candidate card.
+
+MusicBrainz enforces strict rate limits.
+A dedicated `RateLimitAwareClient` throttles requests to approximately 1 req/s and, on HTTP 503, enters a cooldown period during which non-critical follow-up calls are skipped.
 
 === 4. UPCitemdb Fallback
 
@@ -101,7 +108,9 @@ Once a raw API response is obtained, it is:
 
 == API Clients
 
-Each external API is represented by a dedicated Retrofit class backed by its own Dio instance:
+Each external API is represented by a dedicated client class backed by its own Dio instance.
+`TmdbApiClient`, `DiscogsApiClient`, `GoogleBooksApiClient`, `OpenLibraryApiClient`, and `UpcItemDbApiClient` are Retrofit-generated clients.
+`MusicBrainzApi` and `CoverArtArchiveApi` are manual Dio clients (Retrofit is not used for these two, as their response shapes benefit from hand-written parsing).
 
 [cols="2,3", options="header"]
 |===
@@ -110,6 +119,12 @@ Each external API is represented by a dedicated Retrofit class backed by its own
 
 | `TmdbApiClient`
 | `https://api.themoviedb.org/3`
+
+| `MusicBrainzApi`
+| `https://musicbrainz.org/ws/2`
+
+| `CoverArtArchiveApi`
+| `https://coverartarchive.org`
 
 | `DiscogsApiClient`
 | `https://api.discogs.com`
@@ -124,9 +139,10 @@ Each external API is represented by a dedicated Retrofit class backed by its own
 | `https://api.upcitemdb.com/prod/trial`
 |===
 
-API keys for TMDB, Discogs, and UPCitemdb are read at runtime from `SecureStorageService` via a Riverpod provider.
-Google Books and Open Library require no key.
-Users configure their own keys in the Settings screen; keys are never bundled with the application.
+TMDB and UPCitemdb require user-supplied API keys read at runtime from `SecureStorageService` via a Riverpod provider.
+Discogs is optional — a key enables it as a music fallback, but the app functions without one.
+MusicBrainz, Cover Art Archive, Google Books, and Open Library need no keys.
+Users configure their keys in the Settings screen; keys are never bundled with the application.
 
 == Metadata Fields
 
@@ -169,6 +185,9 @@ All media types expose the following fields on `MetadataResult`:
 
 === Music
 
+The following fields are populated on `MetadataResult` for music items.
+Fields sourced from MusicBrainz or Cover Art Archive are stored in `extraMetadata` rather than dedicated columns, as they may not be present for every release.
+
 [cols="2,3", options="header"]
 |===
 | Field
@@ -186,9 +205,41 @@ All media types expose the following fields on `MetadataResult`:
 | `catalogueNumber`
 | Label catalogue reference
 
+| `musicbrainzReleaseId`
+| MusicBrainz release MBID (UUID); stored in `extraMetadata`
+
+| `musicbrainzReleaseGroupId`
+| MusicBrainz release-group MBID; stored in `extraMetadata`
+
+| `musicbrainzArtistIds`
+| List of artist MBIDs for all credited performers; stored in `extraMetadata`
+
+| `releaseDate`
+| Full release date string (e.g. `1994-09-26`) where available; stored in `extraMetadata`
+
+| `releaseCountry`
+| ISO 3166-1 alpha-2 country code of the release (e.g. `GB`); stored in `extraMetadata`
+
+| `packaging`
+| Physical packaging description (e.g. `Jewel Case`, `Gatefold`); stored in `extraMetadata`
+
+| `trackCount`
+| Total track count across all discs; stored in `extraMetadata`
+
+| `discCount`
+| Number of discs in the release; stored in `extraMetadata`
+
+| `status`
+| MusicBrainz release status (e.g. `Official`, `Promotional`); stored in `extraMetadata`
+
 | `discogsReleaseId`
-| Discogs release numeric identifier
+| Discogs release numeric identifier; only present when the Discogs fallback fired; stored in `extraMetadata`
 |===
+
+==== Cover Art
+
+Cover art is fetched from the Cover Art Archive by release MBID, with release-group MBID as a fallback when the specific release has no dedicated front image.
+When neither MBID yields a front image, the repository preserves whatever cover URL other fallback providers (Discogs, UPCitemdb) supplied.
 
 === Books
 

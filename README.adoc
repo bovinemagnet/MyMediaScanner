@@ -18,7 +18,7 @@ Scan with your phone camera or a desktop USB barcode scanner / webcam, automatic
 
 Barcode scanning:: Camera on Android/iOS (ML Kit), webcam on all desktop platforms (macOS via mobile_scanner, Windows/Linux via camera_desktop + flutter_zxing), keyboard-wedge USB scanner on desktop, manual entry everywhere.
 
-Automatic metadata lookup:: Tiered strategy across TMDB (film/TV), Discogs (music), Google Books, Open Library (books), and UPCitemdb (fallback). Multi-match disambiguation when multiple results are found.
+Automatic metadata lookup:: Tiered strategy across TMDB (film/TV), MusicBrainz (primary music), Discogs (music fallback), Google Books, Open Library (books), and UPCitemdb (fallback). Multi-match disambiguation when multiple results are found.
 
 Cover OCR:: Recognise text from cover images — ML Kit on Android/iOS, Vision framework on macOS, Tesseract on Windows/Linux. Webcam capture or gallery file picker.
 
@@ -80,13 +80,13 @@ Offline-first:: All data stored locally in SQLite. Fully functional without netw
 | State management with hand-written `Notifier` and `AsyncNotifier` providers
 
 | Drift (SQLite)
-| Local database with type-safe DAOs; schema version 8 with 13 tables and 7 performance indexes
+| Local database with type-safe DAOs; schema version 16 with 14+ tables
 
 | PostgreSQL
 | Optional remote sync via the `postgres` Dart package (direct connection, no intermediary API)
 
 | Dio + Retrofit
-| HTTP client and generated API clients for TMDB, Discogs, Google Books, Open Library, and UPCitemdb
+| HTTP client and generated API clients for TMDB, Discogs, MusicBrainz, Cover Art Archive, Google Books, Open Library, and UPCitemdb
 
 | GoRouter
 | Declarative navigation with `StatefulShellRoute`; desktop sidebar (with drawer fallback) and glassmorphism mobile bottom nav
@@ -125,7 +125,7 @@ dart run build_runner build --delete-conflicting-outputs
 # Run on your platform
 flutter run
 
-# Run tests (~683 tests)
+# Run tests (~1100 tests)
 flutter test
 
 # Analyse
@@ -137,24 +137,37 @@ flutter analyze
 The app requires user-supplied API keys for metadata lookup.
 Configure these in *Settings > API Keys*:
 
-[cols="2,3,1",options="header"]
+[cols="2,3,1,1",options="header"]
 |===
-| Service | Purpose | Free Tier
+| Service | Purpose | Free Tier | Key Required
 
 | https://www.themoviedb.org/settings/api[TMDB]
 | Film/TV metadata + scores
 | Yes (generous)
+| Yes
+
+| https://musicbrainz.org[MusicBrainz]
+| Primary music metadata, release details, artist MBIDs
+| Yes (~1 req/s)
+| No
+
+| https://coverartarchive.org[Cover Art Archive]
+| Front-cover artwork for music releases
+| Yes
+| No
 
 | https://www.discogs.com/settings/developers[Discogs]
-| Music metadata + scores
+| Optional music fallback and enrichment
 | Yes (rate-limited)
+| No (optional)
 
 | https://www.upcitemdb.com/wp/docs/main/development/getting-started/[UPCitemdb]
 | General UPC fallback
 | Yes (limited)
+| Yes
 |===
 
-Google Books and Open Library require no API keys.
+MusicBrainz, Cover Art Archive, Google Books, and Open Library require no API keys.
 
 === PostgreSQL Sync (Optional)
 
@@ -191,7 +204,7 @@ lib/
   data/
     local/      -- Drift database, tables, DAOs
     remote/
-      api/      -- Retrofit API clients (TMDB, Discogs, Google Books, Open Library, UPC)
+      api/      -- Retrofit API clients (TMDB, Discogs, MusicBrainz, Cover Art Archive, Google Books, Open Library, UPC)
       sync/     -- PostgreSQL sync client, conflict resolution, migrations
     mappers/    -- DTO to domain entity converters
     repositories/ -- Concrete implementations of domain interfaces
