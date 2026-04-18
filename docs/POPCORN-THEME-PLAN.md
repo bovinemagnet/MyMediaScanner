@@ -503,7 +503,7 @@ Each numbered step is a single PR.
 
 Before starting, confirm:
 
-1. Are the Obsidian Lens + Precision Editorial themes considered stable/protected, or open to tweaks if we find inconsistencies while adding `AppMediaColors`?
-2. Is adding Space Grotesk acceptable, or should we stick to Manrope for numerals?
-3. Any existing `ThemeExtension` subclasses we should extend rather than add alongside? (Check `app_theme_extensions.dart`.)
-4. WCAG AA body-text contrast on the coral primary — prefer to keep the saturated `#FF5E3A` and ensure all CTA copy is "large text" weight, or darken to `#E44A26`?
+1. Are the Obsidian Lens + Precision Editorial themes considered stable/protected, or open to tweaks if we find inconsistencies while adding `AppMediaColors`? - They can be tweaked
+3. Is adding Space Grotesk acceptable, or should we stick to Manrope for numerals? - acceptable to add Space Grotesk
+4. Any existing `ThemeExtension` subclasses we should extend rather than add alongside? (Check `app_theme_extensions.dart`.) - What ever is better to implement, and to allow other themes to be added later.
+5. WCAG AA body-text contrast on the coral primary — prefer to keep the saturated `#FF5E3A` and ensure all CTA copy is "large text" weight, or darken to `#E44A26`? - what ever looks better, this type of app it not so good as a WCAG AA.
