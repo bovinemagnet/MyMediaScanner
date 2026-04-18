@@ -64,17 +64,6 @@ Widget _wrap({
   );
 }
 
-// TODO: All three tests in this file are blocked by a pre-existing production
-// bug in `BorrowerPickerDialog`: the widget places a `Spacer` inside
-// `AlertDialog.actions`, which is backed by Flutter's `OverflowBar`.
-// `OverflowBar` does not accept `Expanded`/`Spacer` children (it uses
-// `_OverflowBarParentData`, not `FlexParentData`), so Flutter throws a
-// render-tree assertion as soon as the dialog finishes its first layout pass.
-// The fix is to replace `const Spacer()` in the `actions` list with a
-// `SizedBox(width: double.infinity)` or to restructure the actions bar into
-// a plain `Row` inside the `content` widget.
-// Once that fix is applied, remove `skip: true` from each test below.
-
 void main() {
   late MockBorrowerRepository borrowerRepo;
   late MockLoanRepository loanRepo;
@@ -103,7 +92,6 @@ void main() {
 
   testWidgets(
     'lists all borrowers',
-    skip: true, // TODO: unblock once Spacer-in-actions production bug is fixed
     (tester) async {
       when(() => borrowerRepo.watchAll()).thenAnswer(
         (_) => Stream.value([
@@ -127,7 +115,6 @@ void main() {
 
   testWidgets(
     'tapping a borrower creates a loan and dismisses the dialog',
-    skip: true, // TODO: unblock once Spacer-in-actions production bug is fixed
     (tester) async {
       when(() => borrowerRepo.watchAll()).thenAnswer(
         (_) => Stream.value([_borrower(id: 'borrow1', name: 'Charlie')]),
@@ -157,7 +144,6 @@ void main() {
 
   testWidgets(
     'add-new-borrower button opens the form',
-    skip: true, // TODO: unblock once Spacer-in-actions production bug is fixed
     (tester) async {
       when(() => borrowerRepo.watchAll()).thenAnswer(
         (_) => Stream.value([_borrower()]),

@@ -42,6 +42,7 @@ class _BorrowerPickerDialogState extends ConsumerState<BorrowerPickerDialog> {
 
     return AlertDialog(
       title: const Text('Select Borrower'),
+      actionsAlignment: MainAxisAlignment.spaceBetween,
       content: SizedBox(
         width: double.maxFinite,
         child: Column(
@@ -168,7 +169,6 @@ class _BorrowerPickerDialogState extends ConsumerState<BorrowerPickerDialog> {
             style: const TextStyle(fontSize: 12),
           ),
         ),
-        const Spacer(),
         TextButton(
           onPressed: () => Navigator.pop(context),
           child: const Text('Cancel'),
