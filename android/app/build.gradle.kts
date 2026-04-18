@@ -13,6 +13,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -54,6 +55,9 @@ android {
 }
 
 dependencies {
+    // Required by flutter_local_notifications (uses java.time on minSdk < 26).
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+
     // ML Kit optional language models referenced by google_mlkit_text_recognition
     // but not bundled — needed to satisfy R8 missing class checks.
     implementation("com.google.mlkit:text-recognition-chinese:16.0.1")
