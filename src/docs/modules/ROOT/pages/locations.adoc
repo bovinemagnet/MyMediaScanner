@@ -11,6 +11,8 @@ Location tracking models the physical world: rooms, furniture, boxes, and slots.
 NOTE: The locations screen is accessible at the `/locations` route and appears in the desktop sidebar only (branch 9).
 Location data is stored and managed on desktop; mobile devices can view location information in item detail but cannot manage the location tree.
 
+image::screenshots/12-locations.png[Physical location browser showing the room/shelf tree, role=screenshot, width=720]
+
 == Location Hierarchy
 
 Locations form a four-level hierarchy, though all intermediate levels are optional:

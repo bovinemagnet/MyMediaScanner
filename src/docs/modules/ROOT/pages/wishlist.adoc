@@ -7,6 +7,8 @@ include::_attributes.adoc[]
 The wishlist lets you track media you intend to buy.
 The suggestions surface takes that a step further by surfacing trending titles you have not yet seen, ranked by the same scorer that powers the recommendations engine.
 
+image::screenshots/10-wishlist.png[Wishlist screen with tracked items, role=screenshot, width=720]
+
 == Ownership Status
 
 Every `media_items` row carries an `ownership_status` column backed by the `OwnershipStatus` enum:

@@ -6,6 +6,8 @@ MyMediaScanner uses several external APIs for metadata lookup and optional cloud
 Users supply their own API keys, which are stored securely on-device using platform-native credential storage.
 No keys are hard-coded or bundled with the application.
 
+image::screenshots/08-settings.png[Settings screen showing the API keys section, role=screenshot, width=720]
+
 == Metadata API Keys
 
 === Required and Optional Keys

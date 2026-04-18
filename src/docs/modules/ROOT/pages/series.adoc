@@ -6,6 +6,8 @@ include::_attributes.adoc[]
 
 Series grouping lets you link individual media items to a named series or franchise — for example a film collection, a music release group, or a television run — and visualise how complete your ownership of that series is.
 
+image::screenshots/11-series.png[Series screen listing grouped releases with completion counts, role=screenshot, width=720]
+
 == Overview
 
 A *series* is a named grouping of related releases identified by a qualified external ID.

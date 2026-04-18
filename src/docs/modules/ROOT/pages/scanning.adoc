@@ -5,6 +5,8 @@ include::_attributes.adoc[]
 Barcode scanning is the primary way to add items to your collection.
 MyMediaScanner supports real-time camera scanning on mobile, keyboard-wedge USB scanners on desktop, and manual barcode entry on any platform.
 
+image::screenshots/04-scanner.png[Scanner screen ready for input, role=screenshot, width=720]
+
 == Scan Flow
 
 The diagram below shows the complete lifecycle of a single scan, from the camera opening to the item being stored in SQLite and queued for background sync.

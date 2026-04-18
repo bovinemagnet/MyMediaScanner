@@ -5,6 +5,8 @@ include::_attributes.adoc[]
 Batch scanning mode lets you scan a large number of items in rapid succession without returning to the home screen between each one.
 Scanned items are placed in a review queue where you can confirm, edit, or discard individual entries before performing a single bulk save.
 
+image::screenshots/09-batch-editor.png[Batch editor showing the review queue, role=screenshot, width=720]
+
 == Overview
 
 In standard scanning mode each scan triggers an immediate metadata lookup and requires the user to confirm the result before the next scan can begin.

@@ -61,6 +61,23 @@ image::screenshots/01-dashboard.png[Dashboard showing the Quick Scan CTA and rec
 | Identify potential duplicates in the collection based on barcode, title, and metadata similarity
 |===
 
+== Screenshots
+
+The images below are generated from the integration-test tour at `integration_test/screenshot_tour_test.dart` via `tools/capture-screenshots.sh`.
+Feature-specific pages embed their own screenshots near the top; this gallery covers the four core surfaces that do not have a dedicated page.
+
+.Library grid
+image::screenshots/02-collection-grid.png[Library grid view with seeded items, role=screenshot, width=720]
+
+.Item detail
+image::screenshots/03-item-detail.png[Item detail page with cover art, rating, and metadata sections, role=screenshot, width=720]
+
+.Insights dashboard
+image::screenshots/05-insights.png[Insights dashboard with collection charts, role=screenshot, width=720]
+
+.Shelves
+image::screenshots/06-shelves.png[Shelves list with three sample shelves, role=screenshot, width=720]
+
 == Technology Stack
 
 [cols="1,3", options="header"]

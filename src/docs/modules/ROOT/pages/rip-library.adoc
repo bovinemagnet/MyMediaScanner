@@ -6,6 +6,8 @@ The rip library feature is a *desktop-only* capability that scans a directory of
 
 NOTE: The rip library screen is accessible from the `/rips` route and appears in the desktop sidebar only. It is not available on Android or iOS.
 
+image::screenshots/07-rips.png[Rip library showing scanned FLAC albums, role=screenshot, width=720]
+
 == Overview
 
 The feature answers two key questions:

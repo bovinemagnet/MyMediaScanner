@@ -8,6 +8,8 @@ The recommendations engine analyses your collection and suggests what to watch, 
 All scoring is performed locally on-device with no external service calls.
 Results are deterministic and explainable: every recommendation is accompanied by structured reasons you can read at a glance.
 
+image::screenshots/13-suggestions.png[Suggestions screen with ranked recommendation cards, role=screenshot, width=720]
+
 == Design Principles
 
 * *Local* — no data leaves the device.
