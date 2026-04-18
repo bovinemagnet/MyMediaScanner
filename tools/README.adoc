@@ -1,0 +1,45 @@
+= Tools
+Paul Snow
+0.0.0
+
+Helper scripts for MyMediaScanner development.
+
+== capture-screenshots.sh
+
+Captures documentation screenshots by running the integration-test tour
+(`integration_test/screenshot_tour_test.dart`) and copying the produced
+PNGs into `src/docs/modules/ROOT/assets/images/screenshots/`.
+
+=== Run
+
+[source,bash]
+----
+tools/capture-screenshots.sh
+----
+
+=== Requirements
+
+* A Linux desktop session (a real display) — the tour pumps the live Flutter
+  app and cannot render headless. For CI use `Xvfb` or an equivalent virtual
+  framebuffer.
+* The `flutter` CLI on the path with a working Linux build configuration.
+
+=== Output
+
+Raw PNGs land in `build/screenshots/` first and are then copied into the
+Antora asset tree. The raw directory is in `.gitignore` (Flutter's
+standard `/build/` rule); committed screenshots live under
+`src/docs/modules/ROOT/assets/images/screenshots/`.
+
+=== Adding a new screenshot
+
+1. Add a new `testWidgets(...)` case in
+   `integration_test/screenshot_tour_test.dart` that seeds any required
+   data, navigates to the screen, and calls `takeScreenshot(tester, 'NN-name')`.
+2. Re-run the capture script.
+3. Reference the image from a `.adoc` page:
++
+[source,asciidoc]
+----
+image::screenshots/NN-name.png[Alt text here, role=screenshot, width=720]
+----
