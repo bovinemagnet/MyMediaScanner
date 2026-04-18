@@ -157,6 +157,8 @@ Keys are entered in the *Settings* screen at runtime.
 TIP: MusicBrainz, Cover Art Archive, Google Books, and Open Library require no registration.
 You can catalogue music and books immediately without configuring any API keys.
 
+For step-by-step sign-up instructions, rate limit details, and troubleshooting guidance for each provider, see xref:integrations.adoc[Metadata Integrations].
+
 == Project Structure
 
 MyMediaScanner follows clean architecture with a strict dependency rule: `domain/` has no dependencies on `data/` or `presentation/`.

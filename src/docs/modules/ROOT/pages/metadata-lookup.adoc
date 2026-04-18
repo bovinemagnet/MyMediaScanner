@@ -278,3 +278,4 @@ The chosen candidate is then passed back through step 5 (cache and map) as if it
 * xref:scanning.adoc[Barcode Scanning] — scan screen behaviour and scanner input sources
 * xref:data-model.adoc[Data Model] — `barcode_cache`, `media_items`, and related tables
 * xref:api-configuration.adoc[API Configuration] — how users supply and store API keys
+* xref:integrations.adoc[Metadata Integrations] — per-provider setup, rate limits, and troubleshooting for every external service

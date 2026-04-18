@@ -188,3 +188,8 @@ Once enabled, sync covers all tables that carry an `updated_at` column:
 * `barcode_cache`
 
 See xref:sync-strategy.adoc[] for full details of the conflict resolution strategy.
+
+== Related Pages
+
+* xref:integrations.adoc[Metadata Integrations] — per-provider setup guides, rate limits, and troubleshooting for every external service the app uses
+* xref:metadata-lookup.adoc[Metadata Lookup] — how the app routes a scanned barcode through the provider chain

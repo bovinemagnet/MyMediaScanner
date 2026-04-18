@@ -1,0 +1,461 @@
+= Metadata Integrations
+Paul Snow
+0.0.0
+include::_attributes.adoc[]
+:description: Per-provider setup, rate limits, role in the app, and troubleshooting for every external service MyMediaScanner uses.
+
+This page covers every external service that MyMediaScanner contacts during normal use.
+For each provider you will find a brief description of what it does, how it fits into the app's lookup flow, step-by-step setup instructions (where a key or account is required), what rate limits or usage policies apply, and guidance on diagnosing common problems.
+For a full explanation of how the app decides which providers to call and in what order, see xref:metadata-lookup.adoc[Metadata Lookup].
+
+== Music
+
+=== MusicBrainz
+
+MusicBrainz is the open music encyclopaedia maintained by the MetaBrainz Foundation, providing canonical release data, artist credits, and globally unique identifiers (MBIDs) for recordings, releases, and release groups.
+
+==== Role in the app
+
+*Primary music metadata source.*
+When you scan a CD barcode with a music type hint, MusicBrainz is the first service called.
+It returns the release title, artist(s), track listing, label, catalogue number, release country, and release-group MBID — identifiers that the rest of the enrichment pipeline depends on.
+
+==== Setup
+
+No registration or API key is required.
+MusicBrainz is available immediately.
+
+NOTE: MusicBrainz requires all API clients to identify themselves via a versioned `User-Agent` header of the form `AppName/version ( contact-url )`.
+MyMediaScanner sends this header automatically; you do not need to configure anything.
+
+==== Rate limits / usage policy
+
+MusicBrainz enforces approximately one request per second for unauthenticated clients.
+The app's built-in `RateLimitAwareClient` enforces this limit automatically and enters a cooldown period on HTTP 503 responses during which non-critical follow-up calls are skipped.
+Under normal use you will not be blocked.
+
+==== Troubleshooting
+
+* *Scans repeatedly return no music result* — check that your device can reach `https://musicbrainz.org`.
+  A timeout or connection error at this step causes the lookup to fall through to the Discogs fallback.
+* *Source badge on the review screen does not show "MusicBrainz"* — the result came from a fallback provider.
+  This is expected if MusicBrainz had no record for that barcode.
+* *Disambig screen appears with many near-identical candidates* — MusicBrainz returned multiple regional pressings of the same release.
+  Use the country, label, and catalogue number shown on each candidate card to identify your copy.
+
+---
+
+=== Cover Art Archive
+
+The Cover Art Archive (CAA) is a joint project between MusicBrainz and the Internet Archive that hosts front-cover and back-cover scans for music releases.
+
+==== Role in the app
+
+*Music artwork enrichment.*
+After a MusicBrainz lookup succeeds, the app automatically requests the front cover from the CAA using the release MBID.
+If the specific release has no dedicated front image, a second attempt is made using the release-group MBID, which may return artwork uploaded for a related pressing.
+
+==== Setup
+
+No registration or API key is required.
+Cover Art Archive is queried automatically whenever MusicBrainz provides an MBID.
+
+==== Rate limits / usage policy
+
+No documented rate limit is published by the CAA.
+The app makes at most two requests per scan (release MBID, then release-group MBID fallback), so in practice throughput is well within normal limits.
+
+==== Troubleshooting
+
+* *No cover art appears for a music item* — the CAA may have no scans for that release or release group.
+  This is not an error.
+  Other providers (Discogs, UPCitemdb, fanart.tv) may still supply artwork at the enrichment stage.
+* *Artwork appears for some pressings but not yours* — the CAA indexes artwork per release, not per barcode.
+  Consider uploading a scan to the CAA via `https://musicbrainz.org/` to benefit the community.
+
+---
+
+=== GnuDB
+
+GnuDB is a community-maintained CDDB-compatible database of disc metadata, identified by a numeric disc ID computed from the frame offsets in a CD's table of contents.
+
+==== Role in the app
+
+*CUE-based rip metadata lookup.*
+GnuDB is not part of the standard barcode scanning flow.
+It is invoked manually via the *Look up on GnuDB* button inside the Rip Album Detail dialog, which is accessible from the *Rips* screen.
+The app reads the CUE sheet associated with the rip album, computes the CDDB disc ID from the track frame offsets, and queries `gnudb.org` to retrieve the disc title, artist, and track names.
+
+==== Setup
+
+. Open *Settings → GnuDB → Hello username*.
+. Enter a stable identifier for your client — this is sent in the CDDB `hello` handshake string that GnuDB uses to identify calling clients.
+  The default value is `mymediascanner`.
+  Any alphanumeric string without spaces is acceptable; using a consistent value helps GnuDB's access logs and is considered good etiquette.
+
+No account or API key is required.
+
+TIP: The "Hello username" field defaults to `mymediascanner`.
+You can leave it unchanged if you have no preference; changing it to your username or a personal identifier is purely optional.
+
+==== Rate limits / usage policy
+
+GnuDB does not publish a formal rate limit.
+The app applies a request throttle to avoid hammering the server.
+Lookup results are cached in the shared `barcode_cache` table under the key `gnudb:<discid>` with the standard seven-day TTL, so repeated lookups for the same disc are served from the local cache at no cost.
+
+==== Troubleshooting
+
+* *The "Look up on GnuDB" button is disabled* — hover over the button; a tooltip explains the reason.
+  Common reasons are:
+** No CUE sheet is associated with the rip album — import or generate a CUE sheet first.
+** The album is a multi-disc set — multi-disc rips are not supported by the CDDB protocol and are skipped automatically.
+** A network error occurred on a previous attempt — check connectivity and try again.
+* *GnuDB returns "202 No match"* — the disc is not in the GnuDB database.
+  This is common for obscure or regional pressings.
+  You can still edit the album's metadata manually in the Rip Album Detail dialog.
+* *GnuDB returns a result but the track names are wrong* — the CDDB protocol can return multiple genre entries for the same disc ID; the app picks the first match.
+  You can overwrite individual fields manually after the lookup.
+* *Repeated timeouts* — confirm your device can reach `http://gnudb.org` on port 80.
+  GnuDB does not currently offer a TLS endpoint.
+
+---
+
+=== TheAudioDB
+
+TheAudioDB is a community-maintained database of music metadata, including critic scores, artist biographies, mood tags, and supplementary artwork.
+
+==== Role in the app
+
+*Music enrichment.*
+TheAudioDB is queried automatically after a music item has been resolved by MusicBrainz and a `musicbrainz_release_group_id` is available.
+It supplies supplementary data — scores, bios, extra artwork — that MusicBrainz does not carry.
+TheAudioDB data is always optional; failures are silent and do not prevent an item from being saved.
+
+==== Setup
+
+No setup is required.
+The free-tier API key (`"2"`) is bundled with the app and requires no configuration.
+
+==== Rate limits / usage policy
+
+TheAudioDB's free tier is rate-limited.
+Because it is called only as an enrichment step after a primary lookup, the request rate under normal scanning use is low.
+No throttle configuration is exposed in the app.
+
+==== Troubleshooting
+
+* *Critic score or artist bio is missing* — TheAudioDB may not have an entry for that release group.
+  This is expected for less well-known releases.
+* *TheAudioDB data disappeared after re-scanning* — enrichment data is re-fetched on each lookup if the seven-day cache has expired.
+  If the TheAudioDB entry was removed or updated in the interim, the new data (or absence of data) will be reflected.
+
+---
+
+=== Discogs
+
+Discogs is a comprehensive marketplace and database for physical music releases, vinyl, CDs, and related formats, operated by Zink Media.
+
+==== Role in the app
+
+*Optional music fallback and enrichment.*
+Discogs is called only when MusicBrainz returns no result, is rate-limited, or provides candidates with insufficient quality.
+When a Discogs personal token is configured, it is also used to supplement cover art and release data after a MusicBrainz hit.
+The app works without a Discogs token — MusicBrainz and the Cover Art Archive cover the majority of CD releases.
+
+==== Setup
+
+. Register or log in at `https://www.discogs.com/`.
+. Navigate to `https://www.discogs.com/settings/developers`.
+. Under *Personal Access Tokens*, click *Generate new token*.
+. Copy the token.
+. In MyMediaScanner, open *Settings → API Keys → Discogs Token*.
+. Paste the token and tap *Save*.
+
+No OAuth flow is required; a personal access token is sufficient.
+
+==== Rate limits / usage policy
+
+Discogs rate-limits requests per token.
+Under normal use the app stays well within limits, but if you are batch-scanning a large collection with many music items, you may encounter HTTP 429 responses.
+The app does not automatically retry on 429; the affected scan falls through to the UPCitemdb fallback instead.
+
+==== Troubleshooting
+
+* *Repeated 429 responses* — you have hit the per-token rate limit window.
+  Wait approximately one minute and retry the affected items.
+* *Discogs returns a result but the cover art is low resolution* — Discogs thumbnail URLs are used; the full-resolution image is not fetched to conserve bandwidth.
+* *Token appears to be ignored* — confirm the token is saved correctly: the Settings field should display a masked preview (e.g. `••••••••ab3f`).
+  If the preview is blank, the token was not saved; paste it again and tap *Save*.
+
+---
+
+== Film and TV
+
+=== TMDB
+
+The Movie Database (TMDB) is a community-built film and TV metadata database providing titles, synopses, cast, crew, ratings, release dates, and poster artwork.
+
+==== Role in the app
+
+*Primary film and TV metadata source.*
+TMDB is called for all EAN-13 and UPC-A barcodes scanned with a film or TV type hint.
+It is also the service used internally when you enter or scan an IMDb ID — see <<imdb-id-scanning>> below.
+
+==== Setup
+
+. Register for a free account at `https://www.themoviedb.org/`.
+. Go to *Settings → API → Developer API*.
+. Complete the API request form (choose "Personal use / hobby project").
+. Copy the *v3 auth* (API key) string — not the v4 token.
+. In MyMediaScanner, open *Settings → API Keys → TMDB*.
+. Paste the key and tap *Save*.
+
+WARNING: TMDB may take up to a few minutes to activate a newly created key.
+If you receive a 401 response immediately after setup, wait a short while and try again before concluding the key is wrong.
+
+==== Rate limits / usage policy
+
+TMDB's free tier is generous — approximately 50 requests per second.
+MyMediaScanner does not apply additional throttling for TMDB.
+Standard scanning use is well within limits.
+
+==== Troubleshooting
+
+* *HTTP 401 on every scan* — the key is incorrect or inactive.
+  Verify the key on TMDB's website and regenerate it if necessary, then update the value in *Settings → API Keys → TMDB*.
+* *Film appears but has no poster* — TMDB may not have artwork for that release.
+  fanart.tv (if configured) may supply an alternative.
+* *TV series metadata looks wrong* — TMDB barcode lookups resolve to a series entry.
+  If the barcode belongs to a specific season box set, the description may reflect the overall series rather than the season.
+  Edit the item's metadata manually after saving.
+
+---
+
+[#imdb-id-scanning]
+=== IMDb ID Scanning
+
+You can look up any film or TV show by entering its IMDb ID — a string in the form `tt1234567` — directly on the Scan screen.
+
+==== Role in the app
+
+*Direct-to-TMDB lookup via IMDb ID.*
+This is not a separate provider; it uses the same TMDB API key as regular film and TV scanning.
+Internally the app calls the TMDB `+/find/{external_id}+` endpoint, which accepts an IMDb ID and returns the matching film or TV show.
+
+==== Setup
+
+No additional setup is required beyond a valid TMDB API key.
+See <<_tmdb>> for TMDB setup instructions.
+
+To use:
+
+. Open the *Scan* screen.
+. Type or paste an IMDb ID (e.g. `tt0111161`) into the barcode input field.
+. The app detects the `tt` prefix, routes to TMDB `/find`, and proceeds as a normal film lookup.
+
+TIP: This feature is useful when a disc has a damaged or unreadable barcode, or when you want to add a digital-only title to your collection.
+
+==== Rate limits / usage policy
+
+The `/find` endpoint counts against your TMDB quota identically to a standard search request.
+
+==== Troubleshooting
+
+* *IMDb ID returns no result* — confirm the ID is valid and the title is in TMDB's database.
+  Not all IMDb entries are mirrored on TMDB.
+* *Wrong title returned* — the IMDb ID may refer to an episode or person rather than a film or TV series.
+  Only title-level IDs (`tt*` for films and series) are supported; episode-level IDs (`tt*` that resolve to episodes) may not return the expected result.
+
+---
+
+=== TVDB
+
+TheTVDB is a community-maintained database specialising in TV series, with detailed episode-level metadata, artwork, and localised titles.
+
+==== Role in the app
+
+*Optional TV enrichment.*
+TVDB is called as an enrichment step after a TMDB hit when the item is identified as a TV series.
+It is particularly useful for episode-level artwork and international title variants that TMDB may not carry.
+TVDB data is optional — the app functions without it.
+
+==== Setup
+
+. Register for a free account at `https://thetvdb.com/`.
+. Navigate to *Account → API Access*.
+. Create a project and copy the v4 API key.
+. In MyMediaScanner, open *Settings → API Keys → TVDB*.
+. Paste the key and tap *Save*.
+
+NOTE: TVDB v4 API keys have an expiry date.
+The app refreshes authentication tokens automatically via `TvdbTokenManager`, so you should not need to take action unless your key expires and you have not renewed it on the TVDB website.
+
+==== Rate limits / usage policy
+
+TVDB's free tier allows a reasonable number of requests per day.
+Because TVDB is only called as an enrichment step after a primary TMDB hit, the request rate under normal use is low.
+
+==== Troubleshooting
+
+* *TV enrichment data is missing* — the app may not have found a TVDB match for the series.
+  TMDB and TVDB use separate identifiers; not every TMDB title maps to a TVDB entry.
+* *HTTP 401 after the key was working* — your TVDB API key or the token derived from it has expired.
+  Log in to `https://thetvdb.com/` and renew your API access, then update the key in *Settings → API Keys → TVDB*.
+
+---
+
+=== fanart.tv
+
+fanart.tv is a community resource providing high-resolution posters, background art, disc art, and logo images for films, TV series, and music artists.
+
+==== Role in the app
+
+*Enrichment for artwork across all audiovisual and music media types.*
+fanart.tv is queried after a primary hit from TMDB, TVDB, or MusicBrainz.
+It can supply higher-quality or additional artwork variants (landscape backgrounds, clearart logos, CD disc art) beyond what the primary providers offer.
+fanart.tv data is optional — the app functions without it.
+
+==== Setup
+
+. Register for a free account at `https://fanart.tv/`.
+. Navigate to your profile and copy your personal API key.
+. In MyMediaScanner, open *Settings → API Keys → fanart.tv*.
+. Paste the key and tap *Save*.
+
+==== Rate limits / usage policy
+
+fanart.tv's free tier is rate-limited.
+Because it is called only as an enrichment step, request volume under normal use is low.
+
+==== Troubleshooting
+
+* *No additional artwork appears* — fanart.tv may not have community-uploaded assets for that title.
+  Artwork availability depends entirely on community contributions.
+* *HTTP 403* — your key is invalid or has been disabled.
+  Log in to `https://fanart.tv/` and verify that your key is still active.
+
+---
+
+== Books
+
+=== Google Books
+
+Google Books is Google's book metadata service, providing title, author, publisher, ISBN, cover images, and preview snippets for millions of titles worldwide.
+
+==== Role in the app
+
+*Primary ISBN lookup for books.*
+When you scan an ISBN-10 or ISBN-13 barcode with a book type hint, Google Books is the first service called.
+A built-in circuit breaker monitors 429 responses and falls through to Open Library automatically if Google Books is unavailable.
+
+==== Setup
+
+Google Books works without an API key, subject to lower rate limits.
+To obtain a key and raise those limits:
+
+. Create a project in the https://console.cloud.google.com/[Google Cloud Console].
+. Enable the *Books API* for the project.
+. Create an API key under *Credentials*.
+. In MyMediaScanner, open *Settings → API Keys → Google Books*.
+. Paste the key and tap *Save*.
+
+TIP: For personal use with a modest collection, the keyless rate limit is usually sufficient.
+Configure a key only if you are scanning large numbers of books in a short session.
+
+==== Rate limits / usage policy
+
+Without a key, Google Books allows a limited number of requests per day per IP address.
+With a key, the limit increases substantially.
+The app's circuit breaker detects 429 responses and automatically falls through to Open Library, so most quota exhaustion scenarios are handled transparently.
+
+==== Troubleshooting
+
+* *Book metadata is sparse or missing fields* — Google Books data quality varies by title and edition.
+  Open Library may have more complete metadata for the same ISBN.
+* *Lookups fail silently and the result shows Open Library data* — the circuit breaker has tripped on repeated 429s.
+  This resolves automatically once your quota resets (typically at midnight Pacific time).
+* *No result from either Google Books or Open Library* — the ISBN may not be indexed in either database.
+  Try scanning the book's EAN barcode instead; UPCitemdb may have a catalogue entry.
+
+---
+
+=== Open Library
+
+Open Library is a project of the Internet Archive providing a free, open catalogue of book metadata indexed by ISBN, OCLC number, and other identifiers.
+
+==== Role in the app
+
+*ISBN fallback.*
+Open Library is queried automatically when Google Books returns no result or is rate-limited (circuit breaker tripped).
+No configuration is needed.
+
+==== Setup
+
+No registration or API key is required.
+Open Library is available immediately as a fallback.
+
+==== Rate limits / usage policy
+
+Open Library does not publish a formal rate limit for ISBN lookups.
+The app queries it only as a fallback, so request volume is inherently low.
+
+==== Troubleshooting
+
+* *Open Library returns a result but the cover image is missing* — Open Library hosts cover images on a separate service (`https://covers.openlibrary.org`).
+  Cover availability depends on community contributions and may be absent for some editions.
+* *Outdated or incorrect metadata* — Open Library data is community-edited.
+  If you notice an error, you can correct it at `https://openlibrary.org/` directly.
+
+---
+
+== General Fallback
+
+=== UPCitemdb
+
+UPCitemdb is a commercial product database that indexes retail barcodes (UPC-A and EAN-13) across all product categories, including entertainment media and video games.
+
+==== Role in the app
+
+*General barcode fallback and primary video game source.*
+UPCitemdb is queried when no specialist provider satisfies the barcode lookup — for example, when a music barcode is not found in MusicBrainz or Discogs, or when a film barcode returns nothing from TMDB.
+It is also the primary metadata source for video games until a dedicated game database integration is added in a future release.
+
+==== Setup
+
+. Sign up at `https://www.upcitemdb.com/`.
+. Copy your trial or paid API key from the account dashboard.
+. In MyMediaScanner, open *Settings → API Keys → UPCitemdb*.
+. Paste the key and tap *Save*.
+
+NOTE: The UPCitemdb trial plan has a limited monthly lookup allowance.
+If you scan a high volume of items, consider upgrading to a paid plan to avoid exhausting the allowance mid-session.
+
+==== Rate limits / usage policy
+
+Rate limits and monthly allowances depend on your UPCitemdb plan.
+The app does not apply additional throttling for UPCitemdb.
+Each scan that reaches the fallback stage counts against your monthly allowance.
+
+==== Troubleshooting
+
+* *HTTP 403 or "key invalid" error* — verify the key in *Settings → API Keys → UPCitemdb*.
+  Trial keys expire when the monthly allowance is exhausted; upgrade or wait for the allowance to reset.
+* *UPCitemdb returns a result but the metadata is generic* — UPCitemdb pulls product data from retail sources, which may be sparse compared to dedicated media databases.
+  Edit the item's metadata manually after saving.
+* *No result from UPCitemdb* — some barcodes, particularly older or regional pressings, are not indexed.
+  The item will be saved with only the barcode; you can add metadata manually.
+
+---
+
+== How the App Decides Which Providers to Call
+
+The provider selection logic is covered in full detail in xref:metadata-lookup.adoc[Metadata Lookup].
+In summary:
+
+* The app checks the local `barcode_cache` table first — any result cached within the last seven days is returned immediately without a network call.
+* The barcode type is detected (EAN-13, UPC-A, ISBN-10/13, or IMDb ID).
+* The detected type and the media type hint you select on the Scan screen determine which specialist provider is called first.
+* If the specialist provider returns nothing, the lookup falls through to UPCitemdb as a general fallback.
+* Once a result is obtained, it is cached and mapped to a `MetadataResult` domain entity.
+  The `source_apis` field on that entity records which providers contributed to the final result, giving you provenance information on the item detail screen.
