@@ -31,6 +31,18 @@ Antora asset tree. The raw directory is in `.gitignore` (Flutter's
 standard `/build/` rule); committed screenshots live under
 `src/docs/modules/ROOT/assets/images/screenshots/`.
 
+== copy-screenshots.sh
+
+Copies PNGs already present in `build/screenshots/` into the Antora
+asset tree without re-running the integration-test tour. Useful when
+you ran `flutter test` manually (or a single `testWidgets` case) and
+just want to refresh the committed images.
+
+[source,bash]
+----
+tools/copy-screenshots.sh
+----
+
 === Adding a new screenshot
 
 1. Add a new `testWidgets(...)` case in
