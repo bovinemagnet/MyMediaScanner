@@ -18,7 +18,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
 RAW_DIR="build/screenshots"
-DOCS_DIR="src/docs/modules/ROOT/assets/images/screenshots"
+DOCS_DIR="src/docs/modules/ROOT/images/screenshots"
 
 echo "==> Cleaning previous raw captures"
 rm -rf "$RAW_DIR"

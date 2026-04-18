@@ -8,7 +8,7 @@ Helper scripts for MyMediaScanner development.
 
 Captures documentation screenshots by running the integration-test tour
 (`integration_test/screenshot_tour_test.dart`) and copying the produced
-PNGs into `src/docs/modules/ROOT/assets/images/screenshots/`.
+PNGs into `src/docs/modules/ROOT/images/screenshots/`.
 
 === Run
 
@@ -27,14 +27,14 @@ tools/capture-screenshots.sh
 === Output
 
 Raw PNGs land in `build/screenshots/` first and are then copied into the
-Antora asset tree. The raw directory is in `.gitignore` (Flutter's
+Antora images tree. The raw directory is in `.gitignore` (Flutter's
 standard `/build/` rule); committed screenshots live under
-`src/docs/modules/ROOT/assets/images/screenshots/`.
+`src/docs/modules/ROOT/images/screenshots/`.
 
 == copy-screenshots.sh
 
 Copies PNGs already present in `build/screenshots/` into the Antora
-asset tree without re-running the integration-test tour. Useful when
+images tree without re-running the integration-test tour. Useful when
 you ran `flutter test` manually (or a single `testWidgets` case) and
 just want to refresh the committed images.
 

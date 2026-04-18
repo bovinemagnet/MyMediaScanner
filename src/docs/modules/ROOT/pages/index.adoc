@@ -7,12 +7,7 @@ MyMediaScanner is a cross-platform Flutter/Dart application for scanning barcode
 It runs on Android, iOS, macOS, Windows, and Linux.
 Data is stored locally in SQLite with optional sync to a self-hosted PostgreSQL instance.
 
-// Screenshots are produced by `tools/capture-screenshots.sh`, which runs
-// the integration-test tour at `integration_test/screenshot_tour_test.dart`
-// and copies the PNGs into `src/docs/modules/ROOT/assets/images/screenshots/`.
-// Once that directory has been populated, uncomment the image include below.
-//
-// image::screenshots/01-dashboard.png[Dashboard, role=screenshot, width=720]
+image::screenshots/01-dashboard.png[Dashboard showing the Quick Scan CTA and recent additions, role=screenshot, width=720]
 
 == Key Features
 
