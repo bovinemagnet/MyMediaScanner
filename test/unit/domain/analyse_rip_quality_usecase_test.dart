@@ -1,5 +1,7 @@
 // Author: Paul Snow
 
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:mymediascanner/core/utils/flac_decoder.dart';
@@ -176,6 +178,102 @@ void main() {
 
         // Assert
         expect(firstEvent.totalTracks, equals(1));
+      });
+    });
+
+    group('applies log results when AccurateRip status is verified', () {
+      test(
+          'execute_withVerifiedEacLog_updatesTrackAsVerifiedWithLogFields',
+          () async {
+        // Arrange — write an EAC log containing a verified track into a
+        // temp directory and point the track's filePath at that directory.
+        final tempDir =
+            await Directory.systemTemp.createTemp('riplog_verified_');
+        addTearDown(() async {
+          if (await tempDir.exists()) await tempDir.delete(recursive: true);
+        });
+
+        const logContent = '''
+Exact Audio Copy V1.6 from 23. October 2019
+
+EAC extraction logfile from 15. March 2026
+
+Artist / Title / Year : Test Artist / Test Album / 2024
+Format                : FLAC (Tracks)
+Used drive            : ASUS BW-16D1HT   Adapter: 1   ID: 0
+
+Read mode             : Secure
+
+Track  1
+
+     Filename C:\\Music\\TestAlbum\\01 - Track One.flac
+
+     Peak level 96.2 %
+     Track quality 99.8 %
+     Test CRC 882B01BE
+     Copy CRC 882B01BE
+     Accurately ripped (confidence 1)  [F4E2268A]  (AR v2 signature: A1B2C3D4)
+     Copy OK
+
+
+All tracks accurately ripped
+
+No errors occurred
+
+End of status report
+
+==== Log checksum ABCDEF1234567890ABCDEF1234567890 ====
+''';
+        await File('${tempDir.path}/rip.log').writeAsString(logContent);
+
+        final track = _track(
+          id: 'track-1',
+          trackNumber: 1,
+          filePath: '${tempDir.path}/01 - Track One.flac',
+        );
+
+        when(() => mockRepo.getTracksForAlbum('album-1'))
+            .thenAnswer((_) async => [track]);
+        // flac unavailable stops the pipeline after the log branch so we
+        // do not exercise the Isolate.run paths.
+        when(() => mockFlacDecoder.isAvailable())
+            .thenAnswer((_) async => false);
+        when(() => mockRepo.updateTrackQuality(
+              any(),
+              arStatus: any(named: 'arStatus'),
+              arConfidence: any(named: 'arConfidence'),
+              arCrcV1: any(named: 'arCrcV1'),
+              arCrcV2: any(named: 'arCrcV2'),
+              peakLevel: any(named: 'peakLevel'),
+              trackQuality: any(named: 'trackQuality'),
+              copyCrc: any(named: 'copyCrc'),
+              ripLogSource: any(named: 'ripLogSource'),
+              qualityCheckedAt: any(named: 'qualityCheckedAt'),
+            )).thenAnswer((_) async {});
+
+        // Act
+        await useCase.execute('album-1').drain<void>();
+
+        // Assert — verified branch writes AR fields and log-derived metrics.
+        verify(() => mockRepo.updateTrackQuality(
+              'track-1',
+              arStatus: 'verified',
+              arConfidence: 1,
+              arCrcV1: 'F4E2268A',
+              arCrcV2: 'A1B2C3D4',
+              peakLevel: any(named: 'peakLevel'),
+              trackQuality: any(named: 'trackQuality'),
+              copyCrc: '882B01BE',
+              ripLogSource: 'EAC',
+              qualityCheckedAt: any(named: 'qualityCheckedAt'),
+            )).called(1);
+        // Verified tracks do not need further analysis, so not_checked must
+        // not be written.
+        verifyNever(() => mockRepo.updateTrackQuality(
+              'track-1',
+              arStatus: 'not_checked',
+              qualityCheckedAt: any(named: 'qualityCheckedAt'),
+            ));
       });
     });
   });
