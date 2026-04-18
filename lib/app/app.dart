@@ -10,13 +10,17 @@ class App extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final themeMode = ref.watch(themeModeProvider);
+    final choice = ref.watch(themeChoiceProvider);
+    final (light, dark) = switch (choice.family) {
+      ThemeFamily.classic => (AppTheme.light(), AppTheme.dark()),
+      ThemeFamily.popcorn => (AppTheme.popcornLight(), AppTheme.popcornDark()),
+    };
 
     return MaterialApp.router(
       title: AppConstants.appName,
-      theme: AppTheme.light(),
-      darkTheme: AppTheme.dark(),
-      themeMode: themeMode,
+      theme: light,
+      darkTheme: dark,
+      themeMode: themeModeFrom(choice.brightness),
       routerConfig: router,
       debugShowCheckedModeBanner: false,
     );

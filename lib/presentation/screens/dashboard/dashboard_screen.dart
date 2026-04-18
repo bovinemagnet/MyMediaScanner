@@ -6,6 +6,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mymediascanner/app/theme/app_layout_extension.dart';
+import 'package:mymediascanner/app/theme/app_typography.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/presentation/providers/collection_provider.dart';
 import 'package:mymediascanner/presentation/providers/progress_provider.dart';
@@ -278,28 +280,67 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: colors.surfaceContainerHigh,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label.toUpperCase(),
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: colors.onSurfaceVariant,
-                letterSpacing: 0.8,
-              ),
+    final glow = context.layoutFlags.heroStatGlow;
+
+    final content = Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label.toUpperCase(),
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: colors.onSurfaceVariant,
+              letterSpacing: 0.8,
             ),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: theme.textTheme.headlineMedium?.copyWith(
-                color: colors.primary,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: glow
+                ? AppTypography.displayNumeric(
+                    color: colors.primary,
+                    fontSize: 44,
+                  )
+                : theme.textTheme.headlineMedium?.copyWith(
+                    color: colors.primary,
+                  ),
+          ),
+        ],
+      ),
+    );
+
+    if (!glow) {
+      return Expanded(child: content);
+    }
+
+    return Expanded(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Stack(
+          children: [
+            content,
+            Positioned(
+              top: -40,
+              right: -40,
+              width: 140,
+              height: 140,
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        colors.primary.withValues(alpha: 0.55),
+                        colors.primary.withValues(alpha: 0.0),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
           ],

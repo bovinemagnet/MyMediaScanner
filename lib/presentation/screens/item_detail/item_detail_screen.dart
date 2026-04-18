@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:mymediascanner/app/theme/app_layout_extension.dart';
+import 'package:mymediascanner/app/theme/app_media_colors.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/domain/usecases/delete_media_item_usecase.dart';
@@ -80,9 +82,12 @@ class ItemDetailScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Center(
-                  child: CoverArtHero(
-                      imageUrl: item.coverUrl, tag: 'cover-${item.id}'),
+                _GradientHeroBackdrop(
+                  mediaType: item.mediaType,
+                  child: Center(
+                    child: CoverArtHero(
+                        imageUrl: item.coverUrl, tag: 'cover-${item.id}'),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Center(
@@ -782,6 +787,44 @@ class _TrackQualityRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Optional gradient backdrop behind the cover. Active when the current
+/// theme's [AppLayoutExtension.gradientItemDetailHero] flag is set — the
+/// backdrop fades from the media-type accent down to the scaffold surface
+/// so the cover appears to lift off its page.
+class _GradientHeroBackdrop extends StatelessWidget {
+  const _GradientHeroBackdrop({
+    required this.mediaType,
+    required this.child,
+  });
+
+  final MediaType mediaType;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!context.layoutFlags.gradientItemDetailHero) return child;
+
+    final colors = Theme.of(context).colorScheme;
+    final soft = context.mediaColors.softFor(mediaType);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            soft,
+            colors.surface,
+          ],
+        ),
+      ),
+      child: child,
     );
   }
 }

@@ -48,9 +48,9 @@ class _FakeApiKeysNotifier extends ApiKeysNotifier {
       };
 }
 
-class _FakeThemeModeNotifier extends ThemeModeNotifier {
+class _FakeThemeChoiceNotifier extends ThemeChoiceNotifier {
   @override
-  ThemeMode build() => ThemeMode.system;
+  ThemeChoice build() => ThemeChoice.defaults;
 }
 
 class _FakePostgresConfigNotifier extends PostgresConfigNotifier {
@@ -95,7 +95,7 @@ class _FakePreventClippingNotifier extends PreventClippingNotifier {
 
 Widget _buildSettings({
   MockFlutterSecureStorage? storage,
-  ThemeModeNotifier Function()? themeNotifierFactory,
+  ThemeChoiceNotifier Function()? themeNotifierFactory,
 }) {
   final mockStorage = storage ?? MockFlutterSecureStorage();
   when(() => mockStorage.read(key: any(named: 'key')))
@@ -105,8 +105,8 @@ Widget _buildSettings({
     overrides: [
       secureStorageProvider.overrideWithValue(mockStorage),
       apiKeysProvider.overrideWith(_FakeApiKeysNotifier.new),
-      themeModeProvider.overrideWith(
-        themeNotifierFactory ?? _FakeThemeModeNotifier.new,
+      themeChoiceProvider.overrideWith(
+        themeNotifierFactory ?? _FakeThemeChoiceNotifier.new,
       ),
       postgresConfigProvider.overrideWith(_FakePostgresConfigNotifier.new),
       syncRepositoryProvider.overrideWithValue(null),
@@ -211,28 +211,24 @@ void main() {
   // Test 3 — theme mode toggle updates the provider
   // -------------------------------------------------------------------------
 
-  testWidgets('theme mode toggle updates the provider', (tester) async {
-    final capturedModes = <ThemeMode>[];
+  testWidgets('theme brightness toggle updates the provider', (tester) async {
+    final capturedBrightnesses = <ThemeBrightness>[];
 
     await tester.pumpWidget(_buildSettings(
-      themeNotifierFactory: () => _CapturingThemeModeNotifier(
-        onSet: capturedModes.add,
+      themeNotifierFactory: () => _CapturingThemeChoiceNotifier(
+        onSetBrightness: capturedBrightnesses.add,
       ),
     ));
     await tester.pumpAndSettle();
 
-    // Scroll to the Preferences section where the theme tile lives.
     await tester.scrollUntilVisible(
-      find.byType(SegmentedButton<ThemeMode>),
+      find.byType(SegmentedButton<ThemeBrightness>),
       200,
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
 
-    // Tap the 'Light' segment inside the SegmentedButton.
-    // The SegmentedButton renders its children so we look for the icon
-    // inside it specifically to avoid hitting icons in the ListTile leading.
-    final segmentedButton = find.byType(SegmentedButton<ThemeMode>);
+    final segmentedButton = find.byType(SegmentedButton<ThemeBrightness>);
     final lightSegment = find.descendant(
       of: segmentedButton,
       matching: find.byIcon(Icons.light_mode),
@@ -241,9 +237,8 @@ void main() {
     await tester.tap(lightSegment);
     await tester.pumpAndSettle();
 
-    expect(capturedModes, contains(ThemeMode.light));
+    expect(capturedBrightnesses, contains(ThemeBrightness.light));
 
-    // Tap the 'Dark' segment.
     final darkSegment = find.descendant(
       of: segmentedButton,
       matching: find.byIcon(Icons.dark_mode),
@@ -252,7 +247,40 @@ void main() {
     await tester.tap(darkSegment);
     await tester.pumpAndSettle();
 
-    expect(capturedModes, contains(ThemeMode.dark));
+    expect(capturedBrightnesses, contains(ThemeBrightness.dark));
+  });
+
+  testWidgets('palette cards render and switch family', (tester) async {
+    final capturedFamilies = <ThemeFamily>[];
+
+    await tester.pumpWidget(_buildSettings(
+      themeNotifierFactory: () => _CapturingThemeChoiceNotifier(
+        onSetFamily: capturedFamilies.add,
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    // Scroll the Preferences section into view by the Palette heading.
+    await tester.scrollUntilVisible(
+      find.text('Palette'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    // Both palette cards are present.
+    expect(find.text('Classic'), findsOneWidget);
+    expect(find.text('Popcorn'), findsOneWidget);
+
+    // Tap Popcorn.
+    await tester.tap(find.text('Popcorn'));
+    await tester.pumpAndSettle();
+    expect(capturedFamilies, contains(ThemeFamily.popcorn));
+
+    // Tap Classic again.
+    await tester.tap(find.text('Classic'));
+    await tester.pumpAndSettle();
+    expect(capturedFamilies, contains(ThemeFamily.classic));
   });
 
   // -------------------------------------------------------------------------
@@ -309,17 +337,27 @@ void main() {
 // Capturing notifier for theme-mode tests
 // ---------------------------------------------------------------------------
 
-class _CapturingThemeModeNotifier extends ThemeModeNotifier {
-  _CapturingThemeModeNotifier({required this.onSet});
+class _CapturingThemeChoiceNotifier extends ThemeChoiceNotifier {
+  _CapturingThemeChoiceNotifier({
+    this.onSetFamily,
+    this.onSetBrightness,
+  });
 
-  final void Function(ThemeMode) onSet;
+  final void Function(ThemeFamily)? onSetFamily;
+  final void Function(ThemeBrightness)? onSetBrightness;
 
   @override
-  ThemeMode build() => ThemeMode.system;
+  ThemeChoice build() => ThemeChoice.defaults;
 
   @override
-  Future<void> setMode(ThemeMode mode) async {
-    state = mode;
-    onSet(mode);
+  Future<void> setFamily(ThemeFamily family) async {
+    state = state.copyWith(family: family);
+    onSetFamily?.call(family);
+  }
+
+  @override
+  Future<void> setBrightness(ThemeBrightness brightness) async {
+    state = state.copyWith(brightness: brightness);
+    onSetBrightness?.call(brightness);
   }
 }

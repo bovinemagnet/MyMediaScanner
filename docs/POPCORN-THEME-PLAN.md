@@ -1,8 +1,18 @@
 # Popcorn Theme — Implementation Plan
 
-**Status:** Ready to implement
+**Status:** Implemented (closes issue #55). Kept as historical context — the as-built architecture is described under "Design System" in `CLAUDE.md`.
 **Target:** Additive — adds a vibrant "Popcorn" theme (light + dark) alongside the existing Obsidian Lens (dark) and Precision Editorial (light) themes. No existing behaviour is removed.
 **Companion prototype:** `My Media Scanner.html` in the design project — open to see the target look, interact with scanner/detail flows, toggle palettes (Popcorn / Citrus / Berry) and compare light+dark.
+
+---
+
+## Decisions (from §15 questions)
+
+1. **Existing themes** — may be tweaked where `AppMediaColors` integration surfaces inconsistencies.
+2. **Space Grotesk numerals** — acceptable to add; implemented as `AppTypography.displayNumeric()` using Manrope ExtraBold by default (swap `fontFamily` when the `.ttf` files are dropped into `assets/fonts/`).
+3. **`ThemeExtension` strategy** — kept the separate-file convention (`AppDesignExtension`, `AppMediaColors`, `AppLayoutExtension`) so future palettes (Citrus, Berry) drop in as factories.
+4. **WCAG AA on Popcorn coral** — accepted the saturated `#FF5E3A`; CTA labels use Manrope weight 700 ≥ 14pt so they qualify as large text.
+5. **Scope** — shipped Core + §10 polish in one pass (not three separate PRs).
 
 ---
 

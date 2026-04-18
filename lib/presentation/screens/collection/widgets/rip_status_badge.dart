@@ -10,6 +10,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mymediascanner/app/theme/app_media_colors.dart';
 import 'package:mymediascanner/presentation/providers/collection_rip_status_provider.dart';
 
 class RipStatusBadge extends ConsumerWidget {
@@ -27,18 +28,19 @@ class RipStatusBadge extends ConsumerWidget {
       data: (status) {
         if (status == RipStatus.noRip) return const SizedBox.shrink();
 
+        final mediaColors = context.mediaColors;
         final Color badgeColour;
         final IconData badgeIcon;
 
         switch (status) {
           case RipStatus.verified:
-            badgeColour = Colors.green;
+            badgeColour = mediaColors.book;
             badgeIcon = Icons.check;
           case RipStatus.qualityIssues:
-            badgeColour = Colors.amber;
+            badgeColour = mediaColors.tv;
             badgeIcon = Icons.priority_high;
           case RipStatus.ripped:
-            badgeColour = const Color(0xFF6DDDFF); // electric cyan
+            badgeColour = mediaColors.music;
             badgeIcon = Icons.music_note;
           case RipStatus.noRip:
             return const SizedBox.shrink();

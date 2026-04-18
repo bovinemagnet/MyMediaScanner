@@ -102,4 +102,88 @@ abstract final class AppColors {
   static const lightInversePrimary = Color(0xFF00D2FD);
 
   static const lightSurfaceTint = Color(0xFF00647A);
+
+  // ── Popcorn light ──────────────────────────────────────────────────
+  // Warm ivory surfaces, coral primary, mint secondary, periwinkle tertiary.
+  static const popcornSurface = Color(0xFFFFF6EC);
+  static const popcornSurfaceDim = Color(0xFFFBE9D2);
+  static const popcornSurfaceBright = Color(0xFFFFFFFF);
+  static const popcornSurfaceContainerLowest = Color(0xFFFFFFFF);
+  static const popcornSurfaceContainerLow = Color(0xFFFBE9D2);
+  static const popcornSurfaceContainer = Color(0xFFF5E6D0);
+  static const popcornSurfaceContainerHigh = Color(0xFFEFDCC2);
+  static const popcornSurfaceContainerHighest = Color(0xFFE8D3B4);
+
+  static const popcornPrimary = Color(0xFFFF5E3A);
+  static const popcornOnPrimary = Color(0xFFFFFFFF);
+  static const popcornPrimaryContainer = Color(0xFFFFE0D4);
+  static const popcornOnPrimaryContainer = Color(0xFF661E10);
+
+  static const popcornSecondary = Color(0xFF00C4B8);
+  static const popcornOnSecondary = Color(0xFFFFFFFF);
+  static const popcornSecondaryContainer = Color(0xFFC6F2EE);
+  static const popcornOnSecondaryContainer = Color(0xFF003B37);
+
+  static const popcornTertiary = Color(0xFF4A6CF7);
+  static const popcornOnTertiary = Color(0xFFFFFFFF);
+  static const popcornTertiaryContainer = Color(0xFFD6DEFF);
+  static const popcornOnTertiaryContainer = Color(0xFF122269);
+
+  static const popcornOnSurface = Color(0xFF1D1A17);
+  static const popcornOnSurfaceVariant = Color(0xFF5A5149);
+
+  static const popcornOutline = Color(0xFFEFE2CF);
+  static const popcornOutlineVariant = Color(0xFFE0CFB3);
+
+  static const popcornError = Color(0xFFE53946);
+  static const popcornOnError = Color(0xFFFFFFFF);
+  static const popcornErrorContainer = Color(0xFFFFD9DE);
+  static const popcornOnErrorContainer = Color(0xFF5C0010);
+
+  static const popcornInverseSurface = Color(0xFF1D1A17);
+  static const popcornInverseOnSurface = Color(0xFFFFF6EC);
+  static const popcornInversePrimary = Color(0xFFFFB5A0);
+  static const popcornSurfaceTint = Color(0xFFFF5E3A);
+
+  // ── Popcorn dark ───────────────────────────────────────────────────
+  // Warm charcoals + lifted accents to keep coral/mint legible on dark.
+  static const popcornDarkSurface = Color(0xFF161416);
+  static const popcornDarkSurfaceDim = Color(0xFF0E0D0F);
+  static const popcornDarkSurfaceBright = Color(0xFF2A272B);
+  static const popcornDarkSurfaceContainerLowest = Color(0xFF0A090B);
+  static const popcornDarkSurfaceContainerLow = Color(0xFF1A171A);
+  static const popcornDarkSurfaceContainer = Color(0xFF201E22);
+  static const popcornDarkSurfaceContainerHigh = Color(0xFF2A272B);
+  static const popcornDarkSurfaceContainerHighest = Color(0xFF342F34);
+
+  static const popcornDarkPrimary = Color(0xFFFF7A5C);
+  static const popcornDarkOnPrimary = Color(0xFF4D140A);
+  static const popcornDarkPrimaryContainer = Color(0xFF7A2414);
+  static const popcornDarkOnPrimaryContainer = Color(0xFFFFD5C5);
+
+  static const popcornDarkSecondary = Color(0xFF2FDAD0);
+  static const popcornDarkOnSecondary = Color(0xFF003B37);
+  static const popcornDarkSecondaryContainer = Color(0xFF005751);
+  static const popcornDarkOnSecondaryContainer = Color(0xFFC6F2EE);
+
+  static const popcornDarkTertiary = Color(0xFF8AA0FF);
+  static const popcornDarkOnTertiary = Color(0xFF0B1447);
+  static const popcornDarkTertiaryContainer = Color(0xFF2C3F9C);
+  static const popcornDarkOnTertiaryContainer = Color(0xFFD6DEFF);
+
+  static const popcornDarkOnSurface = Color(0xFFF8F4EE);
+  static const popcornDarkOnSurfaceVariant = Color(0xFFB8AFA3);
+
+  static const popcornDarkOutline = Color(0xFF2D2A2E);
+  static const popcornDarkOutlineVariant = Color(0xFF3E3A3F);
+
+  static const popcornDarkError = Color(0xFFFF8A92);
+  static const popcornDarkOnError = Color(0xFF4A0009);
+  static const popcornDarkErrorContainer = Color(0xFF8A0A1A);
+  static const popcornDarkOnErrorContainer = Color(0xFFFFDADE);
+
+  static const popcornDarkInverseSurface = Color(0xFFF8F4EE);
+  static const popcornDarkInverseOnSurface = Color(0xFF1D1A17);
+  static const popcornDarkInversePrimary = Color(0xFFFF5E3A);
+  static const popcornDarkSurfaceTint = Color(0xFFFF7A5C);
 }

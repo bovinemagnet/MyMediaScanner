@@ -4,37 +4,115 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mymediascanner/data/remote/sync/postgres_sync_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// ── Theme mode provider ──────────────────────────────────────────────
+// ── Theme choice (palette family × brightness) ───────────────────────
 
-class ThemeModeNotifier extends Notifier<ThemeMode> {
-  static const _key = 'theme_mode';
+/// Palette family — which colour/component set powers the UI.
+enum ThemeFamily { classic, popcorn }
+
+/// Brightness preference for the selected family.
+enum ThemeBrightness { system, light, dark }
+
+/// Combined theme selection: a family paired with a brightness.
+@immutable
+class ThemeChoice {
+  const ThemeChoice(this.family, this.brightness);
+
+  /// Default for new installs and users who have never touched Settings.
+  static const defaults =
+      ThemeChoice(ThemeFamily.classic, ThemeBrightness.system);
+
+  final ThemeFamily family;
+  final ThemeBrightness brightness;
+
+  ThemeChoice copyWith({ThemeFamily? family, ThemeBrightness? brightness}) =>
+      ThemeChoice(family ?? this.family, brightness ?? this.brightness);
 
   @override
-  ThemeMode build() {
+  bool operator ==(Object other) =>
+      other is ThemeChoice &&
+      other.family == family &&
+      other.brightness == brightness;
+
+  @override
+  int get hashCode => Object.hash(family, brightness);
+
+  @override
+  String toString() => 'ThemeChoice($family, $brightness)';
+}
+
+class ThemeChoiceNotifier extends Notifier<ThemeChoice> {
+  static const _familyKey = 'theme_family';
+  static const _brightnessKey = 'theme_brightness';
+
+  /// Legacy key from the single-dimension ThemeMode era. Read once during
+  /// [_load] to seed [ThemeChoice.brightness] for existing users, then
+  /// deleted so it can't drift.
+  static const _legacyModeKey = 'theme_mode';
+
+  @override
+  ThemeChoice build() {
     _load();
-    return ThemeMode.system;
+    return ThemeChoice.defaults;
   }
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
-    final stored = prefs.getString(_key);
-    if (stored != null) {
-      state = ThemeMode.values.firstWhere(
-        (m) => m.name == stored,
-        orElse: () => ThemeMode.system,
-      );
+
+    final storedFamily = prefs.getString(_familyKey);
+    final storedBrightness = prefs.getString(_brightnessKey);
+
+    // Fresh install or pre-2.x install with only the legacy key.
+    if (storedFamily == null && storedBrightness == null) {
+      final legacy = prefs.getString(_legacyModeKey);
+      if (legacy != null) {
+        final brightness = ThemeBrightness.values.firstWhere(
+          (b) => b.name == legacy,
+          orElse: () => ThemeBrightness.system,
+        );
+        final migrated = ThemeChoice(ThemeFamily.classic, brightness);
+        state = migrated;
+        await prefs.setString(_familyKey, migrated.family.name);
+        await prefs.setString(_brightnessKey, migrated.brightness.name);
+        await prefs.remove(_legacyModeKey);
+      }
+      return;
     }
+
+    state = ThemeChoice(
+      ThemeFamily.values.firstWhere(
+        (f) => f.name == storedFamily,
+        orElse: () => ThemeFamily.classic,
+      ),
+      ThemeBrightness.values.firstWhere(
+        (b) => b.name == storedBrightness,
+        orElse: () => ThemeBrightness.system,
+      ),
+    );
   }
 
-  Future<void> setMode(ThemeMode mode) async {
-    state = mode;
+  Future<void> setFamily(ThemeFamily family) async {
+    state = state.copyWith(family: family);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_key, mode.name);
+    await prefs.setString(_familyKey, family.name);
+  }
+
+  Future<void> setBrightness(ThemeBrightness brightness) async {
+    state = state.copyWith(brightness: brightness);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_brightnessKey, brightness.name);
   }
 }
 
-final themeModeProvider =
-    NotifierProvider<ThemeModeNotifier, ThemeMode>(ThemeModeNotifier.new);
+final themeChoiceProvider =
+    NotifierProvider<ThemeChoiceNotifier, ThemeChoice>(
+        ThemeChoiceNotifier.new);
+
+/// Maps [ThemeBrightness] to Material's [ThemeMode].
+ThemeMode themeModeFrom(ThemeBrightness brightness) => switch (brightness) {
+      ThemeBrightness.system => ThemeMode.system,
+      ThemeBrightness.light => ThemeMode.light,
+      ThemeBrightness.dark => ThemeMode.dark,
+    };
 
 // ── GnuDB username (identifier sent in the CDDB "hello" string) ──────
 

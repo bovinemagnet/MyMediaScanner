@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mymediascanner/app/theme/app_colors.dart';
+import 'package:mymediascanner/app/theme/app_media_colors.dart';
 import 'package:mymediascanner/domain/entities/rip_track.dart';
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
 
@@ -45,14 +45,15 @@ class QualityIcon extends StatelessWidget {
 
   Color _colour(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final mediaColors = context.mediaColors;
     if (track.qualityCheckedAt == null) return colors.outline;
     if (track.accurateRipStatus == 'verified' &&
         (track.clickCount ?? 0) > 0) {
-      return AppColors.tvColor; // amber-like warning
+      return mediaColors.tv; // amber-like warning
     }
-    if (track.accurateRipStatus == 'verified') return AppColors.bookColor;
+    if (track.accurateRipStatus == 'verified') return mediaColors.book;
     if (track.accurateRipStatus == 'mismatch') return colors.error;
-    if ((track.clickCount ?? 0) > 0) return AppColors.tvColor;
+    if ((track.clickCount ?? 0) > 0) return mediaColors.tv;
     return colors.outline;
   }
 

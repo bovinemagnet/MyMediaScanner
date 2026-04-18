@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mymediascanner/app/theme/app_layout_extension.dart';
 import 'package:mymediascanner/app/theme/app_theme_extensions.dart';
 import 'package:mymediascanner/core/constants/app_constants.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
@@ -176,6 +177,29 @@ class AppScaffold extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final glassBlur = design?.glassBlur ?? 12.0;
     final glassOpacity = design?.glassOpacity ?? 0.6;
+    final useFloatingNav = context.layoutFlags.floatingNavBar;
+
+    final bottomNav = useFloatingNav
+        ? _FloatingPillNav(
+            selectedIndex: mobileIndex,
+            onSelected: (index) {
+              _onDestinationSelected(_mobileIndexToShellIndex(index));
+            },
+          )
+        : ClipRect(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: glassBlur, sigmaY: glassBlur),
+              child: NavigationBar(
+                backgroundColor: colors.surfaceContainerLow
+                    .withValues(alpha: glassOpacity),
+                selectedIndex: mobileIndex,
+                onDestinationSelected: (index) {
+                  _onDestinationSelected(_mobileIndexToShellIndex(index));
+                },
+                destinations: _mobileDestinations,
+              ),
+            ),
+          );
 
     return wrapWithShortcuts(
       Scaffold(
@@ -186,20 +210,7 @@ class AppScaffold extends StatelessWidget {
             const MiniPlayerBar(),
           ],
         ),
-        bottomNavigationBar: ClipRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: glassBlur, sigmaY: glassBlur),
-            child: NavigationBar(
-              backgroundColor:
-                  colors.surfaceContainerLow.withValues(alpha: glassOpacity),
-              selectedIndex: mobileIndex,
-              onDestinationSelected: (index) {
-                _onDestinationSelected(_mobileIndexToShellIndex(index));
-              },
-              destinations: _mobileDestinations,
-            ),
-          ),
-        ),
+        bottomNavigationBar: bottomNav,
       ),
     );
   }
@@ -451,4 +462,179 @@ class _SidebarDestination {
   final IconData icon;
   final IconData selectedIcon;
   final String label;
+}
+
+/// Rounded-pill bottom nav used by the Popcorn layout. Four destinations
+/// with the Scanner entry rendered as a raised centre FAB.
+class _FloatingPillNav extends StatelessWidget {
+  const _FloatingPillNav({
+    required this.selectedIndex,
+    required this.onSelected,
+  });
+
+  /// Mobile-nav index of the currently selected destination:
+  /// 0 = Home, 1 = Scanner, 2 = Library, 3 = Insights.
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        child: Container(
+          height: 64,
+          decoration: BoxDecoration(
+            color: colors.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(32),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.15),
+                blurRadius: 24,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              _PillNavSlot(
+                icon: Icons.home_outlined,
+                selectedIcon: Icons.home,
+                label: 'Home',
+                active: selectedIndex == 0,
+                onTap: () => onSelected(0),
+                activeColor: colors.primary,
+                inactiveColor: colors.onSurfaceVariant,
+              ),
+              _PillNavFab(
+                active: selectedIndex == 1,
+                background: colors.primary,
+                foreground: colors.onPrimary,
+                onTap: () => onSelected(1),
+              ),
+              _PillNavSlot(
+                icon: Icons.library_music_outlined,
+                selectedIcon: Icons.library_music,
+                label: 'Library',
+                active: selectedIndex == 2,
+                onTap: () => onSelected(2),
+                activeColor: colors.primary,
+                inactiveColor: colors.onSurfaceVariant,
+              ),
+              _PillNavSlot(
+                icon: Icons.insights_outlined,
+                selectedIcon: Icons.insights,
+                label: 'Insights',
+                active: selectedIndex == 3,
+                onTap: () => onSelected(3),
+                activeColor: colors.primary,
+                inactiveColor: colors.onSurfaceVariant,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PillNavSlot extends StatelessWidget {
+  const _PillNavSlot({
+    required this.icon,
+    required this.selectedIcon,
+    required this.label,
+    required this.active,
+    required this.onTap,
+    required this.activeColor,
+    required this.inactiveColor,
+  });
+
+  final IconData icon;
+  final IconData selectedIcon;
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
+  final Color activeColor;
+  final Color inactiveColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = active ? activeColor : inactiveColor;
+    return Expanded(
+      child: Semantics(
+        button: true,
+        selected: active,
+        label: label,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(active ? selectedIcon : icon, color: color, size: 22),
+              const SizedBox(height: 2),
+              Text(
+                label,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 10,
+                  fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PillNavFab extends StatelessWidget {
+  const _PillNavFab({
+    required this.active,
+    required this.background,
+    required this.foreground,
+    required this.onTap,
+  });
+
+  final bool active;
+  final Color background;
+  final Color foreground;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 72,
+      child: Center(
+        child: Semantics(
+          button: true,
+          selected: active,
+          label: 'Scanner',
+          child: Material(
+            color: background,
+            shape: const CircleBorder(),
+            elevation: 6,
+            shadowColor: background.withValues(alpha: 0.45),
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: onTap,
+              child: SizedBox(
+                width: 54,
+                height: 54,
+                child: Icon(
+                  Icons.qr_code_scanner,
+                  color: foreground,
+                  size: 26,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

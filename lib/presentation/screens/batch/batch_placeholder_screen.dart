@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mymediascanner/app/theme/app_colors.dart';
+import 'package:mymediascanner/app/theme/app_media_colors.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
 import 'package:mymediascanner/domain/entities/metadata_candidate.dart';
 import 'package:mymediascanner/domain/entities/metadata_result.dart';
@@ -593,7 +593,7 @@ class _StatsRow extends StatelessWidget {
               label: 'Auto Matches',
               value: '${state.autoMatchRate.toStringAsFixed(1)}%',
               icon: Icons.check_circle,
-              iconColor: AppColors.bookColor,
+              iconColor: context.mediaColors.book,
               theme: theme,
               colors: colors,
             ),
@@ -1241,11 +1241,12 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bookColour = context.mediaColors.book;
     final (label, bgColor, fgColor) = switch (status) {
       BatchItemStatus.confirmed => (
           'Confirmed',
-          AppColors.bookColor.withValues(alpha: 0.15),
-          AppColors.bookColor,
+          bookColour.withValues(alpha: 0.15),
+          bookColour,
         ),
       BatchItemStatus.conflict => (
           'Review',

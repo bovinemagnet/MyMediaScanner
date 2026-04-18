@@ -5,7 +5,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mymediascanner/app/theme/app_colors.dart';
+import 'package:mymediascanner/app/theme/app_media_colors.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
 import 'package:mymediascanner/presentation/providers/batch_editor_provider.dart';
 import 'package:mymediascanner/presentation/providers/batch_history_provider.dart';
@@ -142,7 +142,8 @@ class _SessionCardState extends State<_SessionCard> {
     final colors = widget.colors;
 
     final isCompleted = session.status == 'completed';
-    final statusColor = isCompleted ? AppColors.bookColor : colors.error;
+    final statusColor =
+        isCompleted ? context.mediaColors.book : colors.error;
     final statusLabel = isCompleted ? 'COMPLETED' : 'DISCARDED';
 
     final dateStr = _formatDateTime(session.createdAt);
@@ -252,7 +253,7 @@ class _SessionCardState extends State<_SessionCard> {
                             width: 8,
                             height: 8,
                             decoration: BoxDecoration(
-                              color: _statusColor(item.status, colors),
+                              color: _statusColor(context, item.status, colors),
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -268,7 +269,7 @@ class _SessionCardState extends State<_SessionCard> {
                           Text(
                             item.status.name.toUpperCase(),
                             style: theme.textTheme.labelSmall?.copyWith(
-                              color: _statusColor(item.status, colors),
+                              color: _statusColor(context, item.status, colors),
                               fontSize: 9,
                               fontWeight: FontWeight.w700,
                             ),
@@ -285,9 +286,10 @@ class _SessionCardState extends State<_SessionCard> {
     );
   }
 
-  Color _statusColor(BatchItemStatus status, ColorScheme colors) {
+  Color _statusColor(
+      BuildContext context, BatchItemStatus status, ColorScheme colors) {
     return switch (status) {
-      BatchItemStatus.confirmed => AppColors.bookColor,
+      BatchItemStatus.confirmed => context.mediaColors.book,
       BatchItemStatus.conflict => colors.error,
       BatchItemStatus.notFound => colors.outline,
       BatchItemStatus.duplicate => colors.tertiary,

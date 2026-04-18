@@ -53,6 +53,49 @@ class AppDesignExtension extends ThemeExtension<AppDesignExtension> {
             AppColors.darkPrimary.withValues(alpha: 0.10),
       );
 
+  /// Warm-neutral Popcorn light tuning.
+  factory AppDesignExtension.popcornLight() => AppDesignExtension(
+        ghostBorderColor:
+            AppColors.popcornOutlineVariant.withValues(alpha: 0.35),
+        gradientPrimary: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.popcornPrimary, AppColors.popcornPrimaryContainer],
+        ),
+        glassOpacity: 0.85,
+        glassBlur: 24.0,
+        ambientShadow: BoxShadow(
+          color: AppColors.popcornOnSurface.withValues(alpha: 0.08),
+          blurRadius: 32,
+          offset: const Offset(0, 8),
+        ),
+        sidebarActiveBackground:
+            AppColors.popcornPrimary.withValues(alpha: 0.12),
+      );
+
+  /// Warm-charcoal Popcorn dark tuning.
+  factory AppDesignExtension.popcornDark() => AppDesignExtension(
+        ghostBorderColor:
+            AppColors.popcornDarkOutlineVariant.withValues(alpha: 0.45),
+        gradientPrimary: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.popcornDarkPrimary,
+            AppColors.popcornDarkPrimaryContainer,
+          ],
+        ),
+        glassOpacity: 0.7,
+        glassBlur: 16.0,
+        ambientShadow: BoxShadow(
+          color: Colors.black.withValues(alpha: 0.45),
+          blurRadius: 40,
+          offset: const Offset(0, 20),
+        ),
+        sidebarActiveBackground:
+            AppColors.popcornDarkPrimary.withValues(alpha: 0.14),
+      );
+
   /// Ghost border — outline-variant at 15 % opacity.
   final Color ghostBorderColor;
 

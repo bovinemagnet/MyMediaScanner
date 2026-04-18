@@ -1,9 +1,10 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:mymediascanner/app/theme/app_colors.dart';
+import 'package:mymediascanner/app/theme/app_layout_extension.dart';
+import 'package:mymediascanner/app/theme/app_media_colors.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
-import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/presentation/widgets/desktop_context_menu.dart';
+import 'package:mymediascanner/presentation/widgets/procedural_cover_placeholder.dart';
 
 class MediaItemCard extends StatelessWidget {
   const MediaItemCard({
@@ -21,19 +22,26 @@ class MediaItemCard extends StatelessWidget {
   final bool isRipped;
   final List<ContextMenuAction> contextMenuActions;
 
-  Color _typeColour(MediaType type) => switch (type) {
-        MediaType.film => AppColors.filmColor,
-        MediaType.tv => AppColors.tvColor,
-        MediaType.music => AppColors.musicColor,
-        MediaType.book => AppColors.bookColor,
-        MediaType.game => AppColors.gameColor,
-        MediaType.unknown => AppColors.unknownColor,
-      };
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final mediaColors = context.mediaColors;
+    final useProceduralCovers = context.layoutFlags.proceduralCovers;
+
+    Widget placeholder() => useProceduralCovers
+        ? ProceduralCoverPlaceholder(
+            title: item.title,
+            mediaType: item.mediaType,
+          )
+        : Container(
+            color: colors.surfaceContainerHighest,
+            child: Icon(
+              Icons.image_not_supported,
+              size: 48,
+              color: colors.onSurfaceVariant,
+            ),
+          );
 
     return DesktopContextMenu(
       actions: contextMenuActions,
@@ -57,20 +65,9 @@ class MediaItemCard extends StatelessWidget {
                                 color: colors.primary,
                               ),
                             ),
-                            errorWidget: (_, _, _) => Icon(
-                              Icons.broken_image,
-                              size: 48,
-                              color: colors.onSurfaceVariant,
-                            ),
+                            errorWidget: (_, _, _) => placeholder(),
                           )
-                        : Container(
-                            color: colors.surfaceContainerHighest,
-                            child: Icon(
-                              Icons.image_not_supported,
-                              size: 48,
-                              color: colors.onSurfaceVariant,
-                            ),
-                          ),
+                        : placeholder(),
                   ),
                   Padding(
                     padding: const EdgeInsets.all(10),
@@ -83,7 +80,7 @@ class MediaItemCard extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: _typeColour(item.mediaType),
+                                color: mediaColors.solidFor(item.mediaType),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
@@ -156,7 +153,7 @@ class MediaItemCard extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: AppColors.bookColor.withValues(alpha: 0.85),
+                      color: mediaColors.book.withValues(alpha: 0.85),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: const Icon(

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mymediascanner/app/theme/app_colors.dart';
+import 'package:mymediascanner/app/theme/app_layout_extension.dart';
+import 'package:mymediascanner/app/theme/app_media_colors.dart';
+import 'package:mymediascanner/app/theme/app_shapes.dart';
 import 'package:mymediascanner/app/theme/app_theme_extensions.dart';
 import 'package:mymediascanner/app/theme/app_typography.dart';
 
@@ -42,8 +45,13 @@ abstract final class AppTheme {
       surfaceTint: AppColors.lightSurfaceTint,
     );
 
-    return _buildTheme(colorScheme, AppTypography.lightTextTheme,
-        AppDesignExtension.light());
+    return _buildTheme(
+      colorScheme,
+      AppTypography.lightTextTheme,
+      AppDesignExtension.light(),
+      AppMediaColors.classic(),
+      AppLayoutExtension.classic(),
+    );
   }
 
   // ── Dark theme ("Obsidian Lens") ───────────────────────────────────
@@ -84,8 +92,154 @@ abstract final class AppTheme {
       surfaceTint: AppColors.darkSurfaceTint,
     );
 
-    return _buildTheme(colorScheme, AppTypography.darkTextTheme,
-        AppDesignExtension.dark());
+    return _buildTheme(
+      colorScheme,
+      AppTypography.darkTextTheme,
+      AppDesignExtension.dark(),
+      AppMediaColors.classic(),
+      AppLayoutExtension.classic(),
+    );
+  }
+
+  // ── Popcorn light ("Popcorn") ──────────────────────────────────────
+  static ThemeData popcornLight() {
+    const colorScheme = ColorScheme(
+      brightness: Brightness.light,
+      primary: AppColors.popcornPrimary,
+      onPrimary: AppColors.popcornOnPrimary,
+      primaryContainer: AppColors.popcornPrimaryContainer,
+      onPrimaryContainer: AppColors.popcornOnPrimaryContainer,
+      secondary: AppColors.popcornSecondary,
+      onSecondary: AppColors.popcornOnSecondary,
+      secondaryContainer: AppColors.popcornSecondaryContainer,
+      onSecondaryContainer: AppColors.popcornOnSecondaryContainer,
+      tertiary: AppColors.popcornTertiary,
+      onTertiary: AppColors.popcornOnTertiary,
+      tertiaryContainer: AppColors.popcornTertiaryContainer,
+      onTertiaryContainer: AppColors.popcornOnTertiaryContainer,
+      error: AppColors.popcornError,
+      onError: AppColors.popcornOnError,
+      errorContainer: AppColors.popcornErrorContainer,
+      onErrorContainer: AppColors.popcornOnErrorContainer,
+      surface: AppColors.popcornSurface,
+      onSurface: AppColors.popcornOnSurface,
+      surfaceDim: AppColors.popcornSurfaceDim,
+      surfaceBright: AppColors.popcornSurfaceBright,
+      surfaceContainerLowest: AppColors.popcornSurfaceContainerLowest,
+      surfaceContainerLow: AppColors.popcornSurfaceContainerLow,
+      surfaceContainer: AppColors.popcornSurfaceContainer,
+      surfaceContainerHigh: AppColors.popcornSurfaceContainerHigh,
+      surfaceContainerHighest: AppColors.popcornSurfaceContainerHighest,
+      onSurfaceVariant: AppColors.popcornOnSurfaceVariant,
+      outline: AppColors.popcornOutline,
+      outlineVariant: AppColors.popcornOutlineVariant,
+      inverseSurface: AppColors.popcornInverseSurface,
+      onInverseSurface: AppColors.popcornInverseOnSurface,
+      inversePrimary: AppColors.popcornInversePrimary,
+      surfaceTint: AppColors.popcornSurfaceTint,
+    );
+
+    return _popcornOverrides(
+      _buildTheme(
+        colorScheme,
+        AppTypography.lightTextTheme,
+        AppDesignExtension.popcornLight(),
+        AppMediaColors.popcorn(),
+        AppLayoutExtension.popcorn(),
+      ),
+      colorScheme,
+    );
+  }
+
+  // ── Popcorn dark ("Popcorn Dark") ──────────────────────────────────
+  static ThemeData popcornDark() {
+    const colorScheme = ColorScheme(
+      brightness: Brightness.dark,
+      primary: AppColors.popcornDarkPrimary,
+      onPrimary: AppColors.popcornDarkOnPrimary,
+      primaryContainer: AppColors.popcornDarkPrimaryContainer,
+      onPrimaryContainer: AppColors.popcornDarkOnPrimaryContainer,
+      secondary: AppColors.popcornDarkSecondary,
+      onSecondary: AppColors.popcornDarkOnSecondary,
+      secondaryContainer: AppColors.popcornDarkSecondaryContainer,
+      onSecondaryContainer: AppColors.popcornDarkOnSecondaryContainer,
+      tertiary: AppColors.popcornDarkTertiary,
+      onTertiary: AppColors.popcornDarkOnTertiary,
+      tertiaryContainer: AppColors.popcornDarkTertiaryContainer,
+      onTertiaryContainer: AppColors.popcornDarkOnTertiaryContainer,
+      error: AppColors.popcornDarkError,
+      onError: AppColors.popcornDarkOnError,
+      errorContainer: AppColors.popcornDarkErrorContainer,
+      onErrorContainer: AppColors.popcornDarkOnErrorContainer,
+      surface: AppColors.popcornDarkSurface,
+      onSurface: AppColors.popcornDarkOnSurface,
+      surfaceDim: AppColors.popcornDarkSurfaceDim,
+      surfaceBright: AppColors.popcornDarkSurfaceBright,
+      surfaceContainerLowest: AppColors.popcornDarkSurfaceContainerLowest,
+      surfaceContainerLow: AppColors.popcornDarkSurfaceContainerLow,
+      surfaceContainer: AppColors.popcornDarkSurfaceContainer,
+      surfaceContainerHigh: AppColors.popcornDarkSurfaceContainerHigh,
+      surfaceContainerHighest: AppColors.popcornDarkSurfaceContainerHighest,
+      onSurfaceVariant: AppColors.popcornDarkOnSurfaceVariant,
+      outline: AppColors.popcornDarkOutline,
+      outlineVariant: AppColors.popcornDarkOutlineVariant,
+      inverseSurface: AppColors.popcornDarkInverseSurface,
+      onInverseSurface: AppColors.popcornDarkInverseOnSurface,
+      inversePrimary: AppColors.popcornDarkInversePrimary,
+      surfaceTint: AppColors.popcornDarkSurfaceTint,
+    );
+
+    return _popcornOverrides(
+      _buildTheme(
+        colorScheme,
+        AppTypography.darkTextTheme,
+        AppDesignExtension.popcornDark(),
+        AppMediaColors.popcornDark(),
+        AppLayoutExtension.popcorn(),
+      ),
+      colorScheme,
+    );
+  }
+
+  /// Popcorn-only overrides on top of [_buildTheme]: chunkier cards,
+  /// pill-stadium chips/buttons, circular icon buttons.
+  static ThemeData _popcornOverrides(ThemeData base, ColorScheme cs) {
+    return base.copyWith(
+      cardTheme: base.cardTheme.copyWith(
+        color: cs.surfaceContainerLowest,
+        shape: AppShapes.cardShape,
+      ),
+      chipTheme: base.chipTheme.copyWith(
+        shape: AppShapes.chipShape,
+        side: BorderSide(color: cs.outlineVariant),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        labelStyle: base.chipTheme.labelStyle?.copyWith(
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: cs.primary,
+          foregroundColor: cs.onPrimary,
+          shape: AppShapes.chipShape,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          textStyle: const TextStyle(
+            fontFamily: 'Manrope',
+            fontWeight: FontWeight.w700,
+            fontSize: 14,
+          ),
+        ),
+      ),
+      iconButtonTheme: const IconButtonThemeData(
+        style: ButtonStyle(shape: WidgetStatePropertyAll(CircleBorder())),
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: cs.primary,
+        foregroundColor: cs.onPrimary,
+        elevation: AppShapes.elevSheet,
+        shape: const CircleBorder(),
+      ),
+    );
   }
 
   // ── Shared theme builder ───────────────────────────────────────────
@@ -93,6 +247,8 @@ abstract final class AppTheme {
     ColorScheme colorScheme,
     TextTheme textTheme,
     AppDesignExtension designExtension,
+    AppMediaColors mediaColors,
+    AppLayoutExtension layoutExtension,
   ) {
     final isDark = colorScheme.brightness == Brightness.dark;
 
@@ -102,7 +258,7 @@ abstract final class AppTheme {
       textTheme: textTheme,
       fontFamily: 'Manrope',
       scaffoldBackgroundColor: colorScheme.surface,
-      extensions: [designExtension],
+      extensions: [designExtension, mediaColors, layoutExtension],
 
       // AppBar — flat, no border
       appBarTheme: AppBarTheme(

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mymediascanner/app/theme/app_colors.dart';
+import 'package:mymediascanner/app/theme/app_media_colors.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
@@ -83,7 +83,7 @@ class _RipCoverageViewState extends ConsumerState<RipCoverageView> {
                       return FilterChip(
                         label: Text(_statusLabel(status)),
                         avatar: Icon(_statusIcon(status),
-                            size: 16, color: _statusColour(status)),
+                            size: 16, color: _statusColour(context, status)),
                         selected: _activeFilters.contains(status),
                         onSelected: (selected) {
                           setState(() {
@@ -206,16 +206,17 @@ IconData _statusIcon(CoverageStatus status) {
   }
 }
 
-Color _statusColour(CoverageStatus status) {
+Color _statusColour(BuildContext context, CoverageStatus status) {
+  final mediaColors = context.mediaColors;
   switch (status) {
     case CoverageStatus.notRipped:
-      return AppColors.filmColor;
+      return mediaColors.film;
     case CoverageStatus.partiallyRipped:
-      return AppColors.tvColor;
+      return mediaColors.tv;
     case CoverageStatus.fullyRipped:
-      return AppColors.bookColor;
+      return mediaColors.book;
     case CoverageStatus.qualityIssues:
-      return AppColors.tvColor;
+      return mediaColors.tv;
   }
 }
 
@@ -281,7 +282,7 @@ class _CoverageItemTile extends ConsumerWidget {
     return ListTile(
       leading: Icon(
         _statusIcon(effectiveStatus),
-        color: _statusColour(effectiveStatus),
+        color: _statusColour(context, effectiveStatus),
       ),
       title: Text(entry.item.title),
       subtitle: Text(entry.item.subtitle ?? ''),

@@ -8,6 +8,25 @@ abstract final class AppTypography {
   static const _manrope = 'Manrope';
   static const _inter = 'Inter';
 
+  /// Display style for large numerics (hero stat cards, count badges).
+  ///
+  /// Uses extra-bold Manrope with a slight negative tracking. If the
+  /// `Space Grotesk` font is added to `assets/fonts/` in future, swap the
+  /// `fontFamily` here to pick it up everywhere without call-site churn.
+  static TextStyle displayNumeric({
+    required Color color,
+    double fontSize = 64,
+  }) {
+    return TextStyle(
+      fontFamily: _manrope,
+      fontSize: fontSize,
+      fontWeight: FontWeight.w800,
+      letterSpacing: -fontSize * 0.02,
+      height: 1.0,
+      color: color,
+    );
+  }
+
   /// Dark mode text theme: Manrope for headlines, Inter for body/labels.
   static TextTheme get darkTextTheme => _buildTextTheme(
         bodyFamily: _inter,

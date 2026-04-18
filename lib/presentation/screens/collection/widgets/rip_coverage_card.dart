@@ -6,7 +6,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:mymediascanner/app/theme/app_colors.dart';
+import 'package:mymediascanner/app/theme/app_media_colors.dart';
 
 /// Card showing rip library statistics: total albums, matched/unmatched
 /// ratio, music collection coverage, and total library size.
@@ -32,6 +32,7 @@ class RipCoverageCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final musicColour = context.mediaColors.music;
 
     if (totalRipAlbums == 0 && totalMusicItems == 0) {
       return Container(
@@ -97,13 +98,13 @@ class RipCoverageCard extends StatelessWidget {
           // ── Total rip albums ─────────────────────────────
           Row(
             children: [
-              const Icon(Icons.album, size: 24, color: AppColors.musicColor),
+              Icon(Icons.album, size: 24, color: musicColour),
               const SizedBox(width: 8),
               Text(
                 '$totalRipAlbums',
                 style: theme.textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.w800,
-                  color: AppColors.musicColor,
+                  color: musicColour,
                 ),
               ),
               const SizedBox(width: 8),
@@ -136,7 +137,7 @@ class RipCoverageCard extends StatelessWidget {
                   if (matchedRipAlbums > 0)
                     Expanded(
                       flex: matchedRipAlbums,
-                      child: Container(color: AppColors.musicColor),
+                      child: Container(color: musicColour),
                     ),
                   if (unmatchedRipAlbums > 0)
                     Expanded(
@@ -155,7 +156,7 @@ class RipCoverageCard extends StatelessWidget {
               Text(
                 '$matchedRipAlbums matched (${matchedPercent.toStringAsFixed(0)}%)',
                 style: theme.textTheme.labelSmall?.copyWith(
-                  color: AppColors.musicColor,
+                  color: musicColour,
                 ),
               ),
               Text(
@@ -178,7 +179,7 @@ class RipCoverageCard extends StatelessWidget {
                   painter: _CoverageRingPainter(
                     percentage: coveragePercent,
                     trackColour: colors.surfaceContainerHighest,
-                    progressColour: AppColors.musicColor,
+                    progressColour: musicColour,
                   ),
                   child: Center(
                     child: Text(

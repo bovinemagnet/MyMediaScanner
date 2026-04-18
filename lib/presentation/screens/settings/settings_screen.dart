@@ -1,6 +1,7 @@
 import 'package:audio_defect_detector/audio_defect_detector.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:mymediascanner/app/theme/app_colors.dart';
 import 'package:mymediascanner/core/constants/app_constants.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -161,6 +162,7 @@ class SettingsScreen extends ConsumerWidget {
             colors: colors,
             theme: theme,
             children: [
+              _PaletteTile(),
               _ThemeModeTile(),
             ],
           ),
@@ -247,45 +249,223 @@ class SettingsScreen extends ConsumerWidget {
   }
 }
 
+/// Tappable palette cards (Classic / Popcorn) shown at the top of the
+/// Preferences section. Each card renders a miniature of the palette —
+/// surface, a primary pill, and three media-type dots — so users can
+/// compare side-by-side before committing.
+class _PaletteTile extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentFamily =
+        ref.watch(themeChoiceProvider.select((c) => c.family));
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Palette',
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _PaletteCard(
+                  label: 'Classic',
+                  selected: currentFamily == ThemeFamily.classic,
+                  surface: AppColors.lightSurface,
+                  primary: AppColors.lightPrimary,
+                  container: AppColors.lightSurfaceContainerHigh,
+                  mediaDots: const [
+                    AppColors.filmColor,
+                    AppColors.musicColor,
+                    AppColors.bookColor,
+                  ],
+                  onTap: () => ref
+                      .read(themeChoiceProvider.notifier)
+                      .setFamily(ThemeFamily.classic),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _PaletteCard(
+                  label: 'Popcorn',
+                  selected: currentFamily == ThemeFamily.popcorn,
+                  surface: AppColors.popcornSurface,
+                  primary: AppColors.popcornPrimary,
+                  container: AppColors.popcornSurfaceContainer,
+                  mediaDots: const [
+                    Color(0xFFFF5E3A),
+                    Color(0xFFA06DFF),
+                    Color(0xFF00C478),
+                  ],
+                  onTap: () => ref
+                      .read(themeChoiceProvider.notifier)
+                      .setFamily(ThemeFamily.popcorn),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PaletteCard extends StatelessWidget {
+  const _PaletteCard({
+    required this.label,
+    required this.selected,
+    required this.surface,
+    required this.primary,
+    required this.container,
+    required this.mediaDots,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final Color surface;
+  final Color primary;
+  final Color container;
+  final List<Color> mediaDots;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final ringColor =
+        selected ? theme.colorScheme.primary : theme.colorScheme.outlineVariant;
+
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: '$label palette',
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          height: 88,
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: ringColor,
+              width: selected ? 2 : 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              // Primary pill
+              Container(
+                width: 24,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: primary,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Faux card
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: container,
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        for (final dot in mediaDots) ...[
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: dot,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      label,
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        // Both palette cards render a light surface, so a
+                        // fixed dark ink colour reads correctly regardless
+                        // of the outer theme's brightness.
+                        color: AppColors.popcornOnSurface,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _ThemeModeTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentMode = ref.watch(themeModeProvider);
+    final currentBrightness =
+        ref.watch(themeChoiceProvider.select((c) => c.brightness));
 
-    String label(ThemeMode mode) => switch (mode) {
-          ThemeMode.system => 'System default',
-          ThemeMode.light => 'Light',
-          ThemeMode.dark => 'Dark',
+    String label(ThemeBrightness b) => switch (b) {
+          ThemeBrightness.system => 'System default',
+          ThemeBrightness.light => 'Light',
+          ThemeBrightness.dark => 'Dark',
         };
 
-    IconData icon(ThemeMode mode) => switch (mode) {
-          ThemeMode.system => Icons.brightness_auto,
-          ThemeMode.light => Icons.light_mode,
-          ThemeMode.dark => Icons.dark_mode,
+    IconData icon(ThemeBrightness b) => switch (b) {
+          ThemeBrightness.system => Icons.brightness_auto,
+          ThemeBrightness.light => Icons.light_mode,
+          ThemeBrightness.dark => Icons.dark_mode,
         };
 
     return ListTile(
-      leading: Icon(icon(currentMode)),
+      leading: Icon(icon(currentBrightness)),
       title: const Text('Theme'),
-      subtitle: Text(label(currentMode)),
-      trailing: SegmentedButton<ThemeMode>(
+      subtitle: Text(label(currentBrightness)),
+      trailing: SegmentedButton<ThemeBrightness>(
         segments: const [
           ButtonSegment(
-            value: ThemeMode.system,
+            value: ThemeBrightness.system,
             icon: Icon(Icons.brightness_auto, size: 18),
           ),
           ButtonSegment(
-            value: ThemeMode.light,
+            value: ThemeBrightness.light,
             icon: Icon(Icons.light_mode, size: 18),
           ),
           ButtonSegment(
-            value: ThemeMode.dark,
+            value: ThemeBrightness.dark,
             icon: Icon(Icons.dark_mode, size: 18),
           ),
         ],
-        selected: {currentMode},
+        selected: {currentBrightness},
         onSelectionChanged: (selection) {
-          ref.read(themeModeProvider.notifier).setMode(selection.first);
+          ref
+              .read(themeChoiceProvider.notifier)
+              .setBrightness(selection.first);
         },
         showSelectedIcon: false,
       ),

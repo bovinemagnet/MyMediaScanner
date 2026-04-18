@@ -5,7 +5,7 @@
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:mymediascanner/app/theme/app_colors.dart';
+import 'package:mymediascanner/app/theme/app_media_colors.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
 
 /// Donut-style pie chart showing media type distribution.
@@ -23,6 +23,7 @@ class MediaTypePieChart extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final mediaColors = context.mediaColors;
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -64,7 +65,7 @@ class MediaTypePieChart extends StatelessWidget {
                     PieChartData(
                       sectionsSpace: 2,
                       centerSpaceRadius: 45,
-                      sections: _buildSections(theme),
+                      sections: _buildSections(theme, mediaColors),
                       pieTouchData: PieTouchData(
                         touchCallback: (_, _) {},
                       ),
@@ -99,7 +100,7 @@ class MediaTypePieChart extends StatelessWidget {
               spacing: 16,
               runSpacing: 8,
               children: byMediaType.entries.map((entry) {
-                final colour = _colourForType(entry.key);
+                final colour = mediaColors.solidFor(entry.key);
                 return Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -128,14 +129,15 @@ class MediaTypePieChart extends StatelessWidget {
     );
   }
 
-  List<PieChartSectionData> _buildSections(ThemeData theme) {
+  List<PieChartSectionData> _buildSections(
+      ThemeData theme, AppMediaColors mediaColors) {
     final sorted = byMediaType.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
     return sorted.map((entry) {
       final percentage = totalItems > 0 ? entry.value / totalItems * 100 : 0.0;
       return PieChartSectionData(
-        color: _colourForType(entry.key),
+        color: mediaColors.solidFor(entry.key),
         value: entry.value.toDouble(),
         title: percentage >= 5 ? '${percentage.toStringAsFixed(0)}%' : '',
         radius: 35,
@@ -146,16 +148,5 @@ class MediaTypePieChart extends StatelessWidget {
         ),
       );
     }).toList();
-  }
-
-  Color _colourForType(MediaType type) {
-    return switch (type) {
-      MediaType.film => AppColors.filmColor,
-      MediaType.tv => AppColors.tvColor,
-      MediaType.music => AppColors.musicColor,
-      MediaType.book => AppColors.bookColor,
-      MediaType.game => AppColors.gameColor,
-      MediaType.unknown => AppColors.unknownColor,
-    };
   }
 }

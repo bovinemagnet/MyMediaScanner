@@ -18,14 +18,14 @@ Cross-platform Flutter/Dart application for scanning barcodes on physical media 
 - Batch scanning mode with queue-based review and bulk save
 - IMDb ID lookup (tt1234567) via TMDB find endpoint
 - Cover OCR text recognition (ML Kit on Android/iOS, Vision framework on macOS, Tesseract on Windows/Linux)
-- Theme mode selector (system/light/dark) persisted to SharedPreferences
+- Theme selector: palette family (Classic / Popcorn) × brightness (system/light/dark) persisted to SharedPreferences
 - Resizable master-detail split with drag divider (persisted to SharedPreferences)
 - Keyboard navigation in collection and rips tables (arrow keys, Enter, Delete, Escape)
 - Auto-collapse sidebar to drawer on narrow desktop windows
 
 ## Technology Stack
 
-- **UI:** Flutter (all platforms), custom "Obsidian Lens" (dark) / "Precision Editorial" (light) design system built on Material 3 with hand-crafted colour schemes, Manrope + Inter typography, glassmorphism, and tonal container architecture
+- **UI:** Flutter (all platforms), custom design system with two palette families: Classic (Obsidian Lens dark + Precision Editorial light) and Popcorn (vibrant coral/mint/periwinkle, light + dark). Built on Material 3 with hand-crafted colour schemes, Manrope + Inter typography, glassmorphism, and tonal container architecture. Media-type colours flow through the `AppMediaColors` theme extension so adding new palettes is hex-only.
 - **State:** Riverpod 3.x with hand-written providers (Notifier and AsyncNotifier); `riverpod_generator` is not used due to incompatibility with `drift_dev`
 - **Local DB:** Drift (SQLite) with type-safe DAOs
 - **Remote DB:** PostgreSQL via `postgres` Dart package (direct connection, no intermediary API)
@@ -82,8 +82,8 @@ Clean architecture with strict dependency rules: `domain/` has zero dependencies
 ```
 lib/
   app/
-    theme/      → Custom design system (app_colors, app_typography, app_theme, app_theme_extensions)
-    app.dart    → MaterialApp.router with theme mode provider
+    theme/      → Custom design system (app_colors, app_typography, app_theme, app_theme_extensions, app_media_colors, app_layout_extension, app_shapes)
+    app.dart    → MaterialApp.router with palette × brightness theme choice
     router.dart → GoRouter with 8 StatefulShellBranch routes
   core/
     constants/  → App constants, breakpoints, window dimensions
@@ -137,12 +137,24 @@ Item detail routes are nested under collection: `/collection/item/:id`
 
 ## Design System
 
-The app uses a custom design system with two themes:
+The app exposes two palette families, each with a light and dark variant.
+The user picks a `ThemeFamily` (Classic / Popcorn) and a `ThemeBrightness`
+(system / light / dark) independently from Settings.
 
+**Classic — editorial, restrained**
 - **Dark ("Obsidian Lens"):** Deep obsidian surfaces (#0e0e0e), electric cyan primary (#6dddff), Inter body text
 - **Light ("Precision Editorial"):** Off-white surfaces (#f5f6f7), deep teal primary (#00647a), Manrope throughout
 
-Design principles: "no-line" rule (tonal shifts instead of borders), glassmorphism for navigation, gradient CTAs, ghost borders (outline-variant at 15% opacity), ambient shadows. Theme extension (`AppDesignExtension`) carries glassmorphism, gradient, and shadow tokens.
+**Popcorn — vibrant, friendly**
+- **Light:** Warm ivory surface (#FFF6EC), coral primary (#FF5E3A), mint secondary (#00C4B8), periwinkle tertiary. Chunkier radii, full-pill chips, floating mobile nav with raised scan FAB.
+- **Dark:** Warm charcoal surface (#161416), lifted coral (#FF7A5C), ivory ink.
+
+Design principles: "no-line" rule (tonal shifts instead of borders), glassmorphism for navigation, gradient CTAs, ghost borders, ambient shadows. Three `ThemeExtension`s carry the non-Material tokens:
+- `AppDesignExtension` — glassmorphism, gradient, ghost-border, shadow.
+- `AppMediaColors` — per-media-type hues (film/tv/music/book/game) plus soft and ink variants. Widgets read via `context.mediaColors.film` or `context.mediaColors.solidFor(type)`.
+- `AppLayoutExtension` — feature flags that gate Popcorn-only polish (floating nav, hero glow, procedural cover placeholders, pill chips, gradient detail hero). Classic themes set all flags to `false`.
+
+Shape tokens live in `AppShapes` (chunkier Popcorn radii) and the hero-numeric `AppTypography.displayNumeric()` helper supplies the oversized stat-card number style.
 
 ## Key Conventions
 

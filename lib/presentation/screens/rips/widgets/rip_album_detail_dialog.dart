@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mymediascanner/app/theme/app_colors.dart';
+import 'package:mymediascanner/app/theme/app_media_colors.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
@@ -643,7 +643,8 @@ class _TrackTileState extends ConsumerState<_TrackTile> {
                     padding: const EdgeInsets.only(right: 8),
                     child: Chip(
                       label: Text('${track.clickCount} clicks'),
-                      backgroundColor: AppColors.tvColor.withValues(alpha: 0.2),
+                      backgroundColor:
+                          context.mediaColors.tv.withValues(alpha: 0.2),
                       visualDensity: VisualDensity.compact,
                     ),
                   ),

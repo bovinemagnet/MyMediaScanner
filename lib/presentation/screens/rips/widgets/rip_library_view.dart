@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mymediascanner/app/theme/app_colors.dart';
+import 'package:mymediascanner/app/theme/app_media_colors.dart';
 import 'package:mymediascanner/core/constants/app_constants.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
@@ -361,6 +361,7 @@ class _RipAlbumCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final tracksAsync = ref.watch(ripTracksProvider(album.id));
     final theme = Theme.of(context);
+    final mediaColors = context.mediaColors;
     final nowPlayingAlbumId = ref.watch(
       nowPlayingProvider.select((s) => s.album?.id),
     );
@@ -436,9 +437,9 @@ class _RipAlbumCard extends ConsumerWidget {
                       Icons.verified,
                       size: 14,
                       color: arVerified == tracks.length
-                          ? AppColors.bookColor
+                          ? mediaColors.book
                           : arVerified > 0
-                              ? AppColors.tvColor
+                              ? mediaColors.tv
                               : theme.colorScheme.onSurfaceVariant,
                     ),
                     const SizedBox(width: 4),
@@ -448,8 +449,8 @@ class _RipAlbumCard extends ConsumerWidget {
                     ),
                     if (withClicks > 0) ...[
                       const SizedBox(width: 8),
-                      const Icon(Icons.warning_amber,
-                          size: 14, color: AppColors.tvColor),
+                      Icon(Icons.warning_amber,
+                          size: 14, color: mediaColors.tv),
                       const SizedBox(width: 4),
                       Text('$withClicks clicks',
                           style: theme.textTheme.bodySmall),
