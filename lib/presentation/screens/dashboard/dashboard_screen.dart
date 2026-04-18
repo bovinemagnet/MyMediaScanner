@@ -36,19 +36,41 @@ class DashboardScreen extends ConsumerWidget {
             children: [
               // Hero header
               Padding(
-                padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
+                padding: const EdgeInsets.fromLTRB(24, 16, 8, 0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Your Digital\nVault.',
-                      style: theme.textTheme.displayMedium,
+                    // Top row: headline on the left, Settings gear on
+                    // the right. Needed because the mobile bottom nav
+                    // doesn't include Settings; the desktop sidebar
+                    // already does but the redundancy is harmless.
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 16),
+                            child: Text(
+                              'Your Digital\nVault.',
+                              style: theme.textTheme.displayMedium,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.settings_outlined),
+                          tooltip: 'Settings',
+                          onPressed: () => context.go('/settings'),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 16),
-                    Text(
-                      'Catalogue anything in seconds.',
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: colors.onSurfaceVariant,
+                    Padding(
+                      padding: const EdgeInsets.only(right: 16),
+                      child: Text(
+                        'Catalogue anything in seconds.',
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: colors.onSurfaceVariant,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
