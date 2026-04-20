@@ -28,8 +28,54 @@ class PostgresSyncClient {
   /// Maximum number of records per batched INSERT statement.
   static const _batchSize = 50;
 
+  /// Whitelist of table names the sync pipeline is allowed to touch.
+  /// Table and column names are interpolated into SQL (they can't be bound
+  /// as parameters), so we restrict them here to prevent any future code
+  /// path from piping user-controlled strings into the DDL surface.
+  static const _allowedTables = {
+    'media_items',
+    'shelves',
+    'shelf_items',
+    'tags',
+    'media_item_tags',
+    'borrowers',
+    'loans',
+    'locations',
+    'series',
+  };
+
+  /// Matches a valid SQL identifier (column or table name).
+  static final _identifierRegex = RegExp(r'^[A-Za-z_][A-Za-z0-9_]*$');
+
   final PostgresConfig config;
   Connection? _connection;
+
+  /// Serialises concurrent calls on the shared [Connection]. The `postgres`
+  /// package runs one query at a time per connection; overlapping awaits
+  /// from different callers would otherwise interleave and raise.
+  final _connectionLock = _AsyncMutex();
+
+  static void _assertSafeTable(String table) {
+    if (!_allowedTables.contains(table)) {
+      throw ArgumentError.value(
+        table,
+        'table',
+        'Table not in the sync allow-list',
+      );
+    }
+  }
+
+  static void _assertSafeColumns(Iterable<String> columns) {
+    for (final c in columns) {
+      if (!_identifierRegex.hasMatch(c)) {
+        throw ArgumentError.value(
+          c,
+          'column',
+          'Invalid SQL identifier',
+        );
+      }
+    }
+  }
 
   /// Builds a multi-row INSERT ... ON CONFLICT SQL statement for batch upserts.
   ///
@@ -39,7 +85,9 @@ class PostgresSyncClient {
     String table,
     List<Map<String, dynamic>> records,
   ) {
+    _assertSafeTable(table);
     final columns = records.first.keys.toList();
+    _assertSafeColumns(columns);
     final params = <dynamic>[];
     final valueClauses = <String>[];
 
@@ -66,7 +114,12 @@ class PostgresSyncClient {
   }
 
   Future<Connection> _getConnection() async {
-    if (_connection != null) return _connection!;
+    final existing = _connection;
+    if (existing != null && existing.isOpen) return existing;
+
+    // Either first connect or the cached Connection was closed by the
+    // server (Postgres idle-timeout: 5-30 min). Re-open either way.
+    _connection = null;
 
     final endpoint = Endpoint(
       host: config.host,
@@ -76,14 +129,14 @@ class PostgresSyncClient {
       password: config.password,
     );
 
-    _connection = await Connection.open(
+    final conn = await Connection.open(
       endpoint,
       settings: ConnectionSettings(
         sslMode: config.requireTls ? SslMode.require : SslMode.disable,
       ),
     );
-
-    return _connection!;
+    _connection = conn;
+    return conn;
   }
 
   /// Test connectivity and return true if successful.
@@ -106,16 +159,18 @@ class PostgresSyncClient {
     List<Map<String, dynamic>> records,
   ) async {
     if (records.isEmpty) return;
-    final conn = await _getConnection();
-
-    for (var i = 0; i < records.length; i += _batchSize) {
-      final batch = records.sublist(
-        i,
-        i + _batchSize > records.length ? records.length : i + _batchSize,
-      );
-      final (:sql, :params) = buildBatchUpsertSql(table, batch);
-      await conn.execute(sql, parameters: params);
-    }
+    _assertSafeTable(table);
+    await _connectionLock.synchronized(() async {
+      final conn = await _getConnection();
+      for (var i = 0; i < records.length; i += _batchSize) {
+        final batch = records.sublist(
+          i,
+          i + _batchSize > records.length ? records.length : i + _batchSize,
+        );
+        final (:sql, :params) = buildBatchUpsertSql(table, batch);
+        await conn.execute(sql, parameters: params);
+      }
+    });
   }
 
   /// Pull all records updated after a given timestamp.
@@ -123,21 +178,24 @@ class PostgresSyncClient {
     String table, {
     int? afterTimestamp,
   }) async {
-    final conn = await _getConnection();
-    final Result result;
+    _assertSafeTable(table);
+    return _connectionLock.synchronized(() async {
+      final conn = await _getConnection();
+      final Result result;
 
-    if (afterTimestamp != null) {
-      result = await conn.execute(
-        Sql.named(
-          'SELECT * FROM $table WHERE updated_at > @ts',
-        ),
-        parameters: {'ts': afterTimestamp},
-      );
-    } else {
-      result = await conn.execute('SELECT * FROM $table');
-    }
+      if (afterTimestamp != null) {
+        result = await conn.execute(
+          Sql.named(
+            'SELECT * FROM $table WHERE updated_at > @ts',
+          ),
+          parameters: {'ts': afterTimestamp},
+        );
+      } else {
+        result = await conn.execute('SELECT * FROM $table');
+      }
 
-    return result.map((row) => row.toColumnMap()).toList();
+      return result.map((row) => row.toColumnMap()).toList();
+    });
   }
 
   /// Lightweight connectivity check using `SELECT 1` with a 5-second timeout.
@@ -176,4 +234,33 @@ enum ConnectionHealth {
   disconnected,
   timeout,
   unconfigured,
+}
+
+/// Minimal single-slot async mutex. Serialises access to the shared
+/// `postgres` [Connection] (the package is single-threaded per connection,
+/// so overlapping awaits from different callers can't safely interleave).
+class _AsyncMutex {
+  Future<void>? _head;
+
+  Future<T> synchronized<T>(Future<T> Function() body) {
+    final prev = _head;
+    final completer = Completer<void>();
+    _head = completer.future;
+
+    return () async {
+      if (prev != null) {
+        try {
+          await prev;
+        } catch (_) {
+          // Ignore prior-block errors; our body runs on a clean slate.
+        }
+      }
+      try {
+        return await body();
+      } finally {
+        completer.complete();
+        if (identical(_head, completer.future)) _head = null;
+      }
+    }();
+  }
 }

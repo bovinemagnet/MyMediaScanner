@@ -240,13 +240,56 @@ class MediaItemRepositoryImpl implements IMediaItemRepository {
       entityType: Value(entityType),
       entityId: Value(entityId),
       operation: Value(operation),
-      payloadJson: Value(jsonEncode({
-        'id': item.id,
-        'barcode': item.barcode,
-        'title': item.title,
-        'media_type': item.mediaType.name,
-      })),
+      // Store a full row snapshot. `PostgresSyncClient.buildBatchUpsertSql`
+      // derives both the INSERT columns and the ON CONFLICT update set
+      // from the payload keys; if we persist only a subset here, every
+      // other column on the server will be NULL on INSERT or left stale
+      // on UPDATE.
+      payloadJson: Value(jsonEncode(_toSyncPayload(item))),
       createdAt: Value(DateTime.now().millisecondsSinceEpoch),
     ));
+  }
+
+  /// Produce a snake_case map of every sync-relevant field on [item], in
+  /// the shape expected by the PostgreSQL `media_items` table.
+  static Map<String, dynamic> _toSyncPayload(MediaItem item) {
+    return <String, dynamic>{
+      'id': item.id,
+      'barcode': item.barcode,
+      'barcode_type': item.barcodeType,
+      'media_type': item.mediaType.name,
+      'title': item.title,
+      'subtitle': item.subtitle,
+      'description': item.description,
+      'cover_url': item.coverUrl,
+      'year': item.year,
+      'publisher': item.publisher,
+      'format': item.format,
+      'genres': jsonEncode(item.genres),
+      'extra_metadata': jsonEncode(item.extraMetadata),
+      'source_apis': jsonEncode(item.sourceApis),
+      'user_rating': item.userRating,
+      'user_review': item.userReview,
+      'critic_score': item.criticScore,
+      'critic_source': item.criticSource,
+      'ownership_status': item.ownershipStatus.name,
+      'condition': item.condition?.name,
+      'price_paid': item.pricePaid,
+      'acquired_at': item.acquiredAt,
+      'retailer': item.retailer,
+      'location_id': item.locationId,
+      'series_id': item.seriesId,
+      'series_position': item.seriesPosition,
+      'progress_current': item.progressCurrent,
+      'progress_total': item.progressTotal,
+      'progress_unit': item.progressUnit?.dbValue,
+      'started_at': item.startedAt,
+      'completed_at': item.completedAt,
+      'consumed': item.consumed ? 1 : 0,
+      'date_added': item.dateAdded,
+      'date_scanned': item.dateScanned,
+      'updated_at': item.updatedAt,
+      'deleted': item.deleted ? 1 : 0,
+    };
   }
 }

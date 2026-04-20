@@ -57,9 +57,15 @@ class SyncLogDao extends DatabaseAccessor<AppDatabase>
   }
 
   /// Purge log entries older than the given epoch timestamp (milliseconds).
+  ///
+  /// Only purges entries that were actually synced — failed entries must
+  /// stay visible so the user can retry or inspect them, no matter how
+  /// old. Prior behaviour dropped pending/failed entries silently.
   Future<int> purgeOlderThan(int epochMs) {
     return (delete(syncLogTable)
-          ..where((t) => t.createdAt.isSmallerThanValue(epochMs)))
+          ..where((t) =>
+              t.createdAt.isSmallerThanValue(epochMs) &
+              t.synced.equals(1)))
         .go();
   }
 

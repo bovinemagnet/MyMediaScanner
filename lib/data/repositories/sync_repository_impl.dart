@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:mymediascanner/data/local/dao/media_items_dao.dart';
 import 'package:mymediascanner/data/local/dao/sync_log_dao.dart';
 import 'package:mymediascanner/data/local/database/app_database.dart';
+import 'package:mymediascanner/data/remote/sync/json_key_case.dart';
 import 'package:mymediascanner/data/remote/sync/postgres_sync_client.dart';
 import 'package:mymediascanner/data/remote/sync/sync_strategy.dart';
 import 'package:mymediascanner/domain/entities/ownership_status.dart';
@@ -41,6 +42,14 @@ class SyncRepositoryImpl implements ISyncRepository {
       final pending = await _syncLogDao.getPending();
       final total = pending.length;
 
+      // Track which entity IDs were successfully pushed this cycle so we
+      // can stamp `synced_at` on only those local rows afterwards. The
+      // prior implementation stamped every unsynced row regardless of
+      // whether its sync_log entry was actually processed, which caused
+      // silent data loss for rows whose log entry was purged or missed.
+      final pushedIds = <String>{};
+      Object? firstFailure;
+
       for (var i = 0; i < pending.length; i++) {
         final log = pending[i];
         _progressController.add(SyncProgress(
@@ -56,6 +65,7 @@ class SyncRepositoryImpl implements ISyncRepository {
           if (decoded is! Map<String, dynamic>) continue;
           await _syncClient.upsertRecords('${log.entityType}s', [decoded]);
           await _syncLogDao.markSynced(log.id);
+          pushedIds.add(log.entityId);
           stopwatch.stop();
           await _syncLogDao.updateLogResult(
             log.id,
@@ -71,19 +81,26 @@ class SyncRepositoryImpl implements ISyncRepository {
             direction: 'push',
             errorMessage: e.toString(),
           );
-          rethrow;
+          // Keep the first error but continue pushing the remaining log
+          // entries — otherwise a single transient failure silently leaves
+          // the rest invisible to `getFailedEntries`.
+          firstFailure ??= e;
         }
       }
 
-      // Mark all items as synced
-      final unsynced = await _mediaItemsDao.getUnsynced();
+      // Stamp `synced_at` only on the local rows we actually pushed.
       final now = DateTime.now().millisecondsSinceEpoch;
-      for (final item in unsynced) {
-        await _mediaItemsDao.markSynced(item.id, now);
+      for (final id in pushedIds) {
+        await _mediaItemsDao.markSynced(id, now);
       }
 
       _progressController.add(SyncProgress.idle);
       await _emitStatus(isSyncing: false);
+      if (firstFailure != null) {
+        // Surface the failure to the caller while the status stream
+        // already reflects per-entry errorMessages.
+        throw firstFailure;
+      }
     } on Exception catch (e) {
       _progressController.add(SyncProgress.idle);
       await _emitStatus(isSyncing: false, error: e.toString());
@@ -95,8 +112,14 @@ class SyncRepositoryImpl implements ISyncRepository {
   Future<void> pullChanges() async {
     await _emitStatus(isSyncing: true);
     try {
-      // Pull remote media items and merge
-      final remoteItems = await _syncClient.pullRecords('media_items');
+      // Pull only remote rows modified since our last successful sync.
+      // Without this the pull grows linearly with the remote table size
+      // and eventually times out on mobile networks.
+      final lastSyncedAt = await _getLastSyncedAt();
+      final remoteItems = await _syncClient.pullRecords(
+        'media_items',
+        afterTimestamp: lastSyncedAt,
+      );
       final total = remoteItems.length;
       _pendingConflicts.clear();
 
@@ -114,14 +137,20 @@ class SyncRepositoryImpl implements ISyncRepository {
 
         final localRow = await _mediaItemsDao.getById(remoteId);
         if (localRow == null) {
-          // Insert new remote item locally
-          await _mediaItemsDao.insertItem(
-            _mapToCompanion(remote),
-          );
+          // Insert new remote item locally. Do NOT trust the remote's
+          // `synced_at` — stamp it ourselves so `getUnsynced()` doesn't
+          // immediately re-flag this row as pending push.
+          final insertData = Map<String, dynamic>.of(remote)
+            ..['synced_at'] = DateTime.now().millisecondsSinceEpoch;
+          await _mediaItemsDao.insertItem(_mapToCompanion(insertData));
           continue;
         }
 
-        final localJson = localRow.toJson();
+        // Drift's toJson() emits camelCase keys; Postgres sends snake_case.
+        // Normalise to snake_case so merge/conflict detection compares
+        // apples to apples and _mapToCompanion (snake-case reader) sees
+        // every merged field.
+        final localJson = JsonKeyCase.toSnakeCase(localRow.toJson());
 
         // Detect conflicts for close-in-time edits
         final conflicts = SyncStrategy.detectConflicts(
@@ -139,6 +168,9 @@ class SyncRepositoryImpl implements ISyncRepository {
 
         // No conflicts — apply standard merge and persist
         final merged = SyncStrategy.mergeFields(localJson, remote);
+        // Stamp synced_at on the merged row so the pulled state isn't
+        // re-flagged as dirty on the next push.
+        merged['synced_at'] = DateTime.now().millisecondsSinceEpoch;
         await _mediaItemsDao.updateItem(_mapToCompanion(merged));
       }
 
@@ -198,6 +230,12 @@ class SyncRepositoryImpl implements ISyncRepository {
       byEntity.putIfAbsent(resolution.entityId, () => []).add(resolution);
     }
 
+    // Pull the remote table ONCE for the whole resolution batch. Prior
+    // versions called pullRecords() inside the per-entity loop, turning an
+    // O(n) operation into O(n·m) — a full table download per conflicted
+    // row — which hung the UI for any realistic conflict list.
+    final remoteItems = await _syncClient.pullRecords('media_items');
+
     for (final entry in byEntity.entries) {
       final entityId = entry.key;
       final entityResolutions = entry.value;
@@ -205,7 +243,6 @@ class SyncRepositoryImpl implements ISyncRepository {
       final localRow = await _mediaItemsDao.getById(entityId);
       if (localRow == null) continue;
 
-      final remoteItems = await _syncClient.pullRecords('media_items');
       final remote = remoteItems.firstWhere(
         (r) => r['id'] == entityId,
         orElse: () => <String, dynamic>{},
@@ -213,10 +250,11 @@ class SyncRepositoryImpl implements ISyncRepository {
       if (remote.isEmpty) continue;
 
       final merged = SyncStrategy.mergeWithResolutions(
-        localRow.toJson(),
+        JsonKeyCase.toSnakeCase(localRow.toJson()),
         remote,
         entityResolutions,
       );
+      merged['synced_at'] = DateTime.now().millisecondsSinceEpoch;
 
       await _mediaItemsDao.updateItem(_mapToCompanion(merged));
 
@@ -267,6 +305,14 @@ class SyncRepositoryImpl implements ISyncRepository {
   @override
   Future<void> purgeSyncHistory(int olderThanEpochMs) async {
     await _syncLogDao.purgeOlderThan(olderThanEpochMs);
+  }
+
+  /// Closes the status/progress broadcast controllers so a subsequent
+  /// repository rebuild (e.g. via Riverpod invalidation) doesn't leak
+  /// listeners on the old instance.
+  Future<void> dispose() async {
+    if (!_statusController.isClosed) await _statusController.close();
+    if (!_progressController.isClosed) await _progressController.close();
   }
 
   Future<void> _emitStatus({

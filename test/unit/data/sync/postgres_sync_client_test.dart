@@ -25,11 +25,11 @@ void main() {
       ];
 
       final result = PostgresSyncClient.buildBatchUpsertSql(
-        'test_table',
+        'media_items',
         records,
       );
 
-      expect(result.sql, contains('INSERT INTO test_table'));
+      expect(result.sql, contains('INSERT INTO media_items'));
       expect(result.params.length, 2);
     });
 
@@ -134,14 +134,14 @@ void main() {
       ];
 
       final result = PostgresSyncClient.buildBatchUpsertSql(
-        'test_table',
+        'media_items',
         records,
       );
 
       // The UPDATE SET clause excludes 'id', leaving it empty.
       // This produces invalid SQL: "ON CONFLICT (id) DO UPDATE SET "
       // but buildBatchUpsertSql does not validate — it simply builds the string.
-      expect(result.sql, contains('INSERT INTO test_table (id)'));
+      expect(result.sql, contains('INSERT INTO media_items (id)'));
       expect(result.sql, contains(r'($1)'));
       expect(result.params, ['1']);
       // The SET clause should be empty (only 'id' was present, and it is excluded)
