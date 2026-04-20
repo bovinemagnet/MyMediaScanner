@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -58,6 +59,7 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
       await _cameraService?.stop();
       await _cameraService?.dispose();
       _cameraService = null;
+      if (!mounted) return;
       setState(() {
         _webcamMode = false;
         _cameraError = null;
@@ -73,37 +75,64 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
       _cameraError = null;
     });
 
+    final CameraService service = ref.read(cameraServiceProvider);
+    _cameraService = service;
     try {
-      _cameraService = ref.read(cameraServiceProvider);
-      await _cameraService!.start();
+      await service.start();
+      if (!mounted) {
+        // User navigated away during start(); tear down to avoid leaking
+        // the native device handle.
+        await service.stop();
+        await service.dispose();
+        if (_cameraService == service) _cameraService = null;
+        return;
+      }
       setState(() {}); // Rebuild to show preview
 
       // Listen for barcode detections from the service.
-      _barcodeSubscription = _cameraService!.onBarcodeDetected.listen(
-        (result) => _onServiceBarcodeDetected(result.rawValue),
+      _barcodeSubscription = service.onBarcodeDetected.listen(
+        (result) => unawaited(_onServiceBarcodeDetected(result.rawValue)),
       );
-    } on Exception catch (e) {
+    } catch (e) {
+      // Catch Error as well as Exception — some platforms throw StateError
+      // for "no cameras available" which is not an Exception subtype.
+      try {
+        await service.dispose();
+      } catch (_) {}
+      if (_cameraService == service) _cameraService = null;
+      if (!mounted) return;
       setState(() => _cameraError = e.toString());
     }
   }
 
-  void _onServiceBarcodeDetected(String barcodeValue) {
+  Future<void> _onServiceBarcodeDetected(String barcodeValue) async {
     if (_hasScanned) return;
     if (barcodeValue.trim().isEmpty) return;
 
+    // Flip the guard synchronously so any further stream events are ignored,
+    // then await stop() so a late periodic-capture frame can't land on a
+    // half-disposed controller.
     _hasScanned = true;
-    _cameraService?.stop();
+    await _cameraService?.stop();
 
-    ref.read(scannerProvider.notifier).onBarcodeScanned(barcodeValue.trim());
+    // Fire-and-forget: the scannerProvider maintains its own lifecycle and
+    // `await`ing here would block subsequent detections on slow lookups.
+    unawaited(ref
+        .read(scannerProvider.notifier)
+        .onBarcodeScanned(barcodeValue.trim()));
   }
 
-  void _resumeWebcamScanning() {
+  Future<void> _resumeWebcamScanning() async {
     // Clear `_hasScanned` BEFORE reset() — Riverpod fires `ref.listen`
     // callbacks synchronously, so reset() re-enters the idle listener
     // below; leaving `_hasScanned` true would recurse via this method.
     _hasScanned = false;
     ref.read(scannerProvider.notifier).reset();
-    _cameraService?.start();
+    // Ensure the prior stop() has fully drained before restarting; callers
+    // can fire this during a state transition that runs back-to-back with
+    // `_onServiceBarcodeDetected`'s own stop().
+    await _cameraService?.stop();
+    await _cameraService?.start();
   }
 
   void _onSubmitted(String barcode) {
@@ -504,10 +533,11 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
 
   Future<void> _scanCover(String barcode, String barcodeType) async {
     final ocr = CoverOcrHelper();
+    String? capturedPath;
     try {
       // If the webcam is active and supports still capture (Windows/Linux),
       // capture directly from the camera instead of opening the gallery.
-      final capturedPath = _webcamMode
+      capturedPath = _webcamMode
           ? await _cameraService?.captureImage()
           : null;
 
@@ -524,6 +554,13 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
       }
     } finally {
       await ocr.dispose();
+      // camera_desktop.takePicture() writes to the system temp directory;
+      // delete when we're done to avoid long-running accumulation.
+      if (capturedPath != null) {
+        try {
+          await File(capturedPath).delete();
+        } catch (_) {}
+      }
     }
   }
 }

@@ -32,10 +32,19 @@ class MobileScannerCameraService implements CameraService {
     return MobileScanner(
       controller: _controller,
       onDetect: (_) {}, // Detection handled via onBarcodeDetected stream
-      errorBuilder: errorBuilder != null
-          ? (context, error) =>
-              errorBuilder('Camera error: ${error.errorCode.message}')
-          : null,
+      // Always supply an errorBuilder — without one, mobile_scanner falls
+      // through to the platform default and permission-denied errors on
+      // macOS never reach the UI.
+      errorBuilder: (context, error) {
+        final message = 'Camera error: ${error.errorCode.message}';
+        if (errorBuilder != null) return errorBuilder(message);
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(message, textAlign: TextAlign.center),
+          ),
+        );
+      },
     );
   }
 

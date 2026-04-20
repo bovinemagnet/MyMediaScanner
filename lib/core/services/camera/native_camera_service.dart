@@ -23,6 +23,7 @@ class NativeCameraService implements CameraService {
   CameraController? _controller;
   final _barcodeController = StreamController<BarcodeResult>.broadcast();
   bool _isActive = false;
+  bool _captureInFlight = false;
   Timer? _captureTimer;
 
   /// The underlying camera controller, exposed for the preview widget.
@@ -46,7 +47,13 @@ class NativeCameraService implements CameraService {
     debugPrint('[scan] availableCameras() returned ${cameras.length}: '
         '${cameras.map((c) => '${c.name}(${c.lensDirection.name})').join(', ')}');
     if (cameras.isEmpty) {
-      throw StateError('No cameras available');
+      // Throw a CameraException rather than StateError so callers that only
+      // `on Exception catch` (StateError extends Error, not Exception) still
+      // surface a useful error to the user.
+      throw CameraException(
+        'no_cameras',
+        'No cameras available on this device.',
+      );
     }
 
     // Use the first reported camera. On desktop the OS-default webcam is
@@ -76,10 +83,16 @@ class NativeCameraService implements CameraService {
       } on CameraException catch (e) {
         debugPrint('[scan] init failed at $preset: ${e.code} ${e.description}');
         lastError = e;
-        // Do NOT dispose here: camera_desktop's _initializeWithDescription
-        // keeps an in-flight listener that will try to notify the disposed
-        // controller a moment later, throwing "used after being disposed".
-        // Letting the failed controller go out of scope is safer.
+        // Dispose the failed controller asynchronously so the native V4L2 /
+        // WMF device handle is released — otherwise the next preset's
+        // `.initialize()` fails with "device busy" on Linux. The tiny delay
+        // lets any in-flight listener settle before dispose runs.
+        unawaited(Future<void>.delayed(const Duration(milliseconds: 50))
+            .then((_) async {
+          try {
+            await ctrl.dispose();
+          } catch (_) {}
+        }));
       }
     }
     if (_controller == null) {
@@ -102,20 +115,31 @@ class NativeCameraService implements CameraService {
   }
 
   Future<void> _captureAndDetect() async {
-    if (!_isActive || _controller == null) return;
-    if (!(_controller!.value.isInitialized)) return;
+    // Guard against overlapping invocations — Timer.periodic fires every
+    // [captureIntervalMs] regardless of whether the previous takePicture()
+    // has completed. USB webcams on Linux routinely take longer than
+    // 500 ms per frame, so parallel captures corrupt the controller.
+    if (_captureInFlight) return;
+    final ctrl = _controller;
+    if (!_isActive || ctrl == null) return;
+    if (!ctrl.value.isInitialized) return;
 
+    _captureInFlight = true;
     try {
-      final xFile = await _controller!.takePicture();
+      final xFile = await ctrl.takePicture();
       final result = await BarcodeDetector.detectFromFile(xFile.path);
       if (result != null) {
         debugPrint('[scan] DECODED ${result.format} -> ${result.rawValue}');
-        _barcodeController.add(result);
+        if (!_barcodeController.isClosed) {
+          _barcodeController.add(result);
+        }
       }
     } on CameraException catch (e) {
       debugPrint('[scan] camera capture failed: ${e.code} ${e.description}');
     } on Exception catch (e) {
       debugPrint('[scan] capture/decode failed: $e');
+    } finally {
+      _captureInFlight = false;
     }
   }
 
@@ -133,18 +157,25 @@ class NativeCameraService implements CameraService {
 
   @override
   Future<String?> captureImage() async {
-    if (!_isActive || _controller == null) return null;
-    if (!_controller!.value.isInitialized) return null;
+    final ctrl = _controller;
+    if (!_isActive || ctrl == null) return null;
+    if (!ctrl.value.isInitialized) return null;
 
     try {
       // Pause periodic barcode detection during capture.
       _captureTimer?.cancel();
-      final xFile = await _controller!.takePicture();
-      _startPeriodicCapture();
+      final xFile = await ctrl.takePicture();
+      // The controller may have been stopped while we were awaiting the
+      // capture; only restart the periodic timer if we're still active.
+      if (_isActive && _controller != null) {
+        _startPeriodicCapture();
+      }
       return xFile.path;
     } on CameraException catch (e) {
       debugPrint('Still capture failed: ${e.description}');
-      _startPeriodicCapture();
+      if (_isActive && _controller != null) {
+        _startPeriodicCapture();
+      }
       return null;
     }
   }

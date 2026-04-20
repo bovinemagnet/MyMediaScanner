@@ -5,6 +5,8 @@
 //
 // Author: Paul Snow
 // Since: 0.0.0
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,10 +33,10 @@ class MobileScanScreen extends ConsumerStatefulWidget {
 
 class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
     with WidgetsBindingObserver {
-  final MobileScannerController _cameraController = MobileScannerController(
-    detectionSpeed: DetectionSpeed.normal,
-    detectionTimeoutMs: 500,
-  );
+  // Built in initState rather than as a field initialiser so hot-reload and
+  // navigation-replace don't leave two live controllers fighting over the
+  // camera on Android.
+  late final MobileScannerController _cameraController;
 
   bool _hasScanned = false;
   bool _externalScannerMode = false;
@@ -44,6 +46,10 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
   @override
   void initState() {
     super.initState();
+    _cameraController = MobileScannerController(
+      detectionSpeed: DetectionSpeed.normal,
+      detectionTimeoutMs: 500,
+    );
     WidgetsBinding.instance.addObserver(this);
   }
 
@@ -60,33 +66,41 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
   void didChangeAppLifecycleState(AppLifecycleState lifecycleState) {
     if (lifecycleState == AppLifecycleState.resumed &&
         !_externalScannerMode &&
-        _hasScanned) {
+        _hasScanned &&
+        // Don't restart the camera if a dialog/overlay is covering the screen
+        // (e.g. the not-found dialog resolved while the app was backgrounded).
+        (ModalRoute.of(context)?.isCurrent ?? true)) {
       _resumeScanning();
     }
   }
 
-  void _toggleExternalScannerMode() {
+  Future<void> _toggleExternalScannerMode() async {
+    final turningOn = !_externalScannerMode;
     setState(() {
-      _externalScannerMode = !_externalScannerMode;
-      if (_externalScannerMode) {
-        _cameraController.stop();
-        // Delay focus request to after the build
-        Future.microtask(() => _externalFocusNode.requestFocus());
-      } else {
-        _cameraController.start();
-        _hasScanned = false;
-      }
+      _externalScannerMode = turningOn;
     });
+    if (turningOn) {
+      await _cameraController.stop();
+      if (!mounted) return;
+      unawaited(Future.microtask(() {
+        if (mounted) _externalFocusNode.requestFocus();
+      }));
+    } else {
+      _hasScanned = false;
+      await _cameraController.start();
+    }
   }
 
   void _onExternalBarcodeSubmitted(String barcode) {
     if (barcode.trim().isEmpty) return;
     _externalController.clear();
     HapticFeedback.mediumImpact();
-    ref.read(scannerProvider.notifier).onBarcodeScanned(barcode.trim());
+    unawaited(ref
+        .read(scannerProvider.notifier)
+        .onBarcodeScanned(barcode.trim()));
   }
 
-  void _onBarcodeDetected(BarcodeCapture capture) {
+  Future<void> _onBarcodeDetected(BarcodeCapture capture) async {
     if (_hasScanned) return;
 
     final barcodes = capture.barcodes;
@@ -95,13 +109,18 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
     final barcodeValue = barcodes.first.rawValue ?? barcodes.first.displayValue;
     if (barcodeValue == null || barcodeValue.trim().isEmpty) return;
 
+    // Flip the guard synchronously so any further onDetect callbacks are
+    // ignored, then await stop() before kicking off the lookup — otherwise
+    // the camera can still be mid-stop when the idle-listener tries to
+    // restart it and Android gets confused.
     _hasScanned = true;
-    HapticFeedback.mediumImpact();
+    unawaited(HapticFeedback.mediumImpact());
+    await _cameraController.stop();
 
-    // Pause scanning to prevent duplicate detections.
-    _cameraController.stop();
-
-    ref.read(scannerProvider.notifier).onBarcodeScanned(barcodeValue.trim());
+    if (!mounted) return;
+    unawaited(ref
+        .read(scannerProvider.notifier)
+        .onBarcodeScanned(barcodeValue.trim()));
   }
 
   void _resumeScanning() {
@@ -166,7 +185,7 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
           ),
         ],
       ),
-    );
+    ).whenComplete(controller.dispose);
   }
 
   void _showDuplicateDialog() {
@@ -244,7 +263,9 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
 
     final ocr = CoverOcrHelper();
     try {
-      final ocrResult = await ocr.captureAndExtractStructured();
+      final ocrResult = await ocr
+          .captureAndExtractStructured()
+          .timeout(const Duration(seconds: 30));
       if (!ocrResult.isEmpty && mounted) {
         await ref
             .read(scannerProvider.notifier)
@@ -257,7 +278,8 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
         // OCR failed or user cancelled — go to manual entry
         context.go('/scan/confirm');
       }
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[MMS-scan] cover OCR failed: $e');
       if (mounted) _resumeScanning();
     } finally {
       await ocr.dispose();
