@@ -1,5 +1,8 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mymediascanner/core/utils/flac_decoder.dart';
+import 'package:mymediascanner/core/utils/native_flac_decoder.dart';
+import 'package:mymediascanner/core/utils/platform_utils.dart';
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
 
 part 'batch_analysis_provider.freezed.dart';
@@ -13,8 +16,23 @@ sealed class BatchAnalysisState with _$BatchAnalysisState {
   const factory BatchAnalysisState({
     @Default(BatchStatus.idle) BatchStatus status,
     @Default({}) Map<String, AlbumAnalysisStatus> albumStatuses,
+    @Default(false) bool usingNativeDecoder,
   }) = _BatchAnalysisState;
 }
+
+/// Probes for a fast bulk-analysis decoder.
+///
+/// On desktop, returns a [NativeFlacDecoder] when the system `flac` binary
+/// is on PATH (~5× faster than the pure-Dart fallback for back-to-back
+/// album decodes). Returns `null` when the binary is missing or on mobile,
+/// in which case callers should fall back to the standard
+/// [flacDecoderProvider].
+final bulkFlacDecoderProvider = FutureProvider<FlacDecoder?>((ref) async {
+  if (!PlatformCapability.isDesktop) return null;
+  final native = NativeFlacDecoder();
+  if (await native.isAvailable()) return native;
+  return null;
+});
 
 class BatchAnalysisNotifier extends Notifier<BatchAnalysisState> {
   bool _cancelled = false;
@@ -37,7 +55,16 @@ class BatchAnalysisNotifier extends Notifier<BatchAnalysisState> {
 
     _cancelled = false;
     final albumIds = state.albumStatuses.keys.toList();
-    state = state.copyWith(status: BatchStatus.running);
+
+    // Probe for the native decoder once at the start of the batch so the
+    // per-album loop pays no per-iteration cost. Falls back transparently
+    // when not on desktop or when the binary isn't on PATH.
+    final bulkDecoder = await ref.read(bulkFlacDecoderProvider.future);
+
+    state = state.copyWith(
+      status: BatchStatus.running,
+      usingNativeDecoder: bulkDecoder != null,
+    );
 
     for (final albumId in albumIds) {
       if (_cancelled) break;
@@ -51,7 +78,10 @@ class BatchAnalysisNotifier extends Notifier<BatchAnalysisState> {
       );
 
       try {
-        await ref.read(qualityAnalysisNotifierProvider.notifier).analyse(albumId);
+        await ref.read(qualityAnalysisNotifierProvider.notifier).analyse(
+              albumId,
+              decoderOverride: bulkDecoder,
+            );
 
         if (!_cancelled) {
           state = state.copyWith(

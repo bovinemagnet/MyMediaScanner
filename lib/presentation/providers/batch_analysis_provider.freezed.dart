@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$BatchAnalysisState {
 
- BatchStatus get status; Map<String, AlbumAnalysisStatus> get albumStatuses;
+ BatchStatus get status; Map<String, AlbumAnalysisStatus> get albumStatuses; bool get usingNativeDecoder;
 /// Create a copy of BatchAnalysisState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $BatchAnalysisStateCopyWith<BatchAnalysisState> get copyWith => _$BatchAnalysisS
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BatchAnalysisState&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other.albumStatuses, albumStatuses));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is BatchAnalysisState&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other.albumStatuses, albumStatuses)&&(identical(other.usingNativeDecoder, usingNativeDecoder) || other.usingNativeDecoder == usingNativeDecoder));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,status,const DeepCollectionEquality().hash(albumStatuses));
+int get hashCode => Object.hash(runtimeType,status,const DeepCollectionEquality().hash(albumStatuses),usingNativeDecoder);
 
 @override
 String toString() {
-  return 'BatchAnalysisState(status: $status, albumStatuses: $albumStatuses)';
+  return 'BatchAnalysisState(status: $status, albumStatuses: $albumStatuses, usingNativeDecoder: $usingNativeDecoder)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $BatchAnalysisStateCopyWith<$Res>  {
   factory $BatchAnalysisStateCopyWith(BatchAnalysisState value, $Res Function(BatchAnalysisState) _then) = _$BatchAnalysisStateCopyWithImpl;
 @useResult
 $Res call({
- BatchStatus status, Map<String, AlbumAnalysisStatus> albumStatuses
+ BatchStatus status, Map<String, AlbumAnalysisStatus> albumStatuses, bool usingNativeDecoder
 });
 
 
@@ -62,11 +62,12 @@ class _$BatchAnalysisStateCopyWithImpl<$Res>
 
 /// Create a copy of BatchAnalysisState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? status = null,Object? albumStatuses = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? status = null,Object? albumStatuses = null,Object? usingNativeDecoder = null,}) {
   return _then(_self.copyWith(
 status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as BatchStatus,albumStatuses: null == albumStatuses ? _self.albumStatuses : albumStatuses // ignore: cast_nullable_to_non_nullable
-as Map<String, AlbumAnalysisStatus>,
+as Map<String, AlbumAnalysisStatus>,usingNativeDecoder: null == usingNativeDecoder ? _self.usingNativeDecoder : usingNativeDecoder // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -148,10 +149,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( BatchStatus status,  Map<String, AlbumAnalysisStatus> albumStatuses)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( BatchStatus status,  Map<String, AlbumAnalysisStatus> albumStatuses,  bool usingNativeDecoder)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _BatchAnalysisState() when $default != null:
-return $default(_that.status,_that.albumStatuses);case _:
+return $default(_that.status,_that.albumStatuses,_that.usingNativeDecoder);case _:
   return orElse();
 
 }
@@ -169,10 +170,10 @@ return $default(_that.status,_that.albumStatuses);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( BatchStatus status,  Map<String, AlbumAnalysisStatus> albumStatuses)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( BatchStatus status,  Map<String, AlbumAnalysisStatus> albumStatuses,  bool usingNativeDecoder)  $default,) {final _that = this;
 switch (_that) {
 case _BatchAnalysisState():
-return $default(_that.status,_that.albumStatuses);}
+return $default(_that.status,_that.albumStatuses,_that.usingNativeDecoder);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -186,10 +187,10 @@ return $default(_that.status,_that.albumStatuses);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( BatchStatus status,  Map<String, AlbumAnalysisStatus> albumStatuses)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( BatchStatus status,  Map<String, AlbumAnalysisStatus> albumStatuses,  bool usingNativeDecoder)?  $default,) {final _that = this;
 switch (_that) {
 case _BatchAnalysisState() when $default != null:
-return $default(_that.status,_that.albumStatuses);case _:
+return $default(_that.status,_that.albumStatuses,_that.usingNativeDecoder);case _:
   return null;
 
 }
@@ -201,7 +202,7 @@ return $default(_that.status,_that.albumStatuses);case _:
 
 
 class _BatchAnalysisState implements BatchAnalysisState {
-  const _BatchAnalysisState({this.status = BatchStatus.idle, final  Map<String, AlbumAnalysisStatus> albumStatuses = const {}}): _albumStatuses = albumStatuses;
+  const _BatchAnalysisState({this.status = BatchStatus.idle, final  Map<String, AlbumAnalysisStatus> albumStatuses = const {}, this.usingNativeDecoder = false}): _albumStatuses = albumStatuses;
   
 
 @override@JsonKey() final  BatchStatus status;
@@ -212,6 +213,7 @@ class _BatchAnalysisState implements BatchAnalysisState {
   return EqualUnmodifiableMapView(_albumStatuses);
 }
 
+@override@JsonKey() final  bool usingNativeDecoder;
 
 /// Create a copy of BatchAnalysisState
 /// with the given fields replaced by the non-null parameter values.
@@ -223,16 +225,16 @@ _$BatchAnalysisStateCopyWith<_BatchAnalysisState> get copyWith => __$BatchAnalys
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BatchAnalysisState&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other._albumStatuses, _albumStatuses));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BatchAnalysisState&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other._albumStatuses, _albumStatuses)&&(identical(other.usingNativeDecoder, usingNativeDecoder) || other.usingNativeDecoder == usingNativeDecoder));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,status,const DeepCollectionEquality().hash(_albumStatuses));
+int get hashCode => Object.hash(runtimeType,status,const DeepCollectionEquality().hash(_albumStatuses),usingNativeDecoder);
 
 @override
 String toString() {
-  return 'BatchAnalysisState(status: $status, albumStatuses: $albumStatuses)';
+  return 'BatchAnalysisState(status: $status, albumStatuses: $albumStatuses, usingNativeDecoder: $usingNativeDecoder)';
 }
 
 
@@ -243,7 +245,7 @@ abstract mixin class _$BatchAnalysisStateCopyWith<$Res> implements $BatchAnalysi
   factory _$BatchAnalysisStateCopyWith(_BatchAnalysisState value, $Res Function(_BatchAnalysisState) _then) = __$BatchAnalysisStateCopyWithImpl;
 @override @useResult
 $Res call({
- BatchStatus status, Map<String, AlbumAnalysisStatus> albumStatuses
+ BatchStatus status, Map<String, AlbumAnalysisStatus> albumStatuses, bool usingNativeDecoder
 });
 
 
@@ -260,11 +262,12 @@ class __$BatchAnalysisStateCopyWithImpl<$Res>
 
 /// Create a copy of BatchAnalysisState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? status = null,Object? albumStatuses = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? status = null,Object? albumStatuses = null,Object? usingNativeDecoder = null,}) {
   return _then(_BatchAnalysisState(
 status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as BatchStatus,albumStatuses: null == albumStatuses ? _self._albumStatuses : albumStatuses // ignore: cast_nullable_to_non_nullable
-as Map<String, AlbumAnalysisStatus>,
+as Map<String, AlbumAnalysisStatus>,usingNativeDecoder: null == usingNativeDecoder ? _self.usingNativeDecoder : usingNativeDecoder // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

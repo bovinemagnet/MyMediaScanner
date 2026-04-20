@@ -17,6 +17,7 @@ void main() {
 
       expect(state.status, BatchStatus.idle);
       expect(state.albumStatuses, isEmpty);
+      expect(state.usingNativeDecoder, isFalse);
     });
 
     test('queueAlbums_setsAlbumStatusesAsQueued', () {

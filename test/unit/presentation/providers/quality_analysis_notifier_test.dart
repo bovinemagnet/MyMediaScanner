@@ -17,6 +17,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:mymediascanner/core/utils/flac_decoder.dart';
 import 'package:dart_accuraterip/dart_accuraterip.dart';
 import 'package:mymediascanner/domain/repositories/i_rip_library_repository.dart';
+import 'package:mymediascanner/domain/entities/rip_track.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
 
@@ -219,6 +220,51 @@ void main() {
         final state = container.read(qualityAnalysisNotifierProvider);
         expect(state.status, QualityAnalysisStatus.complete);
         expect(state.error, contains('DB failure'));
+      });
+
+      test('uses the supplied decoder override instead of the provider',
+          () async {
+        // Arrange — one track and a non-existent file path so _tryParseLog
+        // catches the IO error and the pipeline reaches the decoder
+        // availability check. The provider's decoder must NOT be touched
+        // when an override is supplied.
+        final overrideDecoder = MockFlacDecoder();
+        when(() => mockRipRepo.getTracksForAlbum('album-override'))
+            .thenAnswer((_) async => const [
+                  RipTrack(
+                    id: 'track-1',
+                    ripAlbumId: 'album-override',
+                    trackNumber: 1,
+                    filePath: '/fake/path/track-1.flac',
+                    fileSizeBytes: 0,
+                    updatedAt: 0,
+                  ),
+                ]);
+        when(() => mockFlacDecoder.isAvailable())
+            .thenAnswer((_) async => false);
+        when(() => overrideDecoder.isAvailable())
+            .thenAnswer((_) async => false);
+        when(() => mockRipRepo.updateTrackQuality(
+              any(),
+              arStatus: any(named: 'arStatus'),
+              qualityCheckedAt: any(named: 'qualityCheckedAt'),
+            )).thenAnswer((_) async {});
+
+        final container = _createContainer(
+          ripRepo: mockRipRepo,
+          flacDecoder: mockFlacDecoder,
+          arClient: mockArClient,
+        );
+        addTearDown(container.dispose);
+
+        // Act
+        await container
+            .read(qualityAnalysisNotifierProvider.notifier)
+            .analyse('album-override', decoderOverride: overrideDecoder);
+
+        // Assert — the override was used; the provider's decoder was not.
+        verify(() => overrideDecoder.isAvailable()).called(1);
+        verifyNever(() => mockFlacDecoder.isAvailable());
       });
 
       test('uses default sensitivity when sensitivity provider is loading',

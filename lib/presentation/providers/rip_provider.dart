@@ -311,7 +311,17 @@ class QualityAnalysisNotifier extends Notifier<QualityAnalysisState> {
   @override
   QualityAnalysisState build() => const QualityAnalysisState();
 
-  Future<void> analyse(String ripAlbumId) async {
+  /// Run the quality analysis pipeline for [ripAlbumId].
+  ///
+  /// [decoderOverride] lets callers (typically the bulk-analysis path)
+  /// substitute a different [FlacDecoder] for the duration of this call,
+  /// e.g. the system `flac` CLI on desktop where it is much faster than
+  /// the pure-Dart fallback. When omitted, the standard
+  /// [flacDecoderProvider] is used.
+  Future<void> analyse(
+    String ripAlbumId, {
+    FlacDecoder? decoderOverride,
+  }) async {
     if (state.status == QualityAnalysisStatus.analysing) return;
 
     state = const QualityAnalysisState(
@@ -324,7 +334,7 @@ class QualityAnalysisNotifier extends Notifier<QualityAnalysisState> {
 
       final useCase = AnalyseRipQualityUseCase(
         repository: ref.read(ripLibraryRepositoryProvider),
-        flacDecoder: ref.read(flacDecoderProvider),
+        flacDecoder: decoderOverride ?? ref.read(flacDecoderProvider),
         accurateRipClient: ref.read(accurateRipClientProvider),
         sensitivity: sensitivity,
       );

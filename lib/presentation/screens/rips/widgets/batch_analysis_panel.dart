@@ -93,6 +93,23 @@ class BatchAnalysisPanel extends ConsumerWidget {
               value: state.status == BatchStatus.complete ? 1.0 : progress,
             ),
           ],
+          if (state.status == BatchStatus.running &&
+              state.usingNativeDecoder) ...[
+            const SizedBox(height: 6),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.bolt, size: 14, color: colours.tertiary),
+                const SizedBox(width: 4),
+                Text(
+                  'Native flac decoder',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: colours.tertiary,
+                  ),
+                ),
+              ],
+            ),
+          ],
           const SizedBox(height: 8),
           // Per-album status list (scrollable, capped height)
           ConstrainedBox(
