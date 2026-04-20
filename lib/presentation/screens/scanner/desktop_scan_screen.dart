@@ -97,8 +97,11 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
   }
 
   void _resumeWebcamScanning() {
-    ref.read(scannerProvider.notifier).reset();
+    // Clear `_hasScanned` BEFORE reset() — Riverpod fires `ref.listen`
+    // callbacks synchronously, so reset() re-enters the idle listener
+    // below; leaving `_hasScanned` true would recurse via this method.
     _hasScanned = false;
+    ref.read(scannerProvider.notifier).reset();
     _cameraService?.start();
   }
 

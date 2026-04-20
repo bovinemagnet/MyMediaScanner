@@ -104,9 +104,16 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
   }
 
   void _resumeScanning() {
-    ref.read(scannerProvider.notifier).reset();
+    debugPrint('[MMS-scan] _resumeScanning enter (was hasScanned=$_hasScanned)');
+    // Clear `_hasScanned` BEFORE reset(). Riverpod fires `ref.listen`
+    // callbacks synchronously, so reset() re-enters this widget's idle
+    // listener (line ~308) — leaving `_hasScanned` true would make that
+    // listener call `_resumeScanning` again and recurse to a stack
+    // overflow that hangs the camera on Android.
     _hasScanned = false;
+    ref.read(scannerProvider.notifier).reset();
     _cameraController.start();
+    debugPrint('[MMS-scan] _resumeScanning exit (camera.start dispatched)');
   }
 
   void _showManualEntryDialog() {
@@ -260,6 +267,8 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
     final scannerState = ref.watch(scannerProvider);
 
     ref.listen(scannerProvider, (prev, next) {
+      debugPrint('[MMS-scan] state ${prev?.state} -> ${next.state} '
+          '(hasScanned=$_hasScanned, batch=${next.batchMode})');
       if (next.state == ScanState.found) {
         if (next.batchMode && next.result != null) {
           ref.read(scannerProvider.notifier).queueToBatch(next.result!);

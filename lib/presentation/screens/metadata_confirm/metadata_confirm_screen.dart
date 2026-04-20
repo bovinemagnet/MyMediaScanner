@@ -160,6 +160,8 @@ class MetadataConfirmScreen extends ConsumerWidget {
               EditableMetadataForm(
                 initial: effectiveMetadata!,
                 onSave: (edited) async {
+                  debugPrint('[MMS-save] onSave start barcode=${edited.barcode}'
+                      ' title=${edited.title}');
                   final repository = ref.read(mediaItemRepositoryProvider);
                   final proceed = await confirmSaveOrSkipIfDuplicate(
                     context: context,
@@ -168,9 +170,11 @@ class MetadataConfirmScreen extends ConsumerWidget {
                     title: edited.title,
                     year: edited.year,
                   );
+                  debugPrint('[MMS-save] duplicate check proceed=$proceed');
                   if (!proceed) return;
                   final useCase = ref.read(saveMediaItemUseCaseProvider);
                   await useCase.execute(edited);
+                  debugPrint('[MMS-save] DB write complete');
 
                   final scanner = ref.read(scannerProvider.notifier);
                   if (ref.read(scannerProvider).batchMode) {
@@ -181,19 +185,24 @@ class MetadataConfirmScreen extends ConsumerWidget {
                             content:
                                 Text('${edited.title ?? "Item"} saved')),
                       );
+                      debugPrint('[MMS-save] batch: navigate /scan');
                       context.go('/scan');
                     }
                   } else {
+                    debugPrint('[MMS-save] calling scanner.reset()');
                     scanner.reset();
+                    debugPrint('[MMS-save] scanner.reset() returned');
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                             content:
                                 Text('${edited.title ?? "Item"} saved')),
                       );
+                      debugPrint('[MMS-save] navigate /');
                       context.go('/');
                     }
                   }
+                  debugPrint('[MMS-save] onSave done');
                 },
                 onSaveToWishlist: (edited) async {
                   final repository = ref.read(mediaItemRepositoryProvider);

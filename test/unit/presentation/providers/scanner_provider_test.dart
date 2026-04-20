@@ -547,5 +547,43 @@ void main() {
         expect(state.ocrSearchResult, isNotNull);
       });
     });
+
+    group('reset listener recursion guard', () {
+      // Mobile/desktop scan screens listen for `state == idle` to resume
+      // the camera. Their `_resumeScanning`/`_resumeWebcamScanning`
+      // helpers MUST clear `_hasScanned` before calling reset() — Riverpod
+      // 3 fires `ref.listen` callbacks synchronously, so otherwise the
+      // listener re-enters itself and recurses until Riverpod swallows
+      // a StackOverflowError, which on Android manifests as a save-time
+      // hang because `_cameraController.start()` runs on every unwound
+      // frame and jams the camera HAL.
+      test('resume helper that clears flag before reset stays bounded', () {
+        final container = createContainer();
+        addTearDown(container.dispose);
+
+        var hasScanned = true;
+        var listenerCalls = 0;
+
+        container.listen<ScannerState>(scannerProvider, (prev, next) {
+          listenerCalls++;
+          if (listenerCalls > 50) {
+            fail('listener fired too many times — recursion guard broken');
+          }
+          if (next.state == ScanState.idle && hasScanned) {
+            // Mirrors the FIXED order inside _resumeScanning: clear the
+            // flag first so the inner reset() does not re-trigger this.
+            hasScanned = false;
+            container.read(scannerProvider.notifier).reset();
+          }
+        });
+
+        // Mimics MetadataConfirmScreen.onSave calling scanner.reset()
+        // after a successful save.
+        container.read(scannerProvider.notifier).reset();
+
+        expect(hasScanned, isFalse);
+        expect(listenerCalls, lessThanOrEqualTo(2));
+      });
+    });
   });
 }
