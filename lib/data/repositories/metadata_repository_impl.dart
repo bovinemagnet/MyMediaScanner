@@ -99,7 +99,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     } else if (forceIsbn || BarcodeUtils.isIsbn(barcode)) {
       result = await _lookupBook(barcode, barcodeTypeStr);
     } else if (typeHint == MediaType.film || typeHint == MediaType.tv) {
-      result = await _lookupFilm(barcode, barcodeTypeStr);
+      result = await _lookupFilm(barcode, barcodeTypeStr, typeHint: typeHint);
     } else if (typeHint == MediaType.music) {
       result = await _lookupMusic(barcode, barcodeTypeStr);
     } else {
@@ -107,8 +107,15 @@ class MetadataRepositoryImpl implements IMetadataRepository {
       result = await _lookupGeneral(barcode, barcodeTypeStr);
     }
 
-    // 3. Fallback to UPCitemdb if specialist returned nothing
-    if (result == null && typeHint != null) {
+    // 3. Fallback to UPCitemdb if specialist returned nothing.
+    // The `_lookupGeneral` branch already tries UPC itself, so only fall
+    // through for the specialist paths (IMDb, ISBN, or a specific typeHint)
+    // to avoid double-querying UPCitemdb.
+    if (result == null &&
+        (barcodeType == BarcodeType.imdbId ||
+            forceIsbn ||
+            BarcodeUtils.isIsbn(barcode) ||
+            typeHint != null)) {
       result = await _lookupUpc(barcode, barcodeTypeStr);
     }
 
@@ -578,56 +585,86 @@ class MetadataRepositoryImpl implements IMetadataRepository {
 
   // -- Enrichment --
 
+  /// Fetch TheAudioDB critic-score fields and merge them into [result].
+  /// Best-effort: returns [result] unchanged on any failure.
+  Future<MetadataResult> _enrichWithAudioDb(MetadataResult result) async {
+    if (result.mediaType != MediaType.music || theAudioDbApi == null) {
+      return result;
+    }
+    final mbRgId = _asString(
+      result.extraMetadata['musicbrainz_release_group_id'],
+    );
+    if (mbRgId == null) return result;
+    try {
+      final album = await theAudioDbApi!.getByMusicBrainzId(mbRgId);
+      if (album != null) return EnrichmentMerger.mergeAudioDb(result, album);
+    } on Exception catch (e) {
+      debugPrint('TheAudioDB enrichment failed: $e');
+    }
+    return result;
+  }
+
+  /// Fetch the best fanart.tv poster/cover URL for [result].
+  /// Best-effort: returns `null` on any failure.
+  Future<String?> _fetchFanartUrl(MetadataResult result) async {
+    if (fanartApi == null) return null;
+    try {
+      if (result.mediaType == MediaType.film) {
+        final tmdbId = _asInt(result.extraMetadata['tmdb_id']);
+        if (tmdbId != null) {
+          final images = await fanartApi!.getMovieImages(tmdbId);
+          return images.bestPosterUrl;
+        }
+      } else if (result.mediaType == MediaType.tv) {
+        final tvdbId = _asInt(result.extraMetadata['tvdb_id']);
+        if (tvdbId != null) {
+          final images = await fanartApi!.getTvImages(tvdbId);
+          return images.bestPosterUrl;
+        }
+      } else if (result.mediaType == MediaType.music) {
+        final mbRgId = _asString(
+          result.extraMetadata['musicbrainz_release_group_id'],
+        );
+        if (mbRgId != null) {
+          final images = await fanartApi!.getAlbumImages(mbRgId);
+          return images.bestCoverUrl;
+        }
+      }
+    } on Exception catch (e) {
+      debugPrint('fanart.tv enrichment failed: $e');
+    }
+    return null;
+  }
+
+  /// Defensively coerce cached JSON numerics back to `int`. `extraMetadata`
+  /// round-trips through JSON where numeric fields may be deserialised as
+  /// `double` on some platforms — a bare `as int?` cast would throw.
+  static int? _asInt(Object? value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value);
+    return null;
+  }
+
+  static String? _asString(Object? value) =>
+      value is String ? value : value?.toString();
+
   /// Enrich a metadata result with TheAudioDB scores and fanart.tv artwork.
   /// Failures are silently ignored — enrichment is best-effort.
+  ///
+  /// Runs the two independent enrichments in parallel — they don't depend
+  /// on each other, so serialising them just adds ~200-500 ms of tail
+  /// latency to the user-visible scan flow.
   Future<MetadataResult> _enrichMetadata(MetadataResult result) async {
-    var enriched = result;
-
-    // Music enrichment via TheAudioDB (uses MusicBrainz release group ID)
-    if (result.mediaType == MediaType.music && theAudioDbApi != null) {
-      final mbRgId =
-          result.extraMetadata['musicbrainz_release_group_id'] as String?;
-      if (mbRgId != null) {
-        try {
-          final album = await theAudioDbApi!.getByMusicBrainzId(mbRgId);
-          if (album != null) {
-            enriched = EnrichmentMerger.mergeAudioDb(enriched, album);
-          }
-        } on Exception catch (e) {
-          debugPrint('TheAudioDB enrichment failed: $e');
-        }
-      }
-    }
-
-    // Artwork enrichment via fanart.tv
+    final audioDb = _enrichWithAudioDb(result);
+    final fanartUrl = _fetchFanartUrl(result);
+    final audioDbEnriched = await audioDb;
+    // Re-base fanart merge on the audioDb-enriched result so both updates
+    // compose cleanly.
+    final url = await fanartUrl;
+    var enriched = audioDbEnriched;
     if (fanartApi != null) {
-      try {
-        String? fanartUrl;
-        if (result.mediaType == MediaType.film) {
-          final tmdbId = result.extraMetadata['tmdb_id'] as int?;
-          if (tmdbId != null) {
-            final images = await fanartApi!.getMovieImages(tmdbId);
-            fanartUrl = images.bestPosterUrl;
-          }
-        } else if (result.mediaType == MediaType.tv) {
-          // Try TVDB ID first, fall back to TMDB ID
-          final tvdbId = result.extraMetadata['tvdb_id'] as int?;
-          if (tvdbId != null) {
-            final images = await fanartApi!.getTvImages(tvdbId);
-            fanartUrl = images.bestPosterUrl;
-          }
-        } else if (result.mediaType == MediaType.music) {
-          final mbRgId =
-              result.extraMetadata['musicbrainz_release_group_id'] as String?;
-          if (mbRgId != null) {
-            final images = await fanartApi!.getAlbumImages(mbRgId);
-            fanartUrl = images.bestCoverUrl;
-          }
-        }
-        enriched = EnrichmentMerger.mergeFanartCover(enriched, fanartUrl);
-      } on Exception catch (e) {
-        debugPrint('fanart.tv enrichment failed: $e');
-      }
+      enriched = EnrichmentMerger.mergeFanartCover(enriched, url);
     }
 
     return enriched;
@@ -689,6 +726,10 @@ class MetadataRepositoryImpl implements IMetadataRepository {
       return ScanResult.single(metadata: metadata, isDuplicate: false);
     } catch (e) {
       debugPrint('Cache deserialization failed for $barcode: $e');
+      // Evict the poisoned row so it doesn't keep throwing on every lookup.
+      try {
+        await _cacheDao.deleteByBarcode(barcode);
+      } catch (_) {}
       return null;
     }
   }
@@ -764,6 +805,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     String barcode,
     String barcodeType, {
     MetadataResult? upcHint,
+    MediaType? typeHint,
   }) async {
     if (tmdbApi == null) return null;
     try {
@@ -776,10 +818,22 @@ class MetadataRepositoryImpl implements IMetadataRepository {
 
       final response = await tmdbApi!.searchMulti(titleSource!.title!);
       // Filter out "person" results — only keep movie and TV.
-      final results = response.results
+      var results = response.results
           ?.where((r) => r.mediaType != 'person')
           .toList();
       if (results == null || results.isEmpty) return null;
+
+      // If caller provided a type hint, prefer results whose TMDB media_type
+      // matches. Fall back to the unfiltered list if the hint would leave
+      // us with nothing (better to return a mismatched hit than nothing).
+      if (typeHint == MediaType.tv) {
+        final tvOnly = results.where((r) => r.mediaType == 'tv').toList();
+        if (tvOnly.isNotEmpty) results = tvOnly;
+      } else if (typeHint == MediaType.film) {
+        final movieOnly =
+            results.where((r) => r.mediaType == 'movie').toList();
+        if (movieOnly.isNotEmpty) results = movieOnly;
+      }
 
       if (results.length == 1) {
         await _cacheResponse(barcode, 'film', 'tmdb', results.first.toJson());
@@ -863,9 +917,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
 
       final best = ranked.first;
       final runnerUp = ranked.length > 1 ? ranked[1] : null;
-      final autoAccept =
-          ranked.length == 1 ||
-          _shouldAutoAccept(best: best, runnerUp: runnerUp!);
+      final autoAccept = _shouldAutoAccept(best: best, runnerUp: runnerUp);
 
       if (autoAccept) {
         MusicBrainzReleaseDto detail = best;
@@ -942,8 +994,14 @@ class MetadataRepositoryImpl implements IMetadataRepository {
 
   bool _shouldAutoAccept({
     required MusicBrainzReleaseDto best,
-    required MusicBrainzReleaseDto runnerUp,
+    MusicBrainzReleaseDto? runnerUp,
   }) {
+    // Single-release results from a barcode query are treated as a strong
+    // match — MusicBrainz-by-barcode rarely produces fuzzy hits when only
+    // one release comes back, and `score` is frequently null even on good
+    // matches. Retain the original behaviour of accepting singletons; only
+    // apply the confidence gate when we have a runner-up to compare.
+    if (runnerUp == null) return true;
     final bestOfficial = (best.status ?? '').toLowerCase() == 'official';
     final runnerOfficial = (runnerUp.status ?? '').toLowerCase() == 'official';
     if (bestOfficial && !runnerOfficial) return true;
@@ -1057,11 +1115,18 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     if (upcitemdbApi == null) return null;
     try {
       final response = await upcitemdbApi!.lookup(barcode);
-      final item = response.items?.firstOrNull;
-      if (item != null) {
-        await _cacheResponse(barcode, null, 'upcitemdb', item.toJson());
-        return UpcMapper.fromItem(item, barcode, barcodeType);
-      }
+      final items = response.items;
+      if (items == null || items.isEmpty) return null;
+      // UPCitemdb can legitimately return multiple entries for a shared
+      // GTIN (re-used barcodes across editions). Prefer the one whose
+      // own `ean`/`upc` exactly matches the scanned barcode over the
+      // first item; fall back to the first only if no exact match is found.
+      final exact = items.firstWhere(
+        (i) => i.ean == barcode,
+        orElse: () => items.first,
+      );
+      await _cacheResponse(barcode, null, 'upcitemdb', exact.toJson());
+      return UpcMapper.fromItem(exact, barcode, barcodeType);
     } on Exception catch (e) {
       debugPrint('UPC metadata lookup failed: $e');
     }

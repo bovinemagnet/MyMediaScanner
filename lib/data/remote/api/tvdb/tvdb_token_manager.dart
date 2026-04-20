@@ -19,6 +19,12 @@ class TvdbTokenManager {
   String? _cachedToken;
   DateTime? _tokenExpiry;
 
+  /// De-duplicates concurrent `getToken()` calls. Without this, parallel
+  /// callers whose cached token has expired would each issue their own
+  /// `POST /login`, wasting quota and racing each other's writes to
+  /// `_cachedToken`/`_tokenExpiry`.
+  Future<String>? _inFlight;
+
   /// Returns a valid JWT token, refreshing if needed.
   Future<String> getToken() async {
     if (_cachedToken != null &&
@@ -27,6 +33,19 @@ class TvdbTokenManager {
       return _cachedToken!;
     }
 
+    final existing = _inFlight;
+    if (existing != null) return existing;
+
+    final future = _login();
+    _inFlight = future;
+    try {
+      return await future;
+    } finally {
+      if (identical(_inFlight, future)) _inFlight = null;
+    }
+  }
+
+  Future<String> _login() async {
     try {
       final response = await _loginDio.post<Map<String, dynamic>>(
         '/login',

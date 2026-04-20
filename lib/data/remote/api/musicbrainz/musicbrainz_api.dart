@@ -33,7 +33,7 @@ class MusicBrainzApi {
       final response = await _dio.get<Map<String, dynamic>>(
         '/release/',
         queryParameters: {
-          'query': 'barcode:$barcode',
+          'query': 'barcode:${_escapeLucene(barcode)}',
           'fmt': 'json',
           'limit': 5,
         },
@@ -51,7 +51,7 @@ class MusicBrainzApi {
       final response = await _dio.get<Map<String, dynamic>>(
         '/release/',
         queryParameters: {
-          'query': 'release:$title',
+          'query': 'release:${_escapeLucene(title)}',
           'fmt': 'json',
           'limit': 5,
         },
@@ -76,5 +76,22 @@ class MusicBrainzApi {
       if (response.data == null) return null;
       return MusicBrainzReleaseDto.fromJson(response.data!);
     });
+  }
+
+  /// Escapes Lucene reserved characters so user-supplied barcodes or titles
+  /// (e.g. `C++`, `S.O.S.`, hyphenated ISBNs) don't break the query parser
+  /// with a 400 or silently return no results.
+  ///
+  /// Lucene reserved: `+ - && || ! ( ) { } [ ] ^ " ~ * ? : \ /`
+  static String _escapeLucene(String raw) {
+    final buf = StringBuffer();
+    for (final rune in raw.runes) {
+      final c = String.fromCharCode(rune);
+      if ('+-!(){}[]^"~*?:\\/'.contains(c)) {
+        buf.write(r'\');
+      }
+      buf.write(c);
+    }
+    return buf.toString();
   }
 }

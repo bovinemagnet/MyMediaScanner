@@ -25,4 +25,13 @@ class BarcodeCacheDao extends DatabaseAccessor<AppDatabase>
           ..where((t) => t.cachedAt.isSmallerThanValue(cutoff)))
         .go();
   }
+
+  /// Removes a specific cached barcode. Used when deserialisation of the
+  /// cached payload fails so the poisoned row does not keep rethrowing on
+  /// every subsequent lookup.
+  Future<void> deleteByBarcode(String barcode) {
+    return (delete(barcodeCacheTable)
+          ..where((t) => t.barcode.equals(barcode)))
+        .go();
+  }
 }
