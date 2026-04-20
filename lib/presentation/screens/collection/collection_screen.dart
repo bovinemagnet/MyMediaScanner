@@ -328,6 +328,10 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
         .read(insightsExportProvider.notifier)
         .export(format);
 
+    // If the widget unmounted during the export (user navigated away),
+    // skip touching `ref` — reading providers after dispose throws.
+    if (!mounted) return;
+
     if (filePath != null) {
       messenger.showSnackBar(
         SnackBar(

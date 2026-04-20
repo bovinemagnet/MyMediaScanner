@@ -8800,7 +8800,7 @@ class $PlaylistTracksTableTable extends PlaylistTracksTable
     type: DriftSqlType.string,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES playlists (id)',
+      'REFERENCES playlists (id) ON DELETE CASCADE',
     ),
   );
   static const VerificationMeta _ripTrackIdMeta = const VerificationMeta(
@@ -8814,7 +8814,7 @@ class $PlaylistTracksTableTable extends PlaylistTracksTable
     type: DriftSqlType.string,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES rip_tracks (id)',
+      'REFERENCES rip_tracks (id) ON DELETE CASCADE',
     ),
   );
   static const VerificationMeta _sortOrderMeta = const VerificationMeta(
@@ -10144,6 +10144,23 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     locationsTable,
     seriesTable,
   ];
+  @override
+  StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'playlists',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('playlist_tracks', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'rip_tracks',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('playlist_tracks', kind: UpdateKind.delete)],
+    ),
+  ]);
 }
 
 typedef $$MediaItemsTableTableCreateCompanionBuilder =

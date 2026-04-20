@@ -32,6 +32,18 @@ class _TitleSearchFieldState extends State<TitleSearchField> {
   }
 
   @override
+  void didUpdateWidget(covariant TitleSearchField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Re-seed the controller when the parent passes a new [initialText]
+    // (e.g. an OCR result arriving after the first build). Leave the user's
+    // in-progress edit alone if they've already typed into the field.
+    if (widget.initialText != oldWidget.initialText &&
+        _controller.text == (oldWidget.initialText ?? '')) {
+      _controller.text = widget.initialText ?? '';
+    }
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();

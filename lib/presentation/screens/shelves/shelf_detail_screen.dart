@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mymediascanner/presentation/providers/metadata_provider.dart';
+import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/shelf_provider.dart';
 import 'package:mymediascanner/presentation/widgets/empty_state.dart';
 import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
@@ -33,8 +34,17 @@ class ShelfDetailScreen extends ConsumerWidget {
           return ReorderableListView.builder(
             padding: const EdgeInsets.symmetric(vertical: 8),
             itemCount: itemIds.length,
-            onReorder: (oldIndex, newIndex) {
-              // Reorder logic handled by provider
+            onReorder: (oldIndex, newIndex) async {
+              // Flutter contract: if oldIndex < newIndex the destination
+              // index is shifted by 1 because the dragged item hasn't
+              // been removed yet. Compensate before persisting.
+              final adjusted =
+                  oldIndex < newIndex ? newIndex - 1 : newIndex;
+              final movedId = itemIds[oldIndex];
+              await ref
+                  .read(shelfRepositoryProvider)
+                  .reorderItem(shelfId, movedId, adjusted);
+              ref.invalidate(shelfItemIdsProvider(shelfId));
             },
             itemBuilder: (context, index) {
               final itemAsync =
