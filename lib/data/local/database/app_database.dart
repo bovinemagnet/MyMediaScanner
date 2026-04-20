@@ -84,7 +84,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 16;
+  int get schemaVersion => 17;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -167,6 +167,22 @@ class AppDatabase extends _$AppDatabase {
                 mediaItemsTable, mediaItemsTable.completedAt);
             await m.addColumn(
                 mediaItemsTable, mediaItemsTable.consumed);
+          }
+          if (from < 17) {
+            // Schema v16 added rip_albums.gnudb_disc_id to the table
+            // definition (commit 9060213) but shipped without an
+            // onUpgrade branch, so any user who upgraded from v15
+            // sat at user_version=16 with the column missing. The app
+            // is unpublished, so the agreed recovery is drop-and-
+            // recreate the rip tables instead of carrying a one-off
+            // addColumn migration. v17 retriggers this fix for the
+            // window of installs that took the broken v16 build —
+            // existing rip data is rebuilt by re-scanning the library.
+            // rip_tracks must go first because of the FK to rip_albums.
+            await customStatement('DROP TABLE IF EXISTS rip_tracks');
+            await customStatement('DROP TABLE IF EXISTS rip_albums');
+            await m.createTable(ripAlbumsTable);
+            await m.createTable(ripTracksTable);
           }
         },
       );
