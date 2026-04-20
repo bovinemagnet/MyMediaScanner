@@ -70,6 +70,7 @@ class ThemeChoiceNotifier extends Notifier<ThemeChoice> {
           orElse: () => ThemeBrightness.system,
         );
         final migrated = ThemeChoice(ThemeFamily.classic, brightness);
+        if (!ref.mounted) return;
         state = migrated;
         await prefs.setString(_familyKey, migrated.family.name);
         await prefs.setString(_brightnessKey, migrated.brightness.name);
@@ -78,6 +79,7 @@ class ThemeChoiceNotifier extends Notifier<ThemeChoice> {
       return;
     }
 
+    if (!ref.mounted) return;
     state = ThemeChoice(
       ThemeFamily.values.firstWhere(
         (f) => f.name == storedFamily,
@@ -129,7 +131,7 @@ class GnudbUsernameNotifier extends Notifier<String> {
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
     final stored = prefs.getString(_key);
-    if (stored != null && stored.isNotEmpty) {
+    if (stored != null && stored.isNotEmpty && ref.mounted) {
       state = stored;
     }
   }

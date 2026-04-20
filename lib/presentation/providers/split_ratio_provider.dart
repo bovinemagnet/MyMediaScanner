@@ -14,7 +14,7 @@ class SplitRatioNotifier extends Notifier<double> {
   Future<void> _loadFromPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     final stored = prefs.getDouble(_prefKey);
-    if (stored != null) {
+    if (stored != null && ref.mounted) {
       state = stored;
     }
   }

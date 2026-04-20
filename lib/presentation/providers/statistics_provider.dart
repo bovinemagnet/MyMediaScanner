@@ -214,6 +214,13 @@ class DebouncedInsightsNotifier extends AsyncNotifier<InsightsData> {
 
   @override
   Future<InsightsData> build() async {
+    // Cancel any pending debounce timer on provider dispose so the callback
+    // can't invalidateSelf after the notifier has been torn down.
+    ref.onDispose(() {
+      _debounce?.cancel();
+      _debounce = null;
+    });
+
     // Watch all upstream providers
     final itemRepo = ref.watch(mediaItemRepositoryProvider);
     final items = await itemRepo.watchAll().first;
@@ -237,6 +244,8 @@ class DebouncedInsightsNotifier extends AsyncNotifier<InsightsData> {
   void scheduleRefresh() {
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 500), () {
+      // Between scheduling and firing, the provider may have been disposed.
+      if (!ref.mounted) return;
       ref.invalidateSelf();
     });
   }

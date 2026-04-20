@@ -128,15 +128,25 @@ class RemoveAction extends BatchAction {
 }
 
 class ResolveAction extends BatchAction {
-  const ResolveAction({required this.itemId, required this.previousState});
+  const ResolveAction({
+    required this.itemId,
+    required this.previousState,
+    required this.resolvedState,
+  });
   final String itemId;
   final BatchItem previousState;
+  final BatchItem resolvedState;
 }
 
 class SaveAction extends BatchAction {
-  const SaveAction({required this.itemId, required this.previousState});
+  const SaveAction({
+    required this.itemId,
+    required this.previousState,
+    required this.resolvedState,
+  });
   final String itemId;
   final BatchItem previousState;
+  final BatchItem resolvedState;
 }
 
 class ForceKeepAction extends BatchAction {
@@ -330,19 +340,24 @@ class BatchEditorNotifier extends AsyncNotifier<BatchEditorState> {
       return item;
     }).toList();
 
+    final resolvedItem = updated.firstWhere((i) => i.id == itemId);
+
     state = AsyncValue.data(current.copyWith(
       items: updated,
       undoStack: [
         ...current.undoStack,
-        ResolveAction(itemId: itemId, previousState: previousState),
+        ResolveAction(
+          itemId: itemId,
+          previousState: previousState,
+          resolvedState: resolvedItem,
+        ),
       ],
       redoStack: const [],
     ));
 
     // Persist the updated item.
-    final updatedItem = updated.firstWhere((i) => i.id == itemId);
-    final index = updated.indexOf(updatedItem);
-    await _persistItem(updatedItem, index);
+    final index = updated.indexOf(resolvedItem);
+    await _persistItem(resolvedItem, index);
   }
 
   /// Remove an item from the batch.
@@ -441,39 +456,35 @@ class BatchEditorNotifier extends AsyncNotifier<BatchEditorState> {
       repository: ref.read(mediaItemRepositoryProvider),
     );
 
-    final updated = <BatchItem>[];
+    // Update the live state by ID on each iteration. This preserves
+    // concurrent `addScanResult` additions that land during the save loop.
     var savedCount = 0;
-    for (final item in current.items) {
-      if (item.status == BatchItemStatus.confirmed && item.metadata != null) {
-        await useCase.execute(item.metadata!);
-        updated.add(item.copyWith(status: BatchItemStatus.saved));
-        savedCount++;
+    for (final item in confirmedItems) {
+      await useCase.execute(item.metadata!);
+      savedCount++;
 
-        // Emit progress.
-        state = AsyncValue.data(state.requireValue.copyWith(
-          items: [
-            ...updated,
-            ...current.items.sublist(updated.length),
-          ],
-          saveProgress: () =>
-              BatchSaveProgress(current: savedCount, total: total),
-        ));
-      } else {
-        updated.add(item);
-      }
+      final latest = state.requireValue;
+      final nextItems = latest.items.map((i) {
+        if (i.id == item.id) return i.copyWith(status: BatchItemStatus.saved);
+        return i;
+      }).toList();
+      state = AsyncValue.data(latest.copyWith(
+        items: nextItems,
+        saveProgress: () =>
+            BatchSaveProgress(current: savedCount, total: total),
+      ));
     }
 
-    // Check if all items are now saved — if so, complete the session.
+    final finalItems = state.requireValue.items;
     final hasUnsaved =
-        updated.any((i) => i.status != BatchItemStatus.saved);
+        finalItems.any((i) => i.status != BatchItemStatus.saved);
 
     state = AsyncValue.data(state.requireValue.copyWith(
-      items: updated,
       saveProgress: () => null,
     ));
 
-    // Persist all status changes.
-    await _persistAllItems(updated);
+    // Persist all status changes (includes any concurrently added items).
+    await _persistAllItems(finalItems);
 
     if (!hasUnsaved && current.sessionId != null) {
       await _dao.completeSession(current.sessionId!, status: 'completed');
@@ -627,25 +638,33 @@ class BatchEditorNotifier extends AsyncNotifier<BatchEditorState> {
         await _dao.deleteQueueItem(item.id);
         await _updateSessionItemCount(updated.length);
 
-      case ResolveAction():
-        // Redo resolve = apply the resolution again.
-        // We need the resolved state, which is the current item before undo
-        // was applied. The resolve action stores the previous state (before
-        // resolution), so the "resolved" item is what's in current.items.
-        // Actually, after undo the item is back to previousState. To redo,
-        // we need the resolved metadata — but we don't store it separately.
-        // For simplicity, redo of resolve is a no-op on metadata.
-        // Instead, just push it back to the undo stack.
+      case ResolveAction(:final itemId, :final resolvedState):
+        // Redo resolve = re-apply the resolvedState captured at the time
+        // the resolve was first performed.
+        final updated = current.items.map((i) {
+          if (i.id == itemId) return resolvedState;
+          return i;
+        }).toList();
         state = AsyncValue.data(current.copyWith(
+          items: updated,
           undoStack: [...current.undoStack, action],
           redoStack: newRedoStack,
         ));
+        final index = updated.indexWhere((i) => i.id == itemId);
+        if (index >= 0) await _persistItem(resolvedState, index);
 
-      case SaveAction():
+      case SaveAction(:final itemId, :final resolvedState):
+        final updated = current.items.map((i) {
+          if (i.id == itemId) return resolvedState;
+          return i;
+        }).toList();
         state = AsyncValue.data(current.copyWith(
+          items: updated,
           undoStack: [...current.undoStack, action],
           redoStack: newRedoStack,
         ));
+        final index = updated.indexWhere((i) => i.id == itemId);
+        if (index >= 0) await _persistItem(resolvedState, index);
 
       case ForceKeepAction(:final itemId):
         // Redo force-keep = set back to confirmed.

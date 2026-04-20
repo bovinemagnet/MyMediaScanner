@@ -46,12 +46,14 @@ class ImportNotifier extends Notifier<ImportState> {
   }) async {
     final usecase = ref.read(importUseCaseProvider);
 
+    if (!ref.mounted) return;
     state = ImportState(phase: ImportPhase.parsing, source: source);
 
     final List<ImportRow> parsed;
     try {
       parsed = usecase.parse(source, content);
     } on FormatException catch (e) {
+      if (!ref.mounted) return;
       state = state.copyWith(
         phase: ImportPhase.error,
         errorMessage: 'Could not parse file: ${e.message}',
@@ -60,6 +62,7 @@ class ImportNotifier extends Notifier<ImportState> {
     }
 
     if (parsed.isEmpty) {
+      if (!ref.mounted) return;
       state = state.copyWith(
         phase: ImportPhase.error,
         errorMessage: 'No rows found in file.',
@@ -67,6 +70,7 @@ class ImportNotifier extends Notifier<ImportState> {
       return;
     }
 
+    if (!ref.mounted) return;
     state = state.copyWith(
       phase: ImportPhase.enriching,
       rows: parsed,
@@ -76,6 +80,9 @@ class ImportNotifier extends Notifier<ImportState> {
     final updated = List<ImportRow>.from(parsed);
     var i = 0;
     await for (final enriched in usecase.enrich(parsed)) {
+      // User may have navigated away mid-enrichment. Break out rather than
+      // writing to a disposed notifier.
+      if (!ref.mounted) return;
       updated[i] = enriched;
       i++;
       state = state.copyWith(
@@ -84,6 +91,7 @@ class ImportNotifier extends Notifier<ImportState> {
       );
     }
 
+    if (!ref.mounted) return;
     state = state.copyWith(phase: ImportPhase.ready);
   }
 
@@ -107,11 +115,14 @@ class ImportNotifier extends Notifier<ImportState> {
   Future<void> saveAccepted() async {
     if (state.phase != ImportPhase.ready) return;
     final usecase = ref.read(importUseCaseProvider);
+    if (!ref.mounted) return;
     state = state.copyWith(phase: ImportPhase.saving);
     try {
       final saved = await usecase.saveAccepted(state.rows);
+      if (!ref.mounted) return;
       state = state.copyWith(phase: ImportPhase.done, savedCount: saved);
     } on Exception catch (e) {
+      if (!ref.mounted) return;
       state = state.copyWith(
         phase: ImportPhase.error,
         errorMessage: 'Save failed: $e',

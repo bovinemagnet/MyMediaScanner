@@ -47,24 +47,25 @@ class ConnectionHealthNotifier extends Notifier<ConnectionHealth>
   }
 
   Future<void> _ping() async {
+    if (!ref.mounted) return;
     final syncRepo = ref.read(syncRepositoryProvider);
     if (syncRepo == null) {
-      state = ConnectionHealth.unconfigured;
+      if (ref.mounted) state = ConnectionHealth.unconfigured;
       return;
     }
 
     final config = ref.read(postgresConfigProvider).value;
     if (config == null) {
-      state = ConnectionHealth.unconfigured;
+      if (ref.mounted) state = ConnectionHealth.unconfigured;
       return;
     }
 
     final client = PostgresSyncClient(config: config);
     try {
       final health = await client.ping();
-      state = health;
+      if (ref.mounted) state = health;
     } on Exception {
-      state = ConnectionHealth.disconnected;
+      if (ref.mounted) state = ConnectionHealth.disconnected;
     } finally {
       await client.close();
     }
