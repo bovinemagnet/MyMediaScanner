@@ -10,6 +10,8 @@ class EditableMetadataForm extends StatefulWidget {
     required this.initial,
     required this.onSave,
     this.onSaveToWishlist,
+    this.primarySaveLabel = 'Save to Collection',
+    this.primarySaveIcon = Icons.save,
   });
 
   final MetadataResult initial;
@@ -19,6 +21,14 @@ class EditableMetadataForm extends StatefulWidget {
   /// wishlist instead of the main collection. When non-null, a secondary
   /// "Save to Wishlist" button is rendered below the primary Save button.
   final Future<void> Function(MetadataResult edited)? onSaveToWishlist;
+
+  /// Label for the primary save button. The scan-time `SaveTarget` toggle
+  /// drives this through [MetadataConfirmScreen], so the button reads
+  /// "Save to Wishlist" when the scanner is pointed at the wishlist.
+  final String primarySaveLabel;
+
+  /// Icon for the primary save button. Paired with [primarySaveLabel].
+  final IconData primarySaveIcon;
 
   @override
   State<EditableMetadataForm> createState() => _EditableMetadataFormState();
@@ -37,16 +47,21 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.initial.title ?? '');
-    _subtitleController =
-        TextEditingController(text: widget.initial.subtitle ?? '');
-    _descriptionController =
-        TextEditingController(text: widget.initial.description ?? '');
-    _yearController =
-        TextEditingController(text: widget.initial.year?.toString() ?? '');
-    _publisherController =
-        TextEditingController(text: widget.initial.publisher ?? '');
-    _formatController =
-        TextEditingController(text: widget.initial.format ?? '');
+    _subtitleController = TextEditingController(
+      text: widget.initial.subtitle ?? '',
+    );
+    _descriptionController = TextEditingController(
+      text: widget.initial.description ?? '',
+    );
+    _yearController = TextEditingController(
+      text: widget.initial.year?.toString() ?? '',
+    );
+    _publisherController = TextEditingController(
+      text: widget.initial.publisher ?? '',
+    );
+    _formatController = TextEditingController(
+      text: widget.initial.format ?? '',
+    );
     _mediaType = widget.initial.mediaType ?? MediaType.unknown;
   }
 
@@ -64,20 +79,20 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
   bool _saving = false;
 
   MetadataResult _buildEdited() => widget.initial.copyWith(
-        title: _titleController.text.isEmpty ? null : _titleController.text,
-        subtitle:
-            _subtitleController.text.isEmpty ? null : _subtitleController.text,
-        description: _descriptionController.text.isEmpty
-            ? null
-            : _descriptionController.text,
-        year: int.tryParse(_yearController.text),
-        publisher: _publisherController.text.isEmpty
-            ? null
-            : _publisherController.text,
-        format:
-            _formatController.text.isEmpty ? null : _formatController.text,
-        mediaType: _mediaType,
-      );
+    title: _titleController.text.isEmpty ? null : _titleController.text,
+    subtitle: _subtitleController.text.isEmpty
+        ? null
+        : _subtitleController.text,
+    description: _descriptionController.text.isEmpty
+        ? null
+        : _descriptionController.text,
+    year: int.tryParse(_yearController.text),
+    publisher: _publisherController.text.isEmpty
+        ? null
+        : _publisherController.text,
+    format: _formatController.text.isEmpty ? null : _formatController.text,
+    mediaType: _mediaType,
+  );
 
   Future<void> _save() async {
     if (_saving) return;
@@ -86,9 +101,9 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
       await widget.onSave(_buildEdited());
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to save: $e')));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -118,9 +133,9 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
       await callback(_buildEdited());
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to save: $e')));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -150,8 +165,11 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
                 fit: BoxFit.contain,
                 errorWidget: (_, _, _) => SizedBox(
                   height: 200,
-                  child: Icon(Icons.broken_image,
-                      size: 64, color: colors.onSurfaceVariant),
+                  child: Icon(
+                    Icons.broken_image,
+                    size: 64,
+                    color: colors.onSurfaceVariant,
+                  ),
                 ),
               ),
             ),
@@ -163,8 +181,7 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
           Align(
             alignment: Alignment.centerLeft,
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: colors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
@@ -204,8 +221,9 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
                 initialValue: _mediaType,
                 decoration: const InputDecoration(labelText: 'Media Type'),
                 items: MediaType.values
-                    .map((t) =>
-                        DropdownMenuItem(value: t, child: Text(t.label)))
+                    .map(
+                      (t) => DropdownMenuItem(value: t, child: Text(t.label)),
+                    )
                     .toList(),
                 onChanged: (v) {
                   if (v != null) setState(() => _mediaType = v);
@@ -258,8 +276,7 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
                   Expanded(
                     child: TextField(
                       controller: _formatController,
-                      decoration: const InputDecoration(
-                          labelText: 'Format'),
+                      decoration: const InputDecoration(labelText: 'Format'),
                     ),
                   ),
                 ],
@@ -268,7 +285,8 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
               TextField(
                 controller: _publisherController,
                 decoration: const InputDecoration(
-                    labelText: 'Publisher / Studio / Label'),
+                  labelText: 'Publisher / Studio / Label',
+                ),
               ),
             ],
           ),
@@ -310,8 +328,7 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
         // Save button
         GradientButton(
           onPressed: _saving ? null : _save,
-          padding:
-              const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -325,9 +342,9 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
                   ),
                 )
               else
-                const Icon(Icons.save, size: 20),
+                Icon(widget.primarySaveIcon, size: 20),
               const SizedBox(width: 8),
-              Text(_saving ? 'Saving\u2026' : 'Save to Collection'),
+              Text(_saving ? 'Saving\u2026' : widget.primarySaveLabel),
             ],
           ),
         ),
@@ -338,8 +355,7 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
             icon: const Icon(Icons.favorite_border, size: 18),
             label: const Text('Save to Wishlist'),
             style: OutlinedButton.styleFrom(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
             ),
           ),
         ],

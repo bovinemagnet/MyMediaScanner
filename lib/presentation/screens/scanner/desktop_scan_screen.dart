@@ -12,6 +12,7 @@ import 'package:mymediascanner/domain/entities/scan_result.dart';
 import 'package:mymediascanner/presentation/providers/scanner_provider.dart';
 import 'package:mymediascanner/presentation/screens/scanner/widgets/batch_scan_counter.dart';
 import 'package:mymediascanner/presentation/screens/scanner/widgets/media_type_toggles.dart';
+import 'package:mymediascanner/presentation/screens/scanner/widgets/save_target_toggle.dart';
 import 'package:mymediascanner/presentation/screens/scanner/widgets/scan_mode_toggle.dart';
 import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
 
@@ -225,6 +226,8 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Row(
             children: [
+              SaveTargetToggle(),
+              SizedBox(width: 16),
               ScanModeToggle(),
               SizedBox(width: 16),
               Expanded(child: MediaTypeToggles()),
@@ -256,8 +259,7 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const LoadingIndicator(
-                          message: 'Looking up metadata...'),
+                      const LoadingIndicator(message: 'Looking up metadata...'),
                       const SizedBox(height: 24),
                       OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
@@ -291,9 +293,7 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    return service.buildPreview(
-      errorBuilder: _buildCameraError,
-    );
+    return service.buildPreview(errorBuilder: _buildCameraError);
   }
 
   Widget _buildCameraError(String message) {
@@ -301,8 +301,11 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.videocam_off,
-              size: 48, color: Theme.of(context).colorScheme.error),
+          Icon(
+            Icons.videocam_off,
+            size: 48,
+            color: Theme.of(context).colorScheme.error,
+          ),
           const SizedBox(height: 16),
           Text(
             message,
@@ -324,8 +327,7 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
       barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Duplicate Barcode'),
-        content:
-            const Text('This barcode already exists in your collection.'),
+        content: const Text('This barcode already exists in your collection.'),
         actions: [
           TextButton(
             onPressed: () {
@@ -363,12 +365,11 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 16),
+          const SaveTargetToggle(),
+          const SizedBox(height: 12),
           const ScanModeToggle(),
           const SizedBox(height: 16),
-          Text(
-            'Look up as:',
-            style: Theme.of(context).textTheme.labelMedium,
-          ),
+          Text('Look up as:', style: Theme.of(context).textTheme.labelMedium),
           const SizedBox(height: 8),
           const MediaTypeToggles(),
           const SizedBox(height: 16),
@@ -415,8 +416,7 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
           if (scannerState.state == ScanState.error)
             Text(
               scannerState.error ?? 'Unknown error',
-              style:
-                  TextStyle(color: Theme.of(context).colorScheme.error),
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
           if (scannerState.state == ScanState.duplicate)
             Card(
@@ -426,7 +426,8 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
                 child: Column(
                   children: [
                     const Text(
-                        'This barcode already exists in your collection.'),
+                      'This barcode already exists in your collection.',
+                    ),
                     const SizedBox(height: 8),
                     Row(
                       mainAxisSize: MainAxisSize.min,
@@ -506,8 +507,9 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
     try {
       // If the webcam is active and supports still capture (Windows/Linux),
       // capture directly from the camera instead of opening the gallery.
-      final capturedPath =
-          _webcamMode ? await _cameraService?.captureImage() : null;
+      final capturedPath = _webcamMode
+          ? await _cameraService?.captureImage()
+          : null;
 
       final ocrResult = capturedPath != null
           ? await ocr.extractStructuredFromFile(capturedPath)

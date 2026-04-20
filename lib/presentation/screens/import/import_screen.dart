@@ -33,20 +33,23 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
 
     return Scaffold(
       appBar: isDesktop ? null : AppBar(title: const Text('Import')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (isDesktop)
-              const ScreenHeader(
-                title: 'Import collection',
-                subtitle:
-                    'Bulk-import items from a Goodreads, Discogs, '
-                    'Letterboxd or Trakt export.',
-              ),
-            Expanded(child: _buildBody(state)),
-          ],
+      body: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (isDesktop)
+                const ScreenHeader(
+                  title: 'Import collection',
+                  subtitle:
+                      'Bulk-import items from a Goodreads, Discogs, '
+                      'Letterboxd or Trakt export.',
+                ),
+              Expanded(child: _buildBody(state)),
+            ],
+          ),
         ),
       ),
     );
@@ -58,8 +61,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
       ImportPhase.parsing => const _CenteredSpinner(label: 'Parsing file…'),
       ImportPhase.enriching => _buildEnriching(state),
       ImportPhase.ready => _buildPreview(state),
-      ImportPhase.saving =>
-        const _CenteredSpinner(label: 'Saving items…'),
+      ImportPhase.saving => const _CenteredSpinner(label: 'Saving items…'),
       ImportPhase.done => _buildDone(state),
       ImportPhase.error => _buildError(state),
     };
@@ -79,11 +81,12 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
             DropdownButtonFormField<ImportSource>(
               initialValue: _source,
               items: ImportSource.values
-                  .map((s) => DropdownMenuItem(
-                        value: s,
-                        child: Text(
-                            '${s.displayName} (.${s.fileExtension})'),
-                      ))
+                  .map(
+                    (s) => DropdownMenuItem(
+                      value: s,
+                      child: Text('${s.displayName} (.${s.fileExtension})'),
+                    ),
+                  )
                   .toList(),
               onChanged: (v) => setState(() => _source = v ?? _source),
             ),
@@ -107,17 +110,16 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
   }
 
   String _hintFor(ImportSource source) => switch (source) {
-        ImportSource.goodreads =>
-          'Goodreads: My Books → Import and export → Export Library.',
-        ImportSource.discogs =>
-          'Discogs: Collection → Export. Choose CSV format.',
-        ImportSource.letterboxd =>
-          'Letterboxd: Settings → Import & Export → Export your data. '
-              'Use the watched.csv file.',
-        ImportSource.trakt =>
-          'Trakt: Settings → Account → JSON export of watched movies or '
-              'shows.',
-      };
+    ImportSource.goodreads =>
+      'Goodreads: My Books → Import and export → Export Library.',
+    ImportSource.discogs => 'Discogs: Collection → Export. Choose CSV format.',
+    ImportSource.letterboxd =>
+      'Letterboxd: Settings → Import & Export → Export your data. '
+          'Use the watched.csv file.',
+    ImportSource.trakt =>
+      'Trakt: Settings → Account → JSON export of watched movies or '
+          'shows.',
+  };
 
   Future<void> _pickFile() async {
     final result = await FilePicker.platform.pickFiles(
@@ -151,10 +153,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          SizedBox(
-            width: 320,
-            child: LinearProgressIndicator(value: ratio),
-          ),
+          SizedBox(width: 320, child: LinearProgressIndicator(value: ratio)),
           const SizedBox(height: 12),
           Text('Enriching $done of $total…'),
         ],
@@ -167,8 +166,9 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     final colors = theme.colorScheme;
     final notifier = ref.read(importNotifierProvider.notifier);
 
-    final acceptedCount =
-        state.rows.where((r) => r.accepted && r.enriched != null).length;
+    final acceptedCount = state.rows
+        .where((r) => r.accepted && r.enriched != null)
+        .length;
     final notFoundCount = state.rows
         .where((r) => r.status == ImportRowStatus.notFound)
         .length;
@@ -185,25 +185,28 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             _StatusChip(
-                label: '$acceptedCount accepted',
-                color: colors.primary),
+              label: '$acceptedCount accepted',
+              color: colors.primary,
+            ),
             if (notFoundCount > 0)
               _StatusChip(
-                  label: '$notFoundCount not found',
-                  color: colors.tertiary),
+                label: '$notFoundCount not found',
+                color: colors.tertiary,
+              ),
             if (duplicateCount > 0)
               _StatusChip(
-                  label: '$duplicateCount duplicates',
-                  color: colors.outline),
+                label: '$duplicateCount duplicates',
+                color: colors.outline,
+              ),
             const Spacer(),
             TextButton(
-              onPressed: () => notifier.setAcceptedWhere(
-                  (r) => r.enriched != null, true),
+              onPressed: () =>
+                  notifier.setAcceptedWhere((r) => r.enriched != null, true),
               child: const Text('Accept all enriched'),
             ),
             TextButton(
-              onPressed: () => notifier.setAcceptedWhere(
-                  (r) => r.enriched == null, false),
+              onPressed: () =>
+                  notifier.setAcceptedWhere((r) => r.enriched == null, false),
               child: const Text('Reject not-found'),
             ),
           ],
@@ -217,8 +220,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
               final row = state.rows[index];
               return _ImportRowTile(
                 row: row,
-                onAcceptedChanged: (v) =>
-                    notifier.toggleAccepted(index, v),
+                onAcceptedChanged: (v) => notifier.toggleAccepted(index, v),
               );
             },
           ),
@@ -234,8 +236,10 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
             const SizedBox(width: 8),
             FilledButton.icon(
               icon: const Icon(Icons.save),
-              label: Text('Save $acceptedCount item'
-                  '${acceptedCount == 1 ? '' : 's'}'),
+              label: Text(
+                'Save $acceptedCount item'
+                '${acceptedCount == 1 ? '' : 's'}',
+              ),
               onPressed: acceptedCount == 0
                   ? null
                   : () => notifier.saveAccepted(),
@@ -252,11 +256,12 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.check_circle,
-              color: theme.colorScheme.primary, size: 64),
+          Icon(Icons.check_circle, color: theme.colorScheme.primary, size: 64),
           const SizedBox(height: 12),
-          Text('Imported ${state.savedCount} items',
-              style: theme.textTheme.titleMedium),
+          Text(
+            'Imported ${state.savedCount} items',
+            style: theme.textTheme.titleMedium,
+          ),
           const SizedBox(height: 16),
           Wrap(
             spacing: 8,
@@ -283,14 +288,12 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.error_outline,
-              color: theme.colorScheme.error, size: 48),
+          Icon(Icons.error_outline, color: theme.colorScheme.error, size: 48),
           const SizedBox(height: 12),
           Text(state.errorMessage ?? 'Unknown error'),
           const SizedBox(height: 16),
           FilledButton.tonal(
-            onPressed: () =>
-                ref.read(importNotifierProvider.notifier).reset(),
+            onPressed: () => ref.read(importNotifierProvider.notifier).reset(),
             child: const Text('Start over'),
           ),
         ],
@@ -331,9 +334,7 @@ class _ImportRowTile extends StatelessWidget {
     return ListTile(
       leading: Checkbox(
         value: row.accepted && canAccept,
-        onChanged: canAccept
-            ? (v) => onAcceptedChanged(v ?? false)
-            : null,
+        onChanged: canAccept ? (v) => onAcceptedChanged(v ?? false) : null,
       ),
       title: Text(enrichedTitle ?? row.rawTitle ?? '(untitled)'),
       subtitle: Column(
@@ -341,12 +342,13 @@ class _ImportRowTile extends StatelessWidget {
         children: [
           if (row.rawAuthor != null) Text(row.rawAuthor!),
           if (row.errorMessage != null)
-            Text(row.errorMessage!,
-                style: TextStyle(color: colors.error)),
+            Text(row.errorMessage!, style: TextStyle(color: colors.error)),
         ],
       ),
-      trailing: Text(statusLabel,
-          style: theme.textTheme.bodySmall?.copyWith(color: statusColor)),
+      trailing: Text(
+        statusLabel,
+        style: theme.textTheme.bodySmall?.copyWith(color: statusColor),
+      ),
     );
   }
 }
@@ -365,11 +367,10 @@ class _StatusChip extends StatelessWidget {
         color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(label,
-          style: Theme.of(context)
-              .textTheme
-              .bodySmall
-              ?.copyWith(color: color)),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: color),
+      ),
     );
   }
 }

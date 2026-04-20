@@ -55,8 +55,8 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     this.theAudioDbApi,
     this.fanartApi,
     ApiCircuitBreaker? googleBooksBreaker,
-  })  : _cacheDao = cacheDao,
-        googleBooksBreaker = googleBooksBreaker ?? ApiCircuitBreaker();
+  }) : _cacheDao = cacheDao,
+       googleBooksBreaker = googleBooksBreaker ?? ApiCircuitBreaker();
 
   final BarcodeCacheDao _cacheDao;
   final TmdbApi? tmdbApi;
@@ -75,8 +75,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
 
   /// Returns true if the exception is a 429 rate-limit response.
   static bool _isRateLimited(Object error) {
-    return error is DioException &&
-        error.response?.statusCode == 429;
+    return error is DioException && error.response?.statusCode == 429;
   }
 
   @override
@@ -117,7 +116,9 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     if (result is SingleScanResult) {
       final enriched = await _enrichMetadata(result.metadata);
       return ScanResult.single(
-          metadata: enriched, isDuplicate: result.isDuplicate);
+        metadata: enriched,
+        isDuplicate: result.isDuplicate,
+      );
     }
 
     // 5. Return notFound if all lookups failed
@@ -142,7 +143,8 @@ class MetadataRepositoryImpl implements IMetadataRepository {
       result = await _searchBookByTitle(title, barcode, barcodeType);
     } else {
       // No type hint — try TMDB first, then MusicBrainz, then Google Books
-      result = await _searchTmdbByTitle(title, barcode, barcodeType) ??
+      result =
+          await _searchTmdbByTitle(title, barcode, barcodeType) ??
           await _searchMusicByTitle(title, barcode, barcodeType) ??
           await _searchBookByTitle(title, barcode, barcodeType);
     }
@@ -152,7 +154,10 @@ class MetadataRepositoryImpl implements IMetadataRepository {
   }
 
   Future<ScanResult?> _searchTmdbByTitle(
-      String title, String barcode, String barcodeType) async {
+    String title,
+    String barcode,
+    String barcodeType,
+  ) async {
     if (tmdbApi == null) return null;
     try {
       final response = await tmdbApi!.searchMulti(title);
@@ -162,11 +167,13 @@ class MetadataRepositoryImpl implements IMetadataRepository {
       if (results == null || results.isEmpty) return null;
 
       if (results.length == 1) {
-        await _cacheResponse(
-            barcode, 'film', 'tmdb', results.first.toJson());
+        await _cacheResponse(barcode, 'film', 'tmdb', results.first.toJson());
         return ScanResult.single(
           metadata: TmdbMapper.fromSearchResult(
-              results.first, barcode, barcodeType),
+            results.first,
+            barcode,
+            barcodeType,
+          ),
           isDuplicate: false,
         );
       }
@@ -188,8 +195,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
 
   /// Look up a movie or TV show by IMDb ID (e.g. tt1234567) using TMDB's
   /// find-by-external-ID endpoint.
-  Future<ScanResult?> _lookupImdbId(
-      String imdbId, String barcodeType) async {
+  Future<ScanResult?> _lookupImdbId(String imdbId, String barcodeType) async {
     if (tmdbApi == null) return null;
     try {
       final response = await tmdbApi!.findByExternalId(imdbId);
@@ -209,7 +215,10 @@ class MetadataRepositoryImpl implements IMetadataRepository {
   }
 
   Future<ScanResult?> _searchMusicByTitle(
-      String title, String barcode, String barcodeType) async {
+    String title,
+    String barcode,
+    String barcodeType,
+  ) async {
     // Try MusicBrainz first
     if (musicBrainzApi != null) {
       try {
@@ -218,10 +227,17 @@ class MetadataRepositoryImpl implements IMetadataRepository {
         if (releases != null && releases.isNotEmpty) {
           if (releases.length == 1) {
             await _cacheResponse(
-                barcode, 'music', 'musicbrainz', releases.first.toJson());
+              barcode,
+              'music',
+              'musicbrainz',
+              releases.first.toJson(),
+            );
             return ScanResult.single(
               metadata: MusicBrainzMapper.fromRelease(
-                  releases.first, barcode, barcodeType),
+                releases.first,
+                barcode,
+                barcodeType,
+              ),
               isDuplicate: false,
             );
           }
@@ -251,10 +267,17 @@ class MetadataRepositoryImpl implements IMetadataRepository {
             if (searchResult.id != null) {
               final release = await discogsApi!.getRelease(searchResult.id!);
               await _cacheResponse(
-                  barcode, 'music', 'discogs', release.toJson());
+                barcode,
+                'music',
+                'discogs',
+                release.toJson(),
+              );
               return ScanResult.single(
                 metadata: DiscogsMapper.fromRelease(
-                    release, barcode, barcodeType),
+                  release,
+                  barcode,
+                  barcodeType,
+                ),
                 isDuplicate: false,
               );
             }
@@ -277,7 +300,10 @@ class MetadataRepositoryImpl implements IMetadataRepository {
   }
 
   Future<ScanResult?> _searchBookByTitle(
-      String title, String barcode, String barcodeType) async {
+    String title,
+    String barcode,
+    String barcodeType,
+  ) async {
     if (googleBooksApi != null && googleBooksBreaker.isOpen) {
       try {
         final response = await googleBooksApi!.searchByIsbn(title);
@@ -286,10 +312,17 @@ class MetadataRepositoryImpl implements IMetadataRepository {
         if (items != null && items.isNotEmpty) {
           if (items.length == 1) {
             await _cacheResponse(
-                barcode, 'book', 'google_books', items.first.toJson());
+              barcode,
+              'book',
+              'google_books',
+              items.first.toJson(),
+            );
             return ScanResult.single(
               metadata: GoogleBooksMapper.fromVolume(
-                  items.first, barcode, barcodeType),
+                items.first,
+                barcode,
+                barcodeType,
+              ),
               isDuplicate: false,
             );
           }
@@ -307,6 +340,42 @@ class MetadataRepositoryImpl implements IMetadataRepository {
         if (_isRateLimited(e)) {
           googleBooksBreaker.trip();
         }
+        debugPrint(
+          'Google Books title search failed: $e — '
+          'falling back to Open Library',
+        );
+      }
+    }
+
+    // Fallback to Open Library `/search.json` when Google Books is
+    // unavailable (rate-limited, 5xx, network error) or returned no items.
+    if (openLibraryApi != null) {
+      try {
+        final response = await openLibraryApi!.searchByTitle(title);
+        final docs = response?.docs;
+        if (docs != null && docs.isNotEmpty) {
+          if (docs.length == 1) {
+            return ScanResult.single(
+              metadata: OpenLibraryMapper.fromSearchDoc(
+                docs.first,
+                barcode,
+                barcodeType,
+              ),
+              isDuplicate: false,
+            );
+          }
+          final candidates = docs
+              .take(AppConstants.maxCandidates)
+              .map(OpenLibraryMapper.toSearchCandidate)
+              .toList();
+          return ScanResult.multiMatch(
+            candidates: candidates,
+            barcode: barcode,
+            barcodeType: barcodeType,
+          );
+        }
+      } on Exception catch (e) {
+        debugPrint('Open Library title search failed: $e');
       }
     }
     return null;
@@ -319,15 +388,20 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     String barcodeType,
   ) async {
     return switch (candidate.sourceApi) {
-      'musicbrainz' =>
-        _fetchMusicBrainzDetail(candidate, barcode, barcodeType),
+      'musicbrainz' => _fetchMusicBrainzDetail(candidate, barcode, barcodeType),
       'discogs' => _fetchDiscogsDetail(candidate, barcode, barcodeType),
       'tmdb' => _fetchTmdbDetail(candidate, barcode, barcodeType),
       'tvdb' => _fetchTvdbDetail(candidate, barcode, barcodeType),
-      'google_books' =>
-        _fetchGoogleBooksDetail(candidate, barcode, barcodeType),
-      'open_library' =>
-        _fetchOpenLibraryDetail(candidate, barcode, barcodeType),
+      'google_books' => _fetchGoogleBooksDetail(
+        candidate,
+        barcode,
+        barcodeType,
+      ),
+      'open_library' => _fetchOpenLibraryDetail(
+        candidate,
+        barcode,
+        barcodeType,
+      ),
       'upcitemdb' => _fetchUpcDetail(candidate, barcode, barcodeType),
       _ => null,
     };
@@ -405,6 +479,28 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     String barcodeType,
   ) async {
     if (openLibraryApi == null) return null;
+
+    // Title-search candidates carry a work key like `/works/OL27479W` in
+    // `sourceId`. Resolve by re-running the search and matching the key —
+    // the by-ISBN endpoint can't find works picked from an OCR flow where
+    // the scanned `barcode` isn't the book's ISBN.
+    if (candidate.sourceId.startsWith('/works/')) {
+      try {
+        final response = await openLibraryApi!.searchByTitle(candidate.title);
+        final docs = response?.docs;
+        if (docs != null && docs.isNotEmpty) {
+          final match = docs.firstWhere(
+            (d) => d.key == candidate.sourceId,
+            orElse: () => docs.first,
+          );
+          return OpenLibraryMapper.fromSearchDoc(match, barcode, barcodeType);
+        }
+      } on Exception catch (e) {
+        debugPrint('Open Library work-key detail fetch failed: $e');
+      }
+      return null;
+    }
+
     try {
       final book = await openLibraryApi!.getByIsbn(barcode);
       if (book != null) {
@@ -469,8 +565,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     try {
       final release = await musicBrainzApi!.getRelease(candidate.sourceId);
       if (release != null) {
-        await _cacheResponse(
-            barcode, 'music', 'musicbrainz', release.toJson());
+        await _cacheResponse(barcode, 'music', 'musicbrainz', release.toJson());
         return _buildMusicBrainzResult(release, barcode, barcodeType);
       }
     } on RateLimitExceededException catch (e) {
@@ -522,8 +617,8 @@ class MetadataRepositoryImpl implements IMetadataRepository {
             fanartUrl = images.bestPosterUrl;
           }
         } else if (result.mediaType == MediaType.music) {
-          final mbRgId = result
-              .extraMetadata['musicbrainz_release_group_id'] as String?;
+          final mbRgId =
+              result.extraMetadata['musicbrainz_release_group_id'] as String?;
           if (mbRgId != null) {
             final images = await fanartApi!.getAlbumImages(mbRgId);
             fanartUrl = images.bestCoverUrl;
@@ -554,19 +649,40 @@ class MetadataRepositoryImpl implements IMetadataRepository {
       final barcodeType = BarcodeUtils.detectBarcodeType(barcode).name;
       final metadata = switch (cached.sourceApi) {
         'tmdb' => TmdbMapper.fromSearchResult(
-            TmdbSearchResultDto.fromJson(json), barcode, barcodeType),
+          TmdbSearchResultDto.fromJson(json),
+          barcode,
+          barcodeType,
+        ),
         'discogs' => DiscogsMapper.fromRelease(
-            DiscogsReleaseDto.fromJson(json), barcode, barcodeType),
+          DiscogsReleaseDto.fromJson(json),
+          barcode,
+          barcodeType,
+        ),
         'google_books' => GoogleBooksMapper.fromVolume(
-            GoogleBooksVolumeDto.fromJson(json), barcode, barcodeType),
+          GoogleBooksVolumeDto.fromJson(json),
+          barcode,
+          barcodeType,
+        ),
         'open_library' => OpenLibraryMapper.fromBook(
-            OpenLibraryBookDto.fromJson(json), barcode, barcodeType),
+          OpenLibraryBookDto.fromJson(json),
+          barcode,
+          barcodeType,
+        ),
         'upcitemdb' => UpcMapper.fromItem(
-            UpcItemDto.fromJson(json), barcode, barcodeType),
+          UpcItemDto.fromJson(json),
+          barcode,
+          barcodeType,
+        ),
         'musicbrainz' => MusicBrainzMapper.fromRelease(
-            MusicBrainzReleaseDto.fromJson(json), barcode, barcodeType),
+          MusicBrainzReleaseDto.fromJson(json),
+          barcode,
+          barcodeType,
+        ),
         'tvdb' => TvdbMapper.fromSeries(
-            TvdbSeriesDto.fromJson(json), barcode, barcodeType),
+          TvdbSeriesDto.fromJson(json),
+          barcode,
+          barcodeType,
+        ),
         _ => null,
       };
       if (metadata == null) return null;
@@ -579,22 +695,27 @@ class MetadataRepositoryImpl implements IMetadataRepository {
 
   // -- Lookup methods --
 
-  Future<ScanResult?> _lookupBook(
-      String barcode, String barcodeType) async {
+  Future<ScanResult?> _lookupBook(String barcode, String barcodeType) async {
     // Try Google Books first (skip if circuit breaker is tripped)
     if (googleBooksApi != null && googleBooksBreaker.isOpen) {
       try {
-        final response =
-            await googleBooksApi!.searchByIsbn('isbn:$barcode');
+        final response = await googleBooksApi!.searchByIsbn('isbn:$barcode');
         googleBooksBreaker.reset();
         final items = response.items;
         if (items != null && items.isNotEmpty) {
           if (items.length == 1) {
             await _cacheResponse(
-                barcode, 'book', 'google_books', items.first.toJson());
+              barcode,
+              'book',
+              'google_books',
+              items.first.toJson(),
+            );
             return ScanResult.single(
               metadata: GoogleBooksMapper.fromVolume(
-                  items.first, barcode, barcodeType),
+                items.first,
+                barcode,
+                barcodeType,
+              ),
               isDuplicate: false,
             );
           }
@@ -611,8 +732,10 @@ class MetadataRepositoryImpl implements IMetadataRepository {
       } on Exception catch (e) {
         if (_isRateLimited(e)) {
           googleBooksBreaker.trip();
-          debugPrint('Google Books API rate-limited (429) — '
-              'circuit breaker tripped, falling back to Open Library');
+          debugPrint(
+            'Google Books API rate-limited (429) — '
+            'circuit breaker tripped, falling back to Open Library',
+          );
         }
         // Fall through to Open Library
       }
@@ -623,11 +746,9 @@ class MetadataRepositoryImpl implements IMetadataRepository {
       try {
         final book = await openLibraryApi!.getByIsbn(barcode);
         if (book != null) {
-          await _cacheResponse(
-              barcode, 'book', 'open_library', book.toJson());
+          await _cacheResponse(barcode, 'book', 'open_library', book.toJson());
           return ScanResult.single(
-            metadata:
-                OpenLibraryMapper.fromBook(book, barcode, barcodeType),
+            metadata: OpenLibraryMapper.fromBook(book, barcode, barcodeType),
             isDuplicate: false,
           );
         }
@@ -640,8 +761,10 @@ class MetadataRepositoryImpl implements IMetadataRepository {
   }
 
   Future<ScanResult?> _lookupFilm(
-      String barcode, String barcodeType,
-      {MetadataResult? upcHint}) async {
+    String barcode,
+    String barcodeType, {
+    MetadataResult? upcHint,
+  }) async {
     if (tmdbApi == null) return null;
     try {
       // TMDB doesn't support barcode search directly — use UPCitemdb
@@ -659,11 +782,13 @@ class MetadataRepositoryImpl implements IMetadataRepository {
       if (results == null || results.isEmpty) return null;
 
       if (results.length == 1) {
-        await _cacheResponse(
-            barcode, 'film', 'tmdb', results.first.toJson());
+        await _cacheResponse(barcode, 'film', 'tmdb', results.first.toJson());
         return ScanResult.single(
           metadata: TmdbMapper.fromSearchResult(
-              results.first, barcode, barcodeType),
+            results.first,
+            barcode,
+            barcodeType,
+          ),
           isDuplicate: false,
         );
       }
@@ -683,8 +808,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     return null;
   }
 
-  Future<ScanResult?> _lookupMusic(
-      String barcode, String barcodeType) async {
+  Future<ScanResult?> _lookupMusic(String barcode, String barcodeType) async {
     // 1. Try MusicBrainz first (free, good international barcode coverage)
     final mbResult = await _lookupMusicBrainz(barcode, barcodeType);
     if (mbResult != null) return mbResult;
@@ -700,11 +824,9 @@ class MetadataRepositoryImpl implements IMetadataRepository {
         final searchResult = results.first;
         if (searchResult.id != null) {
           final release = await discogsApi!.getRelease(searchResult.id!);
-          await _cacheResponse(
-              barcode, 'music', 'discogs', release.toJson());
+          await _cacheResponse(barcode, 'music', 'discogs', release.toJson());
           return ScanResult.single(
-            metadata: DiscogsMapper.fromRelease(
-                release, barcode, barcodeType),
+            metadata: DiscogsMapper.fromRelease(release, barcode, barcodeType),
             isDuplicate: false,
           );
         }
@@ -727,7 +849,9 @@ class MetadataRepositoryImpl implements IMetadataRepository {
   }
 
   Future<ScanResult?> _lookupMusicBrainz(
-      String barcode, String barcodeType) async {
+    String barcode,
+    String barcodeType,
+  ) async {
     if (musicBrainzApi == null) return null;
     try {
       final response = await musicBrainzApi!.searchByBarcode(barcode);
@@ -739,7 +863,8 @@ class MetadataRepositoryImpl implements IMetadataRepository {
 
       final best = ranked.first;
       final runnerUp = ranked.length > 1 ? ranked[1] : null;
-      final autoAccept = ranked.length == 1 ||
+      final autoAccept =
+          ranked.length == 1 ||
           _shouldAutoAccept(best: best, runnerUp: runnerUp!);
 
       if (autoAccept) {
@@ -756,10 +881,12 @@ class MetadataRepositoryImpl implements IMetadataRepository {
             debugPrint('MusicBrainz release detail fetch failed: $e');
           }
         }
-        final result =
-            await _buildMusicBrainzResult(detail, barcode, barcodeType);
-        await _cacheResponse(
-            barcode, 'music', 'musicbrainz', detail.toJson());
+        final result = await _buildMusicBrainzResult(
+          detail,
+          barcode,
+          barcodeType,
+        );
+        await _cacheResponse(barcode, 'music', 'musicbrainz', detail.toJson());
         return ScanResult.single(metadata: result, isDuplicate: false);
       }
 
@@ -788,7 +915,8 @@ class MetadataRepositoryImpl implements IMetadataRepository {
   /// MusicBrainz server-side `score` is added so an exact barcode match
   /// surfaces naturally.
   List<MusicBrainzReleaseDto> _rankMusicBrainzReleases(
-      List<MusicBrainzReleaseDto> releases) {
+    List<MusicBrainzReleaseDto> releases,
+  ) {
     int scoreOf(MusicBrainzReleaseDto r) {
       var score = 0;
       if ((r.status ?? '').toLowerCase() == 'official') score += 40;
@@ -807,9 +935,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
       return score + (r.score ?? 0);
     }
 
-    final scored = releases
-        .map((r) => (release: r, score: scoreOf(r)))
-        .toList()
+    final scored = releases.map((r) => (release: r, score: scoreOf(r))).toList()
       ..sort((a, b) => b.score.compareTo(a.score));
     return scored.map((e) => e.release).toList();
   }
@@ -819,8 +945,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     required MusicBrainzReleaseDto runnerUp,
   }) {
     final bestOfficial = (best.status ?? '').toLowerCase() == 'official';
-    final runnerOfficial =
-        (runnerUp.status ?? '').toLowerCase() == 'official';
+    final runnerOfficial = (runnerUp.status ?? '').toLowerCase() == 'official';
     if (bestOfficial && !runnerOfficial) return true;
     final bestScore = best.score ?? 0;
     final runnerScore = runnerUp.score ?? 0;
@@ -833,8 +958,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     String barcode,
     String barcodeType,
   ) async {
-    final mapped =
-        MusicBrainzMapper.fromRelease(release, barcode, barcodeType);
+    final mapped = MusicBrainzMapper.fromRelease(release, barcode, barcodeType);
     final artUrl = await _resolveCoverArt(release);
     return artUrl == null ? mapped : mapped.copyWith(coverUrl: artUrl);
   }
@@ -849,8 +973,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     return archiveUrl ?? release.coverUrl;
   }
 
-  Future<ScanResult?> _lookupGeneral(
-      String barcode, String barcodeType) async {
+  Future<ScanResult?> _lookupGeneral(String barcode, String barcodeType) async {
     // 1. Try MusicBrainz barcode search first — if it matches, it's music.
     // MusicBrainz has better international barcode coverage than UPCitemdb.
     final mbResult = await _lookupMusicBrainz(barcode, barcodeType);
@@ -867,8 +990,11 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     }
     if (upcResult.mediaType == MediaType.film ||
         upcResult.mediaType == MediaType.tv) {
-      final filmResult =
-          await _lookupFilm(barcode, barcodeType, upcHint: upcResult);
+      final filmResult = await _lookupFilm(
+        barcode,
+        barcodeType,
+        upcHint: upcResult,
+      );
       return filmResult ??
           ScanResult.single(metadata: upcResult, isDuplicate: false);
     }
@@ -880,13 +1006,19 @@ class MetadataRepositoryImpl implements IMetadataRepository {
           final results = response.results;
           if (results != null && results.isNotEmpty) {
             if (results.length == 1 && results.first.id != null) {
-              final release =
-                  await discogsApi!.getRelease(results.first.id!);
+              final release = await discogsApi!.getRelease(results.first.id!);
               await _cacheResponse(
-                  barcode, 'music', 'discogs', release.toJson());
+                barcode,
+                'music',
+                'discogs',
+                release.toJson(),
+              );
               return ScanResult.single(
                 metadata: DiscogsMapper.fromRelease(
-                    release, barcode, barcodeType),
+                  release,
+                  barcode,
+                  barcodeType,
+                ),
                 isDuplicate: false,
               );
             }
@@ -910,8 +1042,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     return ScanResult.single(metadata: upcResult, isDuplicate: false);
   }
 
-  Future<ScanResult?> _lookupUpc(
-      String barcode, String barcodeType) async {
+  Future<ScanResult?> _lookupUpc(String barcode, String barcodeType) async {
     final metadata = await _lookupUpcMetadata(barcode, barcodeType);
     if (metadata == null) return null;
     return ScanResult.single(metadata: metadata, isDuplicate: false);
@@ -944,13 +1075,15 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     Map<String, dynamic> responseJson,
   ) async {
     try {
-      await _cacheDao.upsert(BarcodeCacheTableCompanion(
-        barcode: Value(barcode),
-        mediaTypeHint: Value(mediaTypeHint),
-        responseJson: Value(jsonEncode(responseJson)),
-        sourceApi: Value(sourceApi),
-        cachedAt: Value(DateTime.now().millisecondsSinceEpoch),
-      ));
+      await _cacheDao.upsert(
+        BarcodeCacheTableCompanion(
+          barcode: Value(barcode),
+          mediaTypeHint: Value(mediaTypeHint),
+          responseJson: Value(jsonEncode(responseJson)),
+          sourceApi: Value(sourceApi),
+          cachedAt: Value(DateTime.now().millisecondsSinceEpoch),
+        ),
+      );
     } on Exception catch (_) {
       // Cache failures are non-critical
     }

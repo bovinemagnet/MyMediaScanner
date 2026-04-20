@@ -24,6 +24,12 @@ enum ScanState {
 /// Whether the user is scanning a standard barcode or an ISBN.
 enum ScanMode { barcode, isbn }
 
+/// Destination for the scanned item. `collection` saves as
+/// [OwnershipStatus.owned]; `wishlist` saves as [OwnershipStatus.wishlist].
+/// Chosen on the scan screen so a mistap on the metadata-confirm screen
+/// can't quietly divert a scan to the wishlist.
+enum SaveTarget { collection, wishlist }
+
 class ScannerState {
   const ScannerState({
     this.state = ScanState.idle,
@@ -39,6 +45,7 @@ class ScannerState {
       MediaType.book,
       MediaType.game,
     },
+    this.saveTarget = SaveTarget.collection,
     this.ocrSearchResult,
   });
 
@@ -49,6 +56,7 @@ class ScannerState {
   final int batchCount;
   final ScanMode scanMode;
   final Set<MediaType> enabledMediaTypes;
+  final SaveTarget saveTarget;
 
   /// OCR context from cover scan, if available.
   final OcrSearchResult? ocrSearchResult;
@@ -68,6 +76,7 @@ class ScannerState {
     int? batchCount,
     ScanMode? scanMode,
     Set<MediaType>? enabledMediaTypes,
+    SaveTarget? saveTarget,
     OcrSearchResult? ocrSearchResult,
   }) => ScannerState(
     state: state ?? this.state,
@@ -77,6 +86,7 @@ class ScannerState {
     batchCount: batchCount ?? this.batchCount,
     scanMode: scanMode ?? this.scanMode,
     enabledMediaTypes: enabledMediaTypes ?? this.enabledMediaTypes,
+    saveTarget: saveTarget ?? this.saveTarget,
     ocrSearchResult: ocrSearchResult ?? this.ocrSearchResult,
   );
 }
@@ -102,6 +112,13 @@ class ScannerNotifier extends Notifier<ScannerState> {
     state = state.copyWith(scanMode: mode);
   }
 
+  /// Choose whether the next scan is saved to the main collection or to
+  /// the wishlist. Sticky across `reset()` / `cancel()` so a user can
+  /// power-scan a stack of wishlist items without re-toggling each time.
+  void setSaveTarget(SaveTarget target) {
+    state = state.copyWith(saveTarget: target);
+  }
+
   /// Cancel an in-flight lookup and return to idle.
   void cancel() {
     _generation++;
@@ -110,13 +127,11 @@ class ScannerNotifier extends Notifier<ScannerState> {
       batchMode: state.batchMode,
       batchCount: state.batchCount,
       enabledMediaTypes: state.enabledMediaTypes,
+      saveTarget: state.saveTarget,
     );
   }
 
-  Future<void> onBarcodeScanned(
-    String barcode, {
-    MediaType? typeHint,
-  }) async {
+  Future<void> onBarcodeScanned(String barcode, {MediaType? typeHint}) async {
     final effectiveHint = typeHint ?? state.typeHint;
     _generation++;
     final gen = _generation;
@@ -147,6 +162,7 @@ class ScannerNotifier extends Notifier<ScannerState> {
               batchMode: state.batchMode,
               batchCount: state.batchCount,
               enabledMediaTypes: state.enabledMediaTypes,
+              saveTarget: state.saveTarget,
               scanMode: state.scanMode,
             );
           } else {
@@ -156,6 +172,7 @@ class ScannerNotifier extends Notifier<ScannerState> {
               batchMode: state.batchMode,
               batchCount: state.batchCount,
               enabledMediaTypes: state.enabledMediaTypes,
+              saveTarget: state.saveTarget,
               scanMode: state.scanMode,
             );
           }
@@ -173,11 +190,11 @@ class ScannerNotifier extends Notifier<ScannerState> {
             if (detail != null) {
               state = ScannerState(
                 state: ScanState.found,
-                result: ScanResult.single(
-                    metadata: detail, isDuplicate: false),
+                result: ScanResult.single(metadata: detail, isDuplicate: false),
                 batchMode: state.batchMode,
                 batchCount: state.batchCount,
                 enabledMediaTypes: state.enabledMediaTypes,
+                saveTarget: state.saveTarget,
               );
             } else {
               state = ScannerState(
@@ -189,6 +206,7 @@ class ScannerNotifier extends Notifier<ScannerState> {
                 batchMode: state.batchMode,
                 batchCount: state.batchCount,
                 enabledMediaTypes: state.enabledMediaTypes,
+                saveTarget: state.saveTarget,
                 scanMode: state.scanMode,
               );
             }
@@ -199,6 +217,7 @@ class ScannerNotifier extends Notifier<ScannerState> {
               batchMode: state.batchMode,
               batchCount: state.batchCount,
               enabledMediaTypes: state.enabledMediaTypes,
+              saveTarget: state.saveTarget,
               scanMode: state.scanMode,
             );
           }
@@ -209,6 +228,7 @@ class ScannerNotifier extends Notifier<ScannerState> {
             batchMode: state.batchMode,
             batchCount: state.batchCount,
             enabledMediaTypes: state.enabledMediaTypes,
+            saveTarget: state.saveTarget,
             scanMode: state.scanMode,
           );
       }
@@ -220,6 +240,7 @@ class ScannerNotifier extends Notifier<ScannerState> {
         batchMode: state.batchMode,
         batchCount: state.batchCount,
         enabledMediaTypes: state.enabledMediaTypes,
+        saveTarget: state.saveTarget,
         scanMode: state.scanMode,
       );
     }
@@ -233,6 +254,7 @@ class ScannerNotifier extends Notifier<ScannerState> {
       batchMode: state.batchMode,
       batchCount: state.batchCount,
       enabledMediaTypes: state.enabledMediaTypes,
+      saveTarget: state.saveTarget,
       scanMode: state.scanMode,
     );
   }
@@ -248,13 +270,17 @@ class ScannerNotifier extends Notifier<ScannerState> {
       batchMode: state.batchMode,
       batchCount: state.batchCount,
       enabledMediaTypes: state.enabledMediaTypes,
+      saveTarget: state.saveTarget,
       scanMode: state.scanMode,
     );
   }
 
   /// Search by title when barcode lookup returned notFound.
   Future<void> searchByTitle(
-      String title, String barcode, String barcodeType) async {
+    String title,
+    String barcode,
+    String barcodeType,
+  ) async {
     _generation++;
     final gen = _generation;
     state = state.copyWith(state: ScanState.lookingUp);
@@ -277,6 +303,7 @@ class ScannerNotifier extends Notifier<ScannerState> {
             batchMode: state.batchMode,
             batchCount: state.batchCount,
             enabledMediaTypes: state.enabledMediaTypes,
+            saveTarget: state.saveTarget,
             scanMode: state.scanMode,
           );
         case MultiMatchScanResult():
@@ -286,6 +313,7 @@ class ScannerNotifier extends Notifier<ScannerState> {
             batchMode: state.batchMode,
             batchCount: state.batchCount,
             enabledMediaTypes: state.enabledMediaTypes,
+            saveTarget: state.saveTarget,
             scanMode: state.scanMode,
           );
         case NotFoundScanResult():
@@ -295,6 +323,7 @@ class ScannerNotifier extends Notifier<ScannerState> {
             batchMode: state.batchMode,
             batchCount: state.batchCount,
             enabledMediaTypes: state.enabledMediaTypes,
+            saveTarget: state.saveTarget,
             scanMode: state.scanMode,
           );
       }
@@ -306,6 +335,7 @@ class ScannerNotifier extends Notifier<ScannerState> {
         batchMode: state.batchMode,
         batchCount: state.batchCount,
         enabledMediaTypes: state.enabledMediaTypes,
+        saveTarget: state.saveTarget,
         scanMode: state.scanMode,
       );
     }
@@ -348,6 +378,7 @@ class ScannerNotifier extends Notifier<ScannerState> {
               batchMode: state.batchMode,
               batchCount: state.batchCount,
               enabledMediaTypes: state.enabledMediaTypes,
+              saveTarget: state.saveTarget,
               scanMode: state.scanMode,
               ocrSearchResult: ocrSearchResult,
             );
@@ -358,6 +389,7 @@ class ScannerNotifier extends Notifier<ScannerState> {
               batchMode: state.batchMode,
               batchCount: state.batchCount,
               enabledMediaTypes: state.enabledMediaTypes,
+              saveTarget: state.saveTarget,
               scanMode: state.scanMode,
               ocrSearchResult: ocrSearchResult,
             );
@@ -369,6 +401,7 @@ class ScannerNotifier extends Notifier<ScannerState> {
             batchMode: state.batchMode,
             batchCount: state.batchCount,
             enabledMediaTypes: state.enabledMediaTypes,
+            saveTarget: state.saveTarget,
             scanMode: state.scanMode,
             ocrSearchResult: ocrSearchResult,
           );
@@ -379,6 +412,7 @@ class ScannerNotifier extends Notifier<ScannerState> {
             batchMode: state.batchMode,
             batchCount: state.batchCount,
             enabledMediaTypes: state.enabledMediaTypes,
+            saveTarget: state.saveTarget,
             scanMode: state.scanMode,
             ocrSearchResult: ocrSearchResult,
           );
@@ -391,6 +425,7 @@ class ScannerNotifier extends Notifier<ScannerState> {
         batchMode: state.batchMode,
         batchCount: state.batchCount,
         enabledMediaTypes: state.enabledMediaTypes,
+        saveTarget: state.saveTarget,
         scanMode: state.scanMode,
       );
     }
@@ -399,11 +434,14 @@ class ScannerNotifier extends Notifier<ScannerState> {
   /// Called when cover OCR extracts text. Searches by the extracted title.
   @Deprecated('Use onCoverOcrResult() instead')
   Future<void> onCoverTextRecognised(
-      String text, String barcode, String barcodeType) async {
+    String text,
+    String barcode,
+    String barcodeType,
+  ) async {
     // Wrap plain text in an OcrResult for backward compatibility
-    final ocrResult = OcrResult(blocks: [
-      OcrTextBlock(text: text, confidence: 0.85, area: 1.0),
-    ]);
+    final ocrResult = OcrResult(
+      blocks: [OcrTextBlock(text: text, confidence: 0.85, area: 1.0)],
+    );
     await onCoverOcrResult(ocrResult, barcode, barcodeType);
   }
 
@@ -414,6 +452,7 @@ class ScannerNotifier extends Notifier<ScannerState> {
       batchMode: state.batchMode,
       batchCount: state.batchCount,
       enabledMediaTypes: state.enabledMediaTypes,
+      saveTarget: state.saveTarget,
     );
   }
 
@@ -435,5 +474,6 @@ class ScannerNotifier extends Notifier<ScannerState> {
   }
 }
 
-final scannerProvider =
-    NotifierProvider<ScannerNotifier, ScannerState>(ScannerNotifier.new);
+final scannerProvider = NotifierProvider<ScannerNotifier, ScannerState>(
+  ScannerNotifier.new,
+);

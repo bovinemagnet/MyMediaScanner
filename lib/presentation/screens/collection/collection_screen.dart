@@ -89,7 +89,9 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
               GradientButton(
                 onPressed: () => context.go('/scan'),
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 8),
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -135,21 +137,18 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                   icon: Icons.library_music_outlined,
                 );
               }
-              if (isDesktop &&
-                  viewMode == CollectionViewMode.table) {
+              if (isDesktop && viewMode == CollectionViewMode.table) {
                 return CollectionTableView(
                   items: items,
                   lentIds: lentIds,
                   rippedIds: rippedIds,
                   onItemTap: (id) => _onItemTap(context, id),
-                  onDeleteItem: (id) =>
-                      _confirmDeleteItem(context, ref, id),
+                  onDeleteItem: (id) => _confirmDeleteItem(context, ref, id),
                 );
               }
               return GridView.builder(
                 padding: const EdgeInsets.all(16),
-                gridDelegate:
-                    const SliverGridDelegateWithMaxCrossAxisExtent(
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                   maxCrossAxisExtent: 200,
                   childAspectRatio: 0.65,
                   mainAxisSpacing: 12,
@@ -164,8 +163,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                     isRipped: rippedIds.contains(item.id),
                     onTap: () => _onItemTap(context, item.id),
                     contextMenuActions: isDesktop
-                        ? _buildItemContextActions(
-                            context, ref, item)
+                        ? _buildItemContextActions(context, ref, item)
                         : const [],
                   );
                 },
@@ -193,7 +191,10 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                     onPressed: () => context.go('/shelves'),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.favorite_border),
+                    icon: Icon(
+                      Icons.favorite,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
                     tooltip: 'Wishlist',
                     onPressed: () => context.go('/wishlist'),
                   ),
@@ -240,8 +241,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     );
   }
 
-  void _confirmDeleteItem(
-      BuildContext context, WidgetRef ref, String itemId) {
+  void _confirmDeleteItem(BuildContext context, WidgetRef ref, String itemId) {
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -282,9 +282,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       ).execute(item);
       messenger
         ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(content: Text('Metadata refreshed')),
-        );
+        ..showSnackBar(const SnackBar(content: Text('Metadata refreshed')));
     } catch (e) {
       messenger
         ..hideCurrentSnackBar()
@@ -299,9 +297,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Export Collection'),
-        content: const Text(
-          'Choose a format to export your collection.',
-        ),
+        content: const Text('Choose a format to export your collection.'),
         actions: [
           TextButton(
             onPressed: () {
@@ -328,8 +324,9 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     ExportFormat format,
   ) async {
     final messenger = ScaffoldMessenger.of(context);
-    final filePath =
-        await ref.read(insightsExportProvider.notifier).export(format);
+    final filePath = await ref
+        .read(insightsExportProvider.notifier)
+        .export(format);
 
     if (filePath != null) {
       messenger.showSnackBar(
@@ -339,8 +336,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
         ),
       );
     } else {
-      final error =
-          ref.read(insightsExportProvider).error ?? 'Unknown error';
+      final error = ref.read(insightsExportProvider).error ?? 'Unknown error';
       messenger.showSnackBar(
         SnackBar(
           content: Text('Export failed: $error'),

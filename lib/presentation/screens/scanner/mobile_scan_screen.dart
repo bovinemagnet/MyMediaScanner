@@ -13,6 +13,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:mymediascanner/presentation/providers/scanner_provider.dart';
 import 'package:mymediascanner/presentation/screens/scanner/widgets/batch_scan_counter.dart';
 import 'package:mymediascanner/presentation/screens/scanner/widgets/media_type_toggles.dart';
+import 'package:mymediascanner/presentation/screens/scanner/widgets/save_target_toggle.dart';
 import 'package:mymediascanner/presentation/screens/scanner/widgets/scan_mode_toggle.dart';
 import 'package:mymediascanner/presentation/screens/scanner/widgets/scan_overlay.dart';
 import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
@@ -104,7 +105,9 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
   }
 
   void _resumeScanning() {
-    debugPrint('[MMS-scan] _resumeScanning enter (was hasScanned=$_hasScanned)');
+    debugPrint(
+      '[MMS-scan] _resumeScanning enter (was hasScanned=$_hasScanned)',
+    );
     // Clear `_hasScanned` BEFORE reset(). Riverpod fires `ref.listen`
     // callbacks synchronously, so reset() re-enters this widget's idle
     // listener (line ~308) — leaving `_hasScanned` true would make that
@@ -140,9 +143,7 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
             if (value.trim().isNotEmpty) {
               _hasScanned = true;
               _cameraController.stop();
-              ref
-                  .read(scannerProvider.notifier)
-                  .onBarcodeScanned(value.trim());
+              ref.read(scannerProvider.notifier).onBarcodeScanned(value.trim());
             }
           },
         ),
@@ -174,8 +175,7 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
       barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Duplicate Barcode'),
-        content:
-            const Text('This barcode already exists in your collection.'),
+        content: const Text('This barcode already exists in your collection.'),
         actions: [
           TextButton(
             onPressed: () {
@@ -246,7 +246,9 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
     try {
       final ocrResult = await ocr.captureAndExtractStructured();
       if (!ocrResult.isEmpty && mounted) {
-        await ref.read(scannerProvider.notifier).onCoverOcrResult(
+        await ref
+            .read(scannerProvider.notifier)
+            .onCoverOcrResult(
               ocrResult,
               notFound.barcode,
               notFound.barcodeType,
@@ -267,8 +269,10 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
     final scannerState = ref.watch(scannerProvider);
 
     ref.listen(scannerProvider, (prev, next) {
-      debugPrint('[MMS-scan] state ${prev?.state} -> ${next.state} '
-          '(hasScanned=$_hasScanned, batch=${next.batchMode})');
+      debugPrint(
+        '[MMS-scan] state ${prev?.state} -> ${next.state} '
+        '(hasScanned=$_hasScanned, batch=${next.batchMode})',
+      );
       if (next.state == ScanState.found) {
         if (next.batchMode && next.result != null) {
           ref.read(scannerProvider.notifier).queueToBatch(next.result!);
@@ -338,8 +342,10 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
               padding: const EdgeInsets.only(right: 4),
               child: BatchScanCounter(count: scannerState.batchCount),
             ),
-          const Text('Batch',
-              style: TextStyle(color: Colors.white70, fontSize: 11)),
+          const Text(
+            'Batch',
+            style: TextStyle(color: Colors.white70, fontSize: 11),
+          ),
           Switch(
             value: scannerState.batchMode,
             onChanged: (_) =>
@@ -425,9 +431,7 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
               ),
               const SizedBox(height: 10),
               _GlassActionButton(
-                icon: _externalScannerMode
-                    ? Icons.camera_alt
-                    : Icons.bluetooth,
+                icon: _externalScannerMode ? Icons.camera_alt : Icons.bluetooth,
                 onTap: _toggleExternalScannerMode,
               ),
               const SizedBox(height: 10),
@@ -446,7 +450,11 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
           bottom: 0,
           child: Container(
             padding: EdgeInsets.fromLTRB(
-                16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
+              16,
+              12,
+              16,
+              MediaQuery.of(context).padding.bottom + 12,
+            ),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
@@ -460,6 +468,8 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                const SaveTargetToggle(),
+                const SizedBox(height: 8),
                 const ScanModeToggle(),
                 const SizedBox(height: 8),
                 const MediaTypeToggles(),
@@ -468,15 +478,13 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
                   _StatusStrip(
                     label: 'SCANNING METADATA\u2026',
                     color: Theme.of(context).colorScheme.primary,
-                    onCancel: () =>
-                        ref.read(scannerProvider.notifier).cancel(),
+                    onCancel: () => ref.read(scannerProvider.notifier).cancel(),
                   ),
                 ] else if (scannerState.batchMode &&
                     scannerState.batchCount > 0) ...[
                   const SizedBox(height: 12),
                   _StatusStrip(
-                    label:
-                        '${scannerState.batchCount} items queued to batch',
+                    label: '${scannerState.batchCount} items queued to batch',
                     color: Theme.of(context).colorScheme.primary,
                   ),
                 ],
@@ -508,11 +516,13 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
           Text(
             'Scan a barcode with your external scanner, or type it below',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.outline,
-                ),
+              color: Theme.of(context).colorScheme.outline,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
+          const SaveTargetToggle(),
+          const SizedBox(height: 12),
           const ScanModeToggle(),
           const SizedBox(height: 12),
           const MediaTypeToggles(),
@@ -551,9 +561,7 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
           if (scannerState.state == ScanState.error)
             Text(
               scannerState.error ?? 'Unknown error',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.error,
-              ),
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
           if (scannerState.state == ScanState.duplicate)
             Card(
@@ -563,7 +571,8 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
                 child: Column(
                   children: [
                     const Text(
-                        'This barcode already exists in your collection.'),
+                      'This barcode already exists in your collection.',
+                    ),
                     const SizedBox(height: 8),
                     Row(
                       mainAxisSize: MainAxisSize.min,
@@ -617,9 +626,9 @@ class _PermissionDeniedView extends StatelessWidget {
               const SizedBox(height: 24),
               Text(
                 'Camera Permission Required',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Colors.white,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(color: Colors.white),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
@@ -646,10 +655,7 @@ class _PermissionDeniedView extends StatelessWidget {
 
 /// Frosted-glass floating action button for the scanner screen.
 class _GlassActionButton extends StatelessWidget {
-  const _GlassActionButton({
-    required this.icon,
-    required this.onTap,
-  });
+  const _GlassActionButton({required this.icon, required this.onTap});
 
   final IconData icon;
   final VoidCallback onTap;
@@ -667,9 +673,7 @@ class _GlassActionButton extends StatelessWidget {
           height: 44,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.1),
-            ),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
           ),
           child: Icon(icon, color: Colors.white, size: 20),
         ),
@@ -680,11 +684,7 @@ class _GlassActionButton extends StatelessWidget {
 
 /// Status strip shown at the bottom of the scanner.
 class _StatusStrip extends StatelessWidget {
-  const _StatusStrip({
-    required this.label,
-    required this.color,
-    this.onCancel,
-  });
+  const _StatusStrip({required this.label, required this.color, this.onCancel});
 
   final String label;
   final Color color;
@@ -704,10 +704,7 @@ class _StatusStrip extends StatelessWidget {
           SizedBox(
             width: 14,
             height: 14,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: color,
-            ),
+            child: CircularProgressIndicator(strokeWidth: 2, color: color),
           ),
           const SizedBox(width: 10),
           Expanded(

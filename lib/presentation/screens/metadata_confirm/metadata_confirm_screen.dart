@@ -24,8 +24,10 @@ class MetadataConfirmScreen extends ConsumerWidget {
     final ocrContext = scannerState.ocrSearchResult;
     final metadata = switch (scannerState.result) {
       SingleScanResult(:final metadata) => metadata,
-      NotFoundScanResult(:final barcode, :final barcodeType) =>
-        MetadataResult(barcode: barcode, barcodeType: barcodeType),
+      NotFoundScanResult(:final barcode, :final barcodeType) => MetadataResult(
+        barcode: barcode,
+        barcodeType: barcodeType,
+      ),
       _ => null,
     };
 
@@ -80,159 +82,158 @@ class MetadataConfirmScreen extends ConsumerWidget {
             },
           ),
         ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // OCR confidence banner
-              if (ocrContext != null) ...[
-                OcrConfidenceIndicator(
-                  confidence: ocrContext.confidence,
-                  searchTermUsed: ocrContext.searchTermUsed,
-                ),
-                const SizedBox(height: 12),
-              ],
-              if (isNotFound) ...[
-                // Not-found info card
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: colors.surfaceContainerHigh,
-                    borderRadius: BorderRadius.circular(12),
+        // `SafeArea(bottom: true)` eats the Android gesture / 3-button
+        // navigation bar inset so the Save button is never hidden beneath
+        // `< O =`. Top is already handled by AppBar.
+        body: SafeArea(
+          top: false,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // OCR confidence banner
+                if (ocrContext != null) ...[
+                  OcrConfidenceIndicator(
+                    confidence: ocrContext.confidence,
+                    searchTermUsed: ocrContext.searchTermUsed,
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.info_outline,
-                              color: colors.primary, size: 20),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'No metadata found for barcode '
-                              '${metadata.barcode}',
-                              style: theme.textTheme.titleSmall,
+                  const SizedBox(height: 12),
+                ],
+                if (isNotFound) ...[
+                  // Not-found info card
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: colors.surfaceContainerHigh,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.info_outline,
+                              color: colors.primary,
+                              size: 20,
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Search by title below, or fill in the details '
-                        'manually.',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: colors.onSurfaceVariant,
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'No metadata found for barcode '
+                                '${metadata.barcode}',
+                                style: theme.textTheme.titleSmall,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      TitleSearchField(
-                        initialText: ocrContext?.ocrResult.inferredTitle,
-                        isLoading:
-                            scannerState.state == ScanState.lookingUp,
-                        onSearch: (title) {
-                          final result = scannerState.result;
-                          if (result is! NotFoundScanResult) return;
-                          ref
-                              .read(scannerProvider.notifier)
-                              .searchByTitle(
-                                title,
-                                result.barcode,
-                                result.barcodeType,
-                              );
-                        },
-                      ),
-                    ],
+                        const SizedBox(height: 12),
+                        Text(
+                          'Search by title below, or fill in the details '
+                          'manually.',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: colors.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TitleSearchField(
+                          initialText: ocrContext?.ocrResult.inferredTitle,
+                          isLoading: scannerState.state == ScanState.lookingUp,
+                          onSearch: (title) {
+                            final result = scannerState.result;
+                            if (result is! NotFoundScanResult) return;
+                            ref
+                                .read(scannerProvider.notifier)
+                                .searchByTitle(
+                                  title,
+                                  result.barcode,
+                                  result.barcodeType,
+                                );
+                          },
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'OR ENTER DETAILS MANUALLY',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: colors.onSurfaceVariant,
-                    letterSpacing: 1.0,
-                    fontWeight: FontWeight.w700,
+                  const SizedBox(height: 16),
+                  Text(
+                    'OR ENTER DETAILS MANUALLY',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                      letterSpacing: 1.0,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-              ],
-              EditableMetadataForm(
-                initial: effectiveMetadata!,
-                onSave: (edited) async {
-                  debugPrint('[MMS-save] onSave start barcode=${edited.barcode}'
-                      ' title=${edited.title}');
-                  final repository = ref.read(mediaItemRepositoryProvider);
-                  final proceed = await confirmSaveOrSkipIfDuplicate(
-                    context: context,
-                    repository: repository,
-                    barcode: edited.barcode,
-                    title: edited.title,
-                    year: edited.year,
-                  );
-                  debugPrint('[MMS-save] duplicate check proceed=$proceed');
-                  if (!proceed) return;
-                  final useCase = ref.read(saveMediaItemUseCaseProvider);
-                  await useCase.execute(edited);
-                  debugPrint('[MMS-save] DB write complete');
-
-                  final scanner = ref.read(scannerProvider.notifier);
-                  if (ref.read(scannerProvider).batchMode) {
-                    scanner.incrementBatchCount();
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content:
-                                Text('${edited.title ?? "Item"} saved')),
-                      );
-                      debugPrint('[MMS-save] batch: navigate /scan');
-                      context.go('/scan');
-                    }
-                  } else {
-                    debugPrint('[MMS-save] calling scanner.reset()');
-                    scanner.reset();
-                    debugPrint('[MMS-save] scanner.reset() returned');
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content:
-                                Text('${edited.title ?? "Item"} saved')),
-                      );
-                      debugPrint('[MMS-save] navigate /');
-                      context.go('/');
-                    }
-                  }
-                  debugPrint('[MMS-save] onSave done');
-                },
-                onSaveToWishlist: (edited) async {
-                  final repository = ref.read(mediaItemRepositoryProvider);
-                  final proceed = await confirmSaveOrSkipIfDuplicate(
-                    context: context,
-                    repository: repository,
-                    barcode: edited.barcode,
-                    title: edited.title,
-                    year: edited.year,
-                  );
-                  if (!proceed) return;
-                  final useCase = ref.read(saveMediaItemUseCaseProvider);
-                  await useCase.execute(
-                    edited,
-                    ownershipStatus: OwnershipStatus.wishlist,
-                  );
-
-                  ref.read(scannerProvider.notifier).reset();
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                            '${edited.title ?? "Item"} added to wishlist'),
-                      ),
+                  const SizedBox(height: 12),
+                ],
+                EditableMetadataForm(
+                  initial: effectiveMetadata!,
+                  primarySaveLabel:
+                      scannerState.saveTarget == SaveTarget.wishlist
+                      ? 'Save to Wishlist'
+                      : 'Save to Collection',
+                  primarySaveIcon:
+                      scannerState.saveTarget == SaveTarget.wishlist
+                      ? Icons.favorite
+                      : Icons.save,
+                  onSave: (edited) async {
+                    final targetsWishlist =
+                        scannerState.saveTarget == SaveTarget.wishlist;
+                    debugPrint(
+                      '[MMS-save] onSave start barcode=${edited.barcode}'
+                      ' title=${edited.title} target=${scannerState.saveTarget.name}',
                     );
-                    context.go('/wishlist');
-                  }
-                },
-              ),
-            ],
+                    final repository = ref.read(mediaItemRepositoryProvider);
+                    final proceed = await confirmSaveOrSkipIfDuplicate(
+                      context: context,
+                      repository: repository,
+                      barcode: edited.barcode,
+                      title: edited.title,
+                      year: edited.year,
+                    );
+                    debugPrint('[MMS-save] duplicate check proceed=$proceed');
+                    if (!proceed) return;
+                    final useCase = ref.read(saveMediaItemUseCaseProvider);
+                    await useCase.execute(
+                      edited,
+                      ownershipStatus: targetsWishlist
+                          ? OwnershipStatus.wishlist
+                          : OwnershipStatus.owned,
+                    );
+                    debugPrint('[MMS-save] DB write complete');
+
+                    final scanner = ref.read(scannerProvider.notifier);
+                    final snackText = targetsWishlist
+                        ? '${edited.title ?? "Item"} added to wishlist'
+                        : '${edited.title ?? "Item"} saved';
+
+                    if (ref.read(scannerProvider).batchMode) {
+                      scanner.incrementBatchCount();
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text(snackText)));
+                        debugPrint('[MMS-save] batch: navigate /scan');
+                        context.go('/scan');
+                      }
+                    } else {
+                      debugPrint('[MMS-save] calling scanner.reset()');
+                      scanner.reset();
+                      debugPrint('[MMS-save] scanner.reset() returned');
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text(snackText)));
+                        final destination = targetsWishlist ? '/wishlist' : '/';
+                        debugPrint('[MMS-save] navigate $destination');
+                        context.go(destination);
+                      }
+                    }
+                    debugPrint('[MMS-save] onSave done');
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       ),

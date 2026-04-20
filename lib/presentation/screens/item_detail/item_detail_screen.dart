@@ -77,135 +77,141 @@ class ItemDetailScreen extends ConsumerWidget {
               ),
             ],
           ),
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _GradientHeroBackdrop(
-                  mediaType: item.mediaType,
-                  child: Center(
-                    child: CoverArtHero(
-                        imageUrl: item.coverUrl, tag: 'cover-${item.id}'),
+          body: SafeArea(
+            top: false,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _GradientHeroBackdrop(
+                    mediaType: item.mediaType,
+                    child: Center(
+                      child: CoverArtHero(
+                        imageUrl: item.coverUrl,
+                        tag: 'cover-${item.id}',
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                Center(
-                  child: Text(item.title,
-                      style: Theme.of(context).textTheme.headlineSmall),
-                ),
-                if (item.subtitle != null)
+                  const SizedBox(height: 16),
                   Center(
-                    child: Text(item.subtitle!,
-                        style: Theme.of(context).textTheme.titleMedium),
+                    child: Text(
+                      item.title,
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
                   ),
-                const SizedBox(height: 16),
-                Center(
-                  child: StarRatingWidget(
-                    rating: item.userRating ?? 0,
-                    onChanged: (rating) async {
+                  if (item.subtitle != null)
+                    Center(
+                      child: Text(
+                        item.subtitle!,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ),
+                  const SizedBox(height: 16),
+                  Center(
+                    child: StarRatingWidget(
+                      rating: item.userRating ?? 0,
+                      onChanged: (rating) async {
+                        try {
+                          await UpdateRatingUseCase(
+                            repository: ref.read(mediaItemRepositoryProvider),
+                          ).execute(item.id, rating: rating);
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Failed to update rating: $e'),
+                              ),
+                            );
+                          }
+                        }
+                        ref.invalidate(mediaItemProvider(itemId));
+                      },
+                    ),
+                  ),
+                  if (item.criticScore != null) ...[
+                    const SizedBox(height: 12),
+                    Center(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.reviews_outlined,
+                            color: Theme.of(context).colorScheme.tertiary,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            '${item.criticScore!.toStringAsFixed(1)}/10',
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
+                                  color: Theme.of(context).colorScheme.tertiary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            item.criticSource ?? '',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(context).colorScheme.tertiary,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  TagChips(mediaItemId: item.id),
+                  if (item.userReview != null &&
+                      item.userReview!.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Text(item.userReview!),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  PurchaseInfoSection(
+                    item: item,
+                    onChanged: (updated) async {
                       try {
-                        await UpdateRatingUseCase(
-                                repository:
-                                    ref.read(mediaItemRepositoryProvider))
-                            .execute(item.id, rating: rating);
+                        await ref
+                            .read(mediaItemRepositoryProvider)
+                            .update(
+                              updated.copyWith(
+                                updatedAt:
+                                    DateTime.now().millisecondsSinceEpoch,
+                              ),
+                            );
+                        ref.invalidate(mediaItemProvider(itemId));
                       } catch (e) {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Failed to update rating: $e')),
+                            SnackBar(
+                              content: Text('Failed to save purchase info: $e'),
+                            ),
                           );
                         }
                       }
-                      ref.invalidate(mediaItemProvider(itemId));
                     },
                   ),
-                ),
-                if (item.criticScore != null) ...[
-                  const SizedBox(height: 12),
-                  Center(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.reviews_outlined,
-                          color: Theme.of(context).colorScheme.tertiary,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          '${item.criticScore!.toStringAsFixed(1)}/10',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleMedium
-                              ?.copyWith(
-                                color:
-                                    Theme.of(context).colorScheme.tertiary,
-                                fontWeight: FontWeight.bold,
-                              ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          item.criticSource ?? '',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
-                              ?.copyWith(
-                                color:
-                                    Theme.of(context).colorScheme.tertiary,
-                              ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 16),
-                TagChips(mediaItemId: item.id),
-                if (item.userReview != null &&
-                    item.userReview!.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Text(item.userReview!),
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 16),
-                PurchaseInfoSection(
-                  item: item,
-                  onChanged: (updated) async {
-                    try {
-                      await ref
-                          .read(mediaItemRepositoryProvider)
-                          .update(updated.copyWith(
-                            updatedAt:
-                                DateTime.now().millisecondsSinceEpoch,
-                          ));
-                      ref.invalidate(mediaItemProvider(itemId));
-                    } catch (e) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                              content:
-                                  Text('Failed to save purchase info: $e')),
-                        );
-                      }
-                    }
-                  },
-                ),
-                const SizedBox(height: 16),
-                LocationSection(item: item),
-                const SizedBox(height: 16),
-                ProgressSection(item: item),
-                const SizedBox(height: 16),
-                _LendingSection(mediaItemId: item.id),
-                if (item.mediaType == MediaType.music) ...[
                   const SizedBox(height: 16),
-                  _RipStatusSection(item: item),
+                  LocationSection(item: item),
+                  const SizedBox(height: 16),
+                  ProgressSection(item: item),
+                  const SizedBox(height: 16),
+                  _LendingSection(mediaItemId: item.id),
+                  if (item.mediaType == MediaType.music) ...[
+                    const SizedBox(height: 16),
+                    _RipStatusSection(item: item),
+                  ],
+                  const SizedBox(height: 16),
+                  MetadataSection(item: item),
                 ],
-                const SizedBox(height: 16),
-                MetadataSection(item: item),
-              ],
+              ),
             ),
           ),
         );
@@ -218,9 +224,9 @@ class ItemDetailScreen extends ConsumerWidget {
     WidgetRef ref,
     MediaItem item,
   ) async {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Refreshing metadata\u2026')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Refreshing metadata\u2026')));
     try {
       await RefreshMetadataUseCase(
         metadataRepository: ref.read(metadataRepositoryProvider),
@@ -230,9 +236,7 @@ class ItemDetailScreen extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
-          ..showSnackBar(
-            const SnackBar(content: Text('Metadata refreshed')),
-          );
+          ..showSnackBar(const SnackBar(content: Text('Metadata refreshed')));
       }
     } catch (e) {
       if (context.mounted) {
@@ -259,8 +263,8 @@ class ItemDetailScreen extends ConsumerWidget {
           FilledButton(
             onPressed: () async {
               await DeleteMediaItemUseCase(
-                      repository: ref.read(mediaItemRepositoryProvider))
-                  .execute(itemId);
+                repository: ref.read(mediaItemRepositoryProvider),
+              ).execute(itemId);
               if (context.mounted) {
                 Navigator.pop(ctx);
                 context.go('/collection');
@@ -307,14 +311,14 @@ class _LendingSection extends ConsumerWidget {
             }
 
             // Find borrower name
-            final borrowers =
-                allBorrowersAsync.value ?? [];
+            final borrowers = allBorrowersAsync.value ?? [];
             final borrower = borrowers
                 .where((b) => b.id == activeLoan.borrowerId)
                 .firstOrNull;
             final borrowerName = borrower?.name ?? 'Unknown';
             final lentDate = dateFormat.format(
-                DateTime.fromMillisecondsSinceEpoch(activeLoan.lentAt));
+              DateTime.fromMillisecondsSinceEpoch(activeLoan.lentAt),
+            );
 
             final loanColors = Theme.of(context).colorScheme;
             return Card(
@@ -323,18 +327,20 @@ class _LendingSection extends ConsumerWidget {
                 padding: const EdgeInsets.all(12),
                 child: Row(
                   children: [
-                    Icon(Icons.person_outline,
-                        color: loanColors.tertiary),
+                    Icon(Icons.person_outline, color: loanColors.tertiary),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Lent to $borrowerName',
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.w600)),
-                          Text('Since $lentDate',
-                              style: Theme.of(context).textTheme.bodySmall),
+                          Text(
+                            'Lent to $borrowerName',
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          Text(
+                            'Since $lentDate',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
                           if (activeLoan.dueAt != null) ...[
                             const SizedBox(height: 2),
                             Text(
@@ -346,7 +352,8 @@ class _LendingSection extends ConsumerWidget {
                             Padding(
                               padding: const EdgeInsets.only(top: 4),
                               child: OverdueBadge(
-                                  daysOverdue: activeLoan.daysOverdue),
+                                daysOverdue: activeLoan.daysOverdue,
+                              ),
                             ),
                         ],
                       ),
@@ -359,15 +366,16 @@ class _LendingSection extends ConsumerWidget {
                             try {
                               await ReturnItemUseCase(
                                 repository: ref.read(loanRepositoryProvider),
-                                notificationService:
-                                    ref.read(notificationServiceProvider),
+                                notificationService: ref.read(
+                                  notificationServiceProvider,
+                                ),
                               ).execute(activeLoan.id);
                             } catch (e) {
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                      content:
-                                          Text('Failed to return item: $e')),
+                                    content: Text('Failed to return item: $e'),
+                                  ),
                                 );
                               }
                             }
@@ -381,12 +389,15 @@ class _LendingSection extends ConsumerWidget {
                               context: context,
                               initialDate: activeLoan.dueAt != null
                                   ? DateTime.fromMillisecondsSinceEpoch(
-                                      activeLoan.dueAt!)
-                                  : DateTime.now()
-                                      .add(const Duration(days: 14)),
+                                      activeLoan.dueAt!,
+                                    )
+                                  : DateTime.now().add(
+                                      const Duration(days: 14),
+                                    ),
                               firstDate: DateTime.now(),
-                              lastDate: DateTime.now()
-                                  .add(const Duration(days: 365)),
+                              lastDate: DateTime.now().add(
+                                const Duration(days: 365),
+                              ),
                               helpText: 'Extend due date',
                             );
                             if (picked != null) {
@@ -419,18 +430,15 @@ class _LendingSection extends ConsumerWidget {
           loading: () => const SizedBox.shrink(),
           error: (_, _) => const SizedBox.shrink(),
           data: (loans) {
-            final pastLoans =
-                loans.where((l) => l.returnedAt != null).toList();
+            final pastLoans = loans.where((l) => l.returnedAt != null).toList();
             if (pastLoans.isEmpty) return const SizedBox.shrink();
 
-            final borrowers =
-                allBorrowersAsync.value ?? [];
+            final borrowers = allBorrowersAsync.value ?? [];
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('History',
-                    style: Theme.of(context).textTheme.labelLarge),
+                Text('History', style: Theme.of(context).textTheme.labelLarge),
                 const SizedBox(height: 4),
                 ...pastLoans.map((loan) {
                   final borrower = borrowers
@@ -438,14 +446,17 @@ class _LendingSection extends ConsumerWidget {
                       .firstOrNull;
                   final name = borrower?.name ?? 'Unknown';
                   final lent = dateFormat.format(
-                      DateTime.fromMillisecondsSinceEpoch(loan.lentAt));
+                    DateTime.fromMillisecondsSinceEpoch(loan.lentAt),
+                  );
                   final returned = dateFormat.format(
-                      DateTime.fromMillisecondsSinceEpoch(
-                          loan.returnedAt!));
+                    DateTime.fromMillisecondsSinceEpoch(loan.returnedAt!),
+                  );
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 2),
-                    child: Text('$name: $lent \u2013 $returned',
-                        style: Theme.of(context).textTheme.bodySmall),
+                    child: Text(
+                      '$name: $lent \u2013 $returned',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                   );
                 }),
               ],
@@ -483,12 +494,12 @@ class _RipStatusSection extends ConsumerWidget {
                   padding: const EdgeInsets.all(12),
                   child: Row(
                     children: [
-                      Icon(Icons.album,
-                          color: Theme.of(context).colorScheme.outline),
-                      const SizedBox(width: 8),
-                      const Expanded(
-                        child: Text('Not ripped'),
+                      Icon(
+                        Icons.album,
+                        color: Theme.of(context).colorScheme.outline,
                       ),
+                      const SizedBox(width: 8),
+                      const Expanded(child: Text('Not ripped')),
                     ],
                   ),
                 ),
@@ -501,7 +512,8 @@ class _RipStatusSection extends ConsumerWidget {
             final isFullyRipped = expectedTracks != null
                 ? ripTrackCount >= expectedTracks
                 : true;
-            final isPartiallyRipped = expectedTracks != null &&
+            final isPartiallyRipped =
+                expectedTracks != null &&
                 ripTrackCount > 0 &&
                 ripTrackCount < expectedTracks;
 
@@ -541,25 +553,25 @@ class _RipStatusSection extends ConsumerWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(statusText,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w600)),
+                              Text(
+                                statusText,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                               if (ripAlbum.artist != null)
                                 Text(
                                   '${ripAlbum.artist} — ${ripAlbum.albumTitle ?? "Unknown"}',
-                                  style:
-                                      Theme.of(context).textTheme.bodySmall,
+                                  style: Theme.of(context).textTheme.bodySmall,
                                 ),
                               const SizedBox(height: 2),
                               Text(
                                 ripAlbum.libraryPath,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
+                                style: Theme.of(context).textTheme.bodySmall
                                     ?.copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .outline,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.outline,
                                     ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -572,15 +584,15 @@ class _RipStatusSection extends ConsumerWidget {
                           const SizedBox(
                             width: 16,
                             height: 16,
-                            child:
-                                CircularProgressIndicator(strokeWidth: 2),
+                            child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         else
                           FilledButton.tonal(
                             onPressed: () {
                               ref
-                                  .read(qualityAnalysisNotifierProvider
-                                      .notifier)
+                                  .read(
+                                    qualityAnalysisNotifierProvider.notifier,
+                                  )
                                   .analyse(ripAlbum.id);
                             },
                             child: const Text('Check Quality'),
@@ -590,15 +602,16 @@ class _RipStatusSection extends ConsumerWidget {
                           onPressed: () async {
                             try {
                               await ManageRipsUseCase(
-                                repository:
-                                    ref.read(ripLibraryRepositoryProvider),
+                                repository: ref.read(
+                                  ripLibraryRepositoryProvider,
+                                ),
                               ).unlinkFromMediaItem(ripAlbum.id);
                             } catch (e) {
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                      content:
-                                          Text('Failed to unlink rip: $e')),
+                                    content: Text('Failed to unlink rip: $e'),
+                                  ),
                                 );
                               }
                             }
@@ -616,7 +629,8 @@ class _RipStatusSection extends ConsumerWidget {
                     FilledButton.icon(
                       onPressed: () async {
                         final tracks = await ref.read(
-                            ripTracksProvider(ripAlbum.id).future);
+                          ripTracksProvider(ripAlbum.id).future,
+                        );
                         if (tracks.isNotEmpty) {
                           await ref
                               .read(playbackActionProvider.notifier)
@@ -658,12 +672,9 @@ class _RipStatusSection extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: Text(
                       'Error: ${analysisState.error}',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(
-                            color: Theme.of(context).colorScheme.error,
-                          ),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
                     ),
                   ),
                 ],
@@ -699,8 +710,7 @@ class _TrackQualityList extends ConsumerWidget {
       error: (_, _) => const SizedBox.shrink(),
       data: (tracks) {
         // Only show if at least one track has quality data
-        final hasQualityData =
-            tracks.any((t) => t.accurateRipStatus != null);
+        final hasQualityData = tracks.any((t) => t.accurateRipStatus != null);
         if (!hasQualityData) return const SizedBox.shrink();
 
         return Column(
@@ -772,17 +782,18 @@ class _TrackQualityRow extends StatelessWidget {
             children: [
               if (track.peakLevel != null)
                 Text(
-                    'Peak level: ${(track.peakLevel! * 100).toStringAsFixed(1)}%'),
+                  'Peak level: ${(track.peakLevel! * 100).toStringAsFixed(1)}%',
+                ),
               if (track.trackQuality != null)
                 Text(
-                    'Track quality: ${(track.trackQuality! * 100).toStringAsFixed(1)}%'),
+                  'Track quality: ${(track.trackQuality! * 100).toStringAsFixed(1)}%',
+                ),
               if (track.copyCrc != null) Text('Copy CRC: ${track.copyCrc}'),
               if (track.accurateRipCrcV1 != null)
                 Text('AR CRC v1: ${track.accurateRipCrcV1}'),
               if (track.accurateRipCrcV2 != null)
                 Text('AR CRC v2: ${track.accurateRipCrcV2}'),
-              if (track.clickCount != null)
-                Text('Clicks: ${track.clickCount}'),
+              if (track.clickCount != null) Text('Clicks: ${track.clickCount}'),
             ],
           ),
         ),
@@ -796,10 +807,7 @@ class _TrackQualityRow extends StatelessWidget {
 /// backdrop fades from the media-type accent down to the scaffold surface
 /// so the cover appears to lift off its page.
 class _GradientHeroBackdrop extends StatelessWidget {
-  const _GradientHeroBackdrop({
-    required this.mediaType,
-    required this.child,
-  });
+  const _GradientHeroBackdrop({required this.mediaType, required this.child});
 
   final MediaType mediaType;
   final Widget child;
@@ -818,10 +826,7 @@ class _GradientHeroBackdrop extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            soft,
-            colors.surface,
-          ],
+          colors: [soft, colors.surface],
         ),
       ),
       child: child,

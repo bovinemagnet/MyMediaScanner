@@ -548,6 +548,89 @@ void main() {
       });
     });
 
+    group('saveTarget', () {
+      test('defaults to collection', () {
+        final container = createContainer();
+        addTearDown(container.dispose);
+
+        expect(
+          container.read(scannerProvider).saveTarget,
+          SaveTarget.collection,
+        );
+      });
+
+      test('setSaveTarget updates state', () {
+        final container = createContainer();
+        addTearDown(container.dispose);
+
+        final notifier = container.read(scannerProvider.notifier);
+        notifier.setSaveTarget(SaveTarget.wishlist);
+
+        expect(
+          container.read(scannerProvider).saveTarget,
+          SaveTarget.wishlist,
+        );
+      });
+
+      test('is preserved across reset — sticky for power-scanning', () {
+        final container = createContainer();
+        addTearDown(container.dispose);
+
+        final notifier = container.read(scannerProvider.notifier);
+        notifier.setSaveTarget(SaveTarget.wishlist);
+        notifier.reset();
+
+        expect(
+          container.read(scannerProvider).saveTarget,
+          SaveTarget.wishlist,
+        );
+      });
+
+      test('is preserved across cancel', () {
+        final container = createContainer();
+        addTearDown(container.dispose);
+
+        final notifier = container.read(scannerProvider.notifier);
+        notifier.setSaveTarget(SaveTarget.wishlist);
+        notifier.cancel();
+
+        expect(
+          container.read(scannerProvider).saveTarget,
+          SaveTarget.wishlist,
+        );
+      });
+
+      test('is preserved when a scan resolves to single result', () async {
+        const barcode = '9780330258647';
+        const result = ScanResult.single(
+          metadata: MetadataResult(
+            barcode: barcode,
+            barcodeType: 'isbn13',
+            title: 'Hitchhiker',
+            mediaType: MediaType.book,
+          ),
+          isDuplicate: false,
+        );
+        when(
+          () => mockMediaItemRepo.barcodeExists(barcode),
+        ).thenAnswer((_) async => false);
+        when(
+          () => mockMetadataRepo.lookupBarcode(barcode, typeHint: null),
+        ).thenAnswer((_) async => result);
+
+        final container = createContainer();
+        addTearDown(container.dispose);
+
+        final notifier = container.read(scannerProvider.notifier);
+        notifier.setSaveTarget(SaveTarget.wishlist);
+        await notifier.onBarcodeScanned(barcode);
+
+        final state = container.read(scannerProvider);
+        expect(state.state, ScanState.found);
+        expect(state.saveTarget, SaveTarget.wishlist);
+      });
+    });
+
     group('reset listener recursion guard', () {
       // Mobile/desktop scan screens listen for `state == idle` to resume
       // the camera. Their `_resumeScanning`/`_resumeWebcamScanning`
