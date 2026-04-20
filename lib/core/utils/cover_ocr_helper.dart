@@ -17,11 +17,21 @@ class CoverOcrHelper {
     TextRecognizer? recognizer,
     ImagePicker? picker,
     TesseractOcrService? tesseractService,
-  })  : _recognizer = recognizer ?? TextRecognizer(),
+  })  : _injectedRecognizer = recognizer,
         _picker = picker ?? ImagePicker(),
         _tesseractService = tesseractService ?? TesseractOcrService();
 
-  final TextRecognizer _recognizer;
+  /// Constructed lazily — `TextRecognizer()` loads ML Kit native libs which
+  /// are not registered on Linux/Windows and throw `MissingPluginException`
+  /// at construction. Only instantiate when the ML Kit path is actually
+  /// taken (Android / iOS).
+  final TextRecognizer? _injectedRecognizer;
+  TextRecognizer? _lazyRecognizer;
+  TextRecognizer _recognizerOrCreate() {
+    return _injectedRecognizer ??
+        (_lazyRecognizer ??= TextRecognizer());
+  }
+
   final ImagePicker _picker;
   final TesseractOcrService _tesseractService;
 
@@ -101,7 +111,7 @@ class CoverOcrHelper {
   Future<OcrResult> _extractStructuredWithMlKit(String path) async {
     try {
       final inputImage = InputImage.fromFilePath(path);
-      final recognised = await _recognizer.processImage(inputImage);
+      final recognised = await _recognizerOrCreate().processImage(inputImage);
 
       if (recognised.text.isEmpty) return const OcrResult();
 
@@ -180,7 +190,7 @@ class CoverOcrHelper {
   Future<String?> _extractWithMlKit(String path) async {
     try {
       final inputImage = InputImage.fromFilePath(path);
-      final recognised = await _recognizer.processImage(inputImage);
+      final recognised = await _recognizerOrCreate().processImage(inputImage);
 
       if (recognised.text.isEmpty) return null;
 
@@ -206,15 +216,31 @@ class CoverOcrHelper {
 
   /// Removes common noise from OCR-extracted text.
   static String cleanTitle(String raw) {
-    return raw
-        .replaceAll(RegExp(r'\n+'), ' ') // Collapse newlines
-        .replaceAll(RegExp(r'\s+'), ' ') // Collapse whitespace
-        .replaceAll(RegExp(r'[™®©]'), '') // Remove trademark symbols
+    final collapsed = raw
+        .replaceAll(RegExp(r'\n+'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .replaceAll(RegExp(r'[™®©]'), '')
         .trim();
+    // Discard mostly-numeric blocks — OCR on a CD/DVD cover often picks
+    // the barcode number as the largest text block.
+    final digits = RegExp(r'\d').allMatches(collapsed).length;
+    if (collapsed.length >= 4 && digits / collapsed.length > 0.6) {
+      return '';
+    }
+    return collapsed;
   }
 
   /// Releases resources held by the text recogniser.
+  ///
+  /// Safe to call on platforms where ML Kit was never instantiated — the
+  /// native close() can throw [MissingPluginException] on Linux/Windows.
   Future<void> dispose() async {
-    await _recognizer.close();
+    final r = _injectedRecognizer ?? _lazyRecognizer;
+    if (r == null) return;
+    try {
+      await r.close();
+    } on Exception catch (e) {
+      debugPrint('Cover OCR dispose ignored error: $e');
+    }
   }
 }

@@ -23,14 +23,22 @@ abstract final class VisionOcrChannel {
         {'imagePath': imagePath},
       );
       if (result != null) {
-        return result.cast<Map<dynamic, dynamic>>().map((m) {
-          return Map<String, dynamic>.from(m);
-        }).toList();
+        // Defensively coerce — a malformed native implementation returning
+        // non-Map entries must not throw an uncaught TypeError.
+        final out = <Map<String, dynamic>>[];
+        for (final entry in result) {
+          if (entry is Map) {
+            out.add(Map<String, dynamic>.from(entry));
+          }
+        }
+        return out;
       }
     } on PlatformException catch (_) {
       // Native side doesn't support structured output; fall through
     } on MissingPluginException catch (_) {
       // Method not implemented on native side; fall through
+    } on TypeError catch (e) {
+      debugPrint('Vision OCR structured: malformed native response: $e');
     }
 
     // Fallback: wrap plain text result

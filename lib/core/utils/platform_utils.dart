@@ -32,5 +32,8 @@ abstract final class PlatformCapability {
   /// Whether cover OCR text recognition is available.
   /// Android/iOS use ML Kit, macOS uses Vision framework,
   /// Windows/Linux use Tesseract.
-  static bool get hasCoverOcr => true;
+  ///
+  /// Explicitly exclude Flutter web — `ImagePicker.gallery` is effectively
+  /// unusable there and the "scan cover" button would fail on tap.
+  static bool get hasCoverOcr => !kIsWeb && (isMobile || isDesktop);
 }
