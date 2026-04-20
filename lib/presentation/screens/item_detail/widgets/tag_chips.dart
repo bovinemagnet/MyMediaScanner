@@ -41,10 +41,7 @@ class TagChips extends ConsumerWidget {
                   }
                   ref.invalidate(tagIdsForItemProvider(mediaItemId));
                 },
-                backgroundColor: tag.colour != null
-                    ? Color(int.parse(tag.colour!.replaceFirst('#', '0xFF')))
-                        .withAlpha(50)
-                    : null,
+                backgroundColor: _parseTagColour(tag.colour)?.withAlpha(50),
               );
             }),
             ActionChip(
@@ -92,6 +89,16 @@ class TagChips extends ConsumerWidget {
           ),
         ],
       ),
-    );
+    ).whenComplete(() {
+      // Defer dispose so dialog children still being torn down can complete
+      // their unmount without touching a disposed controller.
+      WidgetsBinding.instance.addPostFrameCallback((_) => controller.dispose());
+    });
+  }
+
+  Color? _parseTagColour(String? raw) {
+    if (raw == null) return null;
+    final value = int.tryParse(raw.replaceFirst('#', '0xFF'));
+    return value == null ? null : Color(value);
   }
 }

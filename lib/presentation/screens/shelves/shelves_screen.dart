@@ -167,7 +167,7 @@ class ShelvesScreen extends ConsumerWidget {
           ),
         ],
       ),
-    );
+    ).whenComplete(() => _disposeAfterFrame([nameController]));
   }
 
   void _confirmDeleteShelf(
@@ -205,7 +205,7 @@ class ShelvesScreen extends ConsumerWidget {
   void _showCreateShelfDialog(BuildContext context, WidgetRef ref) {
     final nameController = TextEditingController();
     final descController = TextEditingController();
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Create Shelf'),
@@ -249,7 +249,20 @@ class ShelvesScreen extends ConsumerWidget {
           ),
         ],
       ),
+    ).whenComplete(
+      () => _disposeAfterFrame([nameController, descController]),
     );
+  }
+
+  /// Disposes TextEditingControllers after the next frame so that dialog
+  /// children still being torn down can complete their unmount without
+  /// hitting a disposed controller.
+  void _disposeAfterFrame(List<TextEditingController> controllers) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      for (final c in controllers) {
+        c.dispose();
+      }
+    });
   }
 }
 

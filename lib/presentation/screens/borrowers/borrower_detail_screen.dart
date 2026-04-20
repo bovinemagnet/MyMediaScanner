@@ -185,7 +185,8 @@ class BorrowerDetailScreen extends ConsumerWidget {
     final phoneController = TextEditingController(text: borrower.phone ?? '');
     final notesController = TextEditingController(text: borrower.notes ?? '');
 
-    await showDialog<void>(
+    try {
+      await showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Edit Borrower'),
@@ -252,6 +253,16 @@ class BorrowerDetailScreen extends ConsumerWidget {
         ],
       ),
     );
+    } finally {
+      // Defer dispose so dialog children still being torn down can complete
+      // their unmount without touching a disposed controller.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        nameController.dispose();
+        emailController.dispose();
+        phoneController.dispose();
+        notesController.dispose();
+      });
+    }
   }
 }
 

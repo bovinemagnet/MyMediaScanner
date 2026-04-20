@@ -171,32 +171,37 @@ Future<void> _showCreateDialog(
   required Location? parent,
 }) async {
   final controller = TextEditingController();
-  final result = await showDialog<String>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: Text(parent == null
-          ? 'New top-level location'
-          : 'New child of "${parent.name}"'),
-      content: TextField(
-        controller: controller,
-        autofocus: true,
-        decoration: const InputDecoration(
-          labelText: 'Name',
-          hintText: 'e.g. Living room, Shelf A, Box 3',
+  final String? result;
+  try {
+    result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(parent == null
+            ? 'New top-level location'
+            : 'New child of "${parent.name}"'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: 'Name',
+            hintText: 'e.g. Living room, Shelf A, Box 3',
+          ),
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+            child: const Text('Create'),
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-          child: const Text('Create'),
-        ),
-      ],
-    ),
-  );
+    );
+  } finally {
+    WidgetsBinding.instance.addPostFrameCallback((_) => controller.dispose());
+  }
   if (result == null || result.isEmpty) return;
   await ref
       .read(locationActionsProvider)
@@ -206,27 +211,32 @@ Future<void> _showCreateDialog(
 Future<void> _showRenameDialog(
     BuildContext context, WidgetRef ref, Location node) async {
   final controller = TextEditingController(text: node.name);
-  final result = await showDialog<String>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: const Text('Rename location'),
-      content: TextField(
-        controller: controller,
-        autofocus: true,
-        decoration: const InputDecoration(labelText: 'Name'),
+  final String? result;
+  try {
+    result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Rename location'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(labelText: 'Name'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+            child: const Text('Rename'),
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-          child: const Text('Rename'),
-        ),
-      ],
-    ),
-  );
+    );
+  } finally {
+    WidgetsBinding.instance.addPostFrameCallback((_) => controller.dispose());
+  }
   if (result == null || result.isEmpty || result == node.name) return;
   await ref.read(locationActionsProvider).rename(node, result);
 }
