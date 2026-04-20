@@ -1,74 +1,52 @@
-/// FLAC to raw PCM decoder using the `flac` CLI tool.
+/// FLAC to raw PCM decoder.
 ///
-/// Wraps the `flac` command-line utility to decode FLAC files into raw PCM
-/// bytes (16-bit signed LE, stereo interleaved). Intended for use in isolates
-/// for CPU-intensive audio quality analysis.
+/// Wraps the pure-Dart `dart_flac` library to decode FLAC files into raw PCM
+/// bytes (16-bit signed LE, stereo interleaved). The decode runs in an
+/// isolate to avoid blocking the UI on long files.
+///
+/// The constructor still accepts a [binaryPath] for backwards compatibility
+/// with the secure-storage override that was used by the legacy `flac` CLI
+/// implementation; the value is ignored — no external binary is invoked.
 ///
 /// Author: Paul Snow
 /// Since: 0.0.0
 library;
 
-import 'dart:io';
+import 'dart:isolate';
 import 'dart:typed_data';
 
-/// Decodes FLAC files to raw PCM using the `flac` CLI.
+import 'package:dart_flac/dart_flac.dart' as dflac;
+
+/// Decodes FLAC files to raw PCM using the in-process `dart_flac` decoder.
 class FlacDecoder {
-  /// Create a decoder with an optional custom binary path.
+  /// Create a decoder.
   ///
-  /// If [binaryPath] is null, uses 'flac' from PATH.
+  /// [binaryPath] is accepted for backwards compatibility with a previous
+  /// CLI-based implementation but is now ignored.
   FlacDecoder({String? binaryPath}) : _binaryPath = binaryPath ?? 'flac';
 
   final String _binaryPath;
 
-  /// The path to the flac binary being used.
+  /// The configured binary path (now informational only — no binary is
+  /// invoked).
   String get binaryPath => _binaryPath;
 
-  /// Check whether the `flac` CLI is available.
-  Future<bool> isAvailable() async {
-    try {
-      final result = await Process.run(_binaryPath, ['--version']);
-      return result.exitCode == 0;
-    } catch (_) {
-      return false;
-    }
-  }
+  /// Always returns `true` — decoding is in-process and has no external
+  /// dependency to probe.
+  Future<bool> isAvailable() async => true;
 
-  /// Decode a FLAC file to raw PCM bytes (16-bit signed LE, stereo).
+  /// Decode a FLAC file to raw PCM bytes (16-bit signed LE, interleaved).
   ///
-  /// Uses `--force-raw-format` to produce headerless raw PCM output.
-  /// Throws [FlacDecodeException] if decoding fails.
+  /// The decode runs in an isolate. Throws [FlacDecodeException] if decoding
+  /// fails.
   Future<Uint8List> decode(String flacFilePath) async {
-    final result = await Process.run(
-      _binaryPath,
-      [
-        '-d', // decode
-        '-c', // stdout
-        '-f', // force overwrite (not applicable with -c, but harmless)
-        '--force-raw-format',
-        '--endian=little',
-        '--sign=signed',
-        flacFilePath,
-      ],
-      stdoutEncoding: null, // capture stdout as bytes
-    );
-
-    if (result.exitCode != 0) {
-      final stderr = result.stderr is String
-          ? result.stderr as String
-          : String.fromCharCodes(result.stderr as List<int>);
-      throw FlacDecodeException(
-        'Failed to decode $flacFilePath (exit code ${result.exitCode}): '
-        '${stderr.trim()}',
+    try {
+      return await Isolate.run(
+        () => dflac.decodeFlacFileToPcm(flacFilePath),
       );
+    } catch (e) {
+      throw FlacDecodeException('Failed to decode $flacFilePath: $e');
     }
-
-    final stdout = result.stdout;
-    if (stdout is Uint8List) return stdout;
-    if (stdout is List<int>) return Uint8List.fromList(stdout);
-
-    throw FlacDecodeException(
-      'Unexpected stdout type from flac process: ${stdout.runtimeType}',
-    );
   }
 }
 

@@ -242,6 +242,22 @@ void main() {
       expect(metadata!.durationMs, equals(10000));
     });
 
+    test('exposes the exact total sample count from STREAMINFO', () {
+      // Pick a sample count that does not divide evenly by sampleRate so a
+      // duration-based approximation would not round-trip to the same value.
+      const samples = 441001;
+      final bytes = buildFlacFixture(
+        tags: {'TITLE': 'Sample Count Test'},
+        sampleRate: 44100,
+        totalSamples: samples,
+      );
+
+      final metadata = FlacReader.readMetadataFromBytes(bytes);
+
+      expect(metadata, isNotNull);
+      expect(metadata!.totalSamples, equals(samples));
+    });
+
     test('rejects non-FLAC files', () {
       final bytes = Uint8List.fromList([0x49, 0x44, 0x33, 0x04]); // ID3 header
 

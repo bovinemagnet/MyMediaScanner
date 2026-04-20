@@ -25,6 +25,7 @@ class FlacMetadata {
     this.barcode,
     this.totalTracks,
     this.durationMs,
+    this.totalSamples,
     this.rawTags = const {},
   });
 
@@ -37,6 +38,12 @@ class FlacMetadata {
   final String? barcode;
   final int? totalTracks;
   final int? durationMs;
+
+  /// Exact total sample count from the FLAC STREAMINFO block.
+  ///
+  /// Preferred over [durationMs] when computing AccurateRip disc IDs or
+  /// anything else that needs sample-accurate counts.
+  final int? totalSamples;
 
   /// All Vorbis Comment tags as uppercase key → value pairs.
   ///
@@ -79,8 +86,10 @@ class FlacReader {
 
     final streamInfo = doc.streamInfo;
     int? durationMs;
+    int? totalSamples;
     if (streamInfo.sampleRate > 0 && streamInfo.totalSamples > 0) {
       durationMs = (streamInfo.totalSamples * 1000) ~/ streamInfo.sampleRate;
+      totalSamples = streamInfo.totalSamples;
     }
 
     final barcode = tags['BARCODE'] ?? tags['UPC'] ?? tags['EAN'];
@@ -96,6 +105,7 @@ class FlacReader {
       totalTracks:
           _parseInt(tags['TOTALTRACKS']) ?? _parseInt(tags['TRACKTOTAL']),
       durationMs: durationMs,
+      totalSamples: totalSamples,
       rawTags: tags,
     );
   }

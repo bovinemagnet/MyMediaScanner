@@ -126,9 +126,10 @@ class AnalyseRipQualityUseCase {
     final sampleCounts = <int>[];
     for (final track in tracks) {
       final metadata = await FlacReader.readMetadata(track.filePath);
-      if (metadata?.durationMs != null) {
-        // Approximate sample count from duration
-        // More accurate: read STREAMINFO directly, but duration-based is close
+      if (metadata?.totalSamples != null) {
+        sampleCounts.add(metadata!.totalSamples!);
+      } else if (metadata?.durationMs != null) {
+        // Fallback when STREAMINFO totalSamples was missing/zero.
         sampleCounts.add((metadata!.durationMs! * 44100) ~/ 1000);
       } else {
         sampleCounts.add(0);
