@@ -19,10 +19,7 @@ class DioFactory {
     );
 
     if (kDebugMode) {
-      dio.interceptors.add(LogInterceptor(
-        requestBody: false,
-        responseBody: false,
-      ));
+      dio.interceptors.add(_SafeDebugLogInterceptor());
     }
 
     return dio;
@@ -77,10 +74,7 @@ class DioFactory {
       ),
     );
     if (kDebugMode) {
-      dio.interceptors.add(LogInterceptor(
-        requestBody: false,
-        responseBody: false,
-      ));
+      dio.interceptors.add(_SafeDebugLogInterceptor());
     }
     return dio;
   }
@@ -115,5 +109,33 @@ class DioFactory {
       },
     ));
     return dio;
+  }
+}
+
+/// Debug-only interceptor that logs method + path + status only.
+///
+/// Avoids the default Dio [LogInterceptor] which prints the full URI
+/// (including `?api_key=…` query parameters) and request/response headers
+/// (including `Authorization: Bearer …`).
+class _SafeDebugLogInterceptor extends Interceptor {
+  @override
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+    debugPrint('[Dio] → ${options.method} ${options.baseUrl}${options.path}');
+    handler.next(options);
+  }
+
+  @override
+  void onResponse(Response<dynamic> response, ResponseInterceptorHandler handler) {
+    final req = response.requestOptions;
+    debugPrint('[Dio] ← ${response.statusCode} ${req.method} ${req.baseUrl}${req.path}');
+    handler.next(response);
+  }
+
+  @override
+  void onError(DioException err, ErrorInterceptorHandler handler) {
+    final req = err.requestOptions;
+    final status = err.response?.statusCode;
+    debugPrint('[Dio] ✗ ${status ?? err.type} ${req.method} ${req.baseUrl}${req.path}');
+    handler.next(err);
   }
 }
