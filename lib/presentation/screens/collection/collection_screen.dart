@@ -11,6 +11,7 @@ import 'package:mymediascanner/presentation/providers/insights_export_provider.d
 import 'package:mymediascanner/presentation/providers/loan_provider.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
+import 'package:mymediascanner/presentation/screens/collection/widgets/fill_missing_covers_dialog.dart';
 import 'package:mymediascanner/presentation/screens/collection/widgets/filter_bar.dart';
 import 'package:mymediascanner/presentation/screens/collection/widgets/media_item_card.dart';
 import 'package:mymediascanner/presentation/screens/collection/widgets/sort_selector.dart';
@@ -74,6 +75,11 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
             subtitle: 'Managing your media collection.',
             actions: [
               const ViewModeToggle(),
+              IconButton(
+                icon: const Icon(Icons.image_search),
+                tooltip: 'Fetch missing covers',
+                onPressed: () => showFillMissingCoversDialog(context, ref),
+              ),
               IconButton(
                 icon: const Icon(Icons.download),
                 tooltip: 'Export collection',
@@ -197,6 +203,12 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                     ),
                     tooltip: 'Wishlist',
                     onPressed: () => context.go('/wishlist'),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.image_search),
+                    tooltip: 'Fetch missing covers',
+                    onPressed: () =>
+                        showFillMissingCoversDialog(context, ref),
                   ),
                   IconButton(
                     icon: const Icon(Icons.download),

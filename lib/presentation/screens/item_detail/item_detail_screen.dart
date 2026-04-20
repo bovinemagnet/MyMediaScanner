@@ -7,6 +7,7 @@ import 'package:mymediascanner/app/theme/app_media_colors.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/domain/usecases/delete_media_item_usecase.dart';
+import 'package:mymediascanner/domain/usecases/fetch_missing_cover_usecase.dart';
 import 'package:mymediascanner/domain/usecases/manage_rips_usecase.dart';
 import 'package:mymediascanner/domain/usecases/refresh_metadata_usecase.dart';
 import 'package:mymediascanner/domain/usecases/return_item_usecase.dart';
@@ -65,6 +66,12 @@ class ItemDetailScreen extends ConsumerWidget {
                 onPressed: () => _refreshMetadata(context, ref, item),
                 tooltip: 'Refresh metadata',
               ),
+              if (item.coverUrl == null || item.coverUrl!.isEmpty)
+                IconButton(
+                  icon: const Icon(Icons.image_search),
+                  onPressed: () => _fetchMissingCover(context, ref, item),
+                  tooltip: 'Fetch cover art',
+                ),
               IconButton(
                 icon: const Icon(Icons.edit),
                 onPressed: () => context.go('/collection/item/${item.id}/edit'),
@@ -246,6 +253,40 @@ class ItemDetailScreen extends ConsumerWidget {
             SnackBar(content: Text('Failed to refresh metadata: $e')),
           );
       }
+    }
+  }
+
+  Future<void> _fetchMissingCover(
+    BuildContext context,
+    WidgetRef ref,
+    MediaItem item,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(
+      const SnackBar(content: Text('Searching for cover art\u2026')),
+    );
+    try {
+      final outcome = await FetchMissingCoverUseCase(
+        metadataRepository: ref.read(metadataRepositoryProvider),
+        mediaItemRepository: ref.read(mediaItemRepositoryProvider),
+      ).execute(item);
+      ref.invalidate(mediaItemProvider(itemId));
+      if (!context.mounted) return;
+      final message = switch (outcome) {
+        FetchCoverOutcome.updated => 'Cover art updated',
+        FetchCoverOutcome.notFound => 'No cover art found',
+        FetchCoverOutcome.alreadyHasCover => 'Item already has a cover',
+      };
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(message)));
+    } catch (e) {
+      if (!context.mounted) return;
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(content: Text('Failed to fetch cover: $e')),
+        );
     }
   }
 
