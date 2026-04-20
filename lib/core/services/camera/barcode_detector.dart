@@ -1,5 +1,6 @@
-import 'dart:typed_data';
+import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_zxing/flutter_zxing.dart';
 
 import 'package:mymediascanner/core/services/camera/camera_service.dart';
@@ -28,18 +29,46 @@ class BarcodeDetector {
   }
 
   /// Attempt to detect a barcode from an image file path.
+  ///
+  /// Tries the path-based zxing API first, then falls back to reading the
+  /// bytes ourselves and using the bytes API — flutter_zxing's path API has
+  /// historically been flaky on Linux.
   static Future<BarcodeResult?> detectFromFile(String path) async {
+    final file = File(path);
+    final size = await file.exists() ? await file.length() : -1;
+    debugPrint('[scan] decoding $path (${size}B)');
+    if (size <= 0) return null;
+
     try {
-      final result =
+      final pathResult =
           await _zx.readBarcodeImagePathString(path, DecodeParams());
-      if (!result.isValid) return null;
-      final text = result.text;
+      if (pathResult.isValid && (pathResult.text?.isNotEmpty ?? false)) {
+        return BarcodeResult(
+          rawValue: pathResult.text!,
+          format: pathResult.format?.toString(),
+        );
+      }
+      debugPrint('[scan] path-API miss (error="${pathResult.error}"), '
+          'trying bytes-API');
+    } on Exception catch (e) {
+      debugPrint('[scan] path-API threw: $e, trying bytes-API');
+    }
+
+    try {
+      final bytes = await file.readAsBytes();
+      final byteResult = _zx.readBarcode(bytes, DecodeParams());
+      if (!byteResult.isValid) {
+        debugPrint('[scan] bytes-API miss (error="${byteResult.error}")');
+        return null;
+      }
+      final text = byteResult.text;
       if (text == null || text.isEmpty) return null;
       return BarcodeResult(
         rawValue: text,
-        format: result.format?.toString(),
+        format: byteResult.format?.toString(),
       );
-    } on Exception {
+    } on Exception catch (e) {
+      debugPrint('[scan] bytes-API threw: $e');
       return null;
     }
   }

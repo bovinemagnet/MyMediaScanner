@@ -43,23 +43,49 @@ class NativeCameraService implements CameraService {
   @override
   Future<void> start() async {
     final cameras = await availableCameras();
+    debugPrint('[scan] availableCameras() returned ${cameras.length}: '
+        '${cameras.map((c) => '${c.name}(${c.lensDirection.name})').join(', ')}');
     if (cameras.isEmpty) {
       throw StateError('No cameras available');
     }
 
-    // Prefer front-facing for desktop webcam, fall back to first available.
-    final camera = cameras.firstWhere(
-      (c) => c.lensDirection == CameraLensDirection.front,
-      orElse: () => cameras.first,
-    );
+    // Use the first reported camera. On desktop the OS-default webcam is
+    // typically index 0; the previous front-facing preference picked the
+    // wrong device on Linux where USB webcams report as `external`.
+    final camera = cameras.first;
+    debugPrint('[scan] using camera "${camera.name}" '
+        '(${camera.lensDirection.name})');
 
-    _controller = CameraController(
-      camera,
+    // Some webcams (and camera_desktop on Linux) reject specific
+    // ResolutionPresets with "internal data screen error". Try a chain
+    // from high downwards until one initialises successfully.
+    const presets = [
+      ResolutionPreset.high,
       ResolutionPreset.medium,
-      enableAudio: false,
-    );
-
-    await _controller!.initialize();
+      ResolutionPreset.low,
+    ];
+    CameraException? lastError;
+    for (final preset in presets) {
+      final ctrl = CameraController(camera, preset, enableAudio: false);
+      try {
+        await ctrl.initialize();
+        _controller = ctrl;
+        debugPrint('[scan] camera initialised at $preset, '
+            'preview size=${ctrl.value.previewSize}');
+        break;
+      } on CameraException catch (e) {
+        debugPrint('[scan] init failed at $preset: ${e.code} ${e.description}');
+        lastError = e;
+        // Do NOT dispose here: camera_desktop's _initializeWithDescription
+        // keeps an in-flight listener that will try to notify the disposed
+        // controller a moment later, throwing "used after being disposed".
+        // Letting the failed controller go out of scope is safer.
+      }
+    }
+    if (_controller == null) {
+      throw lastError ??
+          CameraException('init_failed', 'No resolution preset accepted');
+    }
     _isActive = true;
 
     // Use periodic still-frame capture for barcode detection.
@@ -83,12 +109,13 @@ class NativeCameraService implements CameraService {
       final xFile = await _controller!.takePicture();
       final result = await BarcodeDetector.detectFromFile(xFile.path);
       if (result != null) {
+        debugPrint('[scan] DECODED ${result.format} -> ${result.rawValue}');
         _barcodeController.add(result);
       }
     } on CameraException catch (e) {
-      debugPrint('Camera capture failed: ${e.description}');
+      debugPrint('[scan] camera capture failed: ${e.code} ${e.description}');
     } on Exception catch (e) {
-      debugPrint('Barcode detection failed: $e');
+      debugPrint('[scan] capture/decode failed: $e');
     }
   }
 
