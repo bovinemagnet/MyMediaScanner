@@ -36,6 +36,41 @@ void main() {
     expect(find.text('Save to Collection'), findsOneWidget);
   });
 
+  testWidgets('subtitle label adapts to the picked media type',
+      (tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(home: ManualAddScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Default type is unknown → generic "Subtitle" label.
+    expect(find.text('Subtitle'), findsOneWidget);
+    expect(find.text('Artist'), findsNothing);
+
+    // Pick Music: subtitle relabels to Artist.
+    await tester.tap(find.text('Media Type'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Music').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Artist'), findsOneWidget);
+
+    // Switch to Book: subtitle relabels to Author.
+    await tester.tap(find.byType(DropdownButtonFormField<MediaType>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Book').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Author'), findsOneWidget);
+
+    // Switch to Game: subtitle relabels to Platform.
+    await tester.tap(find.byType(DropdownButtonFormField<MediaType>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Game').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Platform'), findsOneWidget);
+  });
+
   testWidgets('tapping Save to Collection calls SaveMediaItemUseCase.execute',
       (tester) async {
     final mock = _MockSaveUseCase();

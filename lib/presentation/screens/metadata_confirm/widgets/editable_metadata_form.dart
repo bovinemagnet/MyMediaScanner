@@ -78,6 +78,16 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
 
   bool _saving = false;
 
+  /// Contextual label for the "subtitle" slot — a single string on
+  /// `MediaItem` that carries different semantics per media type:
+  /// artist for music, author for books, platform for games, etc.
+  String _subtitleLabel(MediaType type) => switch (type) {
+        MediaType.music => 'Artist',
+        MediaType.book => 'Author',
+        MediaType.game => 'Platform',
+        _ => 'Subtitle',
+      };
+
   MetadataResult _buildEdited() => widget.initial.copyWith(
     title: _titleController.text.isEmpty ? null : _titleController.text,
     subtitle: _subtitleController.text.isEmpty
@@ -260,7 +270,9 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
               const SizedBox(height: 12),
               TextField(
                 controller: _subtitleController,
-                decoration: const InputDecoration(labelText: 'Subtitle'),
+                decoration: InputDecoration(
+                  labelText: _subtitleLabel(_mediaType),
+                ),
               ),
               const SizedBox(height: 12),
               Row(
