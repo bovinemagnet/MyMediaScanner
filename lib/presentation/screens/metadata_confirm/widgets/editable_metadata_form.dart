@@ -6,6 +6,7 @@ import 'package:mymediascanner/domain/entities/metadata_candidate.dart';
 import 'package:mymediascanner/domain/entities/metadata_result.dart';
 import 'package:mymediascanner/domain/entities/scan_result.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
+import 'package:mymediascanner/presentation/providers/settings_provider.dart';
 import 'package:mymediascanner/presentation/widgets/gradient_button.dart';
 
 class EditableMetadataForm extends StatefulWidget {
@@ -234,6 +235,31 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
     }
   }
 
+  /// Returns a message explaining why a type-aware lookup would fail for
+  /// [type] given the currently-configured [apiKeys], or `null` if the
+  /// lookup can proceed.
+  ///
+  /// Film/TV title search only routes to TMDB; without a TMDB key the
+  /// repository returns `notFound` without trying anything else. Games have
+  /// no API yet (tracked in #57). Music, book, and unknown always have at
+  /// least one key-free fallback (MusicBrainz / Open Library).
+  String? _missingApiMessage(MediaType type, Map<String, String?> apiKeys) {
+    switch (type) {
+      case MediaType.film:
+      case MediaType.tv:
+        if ((apiKeys['tmdb'] ?? '').isEmpty) {
+          return 'TMDB API key required in Settings to search for films and TV.';
+        }
+        return null;
+      case MediaType.game:
+        return 'Online lookup for games is not yet supported.';
+      case MediaType.music:
+      case MediaType.book:
+      case MediaType.unknown:
+        return null;
+    }
+  }
+
   /// Runs a type-aware online search using the current title + subtitle as
   /// the query. On single match, populates the form directly. On multi
   /// match, opens a bottom sheet of candidates; selecting one fetches its
@@ -250,6 +276,16 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
       );
       return;
     }
+
+    final apiKeys = ref.read(apiKeysProvider).value ?? const {};
+    final missing = _missingApiMessage(_mediaType, apiKeys);
+    if (missing != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(missing)),
+      );
+      return;
+    }
+
     final query = parts.join(' ');
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _lookingUp = true);

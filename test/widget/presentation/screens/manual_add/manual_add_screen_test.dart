@@ -12,11 +12,17 @@ import 'package:mymediascanner/domain/repositories/i_metadata_repository.dart';
 import 'package:mymediascanner/domain/usecases/save_media_item_usecase.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/series_provider.dart';
+import 'package:mymediascanner/presentation/providers/settings_provider.dart';
 import 'package:mymediascanner/presentation/screens/manual_add/manual_add_screen.dart';
 
 class _MockSaveUseCase extends Mock implements SaveMediaItemUseCase {}
 
 class _MockMetadataRepository extends Mock implements IMetadataRepository {}
+
+class _EmptyApiKeysNotifier extends ApiKeysNotifier {
+  @override
+  Future<Map<String, String?>> build() async => const <String, String?>{};
+}
 
 void main() {
   setUpAll(() {
@@ -315,6 +321,57 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.widgetWithText(ChoiceChip, '720p'), findsNothing);
     expect(find.widgetWithText(ChoiceChip, '1080p'), findsNothing);
+  });
+
+  testWidgets(
+      'Search online for Film with no TMDB key shows settings hint',
+      (tester) async {
+    tester.view.physicalSize = const Size(1200, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final repo = _MockMetadataRepository();
+    // The repo should NOT be called — we short-circuit before dispatch.
+    when(() => repo.searchByTitle(any(), any(), any(),
+            typeHint: any(named: 'typeHint')))
+        .thenAnswer(
+      (_) async => const ScanResult.notFound(
+        barcode: 'MANUAL-x',
+        barcodeType: 'MANUAL',
+      ),
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          metadataRepositoryProvider.overrideWithValue(repo),
+          // Explicit empty api keys — no TMDB configured.
+          apiKeysProvider.overrideWith(() => _EmptyApiKeysNotifier()),
+        ],
+        child: const MaterialApp(home: ManualAddScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Pick Film.
+    await tester.tap(find.byType(DropdownButtonFormField<MediaType>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Film').last);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Title'), 'Aliens');
+    await tester.tap(find.text('Search online'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+          'TMDB API key required in Settings to search for films and TV.'),
+      findsOneWidget,
+    );
+    verifyNever(() => repo.searchByTitle(any(), any(), any(),
+        typeHint: any(named: 'typeHint')));
   });
 
   testWidgets(
