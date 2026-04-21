@@ -67,6 +67,8 @@ class _ManualAddScreenState extends ConsumerState<ManualAddScreen> {
             onSave: _handleSave,
             primarySaveLabel: 'Save to Collection',
             primarySaveIcon: Icons.save,
+            enableOnlineLookup: true,
+            showFormatSuggestions: true,
           ),
         ),
       ),

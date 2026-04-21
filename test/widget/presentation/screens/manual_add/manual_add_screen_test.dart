@@ -7,11 +7,16 @@ import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/domain/entities/metadata_result.dart';
 import 'package:mymediascanner/domain/entities/ownership_status.dart';
+import 'package:mymediascanner/domain/entities/scan_result.dart';
+import 'package:mymediascanner/domain/repositories/i_metadata_repository.dart';
 import 'package:mymediascanner/domain/usecases/save_media_item_usecase.dart';
+import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/series_provider.dart';
 import 'package:mymediascanner/presentation/screens/manual_add/manual_add_screen.dart';
 
 class _MockSaveUseCase extends Mock implements SaveMediaItemUseCase {}
+
+class _MockMetadataRepository extends Mock implements IMetadataRepository {}
 
 void main() {
   setUpAll(() {
@@ -73,6 +78,11 @@ void main() {
 
   testWidgets('tapping Save to Collection calls SaveMediaItemUseCase.execute',
       (tester) async {
+    tester.view.physicalSize = const Size(1200, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     final mock = _MockSaveUseCase();
     when(() => mock.execute(any(),
             ownershipStatus: any(named: 'ownershipStatus')))
@@ -112,8 +122,6 @@ void main() {
 
     await tester.enterText(
         find.widgetWithText(TextField, 'Title'), 'Dune');
-    await tester.ensureVisible(find.text('Save to Collection'));
-    await tester.pumpAndSettle();
     await tester.tap(find.text('Save to Collection'));
     await tester.pumpAndSettle();
 
@@ -121,5 +129,147 @@ void main() {
           any(),
           ownershipStatus: OwnershipStatus.owned,
         )).called(1);
+  });
+
+  testWidgets(
+      'Search online populates form fields from single match',
+      (tester) async {
+    tester.view.physicalSize = const Size(1200, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final repo = _MockMetadataRepository();
+    when(() => repo.searchByTitle(any(), any(), any(),
+            typeHint: any(named: 'typeHint')))
+        .thenAnswer(
+      (_) async => const ScanResult.single(
+        metadata: MetadataResult(
+          barcode: 'MANUAL-x',
+          barcodeType: 'MANUAL',
+          mediaType: MediaType.music,
+          title: 'OK Computer',
+          subtitle: 'Radiohead',
+          year: 1997,
+          publisher: 'Parlophone',
+          format: 'CD',
+          sourceApis: ['musicbrainz'],
+        ),
+        isDuplicate: false,
+      ),
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          metadataRepositoryProvider.overrideWithValue(repo),
+        ],
+        child: const MaterialApp(home: ManualAddScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Title'), 'OK Computer');
+    await tester.tap(find.text('Search online'));
+    await tester.pumpAndSettle();
+
+    // The returned metadata should have populated the form.
+    expect(find.widgetWithText(TextField, 'Parlophone'), findsOneWidget);
+    expect(find.widgetWithText(TextField, '1997'), findsOneWidget);
+    expect(find.widgetWithText(TextField, 'Radiohead'), findsOneWidget);
+    expect(find.text('Source: MusicBrainz'), findsOneWidget);
+  });
+
+  testWidgets('Search online snackbars when no match is found',
+      (tester) async {
+    tester.view.physicalSize = const Size(1200, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final repo = _MockMetadataRepository();
+    when(() => repo.searchByTitle(any(), any(), any(),
+            typeHint: any(named: 'typeHint')))
+        .thenAnswer(
+      (_) async => const ScanResult.notFound(
+        barcode: 'MANUAL-x',
+        barcodeType: 'MANUAL',
+      ),
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          metadataRepositoryProvider.overrideWithValue(repo),
+        ],
+        child: const MaterialApp(home: ManualAddScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Title'), 'Zzzzzz');
+    await tester.tap(find.text('Search online'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('No matches found online'), findsOneWidget);
+  });
+
+  testWidgets('Format chip fills the Format field for Film',
+      (tester) async {
+    tester.view.physicalSize = const Size(1200, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(home: ManualAddScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Pick Film.
+    await tester.tap(find.byType(DropdownButtonFormField<MediaType>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Film').last);
+    await tester.pumpAndSettle();
+
+    // Format chips should appear.
+    expect(find.widgetWithText(ActionChip, 'DVD'), findsOneWidget);
+    expect(find.widgetWithText(ActionChip, 'Blu-ray'), findsOneWidget);
+    expect(find.widgetWithText(ActionChip, '4K Blu-ray'), findsOneWidget);
+
+    // Tapping a chip fills the Format field.
+    await tester.tap(find.widgetWithText(ActionChip, '4K Blu-ray'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(TextField, '4K Blu-ray'), findsOneWidget);
+  });
+
+  testWidgets('Platform chip fills the Platform field for Game',
+      (tester) async {
+    tester.view.physicalSize = const Size(1200, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(home: ManualAddScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(DropdownButtonFormField<MediaType>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Game').last);
+    await tester.pumpAndSettle();
+
+    expect(find.widgetWithText(ActionChip, 'PS5'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(ActionChip, 'PS5'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(TextField, 'PS5'), findsOneWidget);
   });
 }
