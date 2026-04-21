@@ -74,18 +74,38 @@ class DashboardScreen extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    GradientButton(
-                      onPressed: () => context.go('/scan'),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 32, vertical: 14),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.qr_code_scanner, size: 20),
-                          SizedBox(width: 8),
-                          Text('Quick Scan'),
-                        ],
-                      ),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        GradientButton(
+                          onPressed: () => context.go('/scan'),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 32, vertical: 14),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.qr_code_scanner, size: 20),
+                              SizedBox(width: 8),
+                              Text('Quick Scan'),
+                            ],
+                          ),
+                        ),
+                        GradientButton(
+                          onPressed: () =>
+                              context.go('/collection/add-manual'),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 32, vertical: 14),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.edit_note, size: 20),
+                              SizedBox(width: 8),
+                              Text('Quick Add'),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

@@ -8,6 +8,7 @@ import 'package:mymediascanner/presentation/screens/dashboard/dashboard_screen.d
 import 'package:mymediascanner/presentation/screens/disambiguation/disambiguation_screen.dart';
 import 'package:mymediascanner/presentation/screens/import/import_screen.dart';
 import 'package:mymediascanner/presentation/screens/item_detail/item_detail_screen.dart';
+import 'package:mymediascanner/presentation/screens/manual_add/manual_add_screen.dart';
 import 'package:mymediascanner/presentation/screens/metadata_confirm/metadata_confirm_screen.dart';
 import 'package:mymediascanner/presentation/screens/rips/rips_screen.dart';
 import 'package:mymediascanner/presentation/screens/scanner/scanner_screen.dart';
@@ -96,6 +97,12 @@ final router = GoRouter(
                   parentNavigatorKey: _rootNavigatorKey,
                   pageBuilder: (context, state) =>
                       _fadeSlideTransition(state, const StatisticsScreen()),
+                ),
+                GoRoute(
+                  path: 'add-manual',
+                  parentNavigatorKey: _rootNavigatorKey,
+                  pageBuilder: (context, state) =>
+                      _fadeSlideTransition(state, const ManualAddScreen()),
                 ),
                 GoRoute(
                   path: 'item/:id',
