@@ -5,6 +5,8 @@ include::_attributes.adoc[]
 Barcode scanning is the primary way to add items to your collection.
 MyMediaScanner supports real-time camera scanning on mobile, keyboard-wedge USB scanners on desktop, and manual barcode entry on any platform.
 
+TIP: Not every item has a scannable barcode. See xref:manual-add.adoc[Manual Add] for the keyboard-only entry path.
+
 image::screenshots/04-scanner.png[Scanner screen ready for input, role=screenshot, width=720]
 
 == Scan Flow

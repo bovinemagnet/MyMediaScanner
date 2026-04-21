@@ -1,0 +1,218 @@
+= Manual Add
+include::_attributes.adoc[]
+:author: Paul Snow
+:version: 0.0.0
+:description: How to add items to your collection without scanning a barcode, using the Manual Add screen with type-aware fields, suggestion chips, and optional online lookup.
+
+Manual Add lets you catalogue items without scanning a barcode.
+It is useful for items with no machine-readable barcode (such as old VHS tapes or hand-labelled discs), rare releases that UPCitemdb cannot resolve, or items you want to record from memory.
+
+== Quick Add on the Dashboard
+
+The Dashboard (`/`) exposes two call-to-action buttons side by side: *Quick Scan* and *Quick Add*.
+Both are laid out inside a `Wrap` widget so they sit on a single row on wide screens and stack vertically on narrow screens.
+
+Tapping *Quick Add* navigates to `/collection/add-manual`, which is nested under the Collection shell branch (branch 1) and uses the `_fadeSlideTransition` page transition.
+The route is defined in `lib/app/router.dart` alongside the other Collection nested routes.
+
+== Type-Aware Form
+
+The Manual Add screen hosts an `EditableMetadataForm` (from `lib/presentation/screens/metadata_confirm/widgets/editable_metadata_form.dart`) with two opt-in flags enabled:
+
+* `enableOnlineLookup: true` — shows the *Search online* button
+* `showFormatSuggestions: true` — shows format and platform suggestion chips
+
+The form's base fields are: Title, Subtitle, Year, Format, Publisher, Description, and Media Type.
+
+=== Subtitle Field Relabelling
+
+The label shown on the Subtitle field changes dynamically based on the selected Media Type.
+This behaviour is also active on the post-scan confirm screen (`/scan/confirm`), so both entry paths use consistent per-type wording.
+
+[cols="1,1",options="header"]
+|===
+| Media Type
+| Subtitle Field Label
+
+| Music
+| Artist
+
+| Book
+| Author
+
+| Game
+| Platform
+
+| Film / TV / Unknown
+| Subtitle
+|===
+
+== Suggestion Chips
+
+When `showFormatSuggestions` is enabled, tappable `ActionChip` widgets appear below certain form fields.
+Tapping a chip fills the adjacent field automatically.
+
+=== Format Chips
+
+Format chips appear below the Format field and vary by the selected Media Type.
+
+[cols="1,2",options="header"]
+|===
+| Media Type
+| Available Format Chips
+
+| Film / TV
+| DVD, Blu-ray, 4K Blu-ray
+
+| Music
+| CD, LP, Cassette, Digital
+
+| Book
+| Hardcover, Paperback, eBook, Audiobook
+
+| Game
+| Disc, Cartridge, Digital
+|===
+
+=== Platform Chips
+
+When the Media Type is *Game*, a row of platform chips appears below the Platform field (the relabelled Subtitle slot).
+
+Available chips: PS5, PS4, Xbox Series X\|S, Xbox One, Switch, PC.
+
+Tapping a chip writes the platform name directly into the Platform field.
+
+=== Resolution Chips
+
+When the Media Type is *Film* or *TV*, an additional row of resolution chips appears after a format chip has been selected — but only for formats where the resolution is not already implied by the format name.
+
+[cols="1,2",options="header"]
+|===
+| Selected Format
+| Resolution Chips
+
+| DVD
+| 480p, 576p
+
+| Blu-ray
+| 720p, 1080p
+
+| 4K Blu-ray
+| _(none — resolution implied by format name)_
+
+| Any other format
+| _(none)_
+|===
+
+Selecting a resolution chip stores the value in `extraMetadata.resolution` on the saved `MediaItem`.
+If the user later switches to a format for which no resolution chips are shown, any previously selected resolution is cleared to avoid stale data.
+
+== Online Lookup
+
+The *Search online* button runs a type-aware title search via `IMetadataRepository.searchByTitle(query, barcode, barcodeType, typeHint: mediaType)`.
+
+=== Query Construction
+
+The search query is built from the Title and Subtitle fields (trimmed, empty fields skipped), concatenated with a space.
+For example, a Title of "Gladiator" with an Artist (Subtitle) of "Hans Zimmer" produces the query `"Gladiator Hans Zimmer"`.
+
+=== API Routing
+
+The selected Media Type determines which API clients are used:
+
+[cols="1,2",options="header"]
+|===
+| Media Type
+| API Routing
+
+| Film / TV
+| TMDB (no fallback)
+
+| Music
+| MusicBrainz, then Discogs
+
+| Book
+| Google Books, then Open Library
+
+| Game
+| No routed source — always returns `NotFoundScanResult` (IGDB integration tracked as issue #57)
+
+| Unknown
+| Cascades through TMDB, MusicBrainz, and Google Books in order
+|===
+
+See xref:metadata-lookup.adoc[Metadata Lookup] for the full repository behaviour, including caching, candidate ranking, and field mapping.
+
+=== Search Results
+
+[cols="1,3",options="header"]
+|===
+| Result Type
+| Behaviour
+
+| `SingleScanResult`
+| Form fields are populated with the returned metadata; a snackbar confirms "Metadata found".
+
+| `MultiMatchScanResult`
+| A bottom sheet displays candidate cards; tapping one calls `fetchCandidateDetail` to retrieve full detail and populates the form.
+
+| `NotFoundScanResult`
+| A snackbar displays "No matches found online". The form fields are unchanged.
+|===
+
+== API Key Requirements
+
+Before dispatching the search, the screen queries `apiKeysProvider` to verify that the keys required by the selected Media Type are present.
+If a required key is missing, the search is short-circuited and a specific snackbar is shown instead.
+
+[cols="1,1,3",options="header"]
+|===
+| Media Type
+| Required Key
+| Snackbar Message When Missing
+
+| Film / TV
+| TMDB API key
+| "TMDB API key required in Settings to search for films and TV."
+
+| Game
+| _(no key — feature unsupported)_
+| "Online lookup for games is not yet supported."
+
+| Music
+| None (MusicBrainz is key-free; Discogs key optional)
+| _(always proceeds)_
+
+| Book
+| None (Google Books and Open Library are key-free)
+| _(always proceeds)_
+|===
+
+See xref:api-configuration.adoc[API Configuration] for instructions on adding and managing API keys in the Settings screen.
+
+== Placeholder Barcode
+
+Because a manually entered item has no real barcode, the screen mints a synthetic identifier:
+
+* *Format:* `MANUAL-<uuid-v7>` (e.g. `MANUAL-018f3e1a-2b4c-7d8e-9f0a-1b2c3d4e5f6a`)
+* *Barcode type:* `MANUAL`
+
+The placeholder barcode ensures that the deduplication check in `barcode_cache`, the sync log, and the conflict-resolution logic all continue to operate correctly.
+A `MANUAL-*` prefix is never confused with a real EAN, UPC, or ISBN, and UUIDs v7 are time-ordered so that bulk manual entries sort correctly in the sync log.
+
+== Flow Diagram
+
+The diagram below shows the complete Manual Add flow from dashboard tap to item save.
+
+[{MERMAID}]
+----
+include::example$manual-add-flow.mmd[]
+----
+
+== Related Pages
+
+* xref:scanning.adoc[Barcode Scanning] — the primary barcode-based entry path
+* xref:batch-scanning.adoc[Batch Scanning] — queue-based review mode for multiple items
+* xref:metadata-lookup.adoc[Metadata Lookup] — underlying repository behaviour for both barcode and title-based lookup
+* xref:navigation.adoc[Navigation & Routing] — route structure and shell branch layout
+* xref:api-configuration.adoc[API Configuration] — managing API keys in Settings

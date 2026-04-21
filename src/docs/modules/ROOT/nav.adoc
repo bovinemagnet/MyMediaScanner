@@ -10,6 +10,7 @@
 ** xref:sync-strategy.adoc[Sync Strategy]
 * Features
 ** xref:scanning.adoc[Barcode Scanning]
+** xref:manual-add.adoc[Manual Add]
 ** xref:batch-scanning.adoc[Batch Scanning]
 ** xref:lending.adoc[Lending Tracker]
 ** xref:rip-library.adoc[Rip Library]

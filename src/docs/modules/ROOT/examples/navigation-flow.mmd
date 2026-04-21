@@ -1,9 +1,9 @@
-%% Navigation routes — GoRouter StatefulShellRoute with 8 branches
+%% Navigation routes — GoRouter StatefulShellRoute with 12 branches
 %% Desktop: sidebar navigation  Mobile: bottom nav (subset of branches)
 flowchart LR
     Root(["MaterialApp.router\nGoRouter"])
 
-    subgraph SHELL["StatefulShellRoute — 8 Branches"]
+    subgraph SHELL["StatefulShellRoute — 12 Branches"]
         B0["Branch 0\n/ — Dashboard\nDesktop + Mobile"]
         B1["Branch 1\n/collection — Collection\nDesktop + Mobile"]
         B2["Branch 2\n/scan — Scanner\nMobile only"]
@@ -12,10 +12,15 @@ flowchart LR
         B5["Branch 5\n/insights — Insights\nDesktop + Mobile"]
         B6["Branch 6\n/settings — Settings\nDesktop sidebar"]
         B7["Branch 7\n/rips — Rip Library\nDesktop only"]
+        B8["Branch 8\n/wishlist — Wishlist\nDesktop sidebar"]
+        B9["Branch 9\n/locations — Locations\nDesktop sidebar"]
+        B10["Branch 10\n/series — Series\nDesktop sidebar"]
+        B11["Branch 11\n/wishlist-suggestions\nWishlist Suggestions\nDesktop sidebar"]
     end
 
     subgraph COLLECTION_ROUTES["Collection nested routes"]
         ITEM["/collection/item/:id\nItem Detail"]
+        MANUALADD["/collection/add-manual\nManual Add"]
     end
 
     subgraph SCAN_ROUTES["Scanner nested routes"]
@@ -56,6 +61,10 @@ flowchart LR
     style B5 fill:#1a3a4a,color:#6dddff,stroke:#6dddff
     style B6 fill:#1a3a4a,color:#6dddff,stroke:#6dddff
     style B7 fill:#1a3a4a,color:#6dddff,stroke:#6dddff
+    style B8 fill:#1a3a4a,color:#6dddff,stroke:#6dddff
+    style B9 fill:#1a3a4a,color:#6dddff,stroke:#6dddff
+    style B10 fill:#1a3a4a,color:#6dddff,stroke:#6dddff
+    style B11 fill:#1a3a4a,color:#6dddff,stroke:#6dddff
     style COLLECTION_ROUTES fill:#1a2a1a,color:#aaffcc,stroke:#44aa88
     style SCAN_ROUTES fill:#1a2a1a,color:#aaffcc,stroke:#44aa88
     style BATCH_ROUTES fill:#1a2a1a,color:#aaffcc,stroke:#44aa88

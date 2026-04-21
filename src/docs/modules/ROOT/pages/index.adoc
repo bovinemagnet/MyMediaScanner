@@ -7,7 +7,7 @@ MyMediaScanner is a cross-platform Flutter/Dart application for scanning barcode
 It runs on Android, iOS, macOS, Windows, and Linux.
 Data is stored locally in SQLite with optional sync to a self-hosted PostgreSQL instance.
 
-image::screenshots/01-dashboard.png[Dashboard showing the Quick Scan CTA and recent additions, role=screenshot, width=720]
+image::screenshots/01-dashboard.png[Dashboard showing the Quick Scan and Quick Add CTAs, plus recent additions, role=screenshot, width=720]
 
 == Key Features
 
@@ -17,6 +17,9 @@ image::screenshots/01-dashboard.png[Dashboard showing the Quick Scan CTA and rec
 
 | Barcode Scanning
 | Camera-based scanning on Android and iOS via ML Kit; USB keyboard-wedge and webcam scanning on all desktop platforms (macOS, Windows, Linux)
+
+| Manual Add
+| Add items to the catalogue without scanning — useful for items with no barcode or items the metadata APIs cannot resolve. Includes type-aware field labels, format / platform / resolution suggestion chips, and an optional online lookup.
 
 | Tiered Metadata Lookup
 | Automatic lookup through TMDB, MusicBrainz, Cover Art Archive, Discogs, Google Books, Open Library, and UPCitemdb, with a local cache to minimise API calls
@@ -129,4 +132,5 @@ Tests use `mocktail` for mocking and `ProviderContainer` with overrides for prov
 * xref:data-model.adoc[Data Model] — schema tables and entity design
 * xref:metadata-lookup.adoc[Metadata Lookup] — tiered lookup strategy and caching
 * xref:scanning.adoc[Barcode Scanning] — camera, USB, and webcam scanning details
+* xref:manual-add.adoc[Manual Add] — keyboard-only item entry with suggestion chips and online lookup
 * xref:testing.adoc[Testing] — test structure and how to run the suite

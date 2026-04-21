@@ -1,0 +1,78 @@
+%% Manual-add online lookup decision flow
+%% Entry point: user taps "Search online" on the Manual Add screen
+%% Key: teal endpoint nodes, green for API calls, amber for warnings/fallbacks, red for dead ends
+flowchart TD
+    Start(["User taps 'Search online'\ntitle + subtitle entered\nMediaType selected"])
+
+    CheckType{"MediaType?"}
+
+    %% ── API key guards ────────────────────────────────────────────
+    NeedsTmdb{"TMDB API key\nconfigured?"}
+    SnackbarTmdb(["Snackbar: 'TMDB API key\nrequired in Settings'"])
+    SnackbarGame(["Snackbar: 'Online lookup for\ngames is not yet supported'\n(issue #57)"])
+
+    %% ── Query construction ────────────────────────────────────────
+    BuildQuery["Trim title + subtitle\n(skip blanks)\nspace-join → query string"]
+
+    %% ── Repository call ───────────────────────────────────────────
+    SearchCall["IMetadataRepository\n.searchByTitle(\n  query,\n  placeholderBarcode,\n  'MANUAL',\n  typeHint: mediaType\n)"]
+
+    %% ── Result branches ───────────────────────────────────────────
+    ScanResult{"ScanResult\ntype?"}
+
+    %% SingleScanResult path
+    ApplyMeta["Apply metadata to form\ntitle / subtitle / year /\npublisher / format /\ncoverUrl / sourceApis"]
+    SnackbarFound(["Snackbar: 'Metadata found'"])
+
+    %% MultiMatchScanResult path
+    BottomSheet["Open bottom sheet\ncandidate picker"]
+    UserPick["User taps candidate"]
+    FetchDetail["fetchCandidateDetail(\ncandidate\n)"]
+    ApplyMetaMulti["Apply metadata to form"]
+
+    %% NotFoundScanResult path
+    SnackbarNotFound(["Snackbar: 'No matches found online'"])
+
+    %% ── End state ─────────────────────────────────────────────────
+    FormReady(["Form populated\nUser reviews and taps\n'Save to Collection'\n→ SaveMediaItemUseCase"])
+
+    %% ── Wiring ────────────────────────────────────────────────────
+    Start --> CheckType
+
+    CheckType -- "Film / TV" --> NeedsTmdb
+    NeedsTmdb -- "no key" --> SnackbarTmdb
+    NeedsTmdb -- "key present" --> BuildQuery
+
+    CheckType -- "Game" --> SnackbarGame
+
+    CheckType -- "Music" --> BuildQuery
+    CheckType -- "Book" --> BuildQuery
+    CheckType -- "Unknown" --> BuildQuery
+
+    BuildQuery --> SearchCall
+    SearchCall --> ScanResult
+
+    ScanResult -- "SingleScanResult" --> ApplyMeta
+    ApplyMeta --> SnackbarFound
+    SnackbarFound --> FormReady
+
+    ScanResult -- "MultiMatchScanResult" --> BottomSheet
+    BottomSheet --> UserPick
+    UserPick --> FetchDetail
+    FetchDetail --> ApplyMetaMulti
+    ApplyMetaMulti --> FormReady
+
+    ScanResult -- "NotFoundScanResult" --> SnackbarNotFound
+
+    %% ── Styles ────────────────────────────────────────────────────
+    style Start fill:#00647a,color:#fff,stroke:#004d5c
+    style FormReady fill:#00647a,color:#fff,stroke:#004d5c
+    style SnackbarTmdb fill:#7a3030,color:#fff,stroke:#5c2020
+    style SnackbarGame fill:#7a3030,color:#fff,stroke:#5c2020
+    style SnackbarNotFound fill:#7a3030,color:#fff,stroke:#5c2020
+    style SearchCall fill:#1a4a3a,color:#aaffcc,stroke:#44aa88
+    style FetchDetail fill:#1a4a3a,color:#aaffcc,stroke:#44aa88
+    style ApplyMeta fill:#1a4a3a,color:#aaffcc,stroke:#44aa88
+    style ApplyMetaMulti fill:#1a4a3a,color:#aaffcc,stroke:#44aa88
+    style BottomSheet fill:#4a4a1a,color:#ffeeaa,stroke:#888822
+    style NeedsTmdb fill:#4a4a1a,color:#ffeeaa,stroke:#888822

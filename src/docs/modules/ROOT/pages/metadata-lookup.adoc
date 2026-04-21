@@ -273,6 +273,20 @@ When an API returns multiple candidate matches for a single barcode (common with
 The router navigates to the disambiguation screen (`/disambiguation`), where the user selects the correct release.
 The chosen candidate is then passed back through step 5 (cache and map) as if it were a single result.
 
+== Title-Based Lookup
+
+The manual-add screen and the post-scan "Barcode Not Found" fallback both invoke `IMetadataRepository.searchByTitle(query, barcode, barcodeType, typeHint:)` instead of `lookupBarcode(...)`.
+Routing uses the same per-type specialist clients as barcode lookup:
+
+* Film / TV → TMDB (no fallback).
+* Music → MusicBrainz, then Discogs.
+* Books → Google Books, then Open Library.
+* Games → no routed source (UPCitemdb has no title search); title lookup always returns `NotFoundScanResult` until IGDB integration lands.
+* Unknown → cascade through TMDB, MusicBrainz, Google Books in order.
+
+Because the film / TV route has no key-free fallback, searching for a film or TV title without a TMDB key configured would silently return `NotFoundScanResult`.
+The manual-add screen pre-checks `apiKeysProvider` and short-circuits with a specific snackbar in that case; see xref:manual-add.adoc#_api_key_requirements[Manual Add — API Key Requirements].
+
 == Related Pages
 
 * xref:scanning.adoc[Barcode Scanning] — scan screen behaviour and scanner input sources

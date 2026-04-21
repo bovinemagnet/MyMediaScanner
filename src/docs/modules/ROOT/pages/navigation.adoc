@@ -116,6 +116,10 @@ They push onto the branch's own navigator stack.
 |Screen
 |Parent Branch
 
+|`/collection/add-manual`
+|Manual Add
+|Collection (1)
+
 |`/collection/item/:id`
 |Item Detail
 |Collection (1)
@@ -160,7 +164,7 @@ GoRouter's shell route renders through `AppScaffold`, which inspects the current
 === Android and iOS
 
 * *Bottom navigation bar* with four visible destinations: Home, Library, Scan, and Insights.
-* A floating action button (FAB) provides a quick-scan shortcut from the Dashboard.
+* The Dashboard exposes both a *Quick Scan* and a *Quick Add* call-to-action. Quick Scan opens the scanner; Quick Add navigates to `/collection/add-manual` for keyboard-only item entry.
 * The scanner screen renders a full-screen camera overlay using `mobile_scanner` (ML Kit).
 * Shelves, Batch Editor, Settings, and Rips are accessible via AppBar actions or secondary navigation, not the bottom bar.
 
