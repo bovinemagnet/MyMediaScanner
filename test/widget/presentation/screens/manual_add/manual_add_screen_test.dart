@@ -272,4 +272,115 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.widgetWithText(TextField, 'PS5'), findsOneWidget);
   });
+
+  testWidgets('Resolution chips appear for Film + DVD and Film + Blu-ray',
+      (tester) async {
+    tester.view.physicalSize = const Size(1200, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(home: ManualAddScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Pick Film.
+    await tester.tap(find.byType(DropdownButtonFormField<MediaType>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Film').last);
+    await tester.pumpAndSettle();
+
+    // No resolution chips until a format is chosen.
+    expect(find.widgetWithText(ChoiceChip, '480p'), findsNothing);
+
+    // DVD → 480p / 576p.
+    await tester.tap(find.widgetWithText(ActionChip, 'DVD'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(ChoiceChip, '480p'), findsOneWidget);
+    expect(find.widgetWithText(ChoiceChip, '576p'), findsOneWidget);
+    expect(find.widgetWithText(ChoiceChip, '720p'), findsNothing);
+
+    // Switch to Blu-ray → 720p / 1080p.
+    await tester.tap(find.widgetWithText(ActionChip, 'Blu-ray'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(ChoiceChip, '720p'), findsOneWidget);
+    expect(find.widgetWithText(ChoiceChip, '1080p'), findsOneWidget);
+    expect(find.widgetWithText(ChoiceChip, '480p'), findsNothing);
+
+    // Switch to 4K Blu-ray → no resolution chips (resolution implied).
+    await tester.tap(find.widgetWithText(ActionChip, '4K Blu-ray'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(ChoiceChip, '720p'), findsNothing);
+    expect(find.widgetWithText(ChoiceChip, '1080p'), findsNothing);
+  });
+
+  testWidgets(
+      'Resolution selection is saved into extraMetadata.resolution',
+      (tester) async {
+    tester.view.physicalSize = const Size(1200, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final mock = _MockSaveUseCase();
+    MetadataResult? captured;
+    when(() => mock.execute(any(),
+            ownershipStatus: any(named: 'ownershipStatus')))
+        .thenAnswer((inv) async {
+      captured = inv.positionalArguments.first as MetadataResult;
+      return const MediaItem(
+        id: 'x',
+        barcode: 'b',
+        barcodeType: 'MANUAL',
+        mediaType: MediaType.film,
+        title: 'Test',
+        dateAdded: 0,
+        dateScanned: 0,
+        updatedAt: 0,
+      );
+    });
+
+    final router = GoRouter(
+      initialLocation: '/',
+      routes: [
+        GoRoute(path: '/', builder: (_, _) => const ManualAddScreen()),
+        GoRoute(
+          path: '/collection',
+          builder: (_, _) => const Scaffold(body: Text('collection')),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          saveMediaItemUseCaseProvider.overrideWithValue(mock),
+        ],
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Title'), 'Dune');
+
+    // Pick Film → tap Blu-ray → tap 1080p → Save.
+    await tester.tap(find.byType(DropdownButtonFormField<MediaType>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Film').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ActionChip, 'Blu-ray'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ChoiceChip, '1080p'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save to Collection'));
+    await tester.pumpAndSettle();
+
+    expect(captured, isNotNull);
+    expect(captured!.extraMetadata['resolution'], '1080p');
+    expect(captured!.format, 'Blu-ray');
+  });
 }

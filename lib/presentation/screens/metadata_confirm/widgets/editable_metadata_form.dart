@@ -61,6 +61,7 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
   late MediaType _mediaType;
   String? _coverUrl;
   late List<String> _sourceApis;
+  String? _resolution;
 
   @override
   void initState() {
@@ -84,6 +85,8 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
     _mediaType = widget.initial.mediaType ?? MediaType.unknown;
     _coverUrl = widget.initial.coverUrl;
     _sourceApis = List<String>.from(widget.initial.sourceApis);
+    final existingRes = widget.initial.extraMetadata['resolution'];
+    _resolution = existingRes is String ? existingRes : null;
   }
 
   @override
@@ -140,23 +143,48 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
         'PC',
       ];
 
-  MetadataResult _buildEdited() => widget.initial.copyWith(
-    title: _titleController.text.isEmpty ? null : _titleController.text,
-    subtitle: _subtitleController.text.isEmpty
-        ? null
-        : _subtitleController.text,
-    description: _descriptionController.text.isEmpty
-        ? null
-        : _descriptionController.text,
-    year: int.tryParse(_yearController.text),
-    publisher: _publisherController.text.isEmpty
-        ? null
-        : _publisherController.text,
-    format: _formatController.text.isEmpty ? null : _formatController.text,
-    mediaType: _mediaType,
-    coverUrl: _coverUrl,
-    sourceApis: _sourceApis,
-  );
+  /// Resolution options that make sense for a given media type and format.
+  /// Only film/TV on DVD or Blu-ray — other formats carry their resolution
+  /// in the format name itself (4K Blu-ray, 8K) so they get no chips.
+  List<String> _resolutionSuggestions(MediaType type, String format) {
+    if (type != MediaType.film && type != MediaType.tv) return const [];
+    final fmt = format.trim().toLowerCase();
+    return switch (fmt) {
+      'dvd' => const ['480p', '576p'],
+      'blu-ray' || 'bluray' || 'blu ray' => const ['720p', '1080p'],
+      _ => const [],
+    };
+  }
+
+  MetadataResult _buildEdited() {
+    // Only persist resolution if it's still a valid choice for the current
+    // media type + format — a stale pick after the user switches away from
+    // DVD/Blu-ray shouldn't leak into saved metadata.
+    final resSuggestions =
+        _resolutionSuggestions(_mediaType, _formatController.text);
+    final resolution =
+        resSuggestions.contains(_resolution) ? _resolution : null;
+    final extra = Map<String, dynamic>.from(widget.initial.extraMetadata);
+    if (resolution != null) extra['resolution'] = resolution;
+    return widget.initial.copyWith(
+      title: _titleController.text.isEmpty ? null : _titleController.text,
+      subtitle: _subtitleController.text.isEmpty
+          ? null
+          : _subtitleController.text,
+      description: _descriptionController.text.isEmpty
+          ? null
+          : _descriptionController.text,
+      year: int.tryParse(_yearController.text),
+      publisher: _publisherController.text.isEmpty
+          ? null
+          : _publisherController.text,
+      format: _formatController.text.isEmpty ? null : _formatController.text,
+      mediaType: _mediaType,
+      coverUrl: _coverUrl,
+      sourceApis: _sourceApis,
+      extraMetadata: extra,
+    );
+  }
 
   Future<void> _save() async {
     if (_saving) return;
@@ -549,8 +577,36 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
                 const SizedBox(height: 8),
                 _SuggestionChipsRow(
                   suggestions: _formatSuggestions(_mediaType),
-                  onTap: (value) =>
-                      setState(() => _formatController.text = value),
+                  onTap: (value) => setState(() {
+                    _formatController.text = value;
+                    // Drop any stale resolution when switching away from a
+                    // format that carries one.
+                    if (!_resolutionSuggestions(_mediaType, value)
+                        .contains(_resolution)) {
+                      _resolution = null;
+                    }
+                  }),
+                ),
+              ],
+              if (widget.showFormatSuggestions &&
+                  _resolutionSuggestions(_mediaType, _formatController.text)
+                      .isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: _resolutionSuggestions(
+                          _mediaType, _formatController.text)
+                      .map(
+                        (r) => ChoiceChip(
+                          label: Text(r),
+                          selected: _resolution == r,
+                          onSelected: (sel) => setState(
+                              () => _resolution = sel ? r : null),
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      )
+                      .toList(),
                 ),
               ],
               const SizedBox(height: 12),
