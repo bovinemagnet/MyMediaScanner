@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mymediascanner/presentation/providers/batch_editor_provider.dart';
 import 'package:mymediascanner/presentation/providers/batch_history_provider.dart';
 import 'package:mymediascanner/presentation/screens/batch/batch_history_screen.dart';
 

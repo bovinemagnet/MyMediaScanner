@@ -70,7 +70,7 @@ Widget _wrap(
         routes: [
           GoRoute(
             path: '/series',
-            builder: (_, __) => const SeriesListScreen(),
+            builder: (_, _) => const SeriesListScreen(),
           ),
           GoRoute(
             path: '/series/:id',

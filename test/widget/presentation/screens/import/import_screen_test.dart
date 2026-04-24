@@ -59,11 +59,11 @@ GoRouter _router({String initialLocation = '/import'}) => GoRouter(
       routes: [
         GoRoute(
           path: '/import',
-          builder: (_, __) => const ImportScreen(),
+          builder: (_, _) => const ImportScreen(),
         ),
         GoRoute(
           path: '/collection',
-          builder: (_, __) => const Scaffold(body: Text('collection')),
+          builder: (_, _) => const Scaffold(body: Text('collection')),
         ),
       ],
     );
@@ -161,7 +161,7 @@ void main() {
     testWidgets(
         'shows a result summary after import completes',
         (tester) async {
-      final doneState = const ImportState(
+      const doneState = ImportState(
         phase: ImportPhase.done,
         savedCount: 8,
       );
@@ -179,7 +179,7 @@ void main() {
     testWidgets(
         'singular grammar when exactly one item is imported',
         (tester) async {
-      final doneState = const ImportState(
+      const doneState = ImportState(
         phase: ImportPhase.done,
         savedCount: 1,
       );
@@ -197,7 +197,7 @@ void main() {
     testWidgets(
         'shows an error message when the import throws',
         (tester) async {
-      final errorState = const ImportState(
+      const errorState = ImportState(
         phase: ImportPhase.error,
         errorMessage: 'Could not parse file: unexpected column header',
       );
@@ -217,7 +217,7 @@ void main() {
     testWidgets(
         'shows "Unknown error" when errorMessage is null in error phase',
         (tester) async {
-      final errorState = const ImportState(
+      const errorState = ImportState(
         phase: ImportPhase.error,
         // errorMessage intentionally null.
       );
@@ -235,7 +235,7 @@ void main() {
     testWidgets(
         'shows a spinner and "Parsing file…" label during parsing',
         (tester) async {
-      final parsingState = const ImportState(
+      const parsingState = ImportState(
         phase: ImportPhase.parsing,
         source: ImportSource.discogs,
       );
@@ -257,7 +257,7 @@ void main() {
     testWidgets(
         'shows a spinner and "Saving items…" label during save',
         (tester) async {
-      final savingState = const ImportState(
+      const savingState = ImportState(
         phase: ImportPhase.saving,
         source: ImportSource.letterboxd,
       );

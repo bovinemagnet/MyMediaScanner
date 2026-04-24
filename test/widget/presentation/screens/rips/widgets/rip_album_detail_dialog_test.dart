@@ -81,7 +81,7 @@ Widget _buildDialog({
     child: MaterialApp(
       home: Scaffold(
         body: Builder(
-          builder: (context) => RipAlbumDetailDialog(album: _album),
+          builder: (context) => const RipAlbumDetailDialog(album: _album),
         ),
       ),
     ),

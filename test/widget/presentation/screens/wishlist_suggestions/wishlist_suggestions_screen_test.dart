@@ -33,7 +33,7 @@ WishlistSuggestion _suggestion({
       ],
     );
 
-MediaItem _mediaItem() => MediaItem(
+MediaItem _mediaItem() => const MediaItem(
       id: 'mi1',
       barcode: 'tt001',
       barcodeType: 'TMDB',

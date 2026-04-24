@@ -932,7 +932,7 @@ void main() {
       when(() => mockCache.upsert(any())).thenAnswer((_) async {});
     });
 
-    DioException _upstream5xx() => DioException(
+    DioException upstream5xx() => DioException(
       requestOptions: RequestOptions(path: '/books/v1/volumes'),
       response: Response(
         requestOptions: RequestOptions(path: '/books/v1/volumes'),
@@ -951,7 +951,7 @@ void main() {
 
       when(
         () => mockGoogleBooksApi.searchByIsbn('Gruffalo'),
-      ).thenThrow(_upstream5xx());
+      ).thenThrow(upstream5xx());
       when(() => mockOpenLibraryApi.searchByTitle('Gruffalo')).thenAnswer(
         (_) async => const OpenLibrarySearchResponseDto(
           numFound: 1,
@@ -995,7 +995,7 @@ void main() {
 
         when(
           () => mockGoogleBooksApi.searchByIsbn('Harry'),
-        ).thenThrow(_upstream5xx());
+        ).thenThrow(upstream5xx());
         when(() => mockOpenLibraryApi.searchByTitle('Harry')).thenAnswer(
           (_) async => const OpenLibrarySearchResponseDto(
             numFound: 2,
@@ -1034,7 +1034,7 @@ void main() {
 
         when(
           () => mockGoogleBooksApi.searchByIsbn('nothing'),
-        ).thenThrow(_upstream5xx());
+        ).thenThrow(upstream5xx());
         when(() => mockOpenLibraryApi.searchByTitle('nothing')).thenAnswer(
           (_) async =>
               const OpenLibrarySearchResponseDto(numFound: 0, docs: []),

@@ -80,7 +80,7 @@ void main() {
   setUpAll(() {
     registerFallbackValue(_borrower());
     registerFallbackValue(
-      Loan(
+      const Loan(
         id: 'l1',
         mediaItemId: 'item1',
         borrowerId: 'b1',
