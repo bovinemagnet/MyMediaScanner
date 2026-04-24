@@ -135,7 +135,7 @@ The selected Media Type determines which API clients are used:
 | Google Books, then Open Library
 
 | Game
-| No routed source — always returns `NotFoundScanResult` (IGDB integration tracked as issue #57)
+| IGDB (title search via `POST /v4/games`; requires Twitch Client ID and Secret in Settings)
 
 | Unknown
 | Cascades through TMDB, MusicBrainz, and Google Books in order
@@ -176,8 +176,8 @@ If a required key is missing, the search is short-circuited and a specific snack
 | "TMDB API key required in Settings to search for films and TV."
 
 | Game
-| _(no key — feature unsupported)_
-| "Online lookup for games is not yet supported."
+| Twitch Client ID and Secret
+| "Twitch Client ID and Secret required in Settings to search for games (IGDB)."
 
 | Music
 | None (MusicBrainz is key-free; Discogs key optional)

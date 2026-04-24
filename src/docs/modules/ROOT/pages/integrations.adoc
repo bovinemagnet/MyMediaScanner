@@ -417,9 +417,9 @@ UPCitemdb is a commercial product database that indexes retail barcodes (UPC-A a
 
 ==== Role in the app
 
-*General barcode fallback and primary video game source.*
+*General barcode fallback.*
 UPCitemdb is queried when no specialist provider satisfies the barcode lookup — for example, when a music barcode is not found in MusicBrainz or Discogs, or when a film barcode returns nothing from TMDB.
-It is also the primary metadata source for video games until a dedicated game database integration is added in a future release.
+For video games it acts as the barcode-to-title resolver; IGDB subsequently enriches the discovered title with game-specific metadata.
 
 ==== Setup
 
@@ -445,6 +445,111 @@ Each scan that reaches the fallback stage counts against your monthly allowance.
   Edit the item's metadata manually after saving.
 * *No result from UPCitemdb* — some barcodes, particularly older or regional pressings, are not indexed.
   The item will be saved with only the barcode; you can add metadata manually.
+
+---
+
+== Games
+
+=== IGDB
+
+IGDB (Internet Games Database) is a comprehensive video game database operated by Twitch, covering titles across all platforms with rich metadata including genres, platforms, companies, ratings, and artwork.
+
+==== Role in the app
+
+*Primary video game metadata source.*
+IGDB is used in two ways:
+
+. *Title search (Manual Add):* When you type a game title and tap *Search online*, the repository calls `POST /v4/games` with an Apicalypse search query and returns a ranked list of matches.
+. *Barcode-based enrichment:* When you scan a game barcode, UPCitemdb first resolves the barcode to a product title.
+  That title is then passed to IGDB as a search query to enrich the result with game-specific metadata — platforms, genres, companies, critic scores, and cover art.
+
+IGDB requires Twitch credentials (Client ID and Client Secret); if these are not configured, both flows return `NotFoundScanResult` and a snackbar directs you to Settings.
+
+==== Authentication model
+
+IGDB uses the Twitch OAuth *client_credentials* flow.
+The app calls `POST https://id.twitch.tv/oauth2/token` on-device to exchange the Client ID and Client Secret for a bearer token.
+The token (typical lifetime approximately 60 days) is cached in platform-native secure storage by `IgdbTokenManager` and refreshed lazily when it approaches expiry.
+No browser redirect or callback URL is involved.
+
+==== Setup
+
+See xref:api-configuration.adoc#_igdb_games_configuration[API Configuration — IGDB / Games Configuration] for step-by-step instructions on registering a Twitch application and entering credentials.
+
+==== Endpoint and query shape
+
+The app calls `POST https://api.igdb.com/v4/games` with an Apicalypse body.
+Two query patterns are used:
+
+*Title search* (Manual Add / barcode enrichment):
+[source]
+----
+search "<title>";
+fields name, summary, cover.url, platforms.name,
+       involved_companies.company.name,
+       involved_companies.developer,
+       involved_companies.publisher,
+       genres.name, first_release_date,
+       aggregated_rating, rating;
+limit 5;
+----
+
+==== Field mapping into MetadataResult
+
+[cols="2,3", options="header"]
+|===
+| MetadataResult field
+| Mapped from IGDB
+
+| `title`
+| `name`
+
+| `subtitle`
+| First entry in `platforms.name` (primary platform)
+
+| `description`
+| `summary`
+
+| `coverImageUrl`
+| `cover.url` with the thumbnail segment (`t_thumb`) replaced by `t_cover_big`
+
+| `year`
+| `first_release_date` (Unix timestamp) converted to a four-digit year
+
+| `publisher`
+| Name from `involved_companies` where `publisher == true`
+
+| `criticScore`
+| `aggregated_rating` if present; falls back to `rating`
+
+| `extraMetadata.developer`
+| Name from `involved_companies` where `developer == true`
+
+| `extraMetadata.platforms`
+| All entries in `platforms.name` as a comma-separated string
+
+| `extraMetadata.igdbId`
+| IGDB numeric game identifier
+|===
+
+==== Rate limits / usage policy
+
+IGDB's free tier allows up to 4 requests per second and 500 requests per month per application under the standard developer plan.
+Under normal personal scanning use this limit is not reached.
+The app does not apply additional throttling for IGDB.
+
+==== Troubleshooting
+
+* *Snackbar "Twitch Client ID and Secret required in Settings to search for games (IGDB)"* — open *Settings → API Keys → IGDB / Games* and ensure both the Client ID and Client Secret fields are filled and saved.
+* *Game search returns no results* — confirm your device can reach `https://api.igdb.com` and `https://id.twitch.tv`.
+  Also verify that the Twitch credentials are correct; an invalid Client Secret causes the token exchange to fail silently and the lookup to short-circuit.
+* *Cover art is missing* — IGDB may not have a cover image for that title, or the `cover.url` field was absent in the response.
+  You can add cover art manually from the item detail screen.
+* *Critic score is absent* — `aggregated_rating` and `rating` are community-calculated and may not be present for niche or very recent releases.
+* *Wrong game returned for a scanned barcode* — the UPCitemdb product title used to drive the IGDB search may be ambiguous (e.g. a regional subtitle or edition label).
+  Use Manual Add to search by a cleaner title, or edit the item's metadata after saving.
+* *HTTP 401 after credentials were working* — the Client Secret may have been regenerated on the Twitch developer console.
+  Update the Client Secret in *Settings → API Keys → IGDB / Games*; the app will request a new bearer token on the next game lookup.
 
 ---
 

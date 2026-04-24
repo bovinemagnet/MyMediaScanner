@@ -74,7 +74,7 @@ The detected type, combined with any media type hint supplied by the user on the
 
 | Video Games
 | EAN-13, UPC-A
-| UPCitemdb (IGDB planned for v2)
+| UPCitemdb (barcode → title) → IGDB enrichment
 |===
 
 Routing rules:
@@ -84,7 +84,8 @@ Routing rules:
 * An **EAN-13 or UPC-A** with a film or TV hint is routed to TMDB search.
 * An **EAN-13 or UPC-A** with a music hint is routed to MusicBrainz first.
 If MusicBrainz returns nothing, is rate-limited, or gives only low-quality data, the repository falls back to Discogs and finally UPCitemdb.
-* An **EAN-13 or UPC-A** with a game hint is sent directly to UPCitemdb.
+* An **EAN-13 or UPC-A** with a game hint is sent to UPCitemdb first to resolve the barcode to a product title.
+  If Twitch credentials are configured, the resolved title is then passed to IGDB for enrichment with game-specific metadata.
 
 For MusicBrainz matches, the repository ranks candidates by status (Official preferred), format (CD, vinyl, and cassette preferred over digital), completeness (label, catalogue number, track count, date, and country) and the MusicBrainz server score.
 A clearly dominant match is auto-accepted; otherwise the user sees the disambiguation screen with country, label, catalogue number, track count, and status on each candidate card.
@@ -96,7 +97,7 @@ A dedicated `RateLimitAwareClient` throttles requests to approximately 1 req/s a
 
 If the specialist API returns no results, the use case falls back to UPCitemdb.
 UPCitemdb is a general-purpose product database and can resolve many retail barcodes even when specialist sources lack coverage.
-It is also the primary source for video games until IGDB integration is added in a later release.
+For video games it acts as the barcode-to-title resolver; IGDB then enriches the discovered title with game-specific metadata when Twitch credentials are available.
 
 === 5. Cache and Map
 
@@ -137,9 +138,13 @@ Each external API is represented by a dedicated client class backed by its own D
 
 | `UpcItemDbApiClient`
 | `https://api.upcitemdb.com/prod/trial`
+
+| `IgdbApiClient`
+| `https://api.igdb.com/v4`
 |===
 
 TMDB and UPCitemdb require user-supplied API keys read at runtime from `SecureStorageService` via a Riverpod provider.
+IGDB requires a Twitch Client ID and Client Secret; the app exchanges these for a bearer token on-device and caches it in secure storage.
 Discogs is optional — a key enables it as a music fallback, but the app functions without one.
 MusicBrainz, Cover Art Archive, Google Books, and Open Library need no keys.
 Users configure their keys in the Settings screen; keys are never bundled with the application.
@@ -281,7 +286,9 @@ Routing uses the same per-type specialist clients as barcode lookup:
 * Film / TV → TMDB (no fallback).
 * Music → MusicBrainz, then Discogs.
 * Books → Google Books, then Open Library.
-* Games → no routed source (UPCitemdb has no title search); title lookup always returns `NotFoundScanResult` until IGDB integration lands.
+* Games → IGDB (`POST /v4/games` with an Apicalypse title query).
+  Requires Twitch Client ID and Secret to be configured in Settings.
+  If credentials are absent, the lookup short-circuits and returns `NotFoundScanResult`.
 * Unknown → cascade through TMDB, MusicBrainz, Google Books in order.
 
 Because the film / TV route has no key-free fallback, searching for a film or TV title without a TMDB key configured would silently return `NotFoundScanResult`.

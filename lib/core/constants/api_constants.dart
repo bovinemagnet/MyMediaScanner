@@ -39,6 +39,10 @@ abstract final class ApiConstants {
   // UPCitemdb
   static const upcItemDbBaseUrl = 'https://api.upcitemdb.com/prod/trial';
 
+  // IGDB (Twitch-authenticated games database)
+  static const igdbBaseUrl = 'https://api.igdb.com/v4';
+  static const twitchOAuthBaseUrl = 'https://id.twitch.tv';
+
   // GnuDB — CDDB-compatible disc metadata lookup. The service is HTTP only.
   static const gnudbBaseUrl = 'http://gnudb.gnudb.org';
   static const gnudbCgiPath = '/~cddb/cddb.cgi';
