@@ -70,8 +70,7 @@ dependencies:
   just_audio_media_kit: ^2.1.0
   ffi: ^2.2.0
   dart_metaflac: ^0.0.1
-  dart_flac:
-    path: ../dart_flac
+  dart_flac: ^0.0.1
   dart_accuraterip: ^0.0.3
   audio_defect_detector: ^0.0.2
   dart_rip_log: ^0.0.1
