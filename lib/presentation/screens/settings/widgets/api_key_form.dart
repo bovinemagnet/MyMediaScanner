@@ -16,6 +16,8 @@ class _ApiKeyFormState extends ConsumerState<ApiKeyForm> {
   final _googleBooksController = TextEditingController();
   final _tvdbController = TextEditingController();
   final _fanartController = TextEditingController();
+  final _twitchClientIdController = TextEditingController();
+  final _twitchClientSecretController = TextEditingController();
 
   @override
   void initState() {
@@ -31,6 +33,8 @@ class _ApiKeyFormState extends ConsumerState<ApiKeyForm> {
     _googleBooksController.text = keys['google_books'] ?? '';
     _tvdbController.text = keys['tvdb'] ?? '';
     _fanartController.text = keys['fanart'] ?? '';
+    _twitchClientIdController.text = keys['twitch_client_id'] ?? '';
+    _twitchClientSecretController.text = keys['twitch_client_secret'] ?? '';
   }
 
   @override
@@ -41,6 +45,8 @@ class _ApiKeyFormState extends ConsumerState<ApiKeyForm> {
     _googleBooksController.dispose();
     _tvdbController.dispose();
     _fanartController.dispose();
+    _twitchClientIdController.dispose();
+    _twitchClientSecretController.dispose();
     super.dispose();
   }
 
@@ -78,6 +84,30 @@ class _ApiKeyFormState extends ConsumerState<ApiKeyForm> {
         const SizedBox(height: 12),
         _keyField('UPCitemdb Key', _upcController, (key) {
           ref.read(apiKeysProvider.notifier).setUpcitemdbKey(key);
+        }),
+
+        const SizedBox(height: 24),
+
+        // IGDB (games) — uses Twitch OAuth
+        Text('IGDB / Games',
+            style: Theme.of(context).textTheme.labelLarge),
+        const SizedBox(height: 4),
+        Text(
+          'IGDB uses Twitch OAuth. Register an app at dev.twitch.tv to get '
+          'a Client ID and Client Secret — both are required for online '
+          'game lookup.',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.outline,
+              ),
+        ),
+        const SizedBox(height: 8),
+        _keyField('Twitch Client ID', _twitchClientIdController, (key) {
+          ref.read(apiKeysProvider.notifier).setTwitchClientId(key);
+        }),
+        const SizedBox(height: 12),
+        _keyField('Twitch Client Secret', _twitchClientSecretController,
+            (key) {
+          ref.read(apiKeysProvider.notifier).setTwitchClientSecret(key);
         }),
 
         const SizedBox(height: 24),

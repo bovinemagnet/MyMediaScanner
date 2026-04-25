@@ -12,6 +12,7 @@ import 'package:mymediascanner/data/local/dao/barcode_cache_dao.dart';
 import 'package:mymediascanner/data/local/database/app_database.dart';
 import 'package:mymediascanner/data/mappers/discogs_mapper.dart';
 import 'package:mymediascanner/data/mappers/enrichment_merger.dart';
+import 'package:mymediascanner/data/mappers/igdb_mapper.dart';
 import 'package:mymediascanner/data/mappers/musicbrainz_mapper.dart';
 import 'package:mymediascanner/data/mappers/google_books_mapper.dart';
 import 'package:mymediascanner/data/mappers/open_library_mapper.dart';
@@ -20,6 +21,8 @@ import 'package:mymediascanner/data/mappers/tvdb_mapper.dart';
 import 'package:mymediascanner/data/mappers/upc_mapper.dart';
 import 'package:mymediascanner/data/remote/api/discogs/discogs_api.dart';
 import 'package:mymediascanner/data/remote/api/fanart/fanart_api.dart';
+import 'package:mymediascanner/data/remote/api/igdb/igdb_api.dart';
+import 'package:mymediascanner/data/remote/api/igdb/models/igdb_game_dto.dart';
 import 'package:mymediascanner/data/remote/api/theaudiodb/theaudiodb_api.dart';
 import 'package:mymediascanner/data/remote/api/musicbrainz/cover_art_archive_api.dart';
 import 'package:mymediascanner/data/remote/api/musicbrainz/models/musicbrainz_release_dto.dart';
@@ -54,6 +57,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     this.upcitemdbApi,
     this.theAudioDbApi,
     this.fanartApi,
+    this.igdbApi,
     ApiCircuitBreaker? googleBooksBreaker,
   }) : _cacheDao = cacheDao,
        googleBooksBreaker = googleBooksBreaker ?? ApiCircuitBreaker();
@@ -69,6 +73,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
   final UpcitemdbApi? upcitemdbApi;
   final TheAudioDbApi? theAudioDbApi;
   final FanartApi? fanartApi;
+  final IgdbApi? igdbApi;
 
   /// Circuit breaker for Google Books API — trips on 429 responses.
   final ApiCircuitBreaker googleBooksBreaker;
@@ -102,6 +107,8 @@ class MetadataRepositoryImpl implements IMetadataRepository {
       result = await _lookupFilm(barcode, barcodeTypeStr, typeHint: typeHint);
     } else if (typeHint == MediaType.music) {
       result = await _lookupMusic(barcode, barcodeTypeStr);
+    } else if (typeHint == MediaType.game) {
+      result = await _lookupGame(barcode, barcodeTypeStr);
     } else {
       // Unknown type — try UPCitemdb first to classify
       result = await _lookupGeneral(barcode, barcodeTypeStr);
@@ -148,6 +155,8 @@ class MetadataRepositoryImpl implements IMetadataRepository {
       result = await _searchMusicByTitle(title, barcode, barcodeType);
     } else if (typeHint == MediaType.book) {
       result = await _searchBookByTitle(title, barcode, barcodeType);
+    } else if (typeHint == MediaType.game) {
+      result = await _searchIgdbByTitle(title, barcode, barcodeType);
     } else {
       // No type hint — try TMDB first, then MusicBrainz, then Google Books
       result =
@@ -388,6 +397,79 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     return null;
   }
 
+  Future<ScanResult?> _searchIgdbByTitle(
+    String title,
+    String barcode,
+    String barcodeType,
+  ) async {
+    if (igdbApi == null) return null;
+    try {
+      final games = await igdbApi!.searchByTitle(title);
+      if (games.isEmpty) return null;
+
+      if (games.length == 1) {
+        await _cacheResponse(barcode, 'game', 'igdb', games.first.toJson());
+        return ScanResult.single(
+          metadata: IgdbMapper.fromGame(games.first, barcode, barcodeType),
+          isDuplicate: false,
+        );
+      }
+
+      final candidates = games
+          .take(AppConstants.maxCandidates)
+          .map(IgdbMapper.toCandidate)
+          .toList();
+      return ScanResult.multiMatch(
+        candidates: candidates,
+        barcode: barcode,
+        barcodeType: barcodeType,
+      );
+    } on Exception catch (e) {
+      debugPrint('IGDB title search failed: $e');
+    }
+    return null;
+  }
+
+  /// Look up a game by barcode. IGDB has no barcode endpoint, so we fetch
+  /// the title from UPCitemdb first and then enrich via IGDB title search.
+  /// If IGDB finds nothing, the UPC result stands on its own.
+  Future<ScanResult?> _lookupGame(String barcode, String barcodeType) async {
+    final upcResult = await _lookupUpcMetadata(barcode, barcodeType);
+    if (upcResult?.title == null) return null;
+
+    if (igdbApi == null) {
+      return ScanResult.single(metadata: upcResult!, isDuplicate: false);
+    }
+
+    try {
+      final games = await igdbApi!.searchByTitle(upcResult!.title!);
+      if (games.isEmpty) {
+        return ScanResult.single(metadata: upcResult, isDuplicate: false);
+      }
+
+      if (games.length == 1) {
+        await _cacheResponse(barcode, 'game', 'igdb', games.first.toJson());
+        return ScanResult.single(
+          metadata: IgdbMapper.fromGame(games.first, barcode, barcodeType),
+          isDuplicate: false,
+        );
+      }
+
+      final candidates = games
+          .take(AppConstants.maxCandidates)
+          .map(IgdbMapper.toCandidate)
+          .toList();
+      return ScanResult.multiMatch(
+        candidates: candidates,
+        barcode: barcode,
+        barcodeType: barcodeType,
+      );
+    } on Exception catch (e) {
+      debugPrint('IGDB enrichment for game barcode failed: $e');
+      return ScanResult.single(metadata: upcResult!, isDuplicate: false);
+    }
+  }
+
   @override
   Future<MetadataResult?> fetchCandidateDetail(
     MetadataCandidate candidate,
@@ -410,8 +492,27 @@ class MetadataRepositoryImpl implements IMetadataRepository {
         barcodeType,
       ),
       'upcitemdb' => _fetchUpcDetail(candidate, barcode, barcodeType),
+      'igdb' => _fetchIgdbDetail(candidate, barcode, barcodeType),
       _ => null,
     };
+  }
+
+  Future<MetadataResult?> _fetchIgdbDetail(
+    MetadataCandidate candidate,
+    String barcode,
+    String barcodeType,
+  ) async {
+    if (igdbApi == null) return null;
+    try {
+      final id = int.parse(candidate.sourceId);
+      final game = await igdbApi!.getById(id);
+      if (game == null) return null;
+      await _cacheResponse(barcode, 'game', 'igdb', game.toJson());
+      return IgdbMapper.fromGame(game, barcode, barcodeType);
+    } on Exception catch (e) {
+      debugPrint('IGDB detail fetch failed: $e');
+    }
+    return null;
   }
 
   // -- Detail fetchers for disambiguation --
@@ -717,6 +818,11 @@ class MetadataRepositoryImpl implements IMetadataRepository {
         ),
         'tvdb' => TvdbMapper.fromSeries(
           TvdbSeriesDto.fromJson(json),
+          barcode,
+          barcodeType,
+        ),
+        'igdb' => IgdbMapper.fromGame(
+          IgdbGameDto.fromJson(json),
           barcode,
           barcodeType,
         ),

@@ -3,6 +3,8 @@ import 'package:mymediascanner/core/constants/api_constants.dart';
 import 'package:mymediascanner/data/remote/api/dio_factory.dart';
 import 'package:mymediascanner/data/remote/api/discogs/discogs_api.dart';
 import 'package:mymediascanner/data/remote/api/fanart/fanart_api.dart';
+import 'package:mymediascanner/data/remote/api/igdb/igdb_api.dart';
+import 'package:mymediascanner/data/remote/api/igdb/igdb_token_manager.dart';
 import 'package:mymediascanner/data/remote/api/theaudiodb/theaudiodb_api.dart';
 import 'package:mymediascanner/data/remote/api/musicbrainz/cover_art_archive_api.dart';
 import 'package:mymediascanner/data/remote/api/musicbrainz/musicbrainz_api.dart';
@@ -61,6 +63,20 @@ final metadataRepositoryProvider = Provider<IMetadataRepository>((ref) {
   final googleBooksKey = apiKeys['google_books'];
   final tvdbKey = apiKeys['tvdb'];
   final fanartKey = apiKeys['fanart'];
+  final twitchClientId = apiKeys['twitch_client_id'];
+  final twitchClientSecret = apiKeys['twitch_client_secret'];
+
+  final igdbApi = (twitchClientId != null &&
+          twitchClientId.isNotEmpty &&
+          twitchClientSecret != null &&
+          twitchClientSecret.isNotEmpty)
+      ? IgdbApi(
+          tokenManager: IgdbTokenManager(
+            clientId: twitchClientId,
+            clientSecret: twitchClientSecret,
+          ),
+        )
+      : null;
 
   return MetadataRepositoryImpl(
     cacheDao: ref.watch(barcodeCacheDaoProvider),
@@ -113,6 +129,7 @@ final metadataRepositoryProvider = Provider<IMetadataRepository>((ref) {
             apiKey: fanartKey,
           ))
         : null,
+    igdbApi: igdbApi,
   );
 });
 

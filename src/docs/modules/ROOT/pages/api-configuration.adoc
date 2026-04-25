@@ -50,11 +50,16 @@ image::screenshots/08-settings.png[Settings screen showing the API keys section,
 | Book metadata fallback when Google Books returns no result
 | Yes (no key required)
 | No
+
+| https://dev.twitch.tv/console[IGDB via Twitch]
+| Video game metadata lookup and enrichment
+| Yes (free developer account)
+| Yes (for game lookup)
 |===
 
 MusicBrainz and Cover Art Archive are queried without authentication and require no registration.
 Discogs is optional — if you supply a token it is used as a music fallback and enrichment source, but the app works without it.
-Only TMDB and UPCitemdb keys are strictly required for full functionality.
+TMDB, UPCitemdb, and Twitch credentials (for IGDB) are required for their respective media types.
 
 NOTE: MusicBrainz asks all clients to identify themselves via a `User-Agent` header containing the application name and version.
 The app sends this header automatically — no configuration is needed.
@@ -67,6 +72,13 @@ TMDB:: Create a free account at https://www.themoviedb.org/, then go to *Setting
 Discogs:: Registration is optional. If you want Discogs as a music fallback, register at https://www.discogs.com/settings/developers and generate a personal access token. OAuth is not required.
 
 UPCitemdb:: Sign up at https://www.upcitemdb.com/ and copy the trial or paid API key from your dashboard.
+
+IGDB / Twitch:: Register or log in at https://dev.twitch.tv/console[dev.twitch.tv/console].
+Create an application (choose "Website Integration" as the category and set the OAuth redirect URL to `http://localhost`).
+Copy the *Client ID* shown on the application page, then click *New Secret* to generate a *Client Secret*.
+Paste both values into the *IGDB / Games* group in *Settings → API Keys*.
+The app exchanges these credentials for a Twitch OAuth bearer token on-device; no browser redirect or OAuth callback is needed.
+The token has an approximately 60-day lifetime and is refreshed automatically when it expires.
 
 === Entering Keys in the App
 
@@ -190,6 +202,49 @@ Once enabled, sync covers all tables that carry an `updated_at` column:
 * `barcode_cache`
 
 See xref:sync-strategy.adoc[] for full details of the conflict resolution strategy.
+
+== IGDB / Games Configuration
+
+IGDB is operated by Twitch and uses the Twitch OAuth *client_credentials* flow for machine-to-machine authentication.
+Unlike the other API keys in the app, you supply a *Twitch Client ID* and a *Twitch Client Secret* rather than a single pre-issued token.
+The app exchanges those credentials for a short-lived bearer token entirely on-device; no browser window or callback URL is involved.
+
+=== How token exchange works
+
+. On the first game lookup after credentials are saved, `IgdbTokenManager` calls `POST https://id.twitch.tv/oauth2/token` with the Client ID, Client Secret, and `grant_type=client_credentials`.
+. Twitch returns a bearer token with an `expires_in` value (typically around 60 days).
+. The token and its expiry timestamp are persisted in the platform-native secure storage vault alongside your other API keys.
+. Subsequent game lookups read the cached token.
+  When the token is within a short refresh window of expiry — or has already expired — `IgdbTokenManager` requests a new token lazily before the IGDB call proceeds.
+
+You do not need to renew credentials manually.
+If Twitch invalidates the token (for example, because you regenerated the Client Secret on the developer console), the next game lookup will attempt a fresh exchange; if that also fails, the lookup returns `NotFoundScanResult` and a snackbar prompts you to check your credentials in Settings.
+
+=== Setting up a Twitch application
+
+. Log in at `https://dev.twitch.tv/console`.
+. Click *Register Your Application*.
+. Fill in a name (e.g. `MyMediaScanner`), set the OAuth redirect URL to `http://localhost`, and choose *Website Integration* as the category.
+. Click *Create*, then open the newly created application.
+. Copy the *Client ID* displayed on the page.
+. Click *New Secret* and copy the generated *Client Secret* before navigating away — Twitch does not show it again.
+
+NOTE: The Client Secret is shown only once.
+If you navigate away without copying it, click *New Secret* again to invalidate the old secret and generate a replacement.
+
+=== Entering credentials in the app
+
+. Open *Settings* from the desktop sidebar or the mobile navigation bar.
+. Scroll to the *IGDB / Games* section.
+. Enter your *Twitch Client ID* in the first field and tap *Save*.
+. Enter your *Twitch Client Secret* in the second field and tap *Save*.
+
+Both values are stored in the platform-native secure storage vault.
+A masked preview is displayed after saving.
+The bearer token fetched from Twitch is also stored in secure storage and is never exposed in the UI.
+
+WARNING: Treat the Twitch Client Secret with the same care as a password.
+If you believe it has been compromised, regenerate it immediately on the Twitch developer console and update the value in Settings.
 
 == Related Pages
 

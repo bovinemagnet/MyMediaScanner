@@ -165,6 +165,8 @@ class ApiKeysNotifier extends AsyncNotifier<Map<String, String?>> {
   static const _googleBooksKey = 'api_key_google_books';
   static const _tvdbKey = 'api_key_tvdb';
   static const _fanartKey = 'api_key_fanart';
+  static const _twitchClientIdKey = 'api_key_twitch_client_id';
+  static const _twitchClientSecretKey = 'api_key_twitch_client_secret';
 
   @override
   Future<Map<String, String?>> build() async {
@@ -176,6 +178,8 @@ class ApiKeysNotifier extends AsyncNotifier<Map<String, String?>> {
       'google_books': await storage.read(key: _googleBooksKey),
       'tvdb': await storage.read(key: _tvdbKey),
       'fanart': await storage.read(key: _fanartKey),
+      'twitch_client_id': await storage.read(key: _twitchClientIdKey),
+      'twitch_client_secret': await storage.read(key: _twitchClientSecretKey),
     };
   }
 
@@ -208,6 +212,18 @@ class ApiKeysNotifier extends AsyncNotifier<Map<String, String?>> {
 
   Future<void> setFanartKey(String key) async {
     await ref.read(secureStorageProvider).write(key: _fanartKey, value: key);
+    ref.invalidateSelf();
+  }
+
+  Future<void> setTwitchClientId(String key) async {
+    await ref.read(secureStorageProvider).write(
+        key: _twitchClientIdKey, value: key);
+    ref.invalidateSelf();
+  }
+
+  Future<void> setTwitchClientSecret(String key) async {
+    await ref.read(secureStorageProvider).write(
+        key: _twitchClientSecretKey, value: key);
     ref.invalidateSelf();
   }
 }

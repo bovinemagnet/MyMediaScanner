@@ -375,6 +375,55 @@ void main() {
   });
 
   testWidgets(
+      'Search online for Game with no Twitch keys shows settings hint',
+      (tester) async {
+    tester.view.physicalSize = const Size(1200, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final repo = _MockMetadataRepository();
+    when(() => repo.searchByTitle(any(), any(), any(),
+            typeHint: any(named: 'typeHint')))
+        .thenAnswer(
+      (_) async => const ScanResult.notFound(
+        barcode: 'MANUAL-x',
+        barcodeType: 'MANUAL',
+      ),
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          metadataRepositoryProvider.overrideWithValue(repo),
+          apiKeysProvider.overrideWith(() => _EmptyApiKeysNotifier()),
+        ],
+        child: const MaterialApp(home: ManualAddScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(DropdownButtonFormField<MediaType>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Game').last);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Title'), 'Elden Ring');
+    await tester.tap(find.text('Search online'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+          'Twitch Client ID and Secret required in Settings to search '
+          'for games (IGDB).'),
+      findsOneWidget,
+    );
+    verifyNever(() => repo.searchByTitle(any(), any(), any(),
+        typeHint: any(named: 'typeHint')));
+  });
+
+  testWidgets(
       'Resolution selection is saved into extraMetadata.resolution',
       (tester) async {
     tester.view.physicalSize = const Size(1200, 2400);

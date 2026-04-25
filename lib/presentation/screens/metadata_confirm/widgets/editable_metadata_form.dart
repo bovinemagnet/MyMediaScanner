@@ -240,9 +240,10 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
   /// lookup can proceed.
   ///
   /// Film/TV title search only routes to TMDB; without a TMDB key the
-  /// repository returns `notFound` without trying anything else. Games have
-  /// no API yet (tracked in #57). Music, book, and unknown always have at
-  /// least one key-free fallback (MusicBrainz / Open Library).
+  /// repository returns `notFound` without trying anything else. Game
+  /// search routes to IGDB, which requires a Twitch Client ID + Secret.
+  /// Music, book, and unknown always have at least one key-free fallback
+  /// (MusicBrainz / Open Library).
   String? _missingApiMessage(MediaType type, Map<String, String?> apiKeys) {
     switch (type) {
       case MediaType.film:
@@ -252,7 +253,12 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
         }
         return null;
       case MediaType.game:
-        return 'Online lookup for games is not yet supported.';
+        if ((apiKeys['twitch_client_id'] ?? '').isEmpty ||
+            (apiKeys['twitch_client_secret'] ?? '').isEmpty) {
+          return 'Twitch Client ID and Secret required in Settings to '
+              'search for games (IGDB).';
+        }
+        return null;
       case MediaType.music:
       case MediaType.book:
       case MediaType.unknown:
