@@ -112,6 +112,12 @@ class RipLibraryDao extends DatabaseAccessor<AppDatabase>
   }
 
   /// Update quality-related columns for a single track.
+  ///
+  /// Each named argument is treated as "leave alone" when null. Drift's
+  /// `Value(null)` would otherwise mean "set this column to NULL", which
+  /// caused a partial update such as `updateTrackQuality(id,
+  /// arStatus: 'not_checked')` to clobber a previously-recorded
+  /// `peakLevel`, `clickCount`, `arCrcV1/V2` etc.
   Future<void> updateTrackQuality(
     String trackId, {
     String? arStatus,
@@ -127,16 +133,25 @@ class RipLibraryDao extends DatabaseAccessor<AppDatabase>
   }) {
     return (update(ripTracksTable)..where((t) => t.id.equals(trackId))).write(
       RipTracksTableCompanion(
-        accurateripStatus: Value(arStatus),
-        accurateripConfidence: Value(arConfidence),
-        accurateripCrcV1: Value(arCrcV1),
-        accurateripCrcV2: Value(arCrcV2),
-        peakLevel: Value(peakLevel),
-        trackQuality: Value(trackQuality),
-        copyCrc: Value(copyCrc),
-        clickCount: Value(clickCount),
-        ripLogSource: Value(ripLogSource),
-        qualityCheckedAt: Value(qualityCheckedAt),
+        accurateripStatus:
+            arStatus != null ? Value(arStatus) : const Value.absent(),
+        accurateripConfidence:
+            arConfidence != null ? Value(arConfidence) : const Value.absent(),
+        accurateripCrcV1:
+            arCrcV1 != null ? Value(arCrcV1) : const Value.absent(),
+        accurateripCrcV2:
+            arCrcV2 != null ? Value(arCrcV2) : const Value.absent(),
+        peakLevel: peakLevel != null ? Value(peakLevel) : const Value.absent(),
+        trackQuality:
+            trackQuality != null ? Value(trackQuality) : const Value.absent(),
+        copyCrc: copyCrc != null ? Value(copyCrc) : const Value.absent(),
+        clickCount:
+            clickCount != null ? Value(clickCount) : const Value.absent(),
+        ripLogSource:
+            ripLogSource != null ? Value(ripLogSource) : const Value.absent(),
+        qualityCheckedAt: qualityCheckedAt != null
+            ? Value(qualityCheckedAt)
+            : const Value.absent(),
       ),
     );
   }

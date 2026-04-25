@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:drift/drift.dart';
 import 'package:mymediascanner/data/local/database/app_database.dart';
 import 'package:mymediascanner/data/local/database/tables/loans_table.dart';
@@ -55,25 +57,50 @@ class LoansDao extends DatabaseAccessor<AppDatabase> with _$LoansDaoMixin {
   /// captured at stream-creation time and embedded in the SQL `WHERE`,
   /// so a loan that silently became overdue mid-session never appeared
   /// until some row mutated.
+  ///
+  /// The previous implementation merged source and ticks via
+  /// `asyncExpand` over an inner periodic generator, which never
+  /// completes — so subsequent source events queued forever and the
+  /// overdue list froze after first emission. We now drive both inputs
+  /// from a single controller so source updates and minute ticks each
+  /// trigger an emission against the latest cached row set.
   Stream<List<LoansTableData>> watchOverdueLoans() {
-    final source = (select(loansTable)
-          ..where((t) =>
-              t.returnedAt.isNull() &
-              t.deleted.equals(0) &
-              t.dueAt.isNotNull()))
-        .watch();
+    final controller = StreamController<List<LoansTableData>>();
+    StreamSubscription<List<LoansTableData>>? sub;
+    Timer? timer;
+    var latest = const <LoansTableData>[];
 
-    // Combine with a 60-second tick so passage of time alone causes
-    // re-emission. Start with an immediate tick so the first frame has
-    // the overdue set without waiting a minute.
-    final ticks =
-        Stream<void>.periodic(const Duration(seconds: 60)).cast<void>();
-    return source.asyncExpand((rows) async* {
-      yield _filterOverdue(rows);
-      await for (final _ in ticks) {
-        yield _filterOverdue(rows);
+    void emit() {
+      if (!controller.isClosed) {
+        controller.add(_filterOverdue(latest));
       }
-    });
+    }
+
+    controller.onListen = () {
+      sub = (select(loansTable)
+            ..where((t) =>
+                t.returnedAt.isNull() &
+                t.deleted.equals(0) &
+                t.dueAt.isNotNull()))
+          .watch()
+          .listen(
+        (rows) {
+          latest = rows;
+          emit();
+        },
+        onError: controller.addError,
+      );
+      timer = Timer.periodic(const Duration(seconds: 60), (_) => emit());
+    };
+
+    controller.onCancel = () async {
+      await sub?.cancel();
+      timer?.cancel();
+      sub = null;
+      timer = null;
+    };
+
+    return controller.stream;
   }
 
   static List<LoansTableData> _filterOverdue(List<LoansTableData> rows) {

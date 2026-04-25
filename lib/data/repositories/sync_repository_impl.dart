@@ -172,6 +172,17 @@ class SyncRepositoryImpl implements ISyncRepository {
         // re-flagged as dirty on the next push.
         merged['synced_at'] = DateTime.now().millisecondsSinceEpoch;
         await _mediaItemsDao.updateItem(_mapToCompanion(merged));
+
+        // If we had pending pushes for this row, their payload reflects
+        // the pre-pull local snapshot — pushing that would silently
+        // clobber whichever fields remote just contributed. Refresh the
+        // payload to the merged state so the next push is a no-op for
+        // remote-newer fields and only writes our local-newer fields.
+        await _syncLogDao.updatePendingPayload(
+          'media_item',
+          remoteId,
+          jsonEncode(merged),
+        );
       }
 
       // Auto-purge old sync log entries (30 days)
@@ -257,6 +268,15 @@ class SyncRepositoryImpl implements ISyncRepository {
       merged['synced_at'] = DateTime.now().millisecondsSinceEpoch;
 
       await _mediaItemsDao.updateItem(_mapToCompanion(merged));
+
+      // Same reasoning as in pullChanges: any pending push for this
+      // entity must now reflect the user-resolved merged state, not
+      // whatever pre-conflict snapshot the log was captured from.
+      await _syncLogDao.updatePendingPayload(
+        'media_item',
+        entityId,
+        jsonEncode(merged),
+      );
 
       // Log the resolution
       for (final res in entityResolutions) {

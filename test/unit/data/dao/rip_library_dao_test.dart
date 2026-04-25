@@ -538,5 +538,70 @@ void main() {
         expect(ids.length, 1);
       });
     });
+
+    group('updateTrackQuality preserves unspecified columns', () {
+      test(
+        'partial update of qualityCheckedAt does not clobber existing log-derived metrics',
+        () async {
+          // Regression test for the bug where every named arg was wrapped
+          // unconditionally in `Value(arg)` — passing `null` then meant
+          // "set to NULL" rather than "leave alone", so a follow-up
+          // partial update wiped previously-recorded peakLevel/clickCount/
+          // CRCs. The fix uses `Value.absent()` for null args.
+          final now = DateTime.now().millisecondsSinceEpoch;
+
+          await dao.insertAlbum(RipAlbumsTableCompanion(
+            id: const Value('rip-1'),
+            libraryPath: const Value('Artist/Album1'),
+            trackCount: const Value(1),
+            totalSizeBytes: const Value(50000000),
+            lastScannedAt: Value(now),
+            updatedAt: Value(now),
+          ));
+          await dao.insertTracks([
+            RipTracksTableCompanion(
+              id: const Value('track-1'),
+              ripAlbumId: const Value('rip-1'),
+              trackNumber: const Value(1),
+              filePath: const Value('/music/track1.flac'),
+              fileSizeBytes: const Value(50000000),
+              updatedAt: Value(now),
+            ),
+          ]);
+
+          // First call: log parser fills in quality metrics.
+          await dao.updateTrackQuality(
+            'track-1',
+            peakLevel: -0.123,
+            trackQuality: 99.7,
+            copyCrc: 'CAFEBABE',
+            ripLogSource: 'EAC',
+            arCrcV1: 'DEADBEEF',
+            arCrcV2: 'BEEFDEAD',
+          );
+
+          // Second call: AccurateRip path can't run, so only arStatus and
+          // qualityCheckedAt get set. The log-derived metrics from the
+          // first call must survive.
+          await dao.updateTrackQuality(
+            'track-1',
+            arStatus: 'not_checked',
+            qualityCheckedAt: now,
+          );
+
+          final tracks = await dao.getTracksForAlbum('rip-1');
+          final track = tracks.single;
+
+          expect(track.peakLevel, closeTo(-0.123, 1e-9));
+          expect(track.trackQuality, closeTo(99.7, 1e-9));
+          expect(track.copyCrc, 'CAFEBABE');
+          expect(track.ripLogSource, 'EAC');
+          expect(track.accurateripCrcV1, 'DEADBEEF');
+          expect(track.accurateripCrcV2, 'BEEFDEAD');
+          expect(track.accurateripStatus, 'not_checked');
+          expect(track.qualityCheckedAt, now);
+        },
+      );
+    });
   });
 }
