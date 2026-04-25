@@ -57,19 +57,24 @@ final shelfRepositoryProvider = Provider<IShelfRepository>((ref) {
 final metadataRepositoryProvider = Provider<IMetadataRepository>((ref) {
   final apiKeys = ref.watch(apiKeysProvider).value ?? {};
 
-  final tmdbKey = apiKeys['tmdb'];
-  final discogsKey = apiKeys['discogs'];
-  final upcKey = apiKeys['upcitemdb'];
-  final googleBooksKey = apiKeys['google_books'];
-  final tvdbKey = apiKeys['tvdb'];
-  final fanartKey = apiKeys['fanart'];
-  final twitchClientId = apiKeys['twitch_client_id'];
-  final twitchClientSecret = apiKeys['twitch_client_secret'];
+  // Normalise so that an empty/whitespace key is treated as unconfigured —
+  // otherwise a cleared field stored as '' would still spin up an
+  // authenticated client with empty credentials and trigger 401 storms.
+  String? key(String name) {
+    final value = apiKeys[name]?.trim();
+    return (value == null || value.isEmpty) ? null : value;
+  }
 
-  final igdbApi = (twitchClientId != null &&
-          twitchClientId.isNotEmpty &&
-          twitchClientSecret != null &&
-          twitchClientSecret.isNotEmpty)
+  final tmdbKey = key('tmdb');
+  final discogsKey = key('discogs');
+  final upcKey = key('upcitemdb');
+  final googleBooksKey = key('google_books');
+  final tvdbKey = key('tvdb');
+  final fanartKey = key('fanart');
+  final twitchClientId = key('twitch_client_id');
+  final twitchClientSecret = key('twitch_client_secret');
+
+  final igdbApi = (twitchClientId != null && twitchClientSecret != null)
       ? IgdbApi(
           tokenManager: IgdbTokenManager(
             clientId: twitchClientId,
@@ -155,9 +160,17 @@ final syncRepositoryProvider = Provider<ISyncRepository?>((ref) {
   final config = ref.watch(postgresConfigProvider).value;
   if (config == null) return null;
 
-  return SyncRepositoryImpl(
+  final client = PostgresSyncClient(config: config);
+  final repo = SyncRepositoryImpl(
     mediaItemsDao: ref.watch(mediaItemsDaoProvider),
     syncLogDao: ref.watch(syncLogDaoProvider),
-    syncClient: PostgresSyncClient(config: config),
+    syncClient: client,
   );
+
+  ref.onDispose(() async {
+    await repo.dispose();
+    await client.close();
+  });
+
+  return repo;
 });

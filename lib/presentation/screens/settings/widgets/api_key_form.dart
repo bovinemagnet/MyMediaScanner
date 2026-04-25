@@ -19,14 +19,13 @@ class _ApiKeyFormState extends ConsumerState<ApiKeyForm> {
   final _twitchClientIdController = TextEditingController();
   final _twitchClientSecretController = TextEditingController();
 
-  @override
-  void initState() {
-    super.initState();
-    _loadExisting();
-  }
+  /// True once the async secure-storage read has resolved and we have
+  /// populated the controllers. Used to gate saves so that hitting the
+  /// save icon while values are still loading can't overwrite a real
+  /// stored secret with an empty string.
+  bool _seeded = false;
 
-  void _loadExisting() {
-    final keys = ref.read(apiKeysProvider).value ?? {};
+  void _seedFrom(Map<String, String?> keys) {
     _tmdbController.text = keys['tmdb'] ?? '';
     _discogsController.text = keys['discogs'] ?? '';
     _upcController.text = keys['upcitemdb'] ?? '';
@@ -35,6 +34,7 @@ class _ApiKeyFormState extends ConsumerState<ApiKeyForm> {
     _fanartController.text = keys['fanart'] ?? '';
     _twitchClientIdController.text = keys['twitch_client_id'] ?? '';
     _twitchClientSecretController.text = keys['twitch_client_secret'] ?? '';
+    _seeded = true;
   }
 
   @override
@@ -52,6 +52,23 @@ class _ApiKeyFormState extends ConsumerState<ApiKeyForm> {
 
   @override
   Widget build(BuildContext context) {
+    final keysAsync = ref.watch(apiKeysProvider);
+
+    // Seed controllers exactly once, when the secure-storage read
+    // resolves. Reading from `ref.read(...).value` in initState misses
+    // late resolution and leaves the form empty, causing a hasty save
+    // to overwrite real keys with ''.
+    if (!_seeded) {
+      keysAsync.whenData(_seedFrom);
+    }
+
+    if (keysAsync.isLoading && !_seeded) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 24),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

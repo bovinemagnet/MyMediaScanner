@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -179,10 +180,16 @@ class MetadataConfirmScreen extends ConsumerWidget {
                   onSave: (edited) async {
                     final targetsWishlist =
                         scannerState.saveTarget == SaveTarget.wishlist;
-                    debugPrint(
-                      '[MMS-save] onSave start barcode=${edited.barcode}'
-                      ' title=${edited.title} target=${scannerState.saveTarget.name}',
-                    );
+                    // Avoid leaking the user's scanned barcode and title
+                    // into release logs — both are personal collection
+                    // data with no operational value in production.
+                    if (kDebugMode) {
+                      debugPrint(
+                        '[MMS-save] onSave start barcode=${edited.barcode}'
+                        ' title=${edited.title}'
+                        ' target=${scannerState.saveTarget.name}',
+                      );
+                    }
                     final repository = ref.read(mediaItemRepositoryProvider);
                     final proceed = await confirmSaveOrSkipIfDuplicate(
                       context: context,

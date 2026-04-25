@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
 import 'package:mymediascanner/core/services/camera/barcode_detector.dart';
@@ -129,7 +130,12 @@ class NativeCameraService implements CameraService {
       final xFile = await ctrl.takePicture();
       final result = await BarcodeDetector.detectFromFile(xFile.path);
       if (result != null) {
-        debugPrint('[scan] DECODED ${result.format} -> ${result.rawValue}');
+        // Don't log the raw barcode value in release builds — it's user
+        // media data and there's no need for it to land in device logs.
+        if (kDebugMode) {
+          debugPrint(
+              '[scan] DECODED ${result.format} (${result.rawValue.length} chars)');
+        }
         if (!_barcodeController.isClosed) {
           _barcodeController.add(result);
         }
