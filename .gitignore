@@ -54,6 +54,8 @@ app.*.map.json
 /android/app/release
 keys.txt
 .claude/
+.codex
+AGENTS.md
 devtools_options.yaml
 .worktrees/
 
