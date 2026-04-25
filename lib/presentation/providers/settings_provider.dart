@@ -183,49 +183,41 @@ class ApiKeysNotifier extends AsyncNotifier<Map<String, String?>> {
     };
   }
 
-  Future<void> setTmdbKey(String key) async {
-    await ref.read(secureStorageProvider).write(key: _tmdbKey, value: key);
+  /// Writes [value] under [storageKey], or deletes the entry when the
+  /// trimmed value is empty. Without the delete branch a cleared field
+  /// would persist as `''`, which the metadata provider previously
+  /// treated as configured and used to spin up authenticated clients
+  /// with empty credentials.
+  Future<void> _writeOrDelete(String storageKey, String value) async {
+    final trimmed = value.trim();
+    final storage = ref.read(secureStorageProvider);
+    if (trimmed.isEmpty) {
+      await storage.delete(key: storageKey);
+    } else {
+      await storage.write(key: storageKey, value: trimmed);
+    }
     ref.invalidateSelf();
   }
 
-  Future<void> setDiscogsKey(String key) async {
-    await ref.read(secureStorageProvider).write(key: _discogsKey, value: key);
-    ref.invalidateSelf();
-  }
+  Future<void> setTmdbKey(String key) => _writeOrDelete(_tmdbKey, key);
 
-  Future<void> setUpcitemdbKey(String key) async {
-    await ref.read(secureStorageProvider).write(
-        key: _upcitemdbKey, value: key);
-    ref.invalidateSelf();
-  }
+  Future<void> setDiscogsKey(String key) => _writeOrDelete(_discogsKey, key);
 
-  Future<void> setGoogleBooksKey(String key) async {
-    await ref.read(secureStorageProvider).write(
-        key: _googleBooksKey, value: key);
-    ref.invalidateSelf();
-  }
+  Future<void> setUpcitemdbKey(String key) =>
+      _writeOrDelete(_upcitemdbKey, key);
 
-  Future<void> setTvdbKey(String key) async {
-    await ref.read(secureStorageProvider).write(key: _tvdbKey, value: key);
-    ref.invalidateSelf();
-  }
+  Future<void> setGoogleBooksKey(String key) =>
+      _writeOrDelete(_googleBooksKey, key);
 
-  Future<void> setFanartKey(String key) async {
-    await ref.read(secureStorageProvider).write(key: _fanartKey, value: key);
-    ref.invalidateSelf();
-  }
+  Future<void> setTvdbKey(String key) => _writeOrDelete(_tvdbKey, key);
 
-  Future<void> setTwitchClientId(String key) async {
-    await ref.read(secureStorageProvider).write(
-        key: _twitchClientIdKey, value: key);
-    ref.invalidateSelf();
-  }
+  Future<void> setFanartKey(String key) => _writeOrDelete(_fanartKey, key);
 
-  Future<void> setTwitchClientSecret(String key) async {
-    await ref.read(secureStorageProvider).write(
-        key: _twitchClientSecretKey, value: key);
-    ref.invalidateSelf();
-  }
+  Future<void> setTwitchClientId(String key) =>
+      _writeOrDelete(_twitchClientIdKey, key);
+
+  Future<void> setTwitchClientSecret(String key) =>
+      _writeOrDelete(_twitchClientSecretKey, key);
 }
 
 final postgresConfigProvider =

@@ -22,14 +22,13 @@ class _PostgresConfigFormState extends ConsumerState<PostgresConfigForm> {
   bool _testing = false;
   String? _testResult;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadExisting();
-  }
+  /// True once the async secure-storage read has resolved and we have
+  /// populated the controllers. Saves and tests stay disabled until
+  /// then so a user clicking through a still-loading form can't blank
+  /// out a real stored password.
+  bool _seeded = false;
 
-  void _loadExisting() {
-    final config = ref.read(postgresConfigProvider).value;
+  void _seedFrom(PostgresConfig? config) {
     if (config != null) {
       _hostController.text = config.host;
       _portController.text = config.port.toString();
@@ -38,6 +37,7 @@ class _PostgresConfigFormState extends ConsumerState<PostgresConfigForm> {
       _passController.text = config.password;
       _requireTls = config.requireTls;
     }
+    _seeded = true;
   }
 
   Future<void> _save() async {
@@ -92,6 +92,19 @@ class _PostgresConfigFormState extends ConsumerState<PostgresConfigForm> {
 
   @override
   Widget build(BuildContext context) {
+    final configAsync = ref.watch(postgresConfigProvider);
+
+    if (!_seeded) {
+      configAsync.whenData(_seedFrom);
+    }
+
+    if (configAsync.isLoading && !_seeded) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('PostgreSQL Configuration')),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(title: const Text('PostgreSQL Configuration')),
       body: SingleChildScrollView(

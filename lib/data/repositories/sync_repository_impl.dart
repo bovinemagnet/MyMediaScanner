@@ -381,12 +381,27 @@ class SyncRepositoryImpl implements ISyncRepository {
       pricePaid: Value(data['price_paid'] as double?),
       acquiredAt: Value(data['acquired_at'] as int?),
       retailer: Value(data['retailer'] as String?),
+      locationId: Value(data['location_id'] as String?),
+      seriesId: Value(data['series_id'] as String?),
+      seriesPosition: Value(data['series_position'] as int?),
+      progressCurrent: Value(data['progress_current'] as int?),
+      progressTotal: Value(data['progress_total'] as int?),
+      progressUnit: Value(data['progress_unit'] as String?),
+      startedAt: Value(data['started_at'] as int?),
+      completedAt: Value(data['completed_at'] as int?),
+      consumed: Value(_resolveConsumed(data['consumed'])),
       dateAdded: Value(data['date_added'] as int? ?? 0),
       dateScanned: Value(data['date_scanned'] as int? ?? 0),
       updatedAt: Value(data['updated_at'] as int? ?? 0),
       syncedAt: Value(data['synced_at'] as int?),
       deleted: Value(data['deleted'] as int? ?? 0),
     );
+  }
+
+  int _resolveConsumed(Object? raw) {
+    if (raw is int) return raw == 0 ? 0 : 1;
+    if (raw is bool) return raw ? 1 : 0;
+    return 0;
   }
 
   SyncLogEntry _toSyncLogEntry(SyncLogTableData row) {
