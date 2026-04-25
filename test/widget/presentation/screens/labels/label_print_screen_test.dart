@@ -10,7 +10,6 @@ import 'package:mymediascanner/domain/entities/ownership_status.dart';
 import 'package:mymediascanner/domain/repositories/i_location_repository.dart';
 import 'package:mymediascanner/domain/repositories/i_media_item_repository.dart';
 import 'package:mymediascanner/presentation/providers/location_provider.dart';
-import 'package:mymediascanner/presentation/providers/recommendations_provider.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/screens/labels/label_print_screen.dart';
 
