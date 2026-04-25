@@ -34,6 +34,25 @@ class SyncLogDao extends DatabaseAccessor<AppDatabase>
     );
   }
 
+  /// Replace the payload of every pending (unsynced) log entry for
+  /// [entityType]/[entityId] with [payloadJson].
+  ///
+  /// Used after `pullChanges` has merged a remote row into a row that
+  /// also has local edits queued for push: the merged state — not the
+  /// pre-pull snapshot the log was originally captured from — is what
+  /// should land on the server when the pending push fires. Without
+  /// this refresh the next push silently overwrites whichever fields
+  /// remote just contributed.
+  Future<int> updatePendingPayload(
+      String entityType, String entityId, String payloadJson) {
+    return (update(syncLogTable)
+          ..where((t) =>
+              t.entityType.equals(entityType) &
+              t.entityId.equals(entityId) &
+              t.synced.equals(0)))
+        .write(SyncLogTableCompanion(payloadJson: Value(payloadJson)));
+  }
+
   Future<void> deleteAll() {
     return delete(syncLogTable).go();
   }

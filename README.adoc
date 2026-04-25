@@ -173,15 +173,25 @@ MusicBrainz, Cover Art Archive, Google Books, and Open Library require no API ke
 
 To sync across devices, set up a PostgreSQL instance and configure the connection in *Settings > PostgreSQL Configuration*.
 
-. Create the database and apply migrations:
+. Create the database and apply every migration in order. Each migration
+beyond `001` is an idempotent `ALTER TABLE` block, so you can safely
+re-run the whole list after adding a new server.
 +
 [source,bash]
 ----
 createdb mymediascanner
-psql mymediascanner -f lib/data/remote/sync/migrations/001_initial_schema.sql
-psql mymediascanner -f lib/data/remote/sync/migrations/002_lending_tables.sql
-psql mymediascanner -f lib/data/remote/sync/migrations/003_critic_scores.sql
+for f in lib/data/remote/sync/migrations/*.sql; do
+  psql mymediascanner -f "$f"
+done
 ----
++
+The migrations currently shipped are:
++
+- `001_initial_schema.sql` — `media_items`, `shelves`, `tags`, and join tables
+- `002_lending_tables.sql` — `borrowers` and `loans`
+- `003_critic_scores.sql` — `critic_score`, `critic_source`
+- `004_ownership_and_purchase.sql` — `ownership_status`, `condition`, `price_paid`, `acquired_at`, `retailer`
+- `005_locations_series_progress.sql` — `location_id`, `series_id`, `series_position`, `progress_*`, `started_at`, `completed_at`, `consumed`
 
 . In the app, go to *Settings > PostgreSQL Configuration*, enter your connection details, and tap *Test Connection*.
 

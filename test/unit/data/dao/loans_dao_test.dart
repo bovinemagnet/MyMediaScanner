@@ -109,5 +109,61 @@ void main() {
       active = await dao.watchActiveLoans().first;
       expect(active, isEmpty);
     });
+
+    test(
+      'watchOverdueLoans re-emits when a new loan is inserted after the first emission',
+      () async {
+        // Regression test for the bug where the overdue stream froze
+        // after first emission because asyncExpand wrapped an inner
+        // generator that never completed. Subsequent source events
+        // (a brand-new loan) were never observed by the stream.
+        await insertMediaItem('item-1');
+        await insertMediaItem('item-2');
+        await insertBorrower('borrower-1');
+
+        final now = DateTime.now().millisecondsSinceEpoch;
+        final pastDue = now - const Duration(days: 1).inMilliseconds;
+
+        // First overdue loan exists at subscription time.
+        await dao.insertLoan(LoansTableCompanion(
+          id: const Value('loan-1'),
+          mediaItemId: const Value('item-1'),
+          borrowerId: const Value('borrower-1'),
+          lentAt: Value(pastDue),
+          dueAt: Value(pastDue),
+          updatedAt: Value(now),
+        ));
+
+        final emissions = <List<int>>[];
+        final sub = dao.watchOverdueLoans().listen(
+          (rows) => emissions.add(rows.map((r) => r.dueAt!).toList()),
+        );
+
+        // Wait for first emission to land.
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+        expect(emissions, isNotEmpty,
+            reason: 'first emission should fire on subscribe');
+        expect(emissions.last.length, 1);
+
+        // Insert a second overdue loan — the source stream should fire
+        // and the merged stream should emit the new combined set.
+        await dao.insertLoan(LoansTableCompanion(
+          id: const Value('loan-2'),
+          mediaItemId: const Value('item-2'),
+          borrowerId: const Value('borrower-1'),
+          lentAt: Value(pastDue),
+          dueAt: Value(pastDue),
+          updatedAt: Value(now),
+        ));
+
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+        await sub.cancel();
+
+        expect(emissions.last.length, 2,
+            reason:
+                'second insert must reach the stream (the asyncExpand bug '
+                'previously kept the stream stuck at the first emission)');
+      },
+    );
   });
 }
