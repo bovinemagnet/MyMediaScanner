@@ -169,6 +169,10 @@ void main() {
       ProviderScope(
         overrides: [
           metadataRepositoryProvider.overrideWithValue(repo),
+          // _lookupOnline now awaits apiKeysProvider.future — without
+          // an override the real ApiKeysNotifier hits flutter_secure_storage,
+          // which never resolves under flutter_test.
+          apiKeysProvider.overrideWith(() => _EmptyApiKeysNotifier()),
         ],
         child: const MaterialApp(home: ManualAddScreen()),
       ),
@@ -208,6 +212,7 @@ void main() {
       ProviderScope(
         overrides: [
           metadataRepositoryProvider.overrideWithValue(repo),
+          apiKeysProvider.overrideWith(() => _EmptyApiKeysNotifier()),
         ],
         child: const MaterialApp(home: ManualAddScreen()),
       ),
