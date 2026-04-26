@@ -135,6 +135,20 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
     await _cameraService?.start();
   }
 
+  /// Fire-and-forget wrapper for [_resumeWebcamScanning] suitable for
+  /// the synchronous `ref.listen` callback. Surfaces any failure as a
+  /// SnackBar instead of letting it silently disappear into a dropped
+  /// future — the camera-restart path on Linux/Windows can throw if the
+  /// device is still releasing from the prior `stop()`.
+  void _resumeWebcamScanningSafely() {
+    unawaited(_resumeWebcamScanning().catchError((Object e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not restart webcam: $e')),
+      );
+    }));
+  }
+
   void _onSubmitted(String barcode) {
     if (barcode.trim().isEmpty) return;
     _controller.clear();
@@ -150,7 +164,7 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
         if (next.batchMode && next.result != null) {
           ref.read(scannerProvider.notifier).queueToBatch(next.result!);
           if (_webcamMode) {
-            _resumeWebcamScanning();
+            _resumeWebcamScanningSafely();
           } else {
             ref.read(scannerProvider.notifier).reset();
           }
@@ -162,7 +176,7 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
         if (next.batchMode && next.result != null) {
           ref.read(scannerProvider.notifier).queueToBatch(next.result!);
           if (_webcamMode) {
-            _resumeWebcamScanning();
+            _resumeWebcamScanningSafely();
           } else {
             ref.read(scannerProvider.notifier).reset();
           }
@@ -176,7 +190,7 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
         if (next.batchMode && next.result != null) {
           ref.read(scannerProvider.notifier).queueToBatch(next.result!);
           if (_webcamMode) {
-            _resumeWebcamScanning();
+            _resumeWebcamScanningSafely();
           } else {
             ref.read(scannerProvider.notifier).reset();
           }
@@ -194,7 +208,7 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
           );
         }
         if (_webcamMode) {
-          _resumeWebcamScanning();
+          _resumeWebcamScanningSafely();
         } else {
           ref.read(scannerProvider.notifier).reset();
         }
@@ -205,7 +219,7 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
           _focusNode.requestFocus();
         }
         if (_webcamMode && _hasScanned) {
-          _resumeWebcamScanning();
+          _resumeWebcamScanningSafely();
         }
       }
       if (next.state == ScanState.duplicate && _webcamMode) {
@@ -361,7 +375,7 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
           TextButton(
             onPressed: () {
               Navigator.of(dialogContext).pop();
-              _resumeWebcamScanning();
+              _resumeWebcamScanningSafely();
             },
             child: const Text('Scan again'),
           ),

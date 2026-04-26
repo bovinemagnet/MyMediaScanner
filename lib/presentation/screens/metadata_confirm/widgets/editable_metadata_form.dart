@@ -64,6 +64,15 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
   late List<String> _sourceApis;
   String? _resolution;
 
+  // Non-form metadata that an online lookup can refresh. Tracked as state
+  // so a user pressing "Search online" actually persists the fetched
+  // genres / critic data / IGDB extras on save — previously _buildEdited
+  // re-read these from widget.initial and discarded the lookup result.
+  late List<String> _genres;
+  double? _criticScore;
+  String? _criticSource;
+  late Map<String, dynamic> _extraMetadata;
+
   @override
   void initState() {
     super.initState();
@@ -86,7 +95,11 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
     _mediaType = widget.initial.mediaType ?? MediaType.unknown;
     _coverUrl = widget.initial.coverUrl;
     _sourceApis = List<String>.from(widget.initial.sourceApis);
-    final existingRes = widget.initial.extraMetadata['resolution'];
+    _genres = List<String>.from(widget.initial.genres);
+    _criticScore = widget.initial.criticScore;
+    _criticSource = widget.initial.criticSource;
+    _extraMetadata = Map<String, dynamic>.from(widget.initial.extraMetadata);
+    final existingRes = _extraMetadata['resolution'];
     _resolution = existingRes is String ? existingRes : null;
   }
 
@@ -165,8 +178,12 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
         _resolutionSuggestions(_mediaType, _formatController.text);
     final resolution =
         resSuggestions.contains(_resolution) ? _resolution : null;
-    final extra = Map<String, dynamic>.from(widget.initial.extraMetadata);
-    if (resolution != null) extra['resolution'] = resolution;
+    final extra = Map<String, dynamic>.from(_extraMetadata);
+    if (resolution != null) {
+      extra['resolution'] = resolution;
+    } else {
+      extra.remove('resolution');
+    }
     return widget.initial.copyWith(
       title: _titleController.text.isEmpty ? null : _titleController.text,
       subtitle: _subtitleController.text.isEmpty
@@ -183,6 +200,9 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
       mediaType: _mediaType,
       coverUrl: _coverUrl,
       sourceApis: _sourceApis,
+      genres: _genres,
+      criticScore: _criticScore,
+      criticSource: _criticSource,
       extraMetadata: extra,
     );
   }
@@ -283,19 +303,21 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
       return;
     }
 
-    final apiKeys = ref.read(apiKeysProvider).value ?? const {};
-    final missing = _missingApiMessage(_mediaType, apiKeys);
-    if (missing != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(missing)),
-      );
-      return;
-    }
-
+    // Wait for the secure-storage read to resolve before deciding which
+    // keys are missing — `.value` returns null while the AsyncNotifier is
+    // still loading, which previously caused a fresh-launch tap to show
+    // a misleading "TMDB API key required" even when keys were stored.
     final query = parts.join(' ');
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _lookingUp = true);
     try {
+      final apiKeys = await ref.read(apiKeysProvider.future);
+      if (!mounted) return;
+      final missing = _missingApiMessage(_mediaType, apiKeys);
+      if (missing != null) {
+        messenger.showSnackBar(SnackBar(content: Text(missing)));
+        return;
+      }
       final repo = ref.read(metadataRepositoryProvider);
       final result = await repo.searchByTitle(
         query,
@@ -460,6 +482,21 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
       }
       if (found.sourceApis.isNotEmpty) {
         _sourceApis = found.sourceApis;
+      }
+      if (found.genres.isNotEmpty) {
+        _genres = List<String>.from(found.genres);
+      }
+      if (found.criticScore != null) {
+        _criticScore = found.criticScore;
+      }
+      if (found.criticSource != null && found.criticSource!.isNotEmpty) {
+        _criticSource = found.criticSource;
+      }
+      // Merge extras: prefer the lookup's keys (igdb_id, developer,
+      // platforms, …) but keep anything we already had that the lookup
+      // doesn't speak to (e.g. user-picked resolution).
+      if (found.extraMetadata.isNotEmpty) {
+        _extraMetadata = {..._extraMetadata, ...found.extraMetadata};
       }
     });
   }

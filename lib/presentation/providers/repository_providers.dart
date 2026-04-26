@@ -156,21 +156,33 @@ final ripLibraryRepositoryProvider = Provider<IRipLibraryRepository>((ref) {
   );
 });
 
-final syncRepositoryProvider = Provider<ISyncRepository?>((ref) {
+/// Single long-lived [PostgresSyncClient] per Postgres configuration.
+///
+/// Both [syncRepositoryProvider] and connection-health pings read this
+/// provider so they share one cached connection. Previously the health
+/// notifier minted a fresh client per ping and `await close()`d it
+/// immediately — defeating the connection cache and paying a TLS
+/// handshake every minute.
+final postgresSyncClientProvider =
+    Provider<PostgresSyncClient?>((ref) {
   final config = ref.watch(postgresConfigProvider).value;
   if (config == null) return null;
-
   final client = PostgresSyncClient(config: config);
+  ref.onDispose(() async => client.close());
+  return client;
+});
+
+final syncRepositoryProvider = Provider<ISyncRepository?>((ref) {
+  final client = ref.watch(postgresSyncClientProvider);
+  if (client == null) return null;
+
   final repo = SyncRepositoryImpl(
     mediaItemsDao: ref.watch(mediaItemsDaoProvider),
     syncLogDao: ref.watch(syncLogDaoProvider),
     syncClient: client,
   );
 
-  ref.onDispose(() async {
-    await repo.dispose();
-    await client.close();
-  });
+  ref.onDispose(() async => repo.dispose());
 
   return repo;
 });

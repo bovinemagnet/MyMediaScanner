@@ -22,6 +22,7 @@ Response<Map<String, dynamic>> _tokenResponse({
 void main() {
   setUpAll(() {
     registerFallbackValue(RequestOptions(path: ''));
+    registerFallbackValue(Options());
   });
 
   late _MockDio dio;
@@ -36,28 +37,41 @@ void main() {
     );
   });
 
-  test('exchanges Client ID + Secret for a bearer token', () async {
-    when(() => dio.post<Map<String, dynamic>>(
-          '/oauth2/token',
-          queryParameters: any(named: 'queryParameters'),
-        )).thenAnswer((_) async => _tokenResponse(token: 'fresh-token'));
+  test(
+    'exchanges Client ID + Secret for a bearer token (credentials in body, not query string)',
+    () async {
+      when(() => dio.post<Map<String, dynamic>>(
+            '/oauth2/token',
+            data: any<Map<String, dynamic>>(named: 'data'),
+            options: any(named: 'options'),
+          )).thenAnswer((_) async => _tokenResponse(token: 'fresh-token'));
 
-    final token = await manager.getToken();
+      final token = await manager.getToken();
 
-    expect(token, 'fresh-token');
-    final captured = verify(() => dio.post<Map<String, dynamic>>(
-          '/oauth2/token',
-          queryParameters: captureAny(named: 'queryParameters'),
-        )).captured.single as Map<String, dynamic>;
-    expect(captured['client_id'], 'cid');
-    expect(captured['client_secret'], 'secret');
-    expect(captured['grant_type'], 'client_credentials');
-  });
+      expect(token, 'fresh-token');
+      final invocation = verify(() => dio.post<Map<String, dynamic>>(
+            '/oauth2/token',
+            data: captureAny<Map<String, dynamic>>(named: 'data'),
+            options: captureAny(named: 'options'),
+          )).captured;
+
+      final body = invocation[0] as Map<String, dynamic>;
+      expect(body['client_id'], 'cid');
+      expect(body['client_secret'], 'secret');
+      expect(body['grant_type'], 'client_credentials');
+
+      // Secret must travel in the body so it never reaches Twitch's
+      // edge proxies as part of the URL line.
+      final options = invocation[1] as Options;
+      expect(options.contentType, Headers.formUrlEncodedContentType);
+    },
+  );
 
   test('caches the token so subsequent calls skip the exchange', () async {
     when(() => dio.post<Map<String, dynamic>>(
           '/oauth2/token',
-          queryParameters: any(named: 'queryParameters'),
+          data: any<Map<String, dynamic>>(named: 'data'),
+          options: any(named: 'options'),
         )).thenAnswer((_) async => _tokenResponse(token: 'once-only'));
 
     await manager.getToken();
@@ -65,7 +79,8 @@ void main() {
 
     verify(() => dio.post<Map<String, dynamic>>(
           '/oauth2/token',
-          queryParameters: any(named: 'queryParameters'),
+          data: any<Map<String, dynamic>>(named: 'data'),
+          options: any(named: 'options'),
         )).called(1);
   });
 
@@ -73,7 +88,8 @@ void main() {
     var call = 0;
     when(() => dio.post<Map<String, dynamic>>(
           '/oauth2/token',
-          queryParameters: any(named: 'queryParameters'),
+          data: any<Map<String, dynamic>>(named: 'data'),
+          options: any(named: 'options'),
         )).thenAnswer((_) async {
       call += 1;
       return _tokenResponse(token: 'token-$call');
@@ -90,7 +106,8 @@ void main() {
   test('throws when Twitch returns no access_token', () async {
     when(() => dio.post<Map<String, dynamic>>(
           '/oauth2/token',
-          queryParameters: any(named: 'queryParameters'),
+          data: any<Map<String, dynamic>>(named: 'data'),
+          options: any(named: 'options'),
         )).thenAnswer((_) async => Response<Map<String, dynamic>>(
           requestOptions: RequestOptions(path: '/oauth2/token'),
           data: const {},
@@ -104,7 +121,8 @@ void main() {
     var calls = 0;
     when(() => dio.post<Map<String, dynamic>>(
           '/oauth2/token',
-          queryParameters: any(named: 'queryParameters'),
+          data: any<Map<String, dynamic>>(named: 'data'),
+          options: any(named: 'options'),
         )).thenAnswer((_) async {
       calls += 1;
       await Future<void>.delayed(const Duration(milliseconds: 10));

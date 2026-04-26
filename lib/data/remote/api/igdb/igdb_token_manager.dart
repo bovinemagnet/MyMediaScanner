@@ -53,13 +53,21 @@ class IgdbTokenManager {
 
   Future<String> _exchange() async {
     try {
+      // Send client_id / client_secret in the form-encoded body, not the
+      // URL query string. Twitch accepts either, but the query-string
+      // form leaves the secret in upstream proxy logs and Twitch's edge
+      // access logs — out of our control. Body form is the canonical
+      // OAuth2 client-credentials shape.
       final response = await _authDio.post<Map<String, dynamic>>(
         '/oauth2/token',
-        queryParameters: {
+        data: {
           'client_id': clientId,
           'client_secret': clientSecret,
           'grant_type': 'client_credentials',
         },
+        options: Options(
+          contentType: Headers.formUrlEncodedContentType,
+        ),
       );
 
       final dto = TwitchTokenDto.fromJson(response.data ?? {});

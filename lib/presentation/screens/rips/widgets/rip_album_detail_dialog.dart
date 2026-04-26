@@ -161,6 +161,15 @@ class _RipAlbumDetailDialogState extends ConsumerState<RipAlbumDetailDialog> {
   void _discard() {
     _artistController.text = widget.album.artist ?? '';
     _albumTitleController.text = widget.album.albumTitle ?? '';
+    // Dispose track-title controllers before clearing — `clear()` alone
+    // drops references and leaks the controllers, which still hold focus
+    // nodes and live `TextField` listeners. The State's own `dispose()`
+    // catches them on widget teardown but Discard is meant to be an
+    // in-place reset, so the leak persists for the lifetime of the
+    // dialog.
+    for (final c in _trackTitleControllers.values) {
+      c.dispose();
+    }
     _trackTitleControllers.clear();
     for (final c in _tagControllers.values) {
       c.dispose();
