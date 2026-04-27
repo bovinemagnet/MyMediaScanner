@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 import 'package:mymediascanner/data/local/dao/series_dao.dart';
+import 'package:mymediascanner/data/local/dao/sync_log_dao.dart';
 import 'package:mymediascanner/data/local/database/app_database.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/domain/entities/series.dart';
@@ -7,9 +10,14 @@ import 'package:mymediascanner/domain/repositories/i_series_repository.dart';
 import 'package:uuid/uuid.dart';
 
 class SeriesRepositoryImpl implements ISeriesRepository {
-  SeriesRepositoryImpl({required SeriesDao dao}) : _dao = dao;
+  SeriesRepositoryImpl({
+    required SeriesDao dao,
+    required SyncLogDao syncLogDao,
+  })  : _dao = dao,
+        _syncLogDao = syncLogDao;
 
   final SeriesDao _dao;
+  final SyncLogDao _syncLogDao;
   static const _uuid = Uuid();
 
   @override
@@ -61,8 +69,21 @@ class SeriesRepositoryImpl implements ISeriesRepository {
   }
 
   @override
-  Future<void> softDelete(String id) {
-    return _dao.softDelete(id, DateTime.now().millisecondsSinceEpoch);
+  Future<void> softDelete(String id) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await _dao.softDelete(id, now);
+    await _syncLogDao.insertLog(SyncLogTableCompanion(
+      id: Value(_uuid.v7()),
+      entityType: const Value('series'),
+      entityId: Value(id),
+      operation: const Value('delete'),
+      payloadJson: Value(jsonEncode({
+        'id': id,
+        'deleted': 1,
+        'updated_at': now,
+      })),
+      createdAt: Value(now),
+    ));
   }
 
   @override

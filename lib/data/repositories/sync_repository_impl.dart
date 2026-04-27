@@ -64,15 +64,22 @@ class SyncRepositoryImpl implements ISyncRepository {
           final decoded = jsonDecode(log.payloadJson);
           if (decoded is! Map<String, dynamic>) continue;
           await _syncClient.upsertRecords('${log.entityType}s', [decoded]);
-          await _syncLogDao.markSynced(log.id);
-          pushedIds.add(log.entityId);
           stopwatch.stop();
-          await _syncLogDao.updateLogResult(
-            log.id,
-            durationMs: stopwatch.elapsedMilliseconds,
-            direction: 'push',
-            resolvedBy: 'auto',
-          );
+          // Network IO sits outside the transaction so the SQLite write
+          // lock isn't held for the round-trip. Once the upsert is
+          // confirmed, atomically mark the log entry synced and stamp its
+          // result metadata so a crash between can't leave the row pushed
+          // remotely while the local log says pending.
+          await _syncLogDao.transaction(() async {
+            await _syncLogDao.markSynced(log.id);
+            await _syncLogDao.updateLogResult(
+              log.id,
+              durationMs: stopwatch.elapsedMilliseconds,
+              direction: 'push',
+              resolvedBy: 'auto',
+            );
+          });
+          pushedIds.add(log.entityId);
         } on Exception catch (e) {
           stopwatch.stop();
           await _syncLogDao.updateLogResult(
@@ -171,18 +178,20 @@ class SyncRepositoryImpl implements ISyncRepository {
         // Stamp synced_at on the merged row so the pulled state isn't
         // re-flagged as dirty on the next push.
         merged['synced_at'] = DateTime.now().millisecondsSinceEpoch;
-        await _mediaItemsDao.updateItem(_mapToCompanion(merged));
 
-        // If we had pending pushes for this row, their payload reflects
-        // the pre-pull local snapshot — pushing that would silently
-        // clobber whichever fields remote just contributed. Refresh the
-        // payload to the merged state so the next push is a no-op for
-        // remote-newer fields and only writes our local-newer fields.
-        await _syncLogDao.updatePendingPayload(
-          'media_item',
-          remoteId,
-          jsonEncode(merged),
-        );
+        // Atomic: write the merged row AND refresh any pending push payload
+        // together. If we updated the local row but crashed before
+        // refreshing the pending payload, the next push would replay the
+        // pre-pull snapshot and silently clobber whichever fields remote
+        // just contributed.
+        await _mediaItemsDao.transaction(() async {
+          await _mediaItemsDao.updateItem(_mapToCompanion(merged));
+          await _syncLogDao.updatePendingPayload(
+            'media_item',
+            remoteId,
+            jsonEncode(merged),
+          );
+        });
       }
 
       // Auto-purge old sync log entries (30 days)
@@ -267,38 +276,42 @@ class SyncRepositoryImpl implements ISyncRepository {
       );
       merged['synced_at'] = DateTime.now().millisecondsSinceEpoch;
 
-      await _mediaItemsDao.updateItem(_mapToCompanion(merged));
+      // Atomic: persist the user-resolved merge, refresh the pending
+      // push payload, AND record the resolution audit log together. A
+      // crash between any pair would leave a half-resolved conflict —
+      // e.g. row updated but pending payload still showing the pre-merge
+      // snapshot, or audit log claiming a resolution that the row never
+      // received.
+      await _mediaItemsDao.transaction(() async {
+        await _mediaItemsDao.updateItem(_mapToCompanion(merged));
 
-      // Same reasoning as in pullChanges: any pending push for this
-      // entity must now reflect the user-resolved merged state, not
-      // whatever pre-conflict snapshot the log was captured from.
-      await _syncLogDao.updatePendingPayload(
-        'media_item',
-        entityId,
-        jsonEncode(merged),
-      );
-
-      // Log the resolution
-      for (final res in entityResolutions) {
-        final logId =
-            '${res.entityId}_${res.fieldName}_${DateTime.now().millisecondsSinceEpoch}';
-        await _syncLogDao.insertLog(
-          SyncLogTableCompanion.insert(
-            id: logId,
-            entityType: res.entityType,
-            entityId: res.entityId,
-            operation: 'conflict_resolution',
-            payloadJson: jsonEncode({
-              'fieldName': res.fieldName,
-              'resolution': res.resolution.name,
-            }),
-            createdAt: DateTime.now().millisecondsSinceEpoch,
-            synced: const Value(1),
-            direction: const Value('pull'),
-            resolvedBy: const Value('user'),
-          ),
+        await _syncLogDao.updatePendingPayload(
+          'media_item',
+          entityId,
+          jsonEncode(merged),
         );
-      }
+
+        for (final res in entityResolutions) {
+          final logId =
+              '${res.entityId}_${res.fieldName}_${DateTime.now().millisecondsSinceEpoch}';
+          await _syncLogDao.insertLog(
+            SyncLogTableCompanion.insert(
+              id: logId,
+              entityType: res.entityType,
+              entityId: res.entityId,
+              operation: 'conflict_resolution',
+              payloadJson: jsonEncode({
+                'fieldName': res.fieldName,
+                'resolution': res.resolution.name,
+              }),
+              createdAt: DateTime.now().millisecondsSinceEpoch,
+              synced: const Value(1),
+              direction: const Value('pull'),
+              resolvedBy: const Value('user'),
+            ),
+          );
+        }
+      });
     }
 
     // Clear resolved conflicts

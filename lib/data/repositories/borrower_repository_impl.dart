@@ -1,14 +1,23 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 import 'package:mymediascanner/data/local/dao/borrowers_dao.dart';
+import 'package:mymediascanner/data/local/dao/sync_log_dao.dart';
 import 'package:mymediascanner/data/local/database/app_database.dart';
 import 'package:mymediascanner/domain/entities/borrower.dart';
 import 'package:mymediascanner/domain/repositories/i_borrower_repository.dart';
+import 'package:uuid/uuid.dart';
 
 class BorrowerRepositoryImpl implements IBorrowerRepository {
-  BorrowerRepositoryImpl({required BorrowersDao borrowersDao})
-      : _borrowersDao = borrowersDao;
+  BorrowerRepositoryImpl({
+    required BorrowersDao borrowersDao,
+    required SyncLogDao syncLogDao,
+  })  : _borrowersDao = borrowersDao,
+        _syncLogDao = syncLogDao;
 
   final BorrowersDao _borrowersDao;
+  final SyncLogDao _syncLogDao;
+  static const _uuid = Uuid();
 
   @override
   Stream<List<Borrower>> watchAll() {
@@ -58,6 +67,22 @@ class BorrowerRepositoryImpl implements IBorrowerRepository {
   Future<void> softDelete(String id) async {
     final now = DateTime.now().millisecondsSinceEpoch;
     await _borrowersDao.softDelete(id, now);
+    // Mirror the media-item soft-delete pattern: enqueue a sync_log row so a
+    // remote pull (or a future cross-entity pull) can replicate the deletion.
+    // Without this the row stays at deleted=1 locally forever and the remote
+    // copy never learns it was retired.
+    await _syncLogDao.insertLog(SyncLogTableCompanion(
+      id: Value(_uuid.v7()),
+      entityType: const Value('borrower'),
+      entityId: Value(id),
+      operation: const Value('delete'),
+      payloadJson: Value(jsonEncode({
+        'id': id,
+        'deleted': 1,
+        'updated_at': now,
+      })),
+      createdAt: Value(now),
+    ));
   }
 
   Borrower _fromRow(BorrowersTableData row) => Borrower(

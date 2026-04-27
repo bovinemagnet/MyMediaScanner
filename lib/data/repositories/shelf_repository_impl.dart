@@ -1,14 +1,23 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 import 'package:mymediascanner/data/local/dao/shelves_dao.dart';
+import 'package:mymediascanner/data/local/dao/sync_log_dao.dart';
 import 'package:mymediascanner/data/local/database/app_database.dart';
 import 'package:mymediascanner/domain/entities/shelf.dart';
 import 'package:mymediascanner/domain/repositories/i_shelf_repository.dart';
+import 'package:uuid/uuid.dart';
 
 class ShelfRepositoryImpl implements IShelfRepository {
-  ShelfRepositoryImpl({required ShelvesDao shelvesDao})
-      : _shelvesDao = shelvesDao;
+  ShelfRepositoryImpl({
+    required ShelvesDao shelvesDao,
+    required SyncLogDao syncLogDao,
+  })  : _shelvesDao = shelvesDao,
+        _syncLogDao = syncLogDao;
 
   final ShelvesDao _shelvesDao;
+  final SyncLogDao _syncLogDao;
+  static const _uuid = Uuid();
 
   @override
   Stream<List<Shelf>> watchAll() {
@@ -44,6 +53,18 @@ class ShelfRepositoryImpl implements IShelfRepository {
   Future<void> softDelete(String id) async {
     final now = DateTime.now().millisecondsSinceEpoch;
     await _shelvesDao.softDelete(id, now);
+    await _syncLogDao.insertLog(SyncLogTableCompanion(
+      id: Value(_uuid.v7()),
+      entityType: const Value('shelf'),
+      entityId: Value(id),
+      operation: const Value('delete'),
+      payloadJson: Value(jsonEncode({
+        'id': id,
+        'deleted': 1,
+        'updated_at': now,
+      })),
+      createdAt: Value(now),
+    ));
   }
 
   @override
@@ -59,9 +80,8 @@ class ShelfRepositoryImpl implements IShelfRepository {
       _shelvesDao.getMediaItemIdsForShelf(shelfId);
 
   @override
-  Future<void> reorderItem(
-      String shelfId, String mediaItemId, int newPosition) =>
-      _shelvesDao.addItem(shelfId, mediaItemId, newPosition);
+  Future<void> reorderItems(String shelfId, List<String> orderedMediaItemIds) =>
+      _shelvesDao.reorderItems(shelfId, orderedMediaItemIds);
 
   Shelf _fromRow(ShelvesTableData row) => Shelf(
         id: row.id,

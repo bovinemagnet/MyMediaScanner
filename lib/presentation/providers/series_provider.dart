@@ -9,7 +9,10 @@ import 'package:mymediascanner/presentation/providers/database_provider.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 
 final seriesRepositoryProvider = Provider<ISeriesRepository>((ref) {
-  return SeriesRepositoryImpl(dao: ref.watch(seriesDaoProvider));
+  return SeriesRepositoryImpl(
+    dao: ref.watch(seriesDaoProvider),
+    syncLogDao: ref.watch(syncLogDaoProvider),
+  );
 });
 
 final allSeriesProvider = StreamProvider<List<SeriesWithCounts>>((ref) {

@@ -1,6 +1,7 @@
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mymediascanner/data/local/database/app_database.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
 import 'package:mymediascanner/domain/entities/rip_track.dart';
 import 'package:mymediascanner/presentation/providers/audio_player_provider.dart';
@@ -248,13 +249,23 @@ class _RipTableViewState extends ConsumerState<RipTableView> {
       _showSnack('No tracks loaded for this album yet');
       return;
     }
-    final playlists = ref.read(allPlaylistsProvider).value;
-    if (playlists == null || playlists.isEmpty) {
+    // Await the future rather than reading `.value`; on cold-launch the
+    // provider is still loading and `.value` is null, which would surface
+    // as a misleading "No playlists found" snackbar even when the user
+    // has playlists.
+    final List<PlaylistsTableData> playlists;
+    try {
+      playlists = await ref.read(allPlaylistsProvider.future);
+    } on Object catch (e) {
+      if (mounted) _showSnack('Failed to load playlists: $e');
+      return;
+    }
+    if (!mounted) return;
+    if (playlists.isEmpty) {
       _showSnack('No playlists found. Create a playlist first.');
       return;
     }
 
-    if (!mounted) return;
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => SimpleDialog(

@@ -51,6 +51,7 @@ final tagRepositoryProvider = Provider<ITagRepository>((ref) {
 final shelfRepositoryProvider = Provider<IShelfRepository>((ref) {
   return ShelfRepositoryImpl(
     shelvesDao: ref.watch(shelvesDaoProvider),
+    syncLogDao: ref.watch(syncLogDaoProvider),
   );
 });
 
@@ -141,6 +142,7 @@ final metadataRepositoryProvider = Provider<IMetadataRepository>((ref) {
 final borrowerRepositoryProvider = Provider<IBorrowerRepository>((ref) {
   return BorrowerRepositoryImpl(
     borrowersDao: ref.watch(borrowersDaoProvider),
+    syncLogDao: ref.watch(syncLogDaoProvider),
   );
 });
 

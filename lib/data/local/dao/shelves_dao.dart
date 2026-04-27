@@ -66,4 +66,28 @@ class ShelvesDao extends DatabaseAccessor<AppDatabase>
         .get();
     return rows.map((r) => r.mediaItemId).toList();
   }
+
+  /// Atomically rewrite the ordering of items on [shelfId]. Deletes every
+  /// existing shelf_items row for the shelf and re-inserts them at indices
+  /// 0..N-1 so positions are dense and unique. The previous single-row
+  /// `addItem` reorder produced position collisions on any move.
+  Future<void> reorderItems(
+    String shelfId,
+    List<String> orderedMediaItemIds,
+  ) async {
+    await transaction(() async {
+      await (delete(shelfItemsTable)
+            ..where((t) => t.shelfId.equals(shelfId)))
+          .go();
+      for (var i = 0; i < orderedMediaItemIds.length; i++) {
+        await into(shelfItemsTable).insert(
+          ShelfItemsTableCompanion(
+            shelfId: Value(shelfId),
+            mediaItemId: Value(orderedMediaItemIds[i]),
+            position: Value(i),
+          ),
+        );
+      }
+    });
+  }
 }

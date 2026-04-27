@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/data/local/database/app_database.dart';
 import 'package:mymediascanner/domain/entities/queue_item.dart';
+import 'package:mymediascanner/domain/entities/rip_album.dart';
 import 'package:mymediascanner/domain/entities/rip_track.dart';
 import 'package:mymediascanner/presentation/providers/audio_player_provider.dart';
 import 'package:mymediascanner/presentation/providers/playlist_provider.dart';
@@ -240,8 +241,20 @@ class _PlaylistDetailContent extends ConsumerWidget {
                     // Build QueueItems using the pre-resolved ripTrackLookup.
                     // RipTracksTableData is converted to domain RipTrack inline
                     // so QueueItem receives the expected type.
-                    final albums =
-                        ref.read(allRipAlbumsProvider).value ?? [];
+                    //
+                    // Await the future rather than reading `.value`; on cold
+                    // launch (or right after a refresh) the albums provider
+                    // is still loading and `.value` is null, so the prior
+                    // `?? []` made the lookup-by-album-id below produce an
+                    // empty queue and the Play All button silently no-op'd.
+                    final List<RipAlbum> albums;
+                    try {
+                      albums = await ref.read(allRipAlbumsProvider.future);
+                    } on Object {
+                      // Provider error path — bail rather than play an empty
+                      // queue.
+                      return;
+                    }
                     final albumById = {for (final a in albums) a.id: a};
 
                     final items = tracks.map((pt) {

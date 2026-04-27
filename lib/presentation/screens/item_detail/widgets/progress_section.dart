@@ -167,6 +167,10 @@ Future<void> _showUpdateDialog(
       ],
     ),
   );
+  // Defer disposal to the next frame so the dialog's exit animation can
+  // read the controller one last time without hitting a
+  // disposed-controller assertion.
+  WidgetsBinding.instance.addPostFrameCallback((_) => controller.dispose());
   if (result == null) return;
   await ref.read(updateProgressUseCaseProvider).updateCurrent(item, result);
 }

@@ -163,7 +163,6 @@ class _BorrowersScreenState extends ConsumerState<BorrowersScreen> {
     final nameController = TextEditingController();
     final emailController = TextEditingController();
     final phoneController = TextEditingController();
-
     await showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
@@ -221,6 +220,20 @@ class _BorrowersScreenState extends ConsumerState<BorrowersScreen> {
         ],
       ),
     );
+    // Disposal is deferred to the next frame so the dialog's exit
+    // animation can read the controllers one last time without hitting a
+    // disposed-controller assertion. Without this, three controllers
+    // leak per invocation for the lifetime of the screen.
+    _disposeAfterFrame(
+        [nameController, emailController, phoneController]);
+  }
+
+  void _disposeAfterFrame(List<TextEditingController> controllers) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      for (final c in controllers) {
+        c.dispose();
+      }
+    });
   }
 
   Future<void> _deleteBorrower(String id) async {

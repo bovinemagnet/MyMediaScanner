@@ -60,5 +60,66 @@ void main() {
         expect(BarcodeUtils.isIsbn('5051892002172'), isFalse);
       });
     });
+
+    // ----------------------------------------------------------------------
+    // Cluster-3 MED-2: cache key normalisation
+    //
+    // Without normalisation, the same physical product captured in two
+    // different shapes produces two cache rows and the second scan misses
+    // the cache, re-hitting the upstream API.
+    // ----------------------------------------------------------------------
+    group('normaliseForCache', () {
+      test('strips ISBN-10 hyphens', () {
+        expect(
+          BarcodeUtils.normaliseForCache('0-1234-56789'),
+          '0123456789',
+        );
+      });
+
+      test('strips ISBN-13 hyphens and whitespace', () {
+        expect(
+          BarcodeUtils.normaliseForCache('978-0-141 03614-4'),
+          '9780141036144',
+        );
+      });
+
+      test(
+          'pads UPC-A leading zero when scanner drops it (11 digit input)',
+          () {
+        expect(
+          BarcodeUtils.normaliseForCache('12345678905'),
+          '012345678905',
+        );
+      });
+
+      test('uppercases IMDb id so case variations collide', () {
+        expect(
+          BarcodeUtils.normaliseForCache('tt0133093'),
+          'TT0133093',
+        );
+        expect(
+          BarcodeUtils.normaliseForCache('TT0133093'),
+          'TT0133093',
+        );
+      });
+
+      test('does not pad 12-digit UPC-A or 13-digit EAN-13', () {
+        expect(
+          BarcodeUtils.normaliseForCache('012345678905'),
+          '012345678905',
+        );
+        expect(
+          BarcodeUtils.normaliseForCache('5051892002172'),
+          '5051892002172',
+        );
+      });
+
+      test('idempotent — second normalise is a no-op', () {
+        const raw = '978-0-141-03614-4';
+        final once = BarcodeUtils.normaliseForCache(raw);
+        final twice = BarcodeUtils.normaliseForCache(once);
+        expect(twice, once);
+      });
+    });
   });
 }

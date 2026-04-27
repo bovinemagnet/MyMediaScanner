@@ -8,5 +8,9 @@ abstract interface class IShelfRepository {
   Future<void> addItem(String shelfId, String mediaItemId, int position);
   Future<void> removeItem(String shelfId, String mediaItemId);
   Future<List<String>> getMediaItemIdsForShelf(String shelfId);
-  Future<void> reorderItem(String shelfId, String mediaItemId, int newPosition);
+  /// Replace the full ordering of items in [shelfId] with
+  /// [orderedMediaItemIds]. The implementation rewrites every shelf item's
+  /// position atomically — passing a partial list will drop the omitted items
+  /// from the shelf, so callers must always supply the complete sequence.
+  Future<void> reorderItems(String shelfId, List<String> orderedMediaItemIds);
 }

@@ -41,4 +41,28 @@ abstract final class BarcodeUtils {
   /// Returns true if the input is an IMDb title ID.
   static bool isImdbId(String input) =>
       detectBarcodeType(input) == BarcodeType.imdbId;
+
+  /// Canonicalise a barcode for use as a cache key.
+  ///
+  /// Normalises so the same physical product produces the same key
+  /// regardless of how it was captured. Without this, scanning a book as
+  /// `0-1234-56789-7` (hyphenated ISBN) and again as `0123456789` (clean)
+  /// produces two cache rows and the second scan re-hits the API.
+  ///
+  /// Rules:
+  /// - Trim and uppercase (`tt0133093` and `TT0133093` collide).
+  /// - Strip all whitespace and dashes (`978-0-141 03615-9` →
+  ///   `9780141036159`).
+  /// - If the result is 11 digits and starts with a digit, treat as a
+  ///   UPC-A whose leading zero was dropped by the scanner and re-pad
+  ///   to 12 digits.
+  /// - Otherwise return as-is.
+  static String normaliseForCache(String raw) {
+    final stripped =
+        raw.trim().toUpperCase().replaceAll(RegExp(r'[\s-]'), '');
+    if (stripped.length == 11 && RegExp(r'^\d{11}$').hasMatch(stripped)) {
+      return '0$stripped';
+    }
+    return stripped;
+  }
 }
