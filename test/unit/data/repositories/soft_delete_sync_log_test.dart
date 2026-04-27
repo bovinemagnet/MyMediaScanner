@@ -35,12 +35,18 @@ void main() {
     required String entityId,
   }) async {
     final pending = await db.syncLogDao.getPending();
+    // Match the delete log specifically — cluster-4 added save/update
+    // logging, so a save-then-softDelete sequence yields multiple entries
+    // for the same (entityType, entityId) and the first one is the
+    // pre-delete insert.
     final match = pending.firstWhere(
-      (r) => r.entityType == entityType && r.entityId == entityId,
+      (r) =>
+          r.entityType == entityType &&
+          r.entityId == entityId &&
+          r.operation == 'delete',
       orElse: () => throw TestFailure(
-          'No pending sync_log entry for $entityType/$entityId'),
+          'No pending delete sync_log entry for $entityType/$entityId'),
     );
-    expect(match.operation, 'delete');
     final payload = jsonDecode(match.payloadJson) as Map<String, dynamic>;
     expect(payload['id'], entityId);
     expect(payload['deleted'], 1);

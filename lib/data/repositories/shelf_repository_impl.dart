@@ -44,8 +44,10 @@ class ShelfRepositoryImpl implements IShelfRepository {
     final existing = await _shelvesDao.getById(shelf.id);
     if (existing != null) {
       await _shelvesDao.updateShelf(companion);
+      await _logSync(shelf, 'update');
     } else {
       await _shelvesDao.insertShelf(companion);
+      await _logSync(shelf, 'insert');
     }
   }
 
@@ -82,6 +84,27 @@ class ShelfRepositoryImpl implements IShelfRepository {
   @override
   Future<void> reorderItems(String shelfId, List<String> orderedMediaItemIds) =>
       _shelvesDao.reorderItems(shelfId, orderedMediaItemIds);
+
+  /// Enqueue a `sync_log` row carrying a full snake_case snapshot of
+  /// [shelf]. Push uses the payload keys to derive the upsert column
+  /// list, so the snapshot must include every sync-relevant field.
+  Future<void> _logSync(Shelf shelf, String operation) {
+    return _syncLogDao.insertLog(SyncLogTableCompanion(
+      id: Value(_uuid.v7()),
+      entityType: const Value('shelf'),
+      entityId: Value(shelf.id),
+      operation: Value(operation),
+      payloadJson: Value(jsonEncode({
+        'id': shelf.id,
+        'name': shelf.name,
+        'description': shelf.description,
+        'sort_order': shelf.sortOrder,
+        'updated_at': shelf.updatedAt,
+        'deleted': 0,
+      })),
+      createdAt: Value(DateTime.now().millisecondsSinceEpoch),
+    ));
+  }
 
   Shelf _fromRow(ShelvesTableData row) => Shelf(
         id: row.id,

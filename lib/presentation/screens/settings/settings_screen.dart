@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mymediascanner/core/services/audio/replay_gain_service.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
+import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
 import 'package:mymediascanner/presentation/providers/replay_gain_provider.dart';
 import 'package:mymediascanner/presentation/screens/settings/widgets/api_key_form.dart';
@@ -237,9 +238,27 @@ class SettingsScreen extends ConsumerWidget {
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(ctx).colorScheme.error,
             ),
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              // Trigger full re-sync SYNC-09
+              final messenger = ScaffoldMessenger.of(context);
+              final repo = ref.read(syncRepositoryProvider);
+              if (repo == null) {
+                messenger.showSnackBar(const SnackBar(
+                  content:
+                      Text('Configure PostgreSQL first to reset.'),
+                ));
+                return;
+              }
+              try {
+                await repo.resetLocalDatabase();
+                messenger.showSnackBar(const SnackBar(
+                  content: Text('Local data replaced with remote.'),
+                ));
+              } on Exception catch (e) {
+                messenger.showSnackBar(SnackBar(
+                  content: Text('Reset failed: $e'),
+                ));
+              }
             },
             child: const Text('Reset'),
           ),

@@ -45,22 +45,28 @@ class BorrowerRepositoryImpl implements IBorrowerRepository {
     );
     if (existing != null) {
       await _borrowersDao.updateBorrower(companion);
+      await _logSync(borrower, 'update');
     } else {
       await _borrowersDao.insertBorrower(companion);
+      await _logSync(borrower, 'insert');
     }
   }
 
   @override
   Future<void> update(Borrower borrower) async {
+    final updated = borrower.copyWith(
+      updatedAt: DateTime.now().millisecondsSinceEpoch,
+    );
     final companion = BorrowersTableCompanion(
-      id: Value(borrower.id),
-      name: Value(borrower.name),
-      email: Value(borrower.email),
-      phone: Value(borrower.phone),
-      notes: Value(borrower.notes),
-      updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+      id: Value(updated.id),
+      name: Value(updated.name),
+      email: Value(updated.email),
+      phone: Value(updated.phone),
+      notes: Value(updated.notes),
+      updatedAt: Value(updated.updatedAt),
     );
     await _borrowersDao.updateBorrower(companion);
+    await _logSync(updated, 'update');
   }
 
   @override
@@ -82,6 +88,28 @@ class BorrowerRepositoryImpl implements IBorrowerRepository {
         'updated_at': now,
       })),
       createdAt: Value(now),
+    ));
+  }
+
+  /// Enqueue a `sync_log` row carrying a full snake_case snapshot of
+  /// [borrower]. Push uses the payload keys to derive the upsert column
+  /// list, so the snapshot must include every sync-relevant field.
+  Future<void> _logSync(Borrower borrower, String operation) {
+    return _syncLogDao.insertLog(SyncLogTableCompanion(
+      id: Value(_uuid.v7()),
+      entityType: const Value('borrower'),
+      entityId: Value(borrower.id),
+      operation: Value(operation),
+      payloadJson: Value(jsonEncode({
+        'id': borrower.id,
+        'name': borrower.name,
+        'email': borrower.email,
+        'phone': borrower.phone,
+        'notes': borrower.notes,
+        'updated_at': borrower.updatedAt,
+        'deleted': borrower.deleted ? 1 : 0,
+      })),
+      createdAt: Value(DateTime.now().millisecondsSinceEpoch),
     ));
   }
 

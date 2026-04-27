@@ -223,6 +223,22 @@ class SyncRepositoryImpl implements ISyncRepository {
   Future<void> resetLocalDatabase() async {
     await _emitStatus(isSyncing: true);
     try {
+      // Honour the dialog promise: "replace all local data with data
+      // from your PostgreSQL server". Wipe local media_items, drop
+      // every sync_log entry (any pending pushes for now-deleted rows
+      // would fail anyway), and clear the last-synced timestamp so the
+      // following pullChanges performs a full pull rather than an
+      // incremental one. The prior implementation was an incremental
+      // pull only — it kept stale local rows the remote no longer
+      // had, kept pending pushes that the user had just chosen to
+      // discard, and didn't refetch anything modified before
+      // lastSyncedAt.
+      await _mediaItemsDao.deleteAll();
+      await _syncLogDao.deleteAll();
+      _pendingConflicts.clear();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_lastSyncedAtKey);
+
       await pullChanges();
       await _emitStatus(isSyncing: false);
     } on Exception catch (e) {
@@ -232,7 +248,18 @@ class SyncRepositoryImpl implements ISyncRepository {
   }
 
   @override
-  Stream<SyncStatus> watchSyncStatus() => _statusController.stream;
+  Stream<SyncStatus> watchSyncStatus() async* {
+    // Emit a current snapshot first so subscribers (most commonly the
+    // syncStatusProvider StreamProvider) leave the loading state
+    // immediately. The underlying controller is a non-replaying broadcast
+    // stream — without this seed, the UI sat on "Checking sync
+    // status..." until the first push/pull event, which on a fresh
+    // launch with no pending work would never arrive.
+    yield await _computeStatus(
+      conflictCount: _pendingConflicts.length,
+    );
+    yield* _statusController.stream;
+  }
 
   @override
   Stream<SyncProgress> watchSyncProgress() => _progressController.stream;
@@ -340,6 +367,12 @@ class SyncRepositoryImpl implements ISyncRepository {
     await _syncLogDao.purgeOlderThan(olderThanEpochMs);
   }
 
+  @override
+  Future<void> clearSyncHistory() async {
+    await _syncLogDao.deleteAll();
+    await _emitStatus();
+  }
+
   /// Closes the status/progress broadcast controllers so a subsequent
   /// repository rebuild (e.g. via Riverpod invalidation) doesn't leak
   /// listeners on the old instance.
@@ -353,15 +386,27 @@ class SyncRepositoryImpl implements ISyncRepository {
     String? error,
     int conflictCount = 0,
   }) async {
+    _statusController.add(await _computeStatus(
+      isSyncing: isSyncing,
+      error: error,
+      conflictCount: conflictCount,
+    ));
+  }
+
+  Future<SyncStatus> _computeStatus({
+    bool isSyncing = false,
+    String? error,
+    int conflictCount = 0,
+  }) async {
     final pendingLogs = await _syncLogDao.getPending();
     final lastSyncedAt = await _getLastSyncedAt();
-    _statusController.add(SyncStatus(
+    return SyncStatus(
       pendingCount: pendingLogs.length,
       lastSyncedAt: lastSyncedAt,
       isSyncing: isSyncing,
       error: error,
       conflictCount: conflictCount,
-    ));
+    );
   }
 
   Future<int?> _getLastSyncedAt() async {
