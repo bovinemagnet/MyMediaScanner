@@ -251,10 +251,17 @@ class SettingsScreen extends ConsumerWidget {
               }
               try {
                 await repo.resetLocalDatabase();
+                // The reset can take seconds (full pull from Postgres).
+                // If the user navigated away from Settings during the
+                // await, the SnackBar must not fire on a torn-down
+                // context — `messenger` is captured pre-await but we
+                // still check `context.mounted` as the canonical guard.
+                if (!context.mounted) return;
                 messenger.showSnackBar(const SnackBar(
                   content: Text('Local data replaced with remote.'),
                 ));
               } on Exception catch (e) {
+                if (!context.mounted) return;
                 messenger.showSnackBar(SnackBar(
                   content: Text('Reset failed: $e'),
                 ));

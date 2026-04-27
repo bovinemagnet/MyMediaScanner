@@ -88,7 +88,20 @@ class LoansDao extends DatabaseAccessor<AppDatabase> with _$LoansDaoMixin {
           latest = rows;
           emit();
         },
-        onError: controller.addError,
+        // Forward the error AND terminate the stream. Forwarding alone
+        // (the prior behaviour) left the controller open with the
+        // periodic timer still firing emit() on stale data — subscribers
+        // that didn't react to the error then sat indefinitely on a
+        // half-broken stream. Closing here gives them a clean
+        // "stream done" signal so they can rebuild.
+        onError: (Object error, StackTrace stack) async {
+          if (!controller.isClosed) {
+            controller.addError(error, stack);
+            timer?.cancel();
+            timer = null;
+            await controller.close();
+          }
+        },
       );
       timer = Timer.periodic(const Duration(seconds: 60), (_) => emit());
     };
