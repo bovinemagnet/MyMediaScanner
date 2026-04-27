@@ -34,12 +34,14 @@ class TagRepositoryImpl implements ITagRepository {
 
   @override
   Future<void> save(Tag tag) async {
+    final existing = await _tagsDao.getById(tag.id);
     await _tagsDao.insertTag(TagsTableCompanion(
       id: Value(tag.id),
       name: Value(tag.name),
       colour: Value(tag.colour),
       updatedAt: Value(tag.updatedAt),
     ));
+    await _logSync(tag, existing == null ? 'insert' : 'update');
   }
 
   @override
@@ -71,6 +73,25 @@ class TagRepositoryImpl implements ITagRepository {
   @override
   Future<List<String>> getTagIdsForMediaItem(String mediaItemId) =>
       _tagsDao.getTagIdsForMediaItem(mediaItemId);
+
+  /// Enqueue a `sync_log` row carrying a full snake_case snapshot of
+  /// [tag]. Push uses the payload keys to derive the upsert column list.
+  Future<void> _logSync(Tag tag, String operation) {
+    return _syncLogDao.insertLog(SyncLogTableCompanion(
+      id: Value(_uuid.v7()),
+      entityType: const Value('tag'),
+      entityId: Value(tag.id),
+      operation: Value(operation),
+      payloadJson: Value(jsonEncode({
+        'id': tag.id,
+        'name': tag.name,
+        'colour': tag.colour,
+        'updated_at': tag.updatedAt,
+        'deleted': 0,
+      })),
+      createdAt: Value(DateTime.now().millisecondsSinceEpoch),
+    ));
+  }
 
   Tag _fromRow(TagsTableData row) => Tag(
         id: row.id,

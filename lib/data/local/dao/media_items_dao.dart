@@ -126,6 +126,14 @@ class MediaItemsDao extends DatabaseAccessor<AppDatabase>
     );
   }
 
+  /// Hard-delete every row in [mediaItemsTable]. Used by
+  /// `SyncRepositoryImpl.resetLocalDatabase` to honour the
+  /// "Replace local data with remote" affordance — soft-delete
+  /// would leave the rows visible to sync and defeat the reset.
+  Future<int> deleteAll() {
+    return delete(mediaItemsTable).go();
+  }
+
   Future<List<MediaItemsTableData>> getUnsynced() {
     return customSelect(
       'SELECT * FROM media_items WHERE synced_at IS NULL OR updated_at > synced_at',

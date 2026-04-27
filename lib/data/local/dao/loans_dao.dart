@@ -110,6 +110,11 @@ class LoansDao extends DatabaseAccessor<AppDatabase> with _$LoansDaoMixin {
         .toList();
   }
 
+  Future<LoansTableData?> getById(String id) {
+    return (select(loansTable)..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
+  }
+
   Future<void> insertLoan(LoansTableCompanion companion) {
     return into(loansTable).insert(companion);
   }

@@ -20,7 +20,18 @@ abstract interface class ISyncRepository {
   Future<List<SyncLogEntry>> getSyncHistory({int limit = 50, int offset = 0});
 
   /// Purge sync log entries older than the given epoch timestamp.
+  ///
+  /// Only removes entries that have already been synced. Failed/pending
+  /// rows are preserved so the user can still inspect or retry them.
   Future<void> purgeSyncHistory(int olderThanEpochMs);
+
+  /// Remove every sync log entry, including pending and failed ones.
+  ///
+  /// Wires the "Clear sync history" affordance honestly — the prior
+  /// implementation routed through [purgeSyncHistory] which only deletes
+  /// successfully-synced rows, so pending/failed entries silently
+  /// survived a "Clear all" tap.
+  Future<void> clearSyncHistory();
 }
 
 class SyncStatus {

@@ -148,9 +148,11 @@ class _SyncLogViewerState extends ConsumerState<SyncLogViewer> {
               Navigator.pop(ctx);
               final repo = ref.read(syncRepositoryProvider);
               if (repo != null) {
-                await repo.purgeSyncHistory(
-                  DateTime.now().millisecondsSinceEpoch,
-                );
+                // Use clearSyncHistory (true clear-all) rather than the
+                // older purgeSyncHistory(now), which only deleted synced
+                // rows — failed/pending entries were silently preserved
+                // despite the dialog promising "remove all".
+                await repo.clearSyncHistory();
                 ref.invalidate(syncHistoryProvider);
               }
             },

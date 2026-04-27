@@ -149,6 +149,7 @@ final borrowerRepositoryProvider = Provider<IBorrowerRepository>((ref) {
 final loanRepositoryProvider = Provider<ILoanRepository>((ref) {
   return LoanRepositoryImpl(
     loansDao: ref.watch(loansDaoProvider),
+    syncLogDao: ref.watch(syncLogDaoProvider),
   );
 });
 

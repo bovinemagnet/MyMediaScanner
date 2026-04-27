@@ -187,4 +187,6 @@ class _FakeRepo implements ISyncRepository {
       [];
   @override
   Future<void> purgeSyncHistory(int olderThanEpochMs) async {}
+  @override
+  Future<void> clearSyncHistory() async {}
 }

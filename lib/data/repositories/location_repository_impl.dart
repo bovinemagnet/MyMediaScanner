@@ -43,8 +43,9 @@ class LocationRepositoryImpl implements ILocationRepository {
   }
 
   @override
-  Future<void> create(Location location) {
-    return _dao.insertLocation(_toCompanion(location));
+  Future<void> create(Location location) async {
+    await _dao.insertLocation(_toCompanion(location));
+    await _logSync(location, 'insert');
   }
 
   @override
@@ -58,6 +59,7 @@ class LocationRepositoryImpl implements ILocationRepository {
       }
     }
     await _dao.updateLocation(_toCompanion(location));
+    await _logSync(location, 'update');
   }
 
   @override
@@ -81,6 +83,27 @@ class LocationRepositoryImpl implements ILocationRepository {
   @override
   Future<bool> wouldCreateCycle(String movingId, String? newParentId) {
     return _dao.wouldCreateCycle(movingId, newParentId);
+  }
+
+  /// Enqueue a `sync_log` row carrying a full snake_case snapshot of
+  /// [location]. Push uses the payload keys to derive the upsert column
+  /// list, so the snapshot must include every sync-relevant field.
+  Future<void> _logSync(Location location, String operation) {
+    return _syncLogDao.insertLog(SyncLogTableCompanion(
+      id: Value(_uuid.v7()),
+      entityType: const Value('location'),
+      entityId: Value(location.id),
+      operation: Value(operation),
+      payloadJson: Value(jsonEncode({
+        'id': location.id,
+        'parent_id': location.parentId,
+        'name': location.name,
+        'sort_order': location.sortOrder,
+        'updated_at': location.updatedAt,
+        'deleted': location.deleted ? 1 : 0,
+      })),
+      createdAt: Value(DateTime.now().millisecondsSinceEpoch),
+    ));
   }
 
   Location _fromRow(LocationsTableData row) => Location(
