@@ -11,6 +11,18 @@ abstract interface class IRipLibraryRepository {
   Future<List<RipTrack>> getTracksForAlbum(String ripAlbumId);
   Future<void> insertTracks(List<RipTrack> tracks);
   Future<void> deleteTracksForAlbum(String ripAlbumId);
+
+  /// Atomically insert a brand-new album with its tracks. Used by
+  /// scan-rip-library so a crash between the album-insert and the
+  /// track-insert can't leave a track-less orphan visible in the UI.
+  Future<void> insertAlbumWithTracks(
+      RipAlbum album, List<RipTrack> tracks);
+
+  /// Atomically update an existing album and replace all of its tracks.
+  /// Used by re-scan; the album row and the track set are committed
+  /// together so a crash mid-rescan can't leave them out of sync.
+  Future<void> updateAlbumAndReplaceTracks(
+      RipAlbum album, List<RipTrack> tracks);
   Stream<Set<String>> watchRippedMediaItemIds();
   Future<void> linkToMediaItem(String ripAlbumId, String mediaItemId);
   Future<void> unlinkFromMediaItem(String ripAlbumId);

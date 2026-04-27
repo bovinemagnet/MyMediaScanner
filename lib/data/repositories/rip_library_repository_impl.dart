@@ -118,6 +118,64 @@ class RipLibraryRepositoryImpl implements IRipLibraryRepository {
   }
 
   @override
+  Future<void> insertAlbumWithTracks(
+      RipAlbum album, List<RipTrack> tracks) async {
+    await _dao.insertAlbumWithTracks(
+      _albumCompanion(album),
+      tracks.map(_trackCompanion).toList(),
+    );
+  }
+
+  @override
+  Future<void> updateAlbumAndReplaceTracks(
+      RipAlbum album, List<RipTrack> tracks) async {
+    await _dao.updateAlbumAndReplaceTracks(
+      _albumCompanion(album),
+      tracks.map(_trackCompanion).toList(),
+    );
+  }
+
+  RipAlbumsTableCompanion _albumCompanion(RipAlbum album) =>
+      RipAlbumsTableCompanion(
+        id: Value(album.id),
+        libraryPath: Value(album.libraryPath),
+        artist: Value(album.artist),
+        albumTitle: Value(album.albumTitle),
+        barcode: Value(album.barcode),
+        trackCount: Value(album.trackCount),
+        discCount: Value(album.discCount),
+        totalSizeBytes: Value(album.totalSizeBytes),
+        mediaItemId: Value(album.mediaItemId),
+        cueFilePath: Value(album.cueFilePath),
+        gnudbDiscId: Value(album.gnudbDiscId),
+        lastScannedAt: Value(album.lastScannedAt),
+        updatedAt: Value(album.updatedAt),
+      );
+
+  RipTracksTableCompanion _trackCompanion(RipTrack t) =>
+      RipTracksTableCompanion(
+        id: Value(t.id),
+        ripAlbumId: Value(t.ripAlbumId),
+        discNumber: Value(t.discNumber),
+        trackNumber: Value(t.trackNumber),
+        title: Value(t.title),
+        filePath: Value(t.filePath),
+        durationMs: Value(t.durationMs),
+        fileSizeBytes: Value(t.fileSizeBytes),
+        updatedAt: Value(t.updatedAt),
+        accurateripStatus: Value(t.accurateRipStatus),
+        accurateripConfidence: Value(t.accurateRipConfidence),
+        accurateripCrcV1: Value(t.accurateRipCrcV1),
+        accurateripCrcV2: Value(t.accurateRipCrcV2),
+        peakLevel: Value(t.peakLevel),
+        trackQuality: Value(t.trackQuality),
+        copyCrc: Value(t.copyCrc),
+        clickCount: Value(t.clickCount),
+        ripLogSource: Value(t.ripLogSource),
+        qualityCheckedAt: Value(t.qualityCheckedAt),
+      );
+
+  @override
   Stream<Set<String>> watchRippedMediaItemIds() {
     return _dao.watchRippedMediaItemIds();
   }

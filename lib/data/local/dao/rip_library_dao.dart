@@ -74,6 +74,49 @@ class RipLibraryDao extends DatabaseAccessor<AppDatabase>
     });
   }
 
+  /// Atomically insert a brand-new album row together with its tracks.
+  /// Wrapping both writes in a single transaction prevents the
+  /// previously-possible orphan: a process crash between the
+  /// `insertAlbum` and `insertTracks` calls left an album visible in
+  /// the UI that fell over the moment the user pressed Play.
+  Future<void> insertAlbumWithTracks(
+    RipAlbumsTableCompanion album,
+    List<RipTracksTableCompanion> tracks,
+  ) {
+    return transaction(() async {
+      await into(ripAlbumsTable).insert(album);
+      if (tracks.isNotEmpty) {
+        await batch((b) {
+          b.insertAll(ripTracksTable, tracks);
+        });
+      }
+    });
+  }
+
+  /// Atomically update an existing album row and replace all of its
+  /// tracks with [tracks]. Used by re-scan: the old track set is wiped
+  /// and the freshly-discovered set is committed in the same
+  /// transaction so a crash mid-rescan can't leave the album with a
+  /// half-updated track list.
+  Future<void> updateAlbumAndReplaceTracks(
+    RipAlbumsTableCompanion album,
+    List<RipTracksTableCompanion> tracks,
+  ) {
+    return transaction(() async {
+      await (update(ripAlbumsTable)
+            ..where((t) => t.id.equals(album.id.value)))
+          .write(album);
+      await (delete(ripTracksTable)
+            ..where((t) => t.ripAlbumId.equals(album.id.value)))
+          .go();
+      if (tracks.isNotEmpty) {
+        await batch((b) {
+          b.insertAll(ripTracksTable, tracks);
+        });
+      }
+    });
+  }
+
   /// Hard-delete all tracks for a rip album (used on re-scan).
   Future<void> deleteTracksForAlbum(String ripAlbumId) {
     return (delete(ripTracksTable)

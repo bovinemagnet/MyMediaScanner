@@ -29,24 +29,30 @@ class ConnectionHealthNotifier extends Notifier<ConnectionHealth>
     final config = ref.watch(postgresConfigProvider).value;
     if (config == null) return ConnectionHealth.unconfigured;
 
-    // Start periodic pinging
-    _startTimer();
-
     if (!_observerRegistered) {
+      // First-time setup: register the lifecycle observer, start the
+      // periodic ping timer, and wire disposal. `build()` re-runs every
+      // time `postgresConfigProvider` re-emits — calling `_startTimer`
+      // every time would cancel-and-restart the 60 s window so a
+      // burst of config edits (or even one unrelated re-emission) would
+      // postpone the next ping indefinitely. Guarding with the same
+      // flag we use for observer registration keeps both idempotent.
       WidgetsBinding.instance.addObserver(this);
       _observerRegistered = true;
+      _startTimer();
+      ref.onDispose(() {
+        _timer?.cancel();
+        _timer = null;
+        if (_observerRegistered) {
+          WidgetsBinding.instance.removeObserver(this);
+          _observerRegistered = false;
+        }
+      });
     }
 
-    // Trigger initial ping
+    // Always re-ping on rebuild — config may have changed and the new
+    // postgresSyncClientProvider value reflects that immediately.
     _ping();
-
-    ref.onDispose(() {
-      _timer?.cancel();
-      if (_observerRegistered) {
-        WidgetsBinding.instance.removeObserver(this);
-        _observerRegistered = false;
-      }
-    });
 
     return ConnectionHealth.unconfigured;
   }
