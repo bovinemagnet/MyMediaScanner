@@ -33,17 +33,32 @@ class MediaItemRepositoryImpl implements IMediaItemRepository {
   }) {
     final useFts =
         searchQuery != null && searchQuery.trim().length >= 2;
+    final hasTagFilter = tagIds != null && tagIds.isNotEmpty;
 
     final Stream<List<MediaItemsTableData>> baseStream = useFts
         ? _mediaItemsDao.watchSearch(searchQuery)
         : _mediaItemsDao.watchAll(
             mediaType: mediaType?.name,
+            tagIds: tagIds,
             sortBy: sortBy,
             ascending: ascending,
           );
 
-    return baseStream.map(
-      (rows) => rows
+    // FTS path skips the DAO-level tag filter (the FTS query joins only
+    // `media_items_fts`), so we have to apply tagIds in-memory by looking
+    // up the assignments. This is rare — full-text search + tag filter
+    // — and a single small read per emission.
+    Future<Set<String>> resolveTaggedIds() async {
+      if (!useFts || !hasTagFilter) return const <String>{};
+      final assignments = await (_db.select(_db.mediaItemTagsTable)
+            ..where((t) => t.tagId.isIn(tagIds)))
+          .get();
+      return assignments.map((a) => a.mediaItemId).toSet();
+    }
+
+    return baseStream.asyncMap((rows) async {
+      final taggedIds = await resolveTaggedIds();
+      return rows
           .where((r) =>
               useFts ||
               mediaType == null ||
@@ -53,10 +68,14 @@ class MediaItemRepositoryImpl implements IMediaItemRepository {
               useFts ||
               searchQuery == null ||
               r.title.toLowerCase().contains(searchQuery.toLowerCase()))
+          .where((r) =>
+              !useFts || !hasTagFilter || taggedIds.contains(r.id))
           .map(_fromRow)
-          .toList(),
-    );
+          .toList();
+    });
   }
+
+  AppDatabase get _db => _mediaItemsDao.attachedDatabase;
 
   @override
   Stream<List<MediaItem>> watchByStatus(OwnershipStatus status) {
@@ -102,28 +121,38 @@ class MediaItemRepositoryImpl implements IMediaItemRepository {
 
   @override
   Future<void> save(MediaItem item) async {
-    await _mediaItemsDao.insertItem(_toCompanion(item));
-    await _logSync('media_item', item.id, 'insert', item);
+    // Atomic: the row write and its sync_log entry must commit together,
+    // or both roll back. A crash between the two left the local mutation
+    // permanently invisible to `pushChanges` (which only iterates
+    // pending log rows), so re-edits couldn't recover the data.
+    await _mediaItemsDao.transaction(() async {
+      await _mediaItemsDao.insertItem(_toCompanion(item));
+      await _logSync('media_item', item.id, 'insert', item);
+    });
   }
 
   @override
   Future<void> update(MediaItem item) async {
-    await _mediaItemsDao.updateItem(_toCompanion(item));
-    await _logSync('media_item', item.id, 'update', item);
+    await _mediaItemsDao.transaction(() async {
+      await _mediaItemsDao.updateItem(_toCompanion(item));
+      await _logSync('media_item', item.id, 'update', item);
+    });
   }
 
   @override
   Future<void> softDelete(String id) async {
     final now = DateTime.now().millisecondsSinceEpoch;
-    await _mediaItemsDao.softDelete(id, now);
-    await _syncLogDao.insertLog(SyncLogTableCompanion(
-      id: Value(_uuid.v7()),
-      entityType: const Value('media_item'),
-      entityId: Value(id),
-      operation: const Value('delete'),
-      payloadJson: Value(jsonEncode({'id': id, 'deleted': 1})),
-      createdAt: Value(now),
-    ));
+    await _mediaItemsDao.transaction(() async {
+      await _mediaItemsDao.softDelete(id, now);
+      await _syncLogDao.insertLog(SyncLogTableCompanion(
+        id: Value(_uuid.v7()),
+        entityType: const Value('media_item'),
+        entityId: Value(id),
+        operation: const Value('delete'),
+        payloadJson: Value(jsonEncode({'id': id, 'deleted': 1})),
+        createdAt: Value(now),
+      ));
+    });
   }
 
   @override

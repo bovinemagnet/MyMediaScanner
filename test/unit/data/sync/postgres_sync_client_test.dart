@@ -128,6 +128,33 @@ void main() {
       expect(result.params.length, 153);
     });
 
+    group('tableForEntityType (cluster-7 HIGH-1 regression)', () {
+      test('regular plurals resolve correctly', () {
+        expect(PostgresSyncClient.tableForEntityType('media_item'),
+            'media_items');
+        expect(PostgresSyncClient.tableForEntityType('tag'), 'tags');
+        expect(PostgresSyncClient.tableForEntityType('borrower'), 'borrowers');
+        expect(PostgresSyncClient.tableForEntityType('loan'), 'loans');
+        expect(
+            PostgresSyncClient.tableForEntityType('location'), 'locations');
+      });
+
+      test('shelf maps to shelves, not shelfs', () {
+        expect(PostgresSyncClient.tableForEntityType('shelf'), 'shelves');
+      });
+
+      test('series maps to series, not seriess', () {
+        expect(PostgresSyncClient.tableForEntityType('series'), 'series');
+      });
+
+      test('unknown entity types throw ArgumentError', () {
+        expect(
+          () => PostgresSyncClient.tableForEntityType('mystery'),
+          throwsA(isA<ArgumentError>()),
+        );
+      });
+    });
+
     test('buildBatchUpsertSql with single column record (only id)', () {
       final records = [
         {'id': '1'},

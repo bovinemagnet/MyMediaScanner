@@ -63,46 +63,55 @@ class LoanRepositoryImpl implements ILoanRepository {
 
   @override
   Future<void> createLoan(Loan loan) async {
-    await _loansDao.insertLoan(LoansTableCompanion(
-      id: Value(loan.id),
-      mediaItemId: Value(loan.mediaItemId),
-      borrowerId: Value(loan.borrowerId),
-      lentAt: Value(loan.lentAt),
-      dueAt: Value(loan.dueAt),
-      notes: Value(loan.notes),
-      updatedAt: Value(loan.updatedAt),
-    ));
-    await _logSync(loan, 'insert');
+    // Atomic write + sync_log: see MediaItemRepositoryImpl.save.
+    await _loansDao.transaction(() async {
+      await _loansDao.insertLoan(LoansTableCompanion(
+        id: Value(loan.id),
+        mediaItemId: Value(loan.mediaItemId),
+        borrowerId: Value(loan.borrowerId),
+        lentAt: Value(loan.lentAt),
+        dueAt: Value(loan.dueAt),
+        notes: Value(loan.notes),
+        updatedAt: Value(loan.updatedAt),
+      ));
+      await _logSync(loan, 'insert');
+    });
   }
 
   @override
   Future<void> updateLoan(Loan loan) async {
-    await _loansDao.updateLoan(LoansTableCompanion(
-      id: Value(loan.id),
-      mediaItemId: Value(loan.mediaItemId),
-      borrowerId: Value(loan.borrowerId),
-      lentAt: Value(loan.lentAt),
-      dueAt: Value(loan.dueAt),
-      notes: Value(loan.notes),
-      updatedAt: Value(loan.updatedAt),
-    ));
-    await _logSync(loan, 'update');
+    await _loansDao.transaction(() async {
+      await _loansDao.updateLoan(LoansTableCompanion(
+        id: Value(loan.id),
+        mediaItemId: Value(loan.mediaItemId),
+        borrowerId: Value(loan.borrowerId),
+        lentAt: Value(loan.lentAt),
+        dueAt: Value(loan.dueAt),
+        notes: Value(loan.notes),
+        updatedAt: Value(loan.updatedAt),
+      ));
+      await _logSync(loan, 'update');
+    });
   }
 
   @override
   Future<void> updateDueDate(String loanId, int? dueAt) async {
     final now = DateTime.now().millisecondsSinceEpoch;
-    await _loansDao.updateDueDate(loanId, dueAt, now);
-    final updated = await _loansDao.getById(loanId);
-    if (updated != null) await _logSync(_fromRow(updated), 'update');
+    await _loansDao.transaction(() async {
+      await _loansDao.updateDueDate(loanId, dueAt, now);
+      final updated = await _loansDao.getById(loanId);
+      if (updated != null) await _logSync(_fromRow(updated), 'update');
+    });
   }
 
   @override
   Future<void> returnItem(String loanId) async {
     final now = DateTime.now().millisecondsSinceEpoch;
-    await _loansDao.returnItem(loanId, now, now);
-    final updated = await _loansDao.getById(loanId);
-    if (updated != null) await _logSync(_fromRow(updated), 'update');
+    await _loansDao.transaction(() async {
+      await _loansDao.returnItem(loanId, now, now);
+      final updated = await _loansDao.getById(loanId);
+      if (updated != null) await _logSync(_fromRow(updated), 'update');
+    });
   }
 
   /// Enqueue a `sync_log` row carrying a full snake_case snapshot of

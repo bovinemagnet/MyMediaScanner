@@ -63,7 +63,13 @@ class SyncRepositoryImpl implements ISyncRepository {
         try {
           final decoded = jsonDecode(log.payloadJson);
           if (decoded is! Map<String, dynamic>) continue;
-          await _syncClient.upsertRecords('${log.entityType}s', [decoded]);
+          // Resolve table from a maintained map — naive `+s` pluralisation
+          // mangles `shelf`/`series` and previously caused those pushes
+          // to fail the allow-list check before they ever reached the
+          // server.
+          final table =
+              PostgresSyncClient.tableForEntityType(log.entityType);
+          await _syncClient.upsertRecords(table, [decoded]);
           stopwatch.stop();
           // Network IO sits outside the transaction so the SQLite write
           // lock isn't held for the round-trip. Once the upsert is
@@ -194,6 +200,44 @@ class SyncRepositoryImpl implements ISyncRepository {
         });
       }
 
+      // Pull non-media-item tables that this client also pushes. The
+      // previous implementation only pulled `media_items`, so a remote
+      // edit to a tag / shelf / borrower / loan / location / series
+      // would never round-trip back to other clients. These entities
+      // don't need the timestamp-window conflict detection that
+      // `media_items` does (no per-field merge UI exists for them yet),
+      // so we apply a simple last-write-wins by `updated_at`.
+      await _pullLastWriteWins(
+        tableName: 'tags',
+        entityType: 'tag',
+        afterTimestamp: lastSyncedAt,
+      );
+      await _pullLastWriteWins(
+        tableName: 'shelves',
+        entityType: 'shelf',
+        afterTimestamp: lastSyncedAt,
+      );
+      await _pullLastWriteWins(
+        tableName: 'borrowers',
+        entityType: 'borrower',
+        afterTimestamp: lastSyncedAt,
+      );
+      await _pullLastWriteWins(
+        tableName: 'loans',
+        entityType: 'loan',
+        afterTimestamp: lastSyncedAt,
+      );
+      await _pullLastWriteWins(
+        tableName: 'locations',
+        entityType: 'location',
+        afterTimestamp: lastSyncedAt,
+      );
+      await _pullLastWriteWins(
+        tableName: 'series',
+        entityType: 'series',
+        afterTimestamp: lastSyncedAt,
+      );
+
       // Auto-purge old sync log entries (30 days)
       final purgeThreshold =
           DateTime.now().millisecondsSinceEpoch - _purgeThresholdMs;
@@ -216,6 +260,158 @@ class SyncRepositoryImpl implements ISyncRepository {
     }
   }
 
+  /// Pull rows from a remote table and upsert them locally using a
+  /// last-write-wins policy on `updated_at`. Used for the simple
+  /// entities (tag, shelf, borrower, loan, location, series) that don't
+  /// have the per-field conflict UI that `media_items` carries.
+  ///
+  /// A row is applied locally if either:
+  ///   - no local row exists with the same `id`, OR
+  ///   - the remote `updated_at` is strictly greater than the local
+  ///     `updated_at`.
+  ///
+  /// The local upsert is dispatched per [entityType] because each table
+  /// has a distinct companion shape; the `_applyRemoteRow` switch keeps
+  /// the dispatch in one place rather than scattered across a wider
+  /// callback API.
+  Future<void> _pullLastWriteWins({
+    required String tableName,
+    required String entityType,
+    required int? afterTimestamp,
+  }) async {
+    final rows = await _syncClient.pullRecords(
+      tableName,
+      afterTimestamp: afterTimestamp,
+    );
+    final total = rows.length;
+    for (var i = 0; i < rows.length; i++) {
+      final remote = rows[i];
+      final id = remote['id'];
+      if (id is! String) continue;
+      _progressController.add(SyncProgress(
+        phase: SyncPhase.pull,
+        current: i + 1,
+        total: total,
+        currentEntityType: entityType,
+      ));
+      final remoteUpdatedAt = (remote['updated_at'] as num?)?.toInt() ?? 0;
+      final localUpdatedAt = await _localUpdatedAt(entityType, id);
+      if (localUpdatedAt != null && remoteUpdatedAt <= localUpdatedAt) {
+        continue;
+      }
+      await _applyRemoteRow(entityType, remote);
+    }
+  }
+
+  Future<int?> _localUpdatedAt(String entityType, String id) async {
+    final db = _mediaItemsDao.attachedDatabase;
+    switch (entityType) {
+      case 'tag':
+        final row = await db.tagsDao.getById(id);
+        return row?.updatedAt;
+      case 'shelf':
+        final row = await db.shelvesDao.getById(id);
+        return row?.updatedAt;
+      case 'borrower':
+        final row = await db.borrowersDao.getById(id);
+        return row?.updatedAt;
+      case 'loan':
+        final row = await db.loansDao.getById(id);
+        return row?.updatedAt;
+      case 'location':
+        final row = await db.locationsDao.getById(id);
+        return row?.updatedAt;
+      case 'series':
+        final row = await db.seriesDao.getById(id);
+        return row?.updatedAt;
+      default:
+        throw StateError('Unsupported entity type for pull: $entityType');
+    }
+  }
+
+  Future<void> _applyRemoteRow(
+      String entityType, Map<String, dynamic> remote) async {
+    final db = _mediaItemsDao.attachedDatabase;
+    switch (entityType) {
+      case 'tag':
+        await db.into(db.tagsTable).insertOnConflictUpdate(
+              TagsTableCompanion.insert(
+                id: remote['id'] as String,
+                name: remote['name'] as String? ?? '',
+                colour: Value(remote['colour'] as String?),
+                updatedAt: (remote['updated_at'] as num?)?.toInt() ?? 0,
+                deleted: Value((remote['deleted'] as num?)?.toInt() ?? 0),
+              ),
+            );
+      case 'shelf':
+        await db.into(db.shelvesTable).insertOnConflictUpdate(
+              ShelvesTableCompanion.insert(
+                id: remote['id'] as String,
+                name: remote['name'] as String? ?? '',
+                description: Value(remote['description'] as String?),
+                sortOrder:
+                    Value((remote['sort_order'] as num?)?.toInt() ?? 0),
+                updatedAt: (remote['updated_at'] as num?)?.toInt() ?? 0,
+                deleted: Value((remote['deleted'] as num?)?.toInt() ?? 0),
+              ),
+            );
+      case 'borrower':
+        await db.into(db.borrowersTable).insertOnConflictUpdate(
+              BorrowersTableCompanion.insert(
+                id: remote['id'] as String,
+                name: remote['name'] as String? ?? '',
+                email: Value(remote['email'] as String?),
+                phone: Value(remote['phone'] as String?),
+                notes: Value(remote['notes'] as String?),
+                updatedAt: (remote['updated_at'] as num?)?.toInt() ?? 0,
+                deleted: Value((remote['deleted'] as num?)?.toInt() ?? 0),
+              ),
+            );
+      case 'loan':
+        await db.into(db.loansTable).insertOnConflictUpdate(
+              LoansTableCompanion.insert(
+                id: remote['id'] as String,
+                mediaItemId: remote['media_item_id'] as String,
+                borrowerId: remote['borrower_id'] as String,
+                lentAt: (remote['lent_at'] as num?)?.toInt() ?? 0,
+                returnedAt:
+                    Value((remote['returned_at'] as num?)?.toInt()),
+                dueAt: Value((remote['due_at'] as num?)?.toInt()),
+                notes: Value(remote['notes'] as String?),
+                updatedAt: (remote['updated_at'] as num?)?.toInt() ?? 0,
+                deleted: Value((remote['deleted'] as num?)?.toInt() ?? 0),
+              ),
+            );
+      case 'location':
+        await db.into(db.locationsTable).insertOnConflictUpdate(
+              LocationsTableCompanion.insert(
+                id: remote['id'] as String,
+                parentId: Value(remote['parent_id'] as String?),
+                name: remote['name'] as String? ?? '',
+                sortOrder:
+                    Value((remote['sort_order'] as num?)?.toInt() ?? 0),
+                updatedAt: (remote['updated_at'] as num?)?.toInt() ?? 0,
+                deleted: Value((remote['deleted'] as num?)?.toInt() ?? 0),
+              ),
+            );
+      case 'series':
+        await db.into(db.seriesTable).insertOnConflictUpdate(
+              SeriesTableCompanion.insert(
+                id: remote['id'] as String,
+                externalId: remote['external_id'] as String? ?? '',
+                name: remote['name'] as String? ?? '',
+                mediaType: remote['media_type'] as String? ?? '',
+                source: remote['source'] as String? ?? '',
+                totalCount: Value((remote['total_count'] as num?)?.toInt()),
+                updatedAt: (remote['updated_at'] as num?)?.toInt() ?? 0,
+                deleted: Value((remote['deleted'] as num?)?.toInt() ?? 0),
+              ),
+            );
+      default:
+        throw StateError('Unsupported entity type for pull: $entityType');
+    }
+  }
+
   @override
   Future<bool> testConnection() => _syncClient.testConnection();
 
@@ -224,17 +420,15 @@ class SyncRepositoryImpl implements ISyncRepository {
     await _emitStatus(isSyncing: true);
     try {
       // Honour the dialog promise: "replace all local data with data
-      // from your PostgreSQL server". Wipe local media_items, drop
-      // every sync_log entry (any pending pushes for now-deleted rows
-      // would fail anyway), and clear the last-synced timestamp so the
-      // following pullChanges performs a full pull rather than an
-      // incremental one. The prior implementation was an incremental
-      // pull only — it kept stale local rows the remote no longer
-      // had, kept pending pushes that the user had just chosen to
-      // discard, and didn't refetch anything modified before
-      // lastSyncedAt.
-      await _mediaItemsDao.deleteAll();
-      await _syncLogDao.deleteAll();
+      // from your PostgreSQL server". The previous implementation only
+      // wiped `media_items` and `sync_log`, leaving shelves, tags,
+      // tag/shelf joins, borrowers, loans, locations, and series behind
+      // — orphaned local data that the next pull couldn't reconcile.
+      // `wipeSyncedUserData` clears every synced table in one atomic
+      // transaction; non-synced tables (rip library, batch sessions,
+      // barcode cache) are left alone since the server has nothing to
+      // repopulate them with.
+      await _mediaItemsDao.attachedDatabase.wipeSyncedUserData();
       _pendingConflicts.clear();
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_lastSyncedAtKey);

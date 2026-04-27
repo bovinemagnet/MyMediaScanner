@@ -34,32 +34,37 @@ class TagRepositoryImpl implements ITagRepository {
 
   @override
   Future<void> save(Tag tag) async {
-    final existing = await _tagsDao.getById(tag.id);
-    await _tagsDao.insertTag(TagsTableCompanion(
-      id: Value(tag.id),
-      name: Value(tag.name),
-      colour: Value(tag.colour),
-      updatedAt: Value(tag.updatedAt),
-    ));
-    await _logSync(tag, existing == null ? 'insert' : 'update');
+    // Atomic write + sync_log: see MediaItemRepositoryImpl.save.
+    await _tagsDao.transaction(() async {
+      final existing = await _tagsDao.getById(tag.id);
+      await _tagsDao.insertTag(TagsTableCompanion(
+        id: Value(tag.id),
+        name: Value(tag.name),
+        colour: Value(tag.colour),
+        updatedAt: Value(tag.updatedAt),
+      ));
+      await _logSync(tag, existing == null ? 'insert' : 'update');
+    });
   }
 
   @override
   Future<void> softDelete(String id) async {
     final now = DateTime.now().millisecondsSinceEpoch;
-    await _tagsDao.softDelete(id, now);
-    await _syncLogDao.insertLog(SyncLogTableCompanion(
-      id: Value(_uuid.v7()),
-      entityType: const Value('tag'),
-      entityId: Value(id),
-      operation: const Value('delete'),
-      payloadJson: Value(jsonEncode({
-        'id': id,
-        'deleted': 1,
-        'updated_at': now,
-      })),
-      createdAt: Value(now),
-    ));
+    await _tagsDao.transaction(() async {
+      await _tagsDao.softDelete(id, now);
+      await _syncLogDao.insertLog(SyncLogTableCompanion(
+        id: Value(_uuid.v7()),
+        entityType: const Value('tag'),
+        entityId: Value(id),
+        operation: const Value('delete'),
+        payloadJson: Value(jsonEncode({
+          'id': id,
+          'deleted': 1,
+          'updated_at': now,
+        })),
+        createdAt: Value(now),
+      ));
+    });
   }
 
   @override

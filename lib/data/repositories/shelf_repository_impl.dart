@@ -41,32 +41,37 @@ class ShelfRepositoryImpl implements IShelfRepository {
       sortOrder: Value(shelf.sortOrder),
       updatedAt: Value(shelf.updatedAt),
     );
-    final existing = await _shelvesDao.getById(shelf.id);
-    if (existing != null) {
-      await _shelvesDao.updateShelf(companion);
-      await _logSync(shelf, 'update');
-    } else {
-      await _shelvesDao.insertShelf(companion);
-      await _logSync(shelf, 'insert');
-    }
+    // Atomic write + sync_log: see MediaItemRepositoryImpl.save.
+    await _shelvesDao.transaction(() async {
+      final existing = await _shelvesDao.getById(shelf.id);
+      if (existing != null) {
+        await _shelvesDao.updateShelf(companion);
+        await _logSync(shelf, 'update');
+      } else {
+        await _shelvesDao.insertShelf(companion);
+        await _logSync(shelf, 'insert');
+      }
+    });
   }
 
   @override
   Future<void> softDelete(String id) async {
     final now = DateTime.now().millisecondsSinceEpoch;
-    await _shelvesDao.softDelete(id, now);
-    await _syncLogDao.insertLog(SyncLogTableCompanion(
-      id: Value(_uuid.v7()),
-      entityType: const Value('shelf'),
-      entityId: Value(id),
-      operation: const Value('delete'),
-      payloadJson: Value(jsonEncode({
-        'id': id,
-        'deleted': 1,
-        'updated_at': now,
-      })),
-      createdAt: Value(now),
-    ));
+    await _shelvesDao.transaction(() async {
+      await _shelvesDao.softDelete(id, now);
+      await _syncLogDao.insertLog(SyncLogTableCompanion(
+        id: Value(_uuid.v7()),
+        entityType: const Value('shelf'),
+        entityId: Value(id),
+        operation: const Value('delete'),
+        payloadJson: Value(jsonEncode({
+          'id': id,
+          'deleted': 1,
+          'updated_at': now,
+        })),
+        createdAt: Value(now),
+      ));
+    });
   }
 
   @override

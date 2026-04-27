@@ -44,6 +44,41 @@ class PostgresSyncClient {
     'series',
   };
 
+  /// Singular `sync_log.entity_type` → remote table name mapping.
+  ///
+  /// The previous implementation appended a literal `s` to derive the
+  /// table, which silently produced `shelfs` / `seriess` (rejected by
+  /// the allow-list above) and broke every push for those entities.
+  /// Maintain this map alongside `_allowedTables` whenever a new
+  /// syncable entity is added.
+  static const _tableByEntityType = <String, String>{
+    'media_item': 'media_items',
+    'shelf': 'shelves',
+    'shelf_item': 'shelf_items',
+    'tag': 'tags',
+    'media_item_tag': 'media_item_tags',
+    'borrower': 'borrowers',
+    'loan': 'loans',
+    'location': 'locations',
+    'series': 'series',
+  };
+
+  /// Resolve the remote table name for a `sync_log.entity_type` value.
+  /// Throws [ArgumentError] if [entityType] is unknown — pushing such a
+  /// row would fail at the SQL layer anyway, but failing here surfaces
+  /// the typo earlier with a clearer message.
+  static String tableForEntityType(String entityType) {
+    final table = _tableByEntityType[entityType];
+    if (table == null) {
+      throw ArgumentError.value(
+        entityType,
+        'entityType',
+        'No remote table mapping (sync_log entity_type unrecognised)',
+      );
+    }
+    return table;
+  }
+
   /// Matches a valid SQL identifier (column or table name).
   static final _identifierRegex = RegExp(r'^[A-Za-z_][A-Za-z0-9_]*$');
 

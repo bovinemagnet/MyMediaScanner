@@ -34,7 +34,6 @@ class BorrowerRepositoryImpl implements IBorrowerRepository {
 
   @override
   Future<void> save(Borrower borrower) async {
-    final existing = await _borrowersDao.getById(borrower.id);
     final companion = BorrowersTableCompanion(
       id: Value(borrower.id),
       name: Value(borrower.name),
@@ -43,13 +42,17 @@ class BorrowerRepositoryImpl implements IBorrowerRepository {
       notes: Value(borrower.notes),
       updatedAt: Value(borrower.updatedAt),
     );
-    if (existing != null) {
-      await _borrowersDao.updateBorrower(companion);
-      await _logSync(borrower, 'update');
-    } else {
-      await _borrowersDao.insertBorrower(companion);
-      await _logSync(borrower, 'insert');
-    }
+    // Atomic write + sync_log: see MediaItemRepositoryImpl.save.
+    await _borrowersDao.transaction(() async {
+      final existing = await _borrowersDao.getById(borrower.id);
+      if (existing != null) {
+        await _borrowersDao.updateBorrower(companion);
+        await _logSync(borrower, 'update');
+      } else {
+        await _borrowersDao.insertBorrower(companion);
+        await _logSync(borrower, 'insert');
+      }
+    });
   }
 
   @override
@@ -65,30 +68,34 @@ class BorrowerRepositoryImpl implements IBorrowerRepository {
       notes: Value(updated.notes),
       updatedAt: Value(updated.updatedAt),
     );
-    await _borrowersDao.updateBorrower(companion);
-    await _logSync(updated, 'update');
+    await _borrowersDao.transaction(() async {
+      await _borrowersDao.updateBorrower(companion);
+      await _logSync(updated, 'update');
+    });
   }
 
   @override
   Future<void> softDelete(String id) async {
     final now = DateTime.now().millisecondsSinceEpoch;
-    await _borrowersDao.softDelete(id, now);
-    // Mirror the media-item soft-delete pattern: enqueue a sync_log row so a
-    // remote pull (or a future cross-entity pull) can replicate the deletion.
-    // Without this the row stays at deleted=1 locally forever and the remote
-    // copy never learns it was retired.
-    await _syncLogDao.insertLog(SyncLogTableCompanion(
-      id: Value(_uuid.v7()),
-      entityType: const Value('borrower'),
-      entityId: Value(id),
-      operation: const Value('delete'),
-      payloadJson: Value(jsonEncode({
-        'id': id,
-        'deleted': 1,
-        'updated_at': now,
-      })),
-      createdAt: Value(now),
-    ));
+    await _borrowersDao.transaction(() async {
+      await _borrowersDao.softDelete(id, now);
+      // Mirror the media-item soft-delete pattern: enqueue a sync_log row
+      // so a remote pull (or a future cross-entity pull) can replicate
+      // the deletion. Without this the row stays at deleted=1 locally
+      // forever and the remote copy never learns it was retired.
+      await _syncLogDao.insertLog(SyncLogTableCompanion(
+        id: Value(_uuid.v7()),
+        entityType: const Value('borrower'),
+        entityId: Value(id),
+        operation: const Value('delete'),
+        payloadJson: Value(jsonEncode({
+          'id': id,
+          'deleted': 1,
+          'updated_at': now,
+        })),
+        createdAt: Value(now),
+      ));
+    });
   }
 
   /// Enqueue a `sync_log` row carrying a full snake_case snapshot of

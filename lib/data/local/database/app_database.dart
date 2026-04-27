@@ -84,7 +84,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 18;
+  int get schemaVersion => 19;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -222,6 +222,32 @@ class AppDatabase extends _$AppDatabase {
               );
             }
           }
+          if (from < 19) {
+            // Cluster-7 MED-1: the v18 fix added a `deleted = 0` guard to
+            // the insert and update triggers but missed the hard-delete
+            // trigger. Hard-deleting a row that was never indexed (the
+            // soft-deleted-then-wiped path that `resetLocalDatabase`
+            // walks) issued an FTS5 `delete` against a rowid the index
+            // had never seen, corrupting the contentless shadow tables.
+            // Drop and recreate the delete trigger with the matching
+            // guard. The other three already have it, so leave them
+            // alone.
+            final ftsExists = await customSelect(
+              'SELECT name FROM sqlite_master '
+              "WHERE type='table' AND name='media_items_fts'",
+            ).get();
+            if (ftsExists.isNotEmpty) {
+              await customStatement(
+                  'DROP TRIGGER IF EXISTS media_items_fts_delete');
+              await customStatement('''
+                CREATE TRIGGER media_items_fts_delete
+                AFTER DELETE ON media_items WHEN old.deleted = 0 BEGIN
+                  INSERT INTO media_items_fts(media_items_fts, rowid, title, subtitle, description, publisher, genres)
+                  VALUES ('delete', old.rowid, old.title, old.subtitle, old.description, old.publisher, old.genres);
+                END
+              ''');
+            }
+          }
         },
       );
 
@@ -289,13 +315,51 @@ class AppDatabase extends _$AppDatabase {
       END
     ''');
 
+    // Hard-delete trigger mirrors the update-side guard: skip rows that
+    // were never indexed (deleted=1 on insert, or already-soft-deleted
+    // when a hard wipe walks the table). Issuing an FTS5 `delete` for a
+    // rowid the index has never seen corrupts the contentless shadow
+    // tables and breaks subsequent inserts/searches.
     await customStatement('''
       CREATE TRIGGER IF NOT EXISTS media_items_fts_delete
-      AFTER DELETE ON media_items BEGIN
+      AFTER DELETE ON media_items WHEN old.deleted = 0 BEGIN
         INSERT INTO media_items_fts(media_items_fts, rowid, title, subtitle, description, publisher, genres)
         VALUES ('delete', old.rowid, old.title, old.subtitle, old.description, old.publisher, old.genres);
       END
     ''');
+  }
+
+  /// Hard-delete every row of synced user data, in a single transaction
+  /// so a partial wipe cannot leave the database with orphaned children.
+  ///
+  /// Used by `SyncRepositoryImpl.resetLocalDatabase` to honour the
+  /// "Replace local data with remote" affordance. Tables that are
+  /// strictly local (rip library scans, batch sessions, the barcode
+  /// metadata cache) are left alone — they aren't synced, so there's
+  /// nothing on the server to repopulate them with, and rebuilding by
+  /// re-scanning is the right path.
+  ///
+  /// Children before parents to play nice with FK enforcement if it
+  /// ever gets enabled. `sync_log` is cleared too so any pending pushes
+  /// for now-deleted rows don't fire on the next sync.
+  Future<void> wipeSyncedUserData() async {
+    await transaction(() async {
+      // Join tables first.
+      await delete(mediaItemTagsTable).go();
+      await delete(shelfItemsTable).go();
+      // Children of borrowers/media_items/shelves/etc.
+      await delete(loansTable).go();
+      // Top-level synced entities.
+      await delete(mediaItemsTable).go();
+      await delete(tagsTable).go();
+      await delete(shelvesTable).go();
+      await delete(borrowersTable).go();
+      await delete(locationsTable).go();
+      await delete(seriesTable).go();
+      // Audit log — pending pushes for the rows we just deleted would
+      // fail anyway, and the user explicitly asked to discard them.
+      await delete(syncLogTable).go();
+    });
   }
 
   /// Creates indexes on commonly queried columns to improve performance.

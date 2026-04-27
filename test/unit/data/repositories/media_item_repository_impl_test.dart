@@ -89,4 +89,78 @@ void main() {
     final m = await repo.findByTitleYear('Foo', 2000);
     expect(m, isEmpty);
   });
+
+  group('watchAll tagIds filter (cluster-7 MED-2 regression)', () {
+    Future<void> seedTag(String id, String name) async {
+      await db.tagsDao.insertTag(TagsTableCompanion.insert(
+        id: id,
+        name: name,
+        updatedAt: 1,
+      ));
+    }
+
+    Future<void> assign(String tagId, String mediaItemId) async {
+      await db.tagsDao.assignToMediaItem(tagId, mediaItemId);
+    }
+
+    test('null/empty tagIds returns every non-deleted row', () async {
+      await repo.save(baseItem(id: 'a'));
+      await repo.save(baseItem(id: 'b'));
+      final all = await repo.watchAll().first;
+      expect(all.map((e) => e.id).toSet(), {'a', 'b'});
+      final allEmpty = await repo.watchAll(tagIds: const []).first;
+      expect(allEmpty.map((e) => e.id).toSet(), {'a', 'b'});
+    });
+
+    test('single tag matches only assigned rows', () async {
+      await repo.save(baseItem(id: 'a'));
+      await repo.save(baseItem(id: 'b'));
+      await repo.save(baseItem(id: 'c'));
+      await seedTag('t1', 'Sci-Fi');
+      await assign('t1', 'a');
+      await assign('t1', 'c');
+
+      final filtered = await repo.watchAll(tagIds: const ['t1']).first;
+      expect(filtered.map((e) => e.id).toSet(), {'a', 'c'});
+    });
+
+    test('multiple tagIds is a UNION (any match)', () async {
+      await repo.save(baseItem(id: 'a'));
+      await repo.save(baseItem(id: 'b'));
+      await repo.save(baseItem(id: 'c'));
+      await seedTag('t1', 'A');
+      await seedTag('t2', 'B');
+      await assign('t1', 'a');
+      await assign('t2', 'b');
+
+      final filtered =
+          await repo.watchAll(tagIds: const ['t1', 't2']).first;
+      expect(filtered.map((e) => e.id).toSet(), {'a', 'b'});
+    });
+
+    test('tagIds combined with mediaType narrows correctly', () async {
+      await repo.save(baseItem(id: 'a').copyWith(mediaType: MediaType.book));
+      await repo.save(baseItem(id: 'b').copyWith(mediaType: MediaType.film));
+      await seedTag('t1', 'Fav');
+      await assign('t1', 'a');
+      await assign('t1', 'b');
+
+      final books = await repo
+          .watchAll(mediaType: MediaType.book, tagIds: const ['t1'])
+          .first;
+      expect(books.map((e) => e.id).toSet(), {'a'});
+    });
+
+    test('tagIds with FTS searchQuery still applies tag filter', () async {
+      await repo.save(baseItem(id: 'a').copyWith(title: 'Dune'));
+      await repo.save(baseItem(id: 'b').copyWith(title: 'Dune Messiah'));
+      await seedTag('t1', 'Owned');
+      await assign('t1', 'b');
+
+      final filtered = await repo
+          .watchAll(searchQuery: 'Dune', tagIds: const ['t1'])
+          .first;
+      expect(filtered.map((e) => e.id).toSet(), {'b'});
+    });
+  });
 }
