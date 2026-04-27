@@ -121,23 +121,31 @@ class BatchMetadataEditNotifier extends Notifier<BatchMetadataEditState> {
 
         try {
           final track = trackLookup[trackId];
-          if (track != null) {
-              // Apply TITLE separately if present, others via setTags.
-              final titleValue = tags['TITLE'];
-              final otherTags = Map<String, String>.from(tags)
-                ..remove('TITLE');
+          if (track == null) {
+            // Track was deleted (or its album invalidated) between
+            // batch-prep and apply. Surface this as an explicit error
+            // so the caller's "applied to N tracks" count is honest;
+            // silently skipping made the UI claim success while the
+            // mutation never reached the file.
+            errors.add(
+                '$trackId: track no longer exists in the rip library');
+            continue;
+          }
+          // Apply TITLE separately if present, others via setTags.
+          final titleValue = tags['TITLE'];
+          final otherTags = Map<String, String>.from(tags)
+            ..remove('TITLE');
 
-              if (titleValue != null) {
-                await useCase.editTrackTitle(
-                    track: track, title: titleValue);
-              }
+          if (titleValue != null) {
+            await useCase.editTrackTitle(
+                track: track, title: titleValue);
+          }
 
-              if (otherTags.isNotEmpty &&
-                  track.filePath.toLowerCase().endsWith('.flac')) {
-                await ref
-                    .read(metaflacWriterProvider)
-                    .setTags(track.filePath, otherTags);
-              }
+          if (otherTags.isNotEmpty &&
+              track.filePath.toLowerCase().endsWith('.flac')) {
+            await ref
+                .read(metaflacWriterProvider)
+                .setTags(track.filePath, otherTags);
           }
         } catch (e) {
           errors.add('$trackId: $e');

@@ -114,7 +114,10 @@ class ScanRipLibraryUseCase {
 
       final existing = existingByPath[result.directoryPath];
       if (existing != null) {
-        // Update existing album
+        // Update existing album. The album row update + delete-existing
+        // tracks + insert-new tracks are committed in a single
+        // transaction so a crash mid-rescan can't leave the album row
+        // pointing at a half-written track list.
         final updated = RipAlbum(
           id: existing.id,
           libraryPath: result.directoryPath,
@@ -129,13 +132,14 @@ class ScanRipLibraryUseCase {
           updatedAt: now,
           cueFilePath: result.cueFilePath,
         );
-        await _repo.updateAlbum(updated);
-
-        // Replace tracks
-        await _repo.deleteTracksForAlbum(existing.id);
-        await _repo.insertTracks(_buildTracks(existing.id, result.tracks, now));
+        await _repo.updateAlbumAndReplaceTracks(
+          updated,
+          _buildTracks(existing.id, result.tracks, now),
+        );
       } else {
-        // Insert new album
+        // Insert new album. Album row + tracks are committed atomically
+        // — the prior split inserts could leave a track-less orphan
+        // album visible in the UI that fell over on first play.
         final albumId = _uuid.v7();
         final album = RipAlbum(
           id: albumId,
@@ -150,8 +154,10 @@ class ScanRipLibraryUseCase {
           updatedAt: now,
           cueFilePath: result.cueFilePath,
         );
-        await _repo.insertAlbum(album);
-        await _repo.insertTracks(_buildTracks(albumId, result.tracks, now));
+        await _repo.insertAlbumWithTracks(
+          album,
+          _buildTracks(albumId, result.tracks, now),
+        );
       }
     }
 

@@ -51,8 +51,31 @@ class StaticExportWriter {
     var done = 0;
     onProgress?.call(done, total);
 
+    final canonicalRoot = p.canonicalize(targetDir.path);
+
     for (final e in bundle.entries) {
-      final file = File(p.join(targetDir.path, e.key));
+      // Defence-in-depth: validate that the bundle key resolves to a
+      // path that stays inside [targetDir]. The keys come from
+      // [StaticExportService.build] which is in-tree, but a future
+      // change there could regress the contract — and a path-traversal
+      // bug in the writer is a much sharper failure than one in the
+      // service. Reject absolute paths, parent-traversal, and any
+      // resolved path that isn't a descendant of the target root.
+      final key = e.key;
+      if (p.isAbsolute(key) ||
+          key.split(p.separator).any((s) => s == '..') ||
+          key.split('/').any((s) => s == '..')) {
+        throw StateError(
+            'StaticExportWriter: refusing unsafe bundle key "$key"');
+      }
+      final resolved = p.canonicalize(p.join(targetDir.path, key));
+      if (!p.isWithin(canonicalRoot, resolved) &&
+          resolved != canonicalRoot) {
+        throw StateError(
+            'StaticExportWriter: bundle key "$key" resolves outside '
+            'target directory');
+      }
+      final file = File(resolved);
       await file.parent.create(recursive: true);
       await file.writeAsBytes(e.value);
       done++;

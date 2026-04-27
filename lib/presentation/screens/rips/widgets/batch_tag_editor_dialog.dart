@@ -81,25 +81,46 @@ class _BatchTagEditorDialogState extends ConsumerState<BatchTagEditorDialog> {
     // Collect all track IDs and build pending changes map.
     final pendingChanges = <String, Map<String, String>>{};
     final originalValues = <String, Map<String, String>>{};
+    final readFailures = <String>[];
 
     for (final album in _selectedAlbums) {
       final tracks = ref.read(ripTracksProvider(album.id)).value ?? [];
       for (final track in tracks) {
-        pendingChanges[track.id] = Map<String, String>.from(tagChanges);
-        // Read current tag values for undo
-        final currentTags =
-            await ref.read(trackRawTagsProvider(track.filePath).future);
-        originalValues[track.id] = {
-          for (final key in tagChanges.keys)
-            if (currentTags.containsKey(key)) key: currentTags[key]!,
-        };
+        try {
+          // Read current tag values for undo. A bad FLAC, missing
+          // file, or vendor-tag parse error here used to bubble out and
+          // abort the entire batch with no per-track feedback. Now we
+          // collect the failure and continue with the rest.
+          final currentTags = await ref
+              .read(trackRawTagsProvider(track.filePath).future);
+          pendingChanges[track.id] = Map<String, String>.from(tagChanges);
+          originalValues[track.id] = {
+            for (final key in tagChanges.keys)
+              if (currentTags.containsKey(key)) key: currentTags[key]!,
+          };
+        } on Object catch (e) {
+          readFailures.add('${track.filePath}: $e');
+        }
       }
+    }
+
+    if (!mounted) return;
+    if (readFailures.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(
+          readFailures.length == 1
+              ? 'Could not read tags from 1 track — preview will skip it.'
+              : 'Could not read tags from ${readFailures.length} tracks — '
+                  'preview will skip them.',
+        ),
+        duration: const Duration(seconds: 4),
+      ));
     }
 
     ref.read(batchMetadataEditProvider.notifier).prepareBatchEdit(
           pendingChanges: pendingChanges,
           originalValues: originalValues,
-          affectedTrackCount: _totalTrackCount,
+          affectedTrackCount: pendingChanges.length,
           affectedAlbumCount: _selectedAlbums.length,
         );
 
@@ -123,24 +144,42 @@ class _BatchTagEditorDialogState extends ConsumerState<BatchTagEditorDialog> {
 
     final pendingChanges = <String, Map<String, String>>{};
     final originalValues = <String, Map<String, String>>{};
+    final readFailures = <String>[];
 
     for (final album in _selectedAlbums) {
       final tracks = ref.read(ripTracksProvider(album.id)).value ?? [];
       for (final track in tracks) {
-        pendingChanges[track.id] = Map<String, String>.from(tagChanges);
-        final currentTags =
-            await ref.read(trackRawTagsProvider(track.filePath).future);
-        originalValues[track.id] = {
-          for (final key in tagChanges.keys)
-            if (currentTags.containsKey(key)) key: currentTags[key]!,
-        };
+        try {
+          final currentTags = await ref
+              .read(trackRawTagsProvider(track.filePath).future);
+          pendingChanges[track.id] = Map<String, String>.from(tagChanges);
+          originalValues[track.id] = {
+            for (final key in tagChanges.keys)
+              if (currentTags.containsKey(key)) key: currentTags[key]!,
+          };
+        } on Object catch (e) {
+          readFailures.add('${track.filePath}: $e');
+        }
       }
+    }
+
+    if (!mounted) return;
+    if (readFailures.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(
+          readFailures.length == 1
+              ? 'Could not read tags from 1 track — it will be skipped.'
+              : 'Could not read tags from ${readFailures.length} tracks — '
+                  'they will be skipped.',
+        ),
+        duration: const Duration(seconds: 4),
+      ));
     }
 
     ref.read(batchMetadataEditProvider.notifier).prepareBatchEdit(
           pendingChanges: pendingChanges,
           originalValues: originalValues,
-          affectedTrackCount: _totalTrackCount,
+          affectedTrackCount: pendingChanges.length,
           affectedAlbumCount: _selectedAlbums.length,
         );
 

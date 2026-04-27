@@ -629,6 +629,14 @@ class _FlacLibrarySectionState extends ConsumerState<_FlacLibrarySection> {
   final _pathController = TextEditingController();
   final _flacBinaryController = TextEditingController();
 
+  /// One-shot seed flags — once we've written the stored value into a
+  /// controller, never overwrite it again. The earlier `text.isEmpty`
+  /// guard re-seeded the field if the user cleared it, clobbering an
+  /// in-progress edit on the next rebuild (e.g. when
+  /// `ripScanNotifierProvider` re-emits scan progress).
+  bool _pathSeeded = false;
+  bool _flacBinarySeeded = false;
+
   @override
   void dispose() {
     _pathController.dispose();
@@ -643,16 +651,24 @@ class _FlacLibrarySectionState extends ConsumerState<_FlacLibrarySection> {
     final flacBinaryAsync = ref.watch(flacBinaryPathOverrideProvider);
     final clickSensitivityAsync = ref.watch(clickDetectionSensitivityProvider);
 
-    // Initialise text field from stored path
+    // Initialise text fields from stored values exactly once.
     pathAsync.whenData((path) {
-      if (path != null && _pathController.text.isEmpty) {
+      if (!_pathSeeded && path != null) {
         _pathController.text = path;
+        _pathSeeded = true;
+      } else if (!_pathSeeded && path == null) {
+        // Mark seeded even when the stored value is null so a delayed
+        // user edit isn't overwritten by a later null re-emission.
+        _pathSeeded = true;
       }
     });
 
     flacBinaryAsync.whenData((path) {
-      if (path != null && _flacBinaryController.text.isEmpty) {
+      if (!_flacBinarySeeded && path != null) {
         _flacBinaryController.text = path;
+        _flacBinarySeeded = true;
+      } else if (!_flacBinarySeeded && path == null) {
+        _flacBinarySeeded = true;
       }
     });
 
