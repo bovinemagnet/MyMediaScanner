@@ -44,12 +44,19 @@ class LocationRepositoryImpl implements ILocationRepository {
 
   @override
   Future<void> create(Location location) async {
-    await _dao.insertLocation(_toCompanion(location));
-    await _logSync(location, 'insert');
+    // Atomic write + sync_log: see MediaItemRepositoryImpl.save.
+    await _dao.transaction(() async {
+      await _dao.insertLocation(_toCompanion(location));
+      await _logSync(location, 'insert');
+    });
   }
 
   @override
   Future<void> update(Location location) async {
+    // Cycle detection runs outside the transaction because reading from
+    // the same connection inside the transaction would still see
+    // committed state, but throwing here surfaces the validation error
+    // to the caller before we open a write txn — cleaner failure mode.
     final existing = await _dao.getById(location.id);
     if (existing != null && existing.parentId != location.parentId) {
       if (await _dao.wouldCreateCycle(location.id, location.parentId)) {
@@ -58,26 +65,30 @@ class LocationRepositoryImpl implements ILocationRepository {
             '${location.parentId}: would create a cycle.');
       }
     }
-    await _dao.updateLocation(_toCompanion(location));
-    await _logSync(location, 'update');
+    await _dao.transaction(() async {
+      await _dao.updateLocation(_toCompanion(location));
+      await _logSync(location, 'update');
+    });
   }
 
   @override
   Future<void> softDelete(String id) async {
     final now = DateTime.now().millisecondsSinceEpoch;
-    await _dao.softDelete(id, now);
-    await _syncLogDao.insertLog(SyncLogTableCompanion(
-      id: Value(_uuid.v7()),
-      entityType: const Value('location'),
-      entityId: Value(id),
-      operation: const Value('delete'),
-      payloadJson: Value(jsonEncode({
-        'id': id,
-        'deleted': 1,
-        'updated_at': now,
-      })),
-      createdAt: Value(now),
-    ));
+    await _dao.transaction(() async {
+      await _dao.softDelete(id, now);
+      await _syncLogDao.insertLog(SyncLogTableCompanion(
+        id: Value(_uuid.v7()),
+        entityType: const Value('location'),
+        entityId: Value(id),
+        operation: const Value('delete'),
+        payloadJson: Value(jsonEncode({
+          'id': id,
+          'deleted': 1,
+          'updated_at': now,
+        })),
+        createdAt: Value(now),
+      ));
+    });
   }
 
   @override

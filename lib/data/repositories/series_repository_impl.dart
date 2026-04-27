@@ -52,56 +52,63 @@ class SeriesRepositoryImpl implements ISeriesRepository {
     required String source,
     int? totalCount,
   }) async {
-    final existing = await _dao.findByExternalId(externalId);
     final now = DateTime.now().millisecondsSinceEpoch;
-    final id = existing?.id ?? _uuid.v7();
-    final resolvedTotalCount = totalCount ?? existing?.totalCount;
-    await _dao.upsert(SeriesTableCompanion(
-      id: Value(id),
-      externalId: Value(externalId),
-      name: Value(name),
-      mediaType: Value(mediaType.name),
-      source: Value(source),
-      totalCount: Value(resolvedTotalCount),
-      updatedAt: Value(now),
-      deleted: const Value(0),
-    ));
-    await _syncLogDao.insertLog(SyncLogTableCompanion(
-      id: Value(_uuid.v7()),
-      entityType: const Value('series'),
-      entityId: Value(id),
-      operation: Value(existing == null ? 'insert' : 'update'),
-      payloadJson: Value(jsonEncode({
-        'id': id,
-        'external_id': externalId,
-        'name': name,
-        'media_type': mediaType.name,
-        'source': source,
-        'total_count': resolvedTotalCount,
-        'updated_at': now,
-        'deleted': 0,
-      })),
-      createdAt: Value(now),
-    ));
-    return id;
+    // Atomic upsert + sync_log: read-then-write in a single transaction
+    // so a concurrent upsert with the same externalId can't cause two
+    // distinct ids to race in.
+    return _dao.transaction(() async {
+      final existing = await _dao.findByExternalId(externalId);
+      final id = existing?.id ?? _uuid.v7();
+      final resolvedTotalCount = totalCount ?? existing?.totalCount;
+      await _dao.upsert(SeriesTableCompanion(
+        id: Value(id),
+        externalId: Value(externalId),
+        name: Value(name),
+        mediaType: Value(mediaType.name),
+        source: Value(source),
+        totalCount: Value(resolvedTotalCount),
+        updatedAt: Value(now),
+        deleted: const Value(0),
+      ));
+      await _syncLogDao.insertLog(SyncLogTableCompanion(
+        id: Value(_uuid.v7()),
+        entityType: const Value('series'),
+        entityId: Value(id),
+        operation: Value(existing == null ? 'insert' : 'update'),
+        payloadJson: Value(jsonEncode({
+          'id': id,
+          'external_id': externalId,
+          'name': name,
+          'media_type': mediaType.name,
+          'source': source,
+          'total_count': resolvedTotalCount,
+          'updated_at': now,
+          'deleted': 0,
+        })),
+        createdAt: Value(now),
+      ));
+      return id;
+    });
   }
 
   @override
   Future<void> softDelete(String id) async {
     final now = DateTime.now().millisecondsSinceEpoch;
-    await _dao.softDelete(id, now);
-    await _syncLogDao.insertLog(SyncLogTableCompanion(
-      id: Value(_uuid.v7()),
-      entityType: const Value('series'),
-      entityId: Value(id),
-      operation: const Value('delete'),
-      payloadJson: Value(jsonEncode({
-        'id': id,
-        'deleted': 1,
-        'updated_at': now,
-      })),
-      createdAt: Value(now),
-    ));
+    await _dao.transaction(() async {
+      await _dao.softDelete(id, now);
+      await _syncLogDao.insertLog(SyncLogTableCompanion(
+        id: Value(_uuid.v7()),
+        entityType: const Value('series'),
+        entityId: Value(id),
+        operation: const Value('delete'),
+        payloadJson: Value(jsonEncode({
+          'id': id,
+          'deleted': 1,
+          'updated_at': now,
+        })),
+        createdAt: Value(now),
+      ));
+    });
   }
 
   @override

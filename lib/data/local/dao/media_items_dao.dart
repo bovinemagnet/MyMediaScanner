@@ -1,11 +1,12 @@
 import 'package:drift/drift.dart';
 import 'package:mymediascanner/data/local/database/app_database.dart';
+import 'package:mymediascanner/data/local/database/tables/media_item_tags_table.dart';
 import 'package:mymediascanner/data/local/database/tables/media_items_table.dart';
 import 'package:mymediascanner/domain/entities/ownership_status.dart';
 
 part 'media_items_dao.g.dart';
 
-@DriftAccessor(tables: [MediaItemsTable])
+@DriftAccessor(tables: [MediaItemsTable, MediaItemTagsTable])
 class MediaItemsDao extends DatabaseAccessor<AppDatabase>
     with _$MediaItemsDaoMixin {
   MediaItemsDao(super.db);
@@ -13,6 +14,7 @@ class MediaItemsDao extends DatabaseAccessor<AppDatabase>
   Stream<List<MediaItemsTableData>> watchAll({
     bool includeDeleted = false,
     String? mediaType,
+    List<String>? tagIds,
     String? sortBy,
     bool ascending = false,
   }) {
@@ -22,6 +24,21 @@ class MediaItemsDao extends DatabaseAccessor<AppDatabase>
     }
     if (mediaType != null) {
       query.where((t) => t.mediaType.equals(mediaType));
+    }
+    // Tag filter: include only rows that have at least one matching
+    // assignment in `media_item_tags`. The stream re-fires when either
+    // table changes because Drift tracks `readsFrom` on the subquery.
+    if (tagIds != null && tagIds.isNotEmpty) {
+      query.where(
+        (t) => existsQuery(
+          selectOnly(mediaItemTagsTable)
+            ..addColumns([mediaItemTagsTable.tagId])
+            ..where(
+              mediaItemTagsTable.mediaItemId.equalsExp(t.id) &
+                  mediaItemTagsTable.tagId.isIn(tagIds),
+            ),
+        ),
+      );
     }
 
     final orderColumn = switch (sortBy) {

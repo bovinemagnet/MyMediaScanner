@@ -5,6 +5,9 @@ part of 'media_items_dao.dart';
 // ignore_for_file: type=lint
 mixin _$MediaItemsDaoMixin on DatabaseAccessor<AppDatabase> {
   $MediaItemsTableTable get mediaItemsTable => attachedDatabase.mediaItemsTable;
+  $TagsTableTable get tagsTable => attachedDatabase.tagsTable;
+  $MediaItemTagsTableTable get mediaItemTagsTable =>
+      attachedDatabase.mediaItemTagsTable;
   MediaItemsDaoManager get managers => MediaItemsDaoManager(this);
 }
 
@@ -15,5 +18,12 @@ class MediaItemsDaoManager {
       $$MediaItemsTableTableTableManager(
         _db.attachedDatabase,
         _db.mediaItemsTable,
+      );
+  $$TagsTableTableTableManager get tagsTable =>
+      $$TagsTableTableTableManager(_db.attachedDatabase, _db.tagsTable);
+  $$MediaItemTagsTableTableTableManager get mediaItemTagsTable =>
+      $$MediaItemTagsTableTableTableManager(
+        _db.attachedDatabase,
+        _db.mediaItemTagsTable,
       );
 }
