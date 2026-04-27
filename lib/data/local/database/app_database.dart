@@ -84,7 +84,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 17;
+  int get schemaVersion => 18;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -184,6 +184,44 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(ripAlbumsTable);
             await m.createTable(ripTracksTable);
           }
+          if (from < 18) {
+            // Cluster-3 MED-3: the prior FTS5 triggers re-inserted into
+            // media_items_fts on every UPDATE, including the soft-delete
+            // UPDATE that sets deleted=1. Soft-deleted items therefore
+            // kept matching full-text search even though every other
+            // surface filters them out. Re-create the triggers with a
+            // deleted=0 guard and rebuild the index from the
+            // non-deleted rows so any already-soft-deleted items drop
+            // out immediately.
+            //
+            // Production paths from v6+ already have the FTS table.
+            // Some artificially-seeded migration tests start without it
+            // (or even without the media_items table); skip cleanly in
+            // those cases — a fresh schema setup will build it via
+            // `onCreate` when it eventually opens at v18+.
+            final ftsExists = await customSelect(
+              'SELECT name FROM sqlite_master '
+              "WHERE type='table' AND name='media_items_fts'",
+            ).get();
+            if (ftsExists.isNotEmpty) {
+              await customStatement(
+                  'DROP TRIGGER IF EXISTS media_items_fts_insert');
+              await customStatement(
+                  'DROP TRIGGER IF EXISTS media_items_fts_update');
+              await customStatement(
+                  'DROP TRIGGER IF EXISTS media_items_fts_update_insert');
+              await customStatement(
+                  'DROP TRIGGER IF EXISTS media_items_fts_delete');
+              await _createFtsTriggers();
+              await customStatement('DELETE FROM media_items_fts');
+              await customStatement(
+                'INSERT INTO media_items_fts(rowid, title, subtitle, '
+                'description, publisher, genres) '
+                'SELECT rowid, title, subtitle, description, publisher, '
+                'genres FROM media_items WHERE deleted = 0',
+              );
+            }
+          }
         },
       );
 
@@ -201,19 +239,51 @@ class AppDatabase extends _$AppDatabase {
       )
     ''');
 
+    await _createFtsTriggers();
+
+    // Seed the index from existing non-deleted rows (for fresh installs
+    // this is empty; for upgrades from versions that had a populated
+    // table this back-fills without including soft-deleted items).
+    await customStatement(
+      'INSERT INTO media_items_fts(rowid, title, subtitle, description, '
+      'publisher, genres) '
+      'SELECT rowid, title, subtitle, description, publisher, genres '
+      'FROM media_items WHERE deleted = 0',
+    );
+  }
+
+  /// (Re)creates the FTS5 sync triggers with a `deleted = 0` guard so
+  /// soft-deleted media items don't surface from full-text search.
+  ///
+  /// Split into separate insert/delete branches because SQLite's FTS5
+  /// `WHEN` clauses on triggers can't conditionally execute one of two
+  /// statements within a single trigger body.
+  Future<void> _createFtsTriggers() async {
     await customStatement('''
       CREATE TRIGGER IF NOT EXISTS media_items_fts_insert
-      AFTER INSERT ON media_items BEGIN
+      AFTER INSERT ON media_items WHEN new.deleted = 0 BEGIN
         INSERT INTO media_items_fts(rowid, title, subtitle, description, publisher, genres)
         VALUES (new.rowid, new.title, new.subtitle, new.description, new.publisher, new.genres);
       END
     ''');
 
+    // The delete-side of an UPDATE only runs when the OLD row was
+    // actually in the index (i.e. wasn't already soft-deleted) — issuing
+    // a 'delete' command for a row that was never indexed corrupts the
+    // FTS5 contentless lookup table and prevents a subsequent un-delete
+    // from re-indexing the row. Re-insert runs WHEN the NEW row is
+    // un-deleted, which covers both regular edits and un-deletes.
     await customStatement('''
       CREATE TRIGGER IF NOT EXISTS media_items_fts_update
-      AFTER UPDATE ON media_items BEGIN
+      AFTER UPDATE ON media_items WHEN old.deleted = 0 BEGIN
         INSERT INTO media_items_fts(media_items_fts, rowid, title, subtitle, description, publisher, genres)
         VALUES ('delete', old.rowid, old.title, old.subtitle, old.description, old.publisher, old.genres);
+      END
+    ''');
+
+    await customStatement('''
+      CREATE TRIGGER IF NOT EXISTS media_items_fts_update_insert
+      AFTER UPDATE ON media_items WHEN new.deleted = 0 BEGIN
         INSERT INTO media_items_fts(rowid, title, subtitle, description, publisher, genres)
         VALUES (new.rowid, new.title, new.subtitle, new.description, new.publisher, new.genres);
       END
@@ -226,11 +296,6 @@ class AppDatabase extends _$AppDatabase {
         VALUES ('delete', old.rowid, old.title, old.subtitle, old.description, old.publisher, old.genres);
       END
     ''');
-
-    // Rebuild index from existing data (for upgrades from previous versions).
-    await customStatement(
-      "INSERT INTO media_items_fts(media_items_fts) VALUES('rebuild')",
-    );
   }
 
   /// Creates indexes on commonly queried columns to improve performance.

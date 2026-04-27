@@ -59,12 +59,22 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     this.fanartApi,
     this.igdbApi,
     ApiCircuitBreaker? googleBooksBreaker,
-  }) : _cacheDao = cacheDao,
-       googleBooksBreaker = googleBooksBreaker ?? ApiCircuitBreaker();
+    RateLimitAwareClient? discogsLimiter,
+  })  : _cacheDao = cacheDao,
+        googleBooksBreaker = googleBooksBreaker ?? ApiCircuitBreaker(),
+        // Discogs's authenticated quota is 60 req/min. Without a gate, a
+        // batch scan can fan out N parallel requests and burn the bucket
+        // in seconds. MusicBrainz already pre-throttles internally; this
+        // is the matching wrapper for Discogs.
+        _discogsLimiter = discogsLimiter ??
+            RateLimitAwareClient(
+              minInterval: const Duration(milliseconds: 1100),
+            );
 
   final BarcodeCacheDao _cacheDao;
   final TmdbApi? tmdbApi;
   final DiscogsApi? discogsApi;
+  final RateLimitAwareClient _discogsLimiter;
   final MusicBrainzApi? musicBrainzApi;
   final CoverArtArchiveApi? coverArtArchiveApi;
   final TvdbApi? tvdbApi;
@@ -275,13 +285,15 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     // Fall back to Discogs title search
     if (discogsApi != null) {
       try {
-        final response = await discogsApi!.searchByTitle(title);
+        final response = await _discogsLimiter
+            .run(() => discogsApi!.searchByTitle(title));
         final results = response.results;
         if (results != null && results.isNotEmpty) {
           if (results.length == 1) {
             final searchResult = results.first;
             if (searchResult.id != null) {
-              final release = await discogsApi!.getRelease(searchResult.id!);
+              final release = await _discogsLimiter
+                  .run(() => discogsApi!.getRelease(searchResult.id!));
               await _cacheResponse(
                 barcode,
                 'music',
@@ -525,7 +537,8 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     if (discogsApi == null) return null;
     try {
       final id = int.parse(candidate.sourceId);
-      final release = await discogsApi!.getRelease(id);
+      final release =
+          await _discogsLimiter.run(() => discogsApi!.getRelease(id));
       await _cacheResponse(barcode, 'music', 'discogs', release.toJson());
       return DiscogsMapper.fromRelease(release, barcode, barcodeType);
     } on Exception catch (_) {
@@ -976,14 +989,16 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     // 2. Fall back to Discogs
     if (discogsApi == null) return null;
     try {
-      final response = await discogsApi!.searchByBarcode(barcode);
+      final response = await _discogsLimiter
+          .run(() => discogsApi!.searchByBarcode(barcode));
       final results = response.results;
       if (results == null || results.isEmpty) return null;
 
       if (results.length == 1) {
         final searchResult = results.first;
         if (searchResult.id != null) {
-          final release = await discogsApi!.getRelease(searchResult.id!);
+          final release = await _discogsLimiter
+              .run(() => discogsApi!.getRelease(searchResult.id!));
           await _cacheResponse(barcode, 'music', 'discogs', release.toJson());
           return ScanResult.single(
             metadata: DiscogsMapper.fromRelease(release, barcode, barcodeType),
@@ -1166,11 +1181,13 @@ class MetadataRepositoryImpl implements IMetadataRepository {
       // MusicBrainz already tried above, go straight to Discogs
       if (discogsApi != null) {
         try {
-          final response = await discogsApi!.searchByBarcode(barcode);
+          final response = await _discogsLimiter
+              .run(() => discogsApi!.searchByBarcode(barcode));
           final results = response.results;
           if (results != null && results.isNotEmpty) {
             if (results.length == 1 && results.first.id != null) {
-              final release = await discogsApi!.getRelease(results.first.id!);
+              final release = await _discogsLimiter
+                  .run(() => discogsApi!.getRelease(results.first.id!));
               await _cacheResponse(
                 barcode,
                 'music',

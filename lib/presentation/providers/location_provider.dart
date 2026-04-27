@@ -6,7 +6,10 @@ import 'package:mymediascanner/presentation/providers/database_provider.dart';
 import 'package:uuid/uuid.dart';
 
 final locationRepositoryProvider = Provider<ILocationRepository>((ref) {
-  return LocationRepositoryImpl(dao: ref.watch(locationsDaoProvider));
+  return LocationRepositoryImpl(
+    dao: ref.watch(locationsDaoProvider),
+    syncLogDao: ref.watch(syncLogDaoProvider),
+  );
 });
 
 /// Stream of every non-deleted location, sorted by sortOrder/name.

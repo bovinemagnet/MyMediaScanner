@@ -1,9 +1,12 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 import 'package:mymediascanner/data/local/dao/tags_dao.dart';
 import 'package:mymediascanner/data/local/dao/sync_log_dao.dart';
 import 'package:mymediascanner/data/local/database/app_database.dart';
 import 'package:mymediascanner/domain/entities/tag.dart';
 import 'package:mymediascanner/domain/repositories/i_tag_repository.dart';
+import 'package:uuid/uuid.dart';
 
 class TagRepositoryImpl implements ITagRepository {
   TagRepositoryImpl({
@@ -13,9 +16,8 @@ class TagRepositoryImpl implements ITagRepository {
         _syncLogDao = syncLogDao;
 
   final TagsDao _tagsDao;
-  // Retained for sync support in Slice 5.
-  // ignore: unused_field
   final SyncLogDao _syncLogDao;
+  static const _uuid = Uuid();
 
   @override
   Stream<List<Tag>> watchAll() {
@@ -44,6 +46,18 @@ class TagRepositoryImpl implements ITagRepository {
   Future<void> softDelete(String id) async {
     final now = DateTime.now().millisecondsSinceEpoch;
     await _tagsDao.softDelete(id, now);
+    await _syncLogDao.insertLog(SyncLogTableCompanion(
+      id: Value(_uuid.v7()),
+      entityType: const Value('tag'),
+      entityId: Value(id),
+      operation: const Value('delete'),
+      payloadJson: Value(jsonEncode({
+        'id': id,
+        'deleted': 1,
+        'updated_at': now,
+      })),
+      createdAt: Value(now),
+    ));
   }
 
   @override

@@ -40,10 +40,12 @@ class ShelfDetailScreen extends ConsumerWidget {
               // been removed yet. Compensate before persisting.
               final adjusted =
                   oldIndex < newIndex ? newIndex - 1 : newIndex;
-              final movedId = itemIds[oldIndex];
+              final reordered = List<String>.of(itemIds);
+              final moved = reordered.removeAt(oldIndex);
+              reordered.insert(adjusted, moved);
               await ref
                   .read(shelfRepositoryProvider)
-                  .reorderItem(shelfId, movedId, adjusted);
+                  .reorderItems(shelfId, reordered);
               ref.invalidate(shelfItemIdsProvider(shelfId));
             },
             itemBuilder: (context, index) {
