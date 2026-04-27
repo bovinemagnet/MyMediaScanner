@@ -35,6 +35,14 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
   bool _hasScanned = false;
   String? _cameraError;
 
+  /// Last keyboard-wedge submission timestamp + value. USB barcode
+  /// scanners are HID devices that can fire two Enter events in quick
+  /// succession; without this guard the same barcode is dispatched
+  /// twice before scannerProvider transitions to lookingUp.
+  DateTime? _lastKeyboardSubmitAt;
+  String? _lastKeyboardSubmitValue;
+  static const _keyboardSubmitDebounce = Duration(milliseconds: 300);
+
   @override
   void initState() {
     super.initState();
@@ -47,7 +55,17 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
     _focusNode.dispose();
     _keyboardFocusNode.dispose();
     _barcodeSubscription?.cancel();
-    _cameraService?.dispose();
+    // CameraService.dispose() is async (V4L2 / WMF / AVFoundation handle
+    // teardown) but State.dispose() must be sync. unawaited(...) marks
+    // the fire-and-forget intent; the catchError ensures a teardown
+    // failure on Linux/Windows surfaces in debug logs instead of going
+    // through the unhandled-async-error path.
+    final pendingCamera = _cameraService?.dispose();
+    if (pendingCamera != null) {
+      unawaited(pendingCamera.catchError((Object error, StackTrace stack) {
+        debugPrint('Camera dispose failed: $error');
+      }));
+    }
     super.dispose();
   }
 
@@ -150,9 +168,24 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
   }
 
   void _onSubmitted(String barcode) {
-    if (barcode.trim().isEmpty) return;
+    final trimmed = barcode.trim();
+    if (trimmed.isEmpty) return;
+    // Debounce keyboard-wedge bursts: a fast HID scanner can deliver two
+    // Enter events for the same scan before scannerProvider's state has
+    // transitioned to lookingUp, so the dedupe in the provider's `if
+    // (state.isLookingUp)` branch doesn't catch it. Drop the second
+    // submission of the same value within a 300 ms window.
+    final now = DateTime.now();
+    if (_lastKeyboardSubmitValue == trimmed &&
+        _lastKeyboardSubmitAt != null &&
+        now.difference(_lastKeyboardSubmitAt!) < _keyboardSubmitDebounce) {
+      _controller.clear();
+      return;
+    }
+    _lastKeyboardSubmitAt = now;
+    _lastKeyboardSubmitValue = trimmed;
     _controller.clear();
-    ref.read(scannerProvider.notifier).onBarcodeScanned(barcode.trim());
+    ref.read(scannerProvider.notifier).onBarcodeScanned(trimmed);
   }
 
   @override
