@@ -142,10 +142,12 @@ class MediaItemRepositoryImpl implements IMediaItemRepository {
 
   @override
   Future<void> update(MediaItem item) async {
+    final previous = await getById(item.id);
     await _mediaItemsDao.transaction(() async {
       await _mediaItemsDao.updateItem(_toCompanion(item));
       await _logSync('media_item', item.id, 'update', item);
     });
+    _maybeMirrorOnTransition(previous, item);
   }
 
   @override
@@ -293,7 +295,6 @@ class MediaItemRepositoryImpl implements IMediaItemRepository {
   /// mirror toggle, presence of a TMDB ID, and movie media type.
   ///
   /// Fire-and-forget — failures land on the bridge row's `last_error`.
-  // ignore: unused_element
   void _maybeMirrorOnTransition(MediaItem? previous, MediaItem next) {
     final mirror = _mirror;
     final readEnabled = _readMirrorEnabled;
