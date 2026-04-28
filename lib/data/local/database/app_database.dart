@@ -30,6 +30,7 @@ import 'package:mymediascanner/data/local/database/tables/series_table.dart';
 import 'package:mymediascanner/data/local/dao/playlist_dao.dart';
 import 'package:mymediascanner/data/local/dao/locations_dao.dart';
 import 'package:mymediascanner/data/local/dao/series_dao.dart';
+import 'package:mymediascanner/data/local/database/tables/tmdb_account_sync_items_table.dart';
 
 part 'app_database.g.dart';
 
@@ -52,6 +53,10 @@ part 'app_database.g.dart';
     PlaylistTracksTable,
     LocationsTable,
     SeriesTable,
+    // `TmdbAccountSyncItemsTable` is intentionally NOT replicated by
+    // PostgreSQL sync — bridge state is per-device and re-derivable
+    // by re-running the TMDB account import on a new device.
+    TmdbAccountSyncItemsTable,
   ],
   daos: [
     MediaItemsDao,
@@ -84,7 +89,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 19;
+  int get schemaVersion => 20;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -248,6 +253,21 @@ class AppDatabase extends _$AppDatabase {
               ''');
             }
           }
+          if (from < 20) {
+            await m.createTable(tmdbAccountSyncItemsTable);
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_tmdb_bridge_media_item_id '
+              'ON tmdb_account_sync_items(media_item_id)',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_tmdb_bridge_barcode '
+              'ON tmdb_account_sync_items(barcode)',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_tmdb_bridge_dirty '
+              'ON tmdb_account_sync_items(local_dirty, remote_dirty)',
+            );
+          }
         },
       );
 
@@ -385,5 +405,14 @@ class AppDatabase extends _$AppDatabase {
     await customStatement(
         'CREATE INDEX IF NOT EXISTS idx_loans_active '
         'ON loans (returned_at)');
+    await customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_tmdb_bridge_media_item_id '
+        'ON tmdb_account_sync_items(media_item_id)');
+    await customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_tmdb_bridge_barcode '
+        'ON tmdb_account_sync_items(barcode)');
+    await customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_tmdb_bridge_dirty '
+        'ON tmdb_account_sync_items(local_dirty, remote_dirty)');
   }
 }

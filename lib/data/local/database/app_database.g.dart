@@ -10076,6 +10076,1172 @@ class SeriesTableCompanion extends UpdateCompanion<SeriesTableData> {
   }
 }
 
+class $TmdbAccountSyncItemsTableTable extends TmdbAccountSyncItemsTable
+    with
+        TableInfo<
+          $TmdbAccountSyncItemsTableTable,
+          TmdbAccountSyncItemsTableData
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TmdbAccountSyncItemsTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _mediaItemIdMeta = const VerificationMeta(
+    'mediaItemId',
+  );
+  @override
+  late final GeneratedColumn<String> mediaItemId = GeneratedColumn<String>(
+    'media_item_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _tmdbIdMeta = const VerificationMeta('tmdbId');
+  @override
+  late final GeneratedColumn<int> tmdbId = GeneratedColumn<int>(
+    'tmdb_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _tmdbMediaTypeMeta = const VerificationMeta(
+    'tmdbMediaType',
+  );
+  @override
+  late final GeneratedColumn<String> tmdbMediaType = GeneratedColumn<String>(
+    'tmdb_media_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _barcodeMeta = const VerificationMeta(
+    'barcode',
+  );
+  @override
+  late final GeneratedColumn<String> barcode = GeneratedColumn<String>(
+    'barcode',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _titleSnapshotMeta = const VerificationMeta(
+    'titleSnapshot',
+  );
+  @override
+  late final GeneratedColumn<String> titleSnapshot = GeneratedColumn<String>(
+    'title_snapshot',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _posterPathSnapshotMeta =
+      const VerificationMeta('posterPathSnapshot');
+  @override
+  late final GeneratedColumn<String> posterPathSnapshot =
+      GeneratedColumn<String>(
+        'poster_path_snapshot',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _tmdbRatingMeta = const VerificationMeta(
+    'tmdbRating',
+  );
+  @override
+  late final GeneratedColumn<double> tmdbRating = GeneratedColumn<double>(
+    'tmdb_rating',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _localRatingSnapshotMeta =
+      const VerificationMeta('localRatingSnapshot');
+  @override
+  late final GeneratedColumn<double> localRatingSnapshot =
+      GeneratedColumn<double>(
+        'local_rating_snapshot',
+        aliasedName,
+        true,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _watchlistMeta = const VerificationMeta(
+    'watchlist',
+  );
+  @override
+  late final GeneratedColumn<int> watchlist = GeneratedColumn<int>(
+    'watchlist',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _favoriteMeta = const VerificationMeta(
+    'favorite',
+  );
+  @override
+  late final GeneratedColumn<int> favorite = GeneratedColumn<int>(
+    'favorite',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _listIdsJsonMeta = const VerificationMeta(
+    'listIdsJson',
+  );
+  @override
+  late final GeneratedColumn<String> listIdsJson = GeneratedColumn<String>(
+    'list_ids_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('[]'),
+  );
+  static const VerificationMeta _accountStateJsonMeta = const VerificationMeta(
+    'accountStateJson',
+  );
+  @override
+  late final GeneratedColumn<String> accountStateJson = GeneratedColumn<String>(
+    'account_state_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('{}'),
+  );
+  static const VerificationMeta _localDirtyMeta = const VerificationMeta(
+    'localDirty',
+  );
+  @override
+  late final GeneratedColumn<int> localDirty = GeneratedColumn<int>(
+    'local_dirty',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _remoteDirtyMeta = const VerificationMeta(
+    'remoteDirty',
+  );
+  @override
+  late final GeneratedColumn<int> remoteDirty = GeneratedColumn<int>(
+    'remote_dirty',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _lastPulledAtMeta = const VerificationMeta(
+    'lastPulledAt',
+  );
+  @override
+  late final GeneratedColumn<int> lastPulledAt = GeneratedColumn<int>(
+    'last_pulled_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _lastPushedAtMeta = const VerificationMeta(
+    'lastPushedAt',
+  );
+  @override
+  late final GeneratedColumn<int> lastPushedAt = GeneratedColumn<int>(
+    'last_pushed_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _lastErrorMeta = const VerificationMeta(
+    'lastError',
+  );
+  @override
+  late final GeneratedColumn<String> lastError = GeneratedColumn<String>(
+    'last_error',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<int> createdAt = GeneratedColumn<int>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    mediaItemId,
+    tmdbId,
+    tmdbMediaType,
+    barcode,
+    titleSnapshot,
+    posterPathSnapshot,
+    tmdbRating,
+    localRatingSnapshot,
+    watchlist,
+    favorite,
+    listIdsJson,
+    accountStateJson,
+    localDirty,
+    remoteDirty,
+    lastPulledAt,
+    lastPushedAt,
+    lastError,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'tmdb_account_sync_items';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<TmdbAccountSyncItemsTableData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('media_item_id')) {
+      context.handle(
+        _mediaItemIdMeta,
+        mediaItemId.isAcceptableOrUnknown(
+          data['media_item_id']!,
+          _mediaItemIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('tmdb_id')) {
+      context.handle(
+        _tmdbIdMeta,
+        tmdbId.isAcceptableOrUnknown(data['tmdb_id']!, _tmdbIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tmdbIdMeta);
+    }
+    if (data.containsKey('tmdb_media_type')) {
+      context.handle(
+        _tmdbMediaTypeMeta,
+        tmdbMediaType.isAcceptableOrUnknown(
+          data['tmdb_media_type']!,
+          _tmdbMediaTypeMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_tmdbMediaTypeMeta);
+    }
+    if (data.containsKey('barcode')) {
+      context.handle(
+        _barcodeMeta,
+        barcode.isAcceptableOrUnknown(data['barcode']!, _barcodeMeta),
+      );
+    }
+    if (data.containsKey('title_snapshot')) {
+      context.handle(
+        _titleSnapshotMeta,
+        titleSnapshot.isAcceptableOrUnknown(
+          data['title_snapshot']!,
+          _titleSnapshotMeta,
+        ),
+      );
+    }
+    if (data.containsKey('poster_path_snapshot')) {
+      context.handle(
+        _posterPathSnapshotMeta,
+        posterPathSnapshot.isAcceptableOrUnknown(
+          data['poster_path_snapshot']!,
+          _posterPathSnapshotMeta,
+        ),
+      );
+    }
+    if (data.containsKey('tmdb_rating')) {
+      context.handle(
+        _tmdbRatingMeta,
+        tmdbRating.isAcceptableOrUnknown(data['tmdb_rating']!, _tmdbRatingMeta),
+      );
+    }
+    if (data.containsKey('local_rating_snapshot')) {
+      context.handle(
+        _localRatingSnapshotMeta,
+        localRatingSnapshot.isAcceptableOrUnknown(
+          data['local_rating_snapshot']!,
+          _localRatingSnapshotMeta,
+        ),
+      );
+    }
+    if (data.containsKey('watchlist')) {
+      context.handle(
+        _watchlistMeta,
+        watchlist.isAcceptableOrUnknown(data['watchlist']!, _watchlistMeta),
+      );
+    }
+    if (data.containsKey('favorite')) {
+      context.handle(
+        _favoriteMeta,
+        favorite.isAcceptableOrUnknown(data['favorite']!, _favoriteMeta),
+      );
+    }
+    if (data.containsKey('list_ids_json')) {
+      context.handle(
+        _listIdsJsonMeta,
+        listIdsJson.isAcceptableOrUnknown(
+          data['list_ids_json']!,
+          _listIdsJsonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('account_state_json')) {
+      context.handle(
+        _accountStateJsonMeta,
+        accountStateJson.isAcceptableOrUnknown(
+          data['account_state_json']!,
+          _accountStateJsonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('local_dirty')) {
+      context.handle(
+        _localDirtyMeta,
+        localDirty.isAcceptableOrUnknown(data['local_dirty']!, _localDirtyMeta),
+      );
+    }
+    if (data.containsKey('remote_dirty')) {
+      context.handle(
+        _remoteDirtyMeta,
+        remoteDirty.isAcceptableOrUnknown(
+          data['remote_dirty']!,
+          _remoteDirtyMeta,
+        ),
+      );
+    }
+    if (data.containsKey('last_pulled_at')) {
+      context.handle(
+        _lastPulledAtMeta,
+        lastPulledAt.isAcceptableOrUnknown(
+          data['last_pulled_at']!,
+          _lastPulledAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('last_pushed_at')) {
+      context.handle(
+        _lastPushedAtMeta,
+        lastPushedAt.isAcceptableOrUnknown(
+          data['last_pushed_at']!,
+          _lastPushedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('last_error')) {
+      context.handle(
+        _lastErrorMeta,
+        lastError.isAcceptableOrUnknown(data['last_error']!, _lastErrorMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {tmdbId, tmdbMediaType},
+  ];
+  @override
+  TmdbAccountSyncItemsTableData map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TmdbAccountSyncItemsTableData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      mediaItemId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}media_item_id'],
+      ),
+      tmdbId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}tmdb_id'],
+      )!,
+      tmdbMediaType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tmdb_media_type'],
+      )!,
+      barcode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}barcode'],
+      ),
+      titleSnapshot: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title_snapshot'],
+      ),
+      posterPathSnapshot: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}poster_path_snapshot'],
+      ),
+      tmdbRating: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}tmdb_rating'],
+      ),
+      localRatingSnapshot: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}local_rating_snapshot'],
+      ),
+      watchlist: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}watchlist'],
+      )!,
+      favorite: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}favorite'],
+      )!,
+      listIdsJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}list_ids_json'],
+      )!,
+      accountStateJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}account_state_json'],
+      )!,
+      localDirty: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}local_dirty'],
+      )!,
+      remoteDirty: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}remote_dirty'],
+      )!,
+      lastPulledAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}last_pulled_at'],
+      ),
+      lastPushedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}last_pushed_at'],
+      ),
+      lastError: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}last_error'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $TmdbAccountSyncItemsTableTable createAlias(String alias) {
+    return $TmdbAccountSyncItemsTableTable(attachedDatabase, alias);
+  }
+}
+
+class TmdbAccountSyncItemsTableData extends DataClass
+    implements Insertable<TmdbAccountSyncItemsTableData> {
+  final String id;
+  final String? mediaItemId;
+  final int tmdbId;
+  final String tmdbMediaType;
+  final String? barcode;
+  final String? titleSnapshot;
+  final String? posterPathSnapshot;
+  final double? tmdbRating;
+  final double? localRatingSnapshot;
+  final int watchlist;
+  final int favorite;
+  final String listIdsJson;
+  final String accountStateJson;
+  final int localDirty;
+  final int remoteDirty;
+  final int? lastPulledAt;
+  final int? lastPushedAt;
+  final String? lastError;
+  final int createdAt;
+  final int updatedAt;
+  const TmdbAccountSyncItemsTableData({
+    required this.id,
+    this.mediaItemId,
+    required this.tmdbId,
+    required this.tmdbMediaType,
+    this.barcode,
+    this.titleSnapshot,
+    this.posterPathSnapshot,
+    this.tmdbRating,
+    this.localRatingSnapshot,
+    required this.watchlist,
+    required this.favorite,
+    required this.listIdsJson,
+    required this.accountStateJson,
+    required this.localDirty,
+    required this.remoteDirty,
+    this.lastPulledAt,
+    this.lastPushedAt,
+    this.lastError,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    if (!nullToAbsent || mediaItemId != null) {
+      map['media_item_id'] = Variable<String>(mediaItemId);
+    }
+    map['tmdb_id'] = Variable<int>(tmdbId);
+    map['tmdb_media_type'] = Variable<String>(tmdbMediaType);
+    if (!nullToAbsent || barcode != null) {
+      map['barcode'] = Variable<String>(barcode);
+    }
+    if (!nullToAbsent || titleSnapshot != null) {
+      map['title_snapshot'] = Variable<String>(titleSnapshot);
+    }
+    if (!nullToAbsent || posterPathSnapshot != null) {
+      map['poster_path_snapshot'] = Variable<String>(posterPathSnapshot);
+    }
+    if (!nullToAbsent || tmdbRating != null) {
+      map['tmdb_rating'] = Variable<double>(tmdbRating);
+    }
+    if (!nullToAbsent || localRatingSnapshot != null) {
+      map['local_rating_snapshot'] = Variable<double>(localRatingSnapshot);
+    }
+    map['watchlist'] = Variable<int>(watchlist);
+    map['favorite'] = Variable<int>(favorite);
+    map['list_ids_json'] = Variable<String>(listIdsJson);
+    map['account_state_json'] = Variable<String>(accountStateJson);
+    map['local_dirty'] = Variable<int>(localDirty);
+    map['remote_dirty'] = Variable<int>(remoteDirty);
+    if (!nullToAbsent || lastPulledAt != null) {
+      map['last_pulled_at'] = Variable<int>(lastPulledAt);
+    }
+    if (!nullToAbsent || lastPushedAt != null) {
+      map['last_pushed_at'] = Variable<int>(lastPushedAt);
+    }
+    if (!nullToAbsent || lastError != null) {
+      map['last_error'] = Variable<String>(lastError);
+    }
+    map['created_at'] = Variable<int>(createdAt);
+    map['updated_at'] = Variable<int>(updatedAt);
+    return map;
+  }
+
+  TmdbAccountSyncItemsTableCompanion toCompanion(bool nullToAbsent) {
+    return TmdbAccountSyncItemsTableCompanion(
+      id: Value(id),
+      mediaItemId: mediaItemId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(mediaItemId),
+      tmdbId: Value(tmdbId),
+      tmdbMediaType: Value(tmdbMediaType),
+      barcode: barcode == null && nullToAbsent
+          ? const Value.absent()
+          : Value(barcode),
+      titleSnapshot: titleSnapshot == null && nullToAbsent
+          ? const Value.absent()
+          : Value(titleSnapshot),
+      posterPathSnapshot: posterPathSnapshot == null && nullToAbsent
+          ? const Value.absent()
+          : Value(posterPathSnapshot),
+      tmdbRating: tmdbRating == null && nullToAbsent
+          ? const Value.absent()
+          : Value(tmdbRating),
+      localRatingSnapshot: localRatingSnapshot == null && nullToAbsent
+          ? const Value.absent()
+          : Value(localRatingSnapshot),
+      watchlist: Value(watchlist),
+      favorite: Value(favorite),
+      listIdsJson: Value(listIdsJson),
+      accountStateJson: Value(accountStateJson),
+      localDirty: Value(localDirty),
+      remoteDirty: Value(remoteDirty),
+      lastPulledAt: lastPulledAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastPulledAt),
+      lastPushedAt: lastPushedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastPushedAt),
+      lastError: lastError == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastError),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory TmdbAccountSyncItemsTableData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TmdbAccountSyncItemsTableData(
+      id: serializer.fromJson<String>(json['id']),
+      mediaItemId: serializer.fromJson<String?>(json['mediaItemId']),
+      tmdbId: serializer.fromJson<int>(json['tmdbId']),
+      tmdbMediaType: serializer.fromJson<String>(json['tmdbMediaType']),
+      barcode: serializer.fromJson<String?>(json['barcode']),
+      titleSnapshot: serializer.fromJson<String?>(json['titleSnapshot']),
+      posterPathSnapshot: serializer.fromJson<String?>(
+        json['posterPathSnapshot'],
+      ),
+      tmdbRating: serializer.fromJson<double?>(json['tmdbRating']),
+      localRatingSnapshot: serializer.fromJson<double?>(
+        json['localRatingSnapshot'],
+      ),
+      watchlist: serializer.fromJson<int>(json['watchlist']),
+      favorite: serializer.fromJson<int>(json['favorite']),
+      listIdsJson: serializer.fromJson<String>(json['listIdsJson']),
+      accountStateJson: serializer.fromJson<String>(json['accountStateJson']),
+      localDirty: serializer.fromJson<int>(json['localDirty']),
+      remoteDirty: serializer.fromJson<int>(json['remoteDirty']),
+      lastPulledAt: serializer.fromJson<int?>(json['lastPulledAt']),
+      lastPushedAt: serializer.fromJson<int?>(json['lastPushedAt']),
+      lastError: serializer.fromJson<String?>(json['lastError']),
+      createdAt: serializer.fromJson<int>(json['createdAt']),
+      updatedAt: serializer.fromJson<int>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'mediaItemId': serializer.toJson<String?>(mediaItemId),
+      'tmdbId': serializer.toJson<int>(tmdbId),
+      'tmdbMediaType': serializer.toJson<String>(tmdbMediaType),
+      'barcode': serializer.toJson<String?>(barcode),
+      'titleSnapshot': serializer.toJson<String?>(titleSnapshot),
+      'posterPathSnapshot': serializer.toJson<String?>(posterPathSnapshot),
+      'tmdbRating': serializer.toJson<double?>(tmdbRating),
+      'localRatingSnapshot': serializer.toJson<double?>(localRatingSnapshot),
+      'watchlist': serializer.toJson<int>(watchlist),
+      'favorite': serializer.toJson<int>(favorite),
+      'listIdsJson': serializer.toJson<String>(listIdsJson),
+      'accountStateJson': serializer.toJson<String>(accountStateJson),
+      'localDirty': serializer.toJson<int>(localDirty),
+      'remoteDirty': serializer.toJson<int>(remoteDirty),
+      'lastPulledAt': serializer.toJson<int?>(lastPulledAt),
+      'lastPushedAt': serializer.toJson<int?>(lastPushedAt),
+      'lastError': serializer.toJson<String?>(lastError),
+      'createdAt': serializer.toJson<int>(createdAt),
+      'updatedAt': serializer.toJson<int>(updatedAt),
+    };
+  }
+
+  TmdbAccountSyncItemsTableData copyWith({
+    String? id,
+    Value<String?> mediaItemId = const Value.absent(),
+    int? tmdbId,
+    String? tmdbMediaType,
+    Value<String?> barcode = const Value.absent(),
+    Value<String?> titleSnapshot = const Value.absent(),
+    Value<String?> posterPathSnapshot = const Value.absent(),
+    Value<double?> tmdbRating = const Value.absent(),
+    Value<double?> localRatingSnapshot = const Value.absent(),
+    int? watchlist,
+    int? favorite,
+    String? listIdsJson,
+    String? accountStateJson,
+    int? localDirty,
+    int? remoteDirty,
+    Value<int?> lastPulledAt = const Value.absent(),
+    Value<int?> lastPushedAt = const Value.absent(),
+    Value<String?> lastError = const Value.absent(),
+    int? createdAt,
+    int? updatedAt,
+  }) => TmdbAccountSyncItemsTableData(
+    id: id ?? this.id,
+    mediaItemId: mediaItemId.present ? mediaItemId.value : this.mediaItemId,
+    tmdbId: tmdbId ?? this.tmdbId,
+    tmdbMediaType: tmdbMediaType ?? this.tmdbMediaType,
+    barcode: barcode.present ? barcode.value : this.barcode,
+    titleSnapshot: titleSnapshot.present
+        ? titleSnapshot.value
+        : this.titleSnapshot,
+    posterPathSnapshot: posterPathSnapshot.present
+        ? posterPathSnapshot.value
+        : this.posterPathSnapshot,
+    tmdbRating: tmdbRating.present ? tmdbRating.value : this.tmdbRating,
+    localRatingSnapshot: localRatingSnapshot.present
+        ? localRatingSnapshot.value
+        : this.localRatingSnapshot,
+    watchlist: watchlist ?? this.watchlist,
+    favorite: favorite ?? this.favorite,
+    listIdsJson: listIdsJson ?? this.listIdsJson,
+    accountStateJson: accountStateJson ?? this.accountStateJson,
+    localDirty: localDirty ?? this.localDirty,
+    remoteDirty: remoteDirty ?? this.remoteDirty,
+    lastPulledAt: lastPulledAt.present ? lastPulledAt.value : this.lastPulledAt,
+    lastPushedAt: lastPushedAt.present ? lastPushedAt.value : this.lastPushedAt,
+    lastError: lastError.present ? lastError.value : this.lastError,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  TmdbAccountSyncItemsTableData copyWithCompanion(
+    TmdbAccountSyncItemsTableCompanion data,
+  ) {
+    return TmdbAccountSyncItemsTableData(
+      id: data.id.present ? data.id.value : this.id,
+      mediaItemId: data.mediaItemId.present
+          ? data.mediaItemId.value
+          : this.mediaItemId,
+      tmdbId: data.tmdbId.present ? data.tmdbId.value : this.tmdbId,
+      tmdbMediaType: data.tmdbMediaType.present
+          ? data.tmdbMediaType.value
+          : this.tmdbMediaType,
+      barcode: data.barcode.present ? data.barcode.value : this.barcode,
+      titleSnapshot: data.titleSnapshot.present
+          ? data.titleSnapshot.value
+          : this.titleSnapshot,
+      posterPathSnapshot: data.posterPathSnapshot.present
+          ? data.posterPathSnapshot.value
+          : this.posterPathSnapshot,
+      tmdbRating: data.tmdbRating.present
+          ? data.tmdbRating.value
+          : this.tmdbRating,
+      localRatingSnapshot: data.localRatingSnapshot.present
+          ? data.localRatingSnapshot.value
+          : this.localRatingSnapshot,
+      watchlist: data.watchlist.present ? data.watchlist.value : this.watchlist,
+      favorite: data.favorite.present ? data.favorite.value : this.favorite,
+      listIdsJson: data.listIdsJson.present
+          ? data.listIdsJson.value
+          : this.listIdsJson,
+      accountStateJson: data.accountStateJson.present
+          ? data.accountStateJson.value
+          : this.accountStateJson,
+      localDirty: data.localDirty.present
+          ? data.localDirty.value
+          : this.localDirty,
+      remoteDirty: data.remoteDirty.present
+          ? data.remoteDirty.value
+          : this.remoteDirty,
+      lastPulledAt: data.lastPulledAt.present
+          ? data.lastPulledAt.value
+          : this.lastPulledAt,
+      lastPushedAt: data.lastPushedAt.present
+          ? data.lastPushedAt.value
+          : this.lastPushedAt,
+      lastError: data.lastError.present ? data.lastError.value : this.lastError,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TmdbAccountSyncItemsTableData(')
+          ..write('id: $id, ')
+          ..write('mediaItemId: $mediaItemId, ')
+          ..write('tmdbId: $tmdbId, ')
+          ..write('tmdbMediaType: $tmdbMediaType, ')
+          ..write('barcode: $barcode, ')
+          ..write('titleSnapshot: $titleSnapshot, ')
+          ..write('posterPathSnapshot: $posterPathSnapshot, ')
+          ..write('tmdbRating: $tmdbRating, ')
+          ..write('localRatingSnapshot: $localRatingSnapshot, ')
+          ..write('watchlist: $watchlist, ')
+          ..write('favorite: $favorite, ')
+          ..write('listIdsJson: $listIdsJson, ')
+          ..write('accountStateJson: $accountStateJson, ')
+          ..write('localDirty: $localDirty, ')
+          ..write('remoteDirty: $remoteDirty, ')
+          ..write('lastPulledAt: $lastPulledAt, ')
+          ..write('lastPushedAt: $lastPushedAt, ')
+          ..write('lastError: $lastError, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    mediaItemId,
+    tmdbId,
+    tmdbMediaType,
+    barcode,
+    titleSnapshot,
+    posterPathSnapshot,
+    tmdbRating,
+    localRatingSnapshot,
+    watchlist,
+    favorite,
+    listIdsJson,
+    accountStateJson,
+    localDirty,
+    remoteDirty,
+    lastPulledAt,
+    lastPushedAt,
+    lastError,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TmdbAccountSyncItemsTableData &&
+          other.id == this.id &&
+          other.mediaItemId == this.mediaItemId &&
+          other.tmdbId == this.tmdbId &&
+          other.tmdbMediaType == this.tmdbMediaType &&
+          other.barcode == this.barcode &&
+          other.titleSnapshot == this.titleSnapshot &&
+          other.posterPathSnapshot == this.posterPathSnapshot &&
+          other.tmdbRating == this.tmdbRating &&
+          other.localRatingSnapshot == this.localRatingSnapshot &&
+          other.watchlist == this.watchlist &&
+          other.favorite == this.favorite &&
+          other.listIdsJson == this.listIdsJson &&
+          other.accountStateJson == this.accountStateJson &&
+          other.localDirty == this.localDirty &&
+          other.remoteDirty == this.remoteDirty &&
+          other.lastPulledAt == this.lastPulledAt &&
+          other.lastPushedAt == this.lastPushedAt &&
+          other.lastError == this.lastError &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class TmdbAccountSyncItemsTableCompanion
+    extends UpdateCompanion<TmdbAccountSyncItemsTableData> {
+  final Value<String> id;
+  final Value<String?> mediaItemId;
+  final Value<int> tmdbId;
+  final Value<String> tmdbMediaType;
+  final Value<String?> barcode;
+  final Value<String?> titleSnapshot;
+  final Value<String?> posterPathSnapshot;
+  final Value<double?> tmdbRating;
+  final Value<double?> localRatingSnapshot;
+  final Value<int> watchlist;
+  final Value<int> favorite;
+  final Value<String> listIdsJson;
+  final Value<String> accountStateJson;
+  final Value<int> localDirty;
+  final Value<int> remoteDirty;
+  final Value<int?> lastPulledAt;
+  final Value<int?> lastPushedAt;
+  final Value<String?> lastError;
+  final Value<int> createdAt;
+  final Value<int> updatedAt;
+  final Value<int> rowid;
+  const TmdbAccountSyncItemsTableCompanion({
+    this.id = const Value.absent(),
+    this.mediaItemId = const Value.absent(),
+    this.tmdbId = const Value.absent(),
+    this.tmdbMediaType = const Value.absent(),
+    this.barcode = const Value.absent(),
+    this.titleSnapshot = const Value.absent(),
+    this.posterPathSnapshot = const Value.absent(),
+    this.tmdbRating = const Value.absent(),
+    this.localRatingSnapshot = const Value.absent(),
+    this.watchlist = const Value.absent(),
+    this.favorite = const Value.absent(),
+    this.listIdsJson = const Value.absent(),
+    this.accountStateJson = const Value.absent(),
+    this.localDirty = const Value.absent(),
+    this.remoteDirty = const Value.absent(),
+    this.lastPulledAt = const Value.absent(),
+    this.lastPushedAt = const Value.absent(),
+    this.lastError = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  TmdbAccountSyncItemsTableCompanion.insert({
+    required String id,
+    this.mediaItemId = const Value.absent(),
+    required int tmdbId,
+    required String tmdbMediaType,
+    this.barcode = const Value.absent(),
+    this.titleSnapshot = const Value.absent(),
+    this.posterPathSnapshot = const Value.absent(),
+    this.tmdbRating = const Value.absent(),
+    this.localRatingSnapshot = const Value.absent(),
+    this.watchlist = const Value.absent(),
+    this.favorite = const Value.absent(),
+    this.listIdsJson = const Value.absent(),
+    this.accountStateJson = const Value.absent(),
+    this.localDirty = const Value.absent(),
+    this.remoteDirty = const Value.absent(),
+    this.lastPulledAt = const Value.absent(),
+    this.lastPushedAt = const Value.absent(),
+    this.lastError = const Value.absent(),
+    required int createdAt,
+    required int updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       tmdbId = Value(tmdbId),
+       tmdbMediaType = Value(tmdbMediaType),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<TmdbAccountSyncItemsTableData> custom({
+    Expression<String>? id,
+    Expression<String>? mediaItemId,
+    Expression<int>? tmdbId,
+    Expression<String>? tmdbMediaType,
+    Expression<String>? barcode,
+    Expression<String>? titleSnapshot,
+    Expression<String>? posterPathSnapshot,
+    Expression<double>? tmdbRating,
+    Expression<double>? localRatingSnapshot,
+    Expression<int>? watchlist,
+    Expression<int>? favorite,
+    Expression<String>? listIdsJson,
+    Expression<String>? accountStateJson,
+    Expression<int>? localDirty,
+    Expression<int>? remoteDirty,
+    Expression<int>? lastPulledAt,
+    Expression<int>? lastPushedAt,
+    Expression<String>? lastError,
+    Expression<int>? createdAt,
+    Expression<int>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (mediaItemId != null) 'media_item_id': mediaItemId,
+      if (tmdbId != null) 'tmdb_id': tmdbId,
+      if (tmdbMediaType != null) 'tmdb_media_type': tmdbMediaType,
+      if (barcode != null) 'barcode': barcode,
+      if (titleSnapshot != null) 'title_snapshot': titleSnapshot,
+      if (posterPathSnapshot != null)
+        'poster_path_snapshot': posterPathSnapshot,
+      if (tmdbRating != null) 'tmdb_rating': tmdbRating,
+      if (localRatingSnapshot != null)
+        'local_rating_snapshot': localRatingSnapshot,
+      if (watchlist != null) 'watchlist': watchlist,
+      if (favorite != null) 'favorite': favorite,
+      if (listIdsJson != null) 'list_ids_json': listIdsJson,
+      if (accountStateJson != null) 'account_state_json': accountStateJson,
+      if (localDirty != null) 'local_dirty': localDirty,
+      if (remoteDirty != null) 'remote_dirty': remoteDirty,
+      if (lastPulledAt != null) 'last_pulled_at': lastPulledAt,
+      if (lastPushedAt != null) 'last_pushed_at': lastPushedAt,
+      if (lastError != null) 'last_error': lastError,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  TmdbAccountSyncItemsTableCompanion copyWith({
+    Value<String>? id,
+    Value<String?>? mediaItemId,
+    Value<int>? tmdbId,
+    Value<String>? tmdbMediaType,
+    Value<String?>? barcode,
+    Value<String?>? titleSnapshot,
+    Value<String?>? posterPathSnapshot,
+    Value<double?>? tmdbRating,
+    Value<double?>? localRatingSnapshot,
+    Value<int>? watchlist,
+    Value<int>? favorite,
+    Value<String>? listIdsJson,
+    Value<String>? accountStateJson,
+    Value<int>? localDirty,
+    Value<int>? remoteDirty,
+    Value<int?>? lastPulledAt,
+    Value<int?>? lastPushedAt,
+    Value<String?>? lastError,
+    Value<int>? createdAt,
+    Value<int>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return TmdbAccountSyncItemsTableCompanion(
+      id: id ?? this.id,
+      mediaItemId: mediaItemId ?? this.mediaItemId,
+      tmdbId: tmdbId ?? this.tmdbId,
+      tmdbMediaType: tmdbMediaType ?? this.tmdbMediaType,
+      barcode: barcode ?? this.barcode,
+      titleSnapshot: titleSnapshot ?? this.titleSnapshot,
+      posterPathSnapshot: posterPathSnapshot ?? this.posterPathSnapshot,
+      tmdbRating: tmdbRating ?? this.tmdbRating,
+      localRatingSnapshot: localRatingSnapshot ?? this.localRatingSnapshot,
+      watchlist: watchlist ?? this.watchlist,
+      favorite: favorite ?? this.favorite,
+      listIdsJson: listIdsJson ?? this.listIdsJson,
+      accountStateJson: accountStateJson ?? this.accountStateJson,
+      localDirty: localDirty ?? this.localDirty,
+      remoteDirty: remoteDirty ?? this.remoteDirty,
+      lastPulledAt: lastPulledAt ?? this.lastPulledAt,
+      lastPushedAt: lastPushedAt ?? this.lastPushedAt,
+      lastError: lastError ?? this.lastError,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (mediaItemId.present) {
+      map['media_item_id'] = Variable<String>(mediaItemId.value);
+    }
+    if (tmdbId.present) {
+      map['tmdb_id'] = Variable<int>(tmdbId.value);
+    }
+    if (tmdbMediaType.present) {
+      map['tmdb_media_type'] = Variable<String>(tmdbMediaType.value);
+    }
+    if (barcode.present) {
+      map['barcode'] = Variable<String>(barcode.value);
+    }
+    if (titleSnapshot.present) {
+      map['title_snapshot'] = Variable<String>(titleSnapshot.value);
+    }
+    if (posterPathSnapshot.present) {
+      map['poster_path_snapshot'] = Variable<String>(posterPathSnapshot.value);
+    }
+    if (tmdbRating.present) {
+      map['tmdb_rating'] = Variable<double>(tmdbRating.value);
+    }
+    if (localRatingSnapshot.present) {
+      map['local_rating_snapshot'] = Variable<double>(
+        localRatingSnapshot.value,
+      );
+    }
+    if (watchlist.present) {
+      map['watchlist'] = Variable<int>(watchlist.value);
+    }
+    if (favorite.present) {
+      map['favorite'] = Variable<int>(favorite.value);
+    }
+    if (listIdsJson.present) {
+      map['list_ids_json'] = Variable<String>(listIdsJson.value);
+    }
+    if (accountStateJson.present) {
+      map['account_state_json'] = Variable<String>(accountStateJson.value);
+    }
+    if (localDirty.present) {
+      map['local_dirty'] = Variable<int>(localDirty.value);
+    }
+    if (remoteDirty.present) {
+      map['remote_dirty'] = Variable<int>(remoteDirty.value);
+    }
+    if (lastPulledAt.present) {
+      map['last_pulled_at'] = Variable<int>(lastPulledAt.value);
+    }
+    if (lastPushedAt.present) {
+      map['last_pushed_at'] = Variable<int>(lastPushedAt.value);
+    }
+    if (lastError.present) {
+      map['last_error'] = Variable<String>(lastError.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<int>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<int>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TmdbAccountSyncItemsTableCompanion(')
+          ..write('id: $id, ')
+          ..write('mediaItemId: $mediaItemId, ')
+          ..write('tmdbId: $tmdbId, ')
+          ..write('tmdbMediaType: $tmdbMediaType, ')
+          ..write('barcode: $barcode, ')
+          ..write('titleSnapshot: $titleSnapshot, ')
+          ..write('posterPathSnapshot: $posterPathSnapshot, ')
+          ..write('tmdbRating: $tmdbRating, ')
+          ..write('localRatingSnapshot: $localRatingSnapshot, ')
+          ..write('watchlist: $watchlist, ')
+          ..write('favorite: $favorite, ')
+          ..write('listIdsJson: $listIdsJson, ')
+          ..write('accountStateJson: $accountStateJson, ')
+          ..write('localDirty: $localDirty, ')
+          ..write('remoteDirty: $remoteDirty, ')
+          ..write('lastPulledAt: $lastPulledAt, ')
+          ..write('lastPushedAt: $lastPushedAt, ')
+          ..write('lastError: $lastError, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -10105,6 +11271,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $PlaylistTracksTableTable(this);
   late final $LocationsTableTable locationsTable = $LocationsTableTable(this);
   late final $SeriesTableTable seriesTable = $SeriesTableTable(this);
+  late final $TmdbAccountSyncItemsTableTable tmdbAccountSyncItemsTable =
+      $TmdbAccountSyncItemsTableTable(this);
   late final MediaItemsDao mediaItemsDao = MediaItemsDao(this as AppDatabase);
   late final TagsDao tagsDao = TagsDao(this as AppDatabase);
   late final ShelvesDao shelvesDao = ShelvesDao(this as AppDatabase);
@@ -10143,6 +11311,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     playlistTracksTable,
     locationsTable,
     seriesTable,
+    tmdbAccountSyncItemsTable,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -17375,6 +18544,534 @@ typedef $$SeriesTableTableProcessedTableManager =
       SeriesTableData,
       PrefetchHooks Function()
     >;
+typedef $$TmdbAccountSyncItemsTableTableCreateCompanionBuilder =
+    TmdbAccountSyncItemsTableCompanion Function({
+      required String id,
+      Value<String?> mediaItemId,
+      required int tmdbId,
+      required String tmdbMediaType,
+      Value<String?> barcode,
+      Value<String?> titleSnapshot,
+      Value<String?> posterPathSnapshot,
+      Value<double?> tmdbRating,
+      Value<double?> localRatingSnapshot,
+      Value<int> watchlist,
+      Value<int> favorite,
+      Value<String> listIdsJson,
+      Value<String> accountStateJson,
+      Value<int> localDirty,
+      Value<int> remoteDirty,
+      Value<int?> lastPulledAt,
+      Value<int?> lastPushedAt,
+      Value<String?> lastError,
+      required int createdAt,
+      required int updatedAt,
+      Value<int> rowid,
+    });
+typedef $$TmdbAccountSyncItemsTableTableUpdateCompanionBuilder =
+    TmdbAccountSyncItemsTableCompanion Function({
+      Value<String> id,
+      Value<String?> mediaItemId,
+      Value<int> tmdbId,
+      Value<String> tmdbMediaType,
+      Value<String?> barcode,
+      Value<String?> titleSnapshot,
+      Value<String?> posterPathSnapshot,
+      Value<double?> tmdbRating,
+      Value<double?> localRatingSnapshot,
+      Value<int> watchlist,
+      Value<int> favorite,
+      Value<String> listIdsJson,
+      Value<String> accountStateJson,
+      Value<int> localDirty,
+      Value<int> remoteDirty,
+      Value<int?> lastPulledAt,
+      Value<int?> lastPushedAt,
+      Value<String?> lastError,
+      Value<int> createdAt,
+      Value<int> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$TmdbAccountSyncItemsTableTableFilterComposer
+    extends Composer<_$AppDatabase, $TmdbAccountSyncItemsTableTable> {
+  $$TmdbAccountSyncItemsTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get mediaItemId => $composableBuilder(
+    column: $table.mediaItemId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get tmdbId => $composableBuilder(
+    column: $table.tmdbId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get tmdbMediaType => $composableBuilder(
+    column: $table.tmdbMediaType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get barcode => $composableBuilder(
+    column: $table.barcode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get titleSnapshot => $composableBuilder(
+    column: $table.titleSnapshot,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get posterPathSnapshot => $composableBuilder(
+    column: $table.posterPathSnapshot,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get tmdbRating => $composableBuilder(
+    column: $table.tmdbRating,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get localRatingSnapshot => $composableBuilder(
+    column: $table.localRatingSnapshot,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get watchlist => $composableBuilder(
+    column: $table.watchlist,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get favorite => $composableBuilder(
+    column: $table.favorite,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get listIdsJson => $composableBuilder(
+    column: $table.listIdsJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get accountStateJson => $composableBuilder(
+    column: $table.accountStateJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get localDirty => $composableBuilder(
+    column: $table.localDirty,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get remoteDirty => $composableBuilder(
+    column: $table.remoteDirty,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get lastPulledAt => $composableBuilder(
+    column: $table.lastPulledAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get lastPushedAt => $composableBuilder(
+    column: $table.lastPushedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get lastError => $composableBuilder(
+    column: $table.lastError,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$TmdbAccountSyncItemsTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $TmdbAccountSyncItemsTableTable> {
+  $$TmdbAccountSyncItemsTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get mediaItemId => $composableBuilder(
+    column: $table.mediaItemId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get tmdbId => $composableBuilder(
+    column: $table.tmdbId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get tmdbMediaType => $composableBuilder(
+    column: $table.tmdbMediaType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get barcode => $composableBuilder(
+    column: $table.barcode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get titleSnapshot => $composableBuilder(
+    column: $table.titleSnapshot,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get posterPathSnapshot => $composableBuilder(
+    column: $table.posterPathSnapshot,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get tmdbRating => $composableBuilder(
+    column: $table.tmdbRating,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get localRatingSnapshot => $composableBuilder(
+    column: $table.localRatingSnapshot,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get watchlist => $composableBuilder(
+    column: $table.watchlist,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get favorite => $composableBuilder(
+    column: $table.favorite,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get listIdsJson => $composableBuilder(
+    column: $table.listIdsJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get accountStateJson => $composableBuilder(
+    column: $table.accountStateJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get localDirty => $composableBuilder(
+    column: $table.localDirty,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get remoteDirty => $composableBuilder(
+    column: $table.remoteDirty,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get lastPulledAt => $composableBuilder(
+    column: $table.lastPulledAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get lastPushedAt => $composableBuilder(
+    column: $table.lastPushedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get lastError => $composableBuilder(
+    column: $table.lastError,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$TmdbAccountSyncItemsTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TmdbAccountSyncItemsTableTable> {
+  $$TmdbAccountSyncItemsTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get mediaItemId => $composableBuilder(
+    column: $table.mediaItemId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get tmdbId =>
+      $composableBuilder(column: $table.tmdbId, builder: (column) => column);
+
+  GeneratedColumn<String> get tmdbMediaType => $composableBuilder(
+    column: $table.tmdbMediaType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get barcode =>
+      $composableBuilder(column: $table.barcode, builder: (column) => column);
+
+  GeneratedColumn<String> get titleSnapshot => $composableBuilder(
+    column: $table.titleSnapshot,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get posterPathSnapshot => $composableBuilder(
+    column: $table.posterPathSnapshot,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get tmdbRating => $composableBuilder(
+    column: $table.tmdbRating,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get localRatingSnapshot => $composableBuilder(
+    column: $table.localRatingSnapshot,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get watchlist =>
+      $composableBuilder(column: $table.watchlist, builder: (column) => column);
+
+  GeneratedColumn<int> get favorite =>
+      $composableBuilder(column: $table.favorite, builder: (column) => column);
+
+  GeneratedColumn<String> get listIdsJson => $composableBuilder(
+    column: $table.listIdsJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get accountStateJson => $composableBuilder(
+    column: $table.accountStateJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get localDirty => $composableBuilder(
+    column: $table.localDirty,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get remoteDirty => $composableBuilder(
+    column: $table.remoteDirty,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get lastPulledAt => $composableBuilder(
+    column: $table.lastPulledAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get lastPushedAt => $composableBuilder(
+    column: $table.lastPushedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get lastError =>
+      $composableBuilder(column: $table.lastError, builder: (column) => column);
+
+  GeneratedColumn<int> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<int> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$TmdbAccountSyncItemsTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $TmdbAccountSyncItemsTableTable,
+          TmdbAccountSyncItemsTableData,
+          $$TmdbAccountSyncItemsTableTableFilterComposer,
+          $$TmdbAccountSyncItemsTableTableOrderingComposer,
+          $$TmdbAccountSyncItemsTableTableAnnotationComposer,
+          $$TmdbAccountSyncItemsTableTableCreateCompanionBuilder,
+          $$TmdbAccountSyncItemsTableTableUpdateCompanionBuilder,
+          (
+            TmdbAccountSyncItemsTableData,
+            BaseReferences<
+              _$AppDatabase,
+              $TmdbAccountSyncItemsTableTable,
+              TmdbAccountSyncItemsTableData
+            >,
+          ),
+          TmdbAccountSyncItemsTableData,
+          PrefetchHooks Function()
+        > {
+  $$TmdbAccountSyncItemsTableTableTableManager(
+    _$AppDatabase db,
+    $TmdbAccountSyncItemsTableTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TmdbAccountSyncItemsTableTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$TmdbAccountSyncItemsTableTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$TmdbAccountSyncItemsTableTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String?> mediaItemId = const Value.absent(),
+                Value<int> tmdbId = const Value.absent(),
+                Value<String> tmdbMediaType = const Value.absent(),
+                Value<String?> barcode = const Value.absent(),
+                Value<String?> titleSnapshot = const Value.absent(),
+                Value<String?> posterPathSnapshot = const Value.absent(),
+                Value<double?> tmdbRating = const Value.absent(),
+                Value<double?> localRatingSnapshot = const Value.absent(),
+                Value<int> watchlist = const Value.absent(),
+                Value<int> favorite = const Value.absent(),
+                Value<String> listIdsJson = const Value.absent(),
+                Value<String> accountStateJson = const Value.absent(),
+                Value<int> localDirty = const Value.absent(),
+                Value<int> remoteDirty = const Value.absent(),
+                Value<int?> lastPulledAt = const Value.absent(),
+                Value<int?> lastPushedAt = const Value.absent(),
+                Value<String?> lastError = const Value.absent(),
+                Value<int> createdAt = const Value.absent(),
+                Value<int> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => TmdbAccountSyncItemsTableCompanion(
+                id: id,
+                mediaItemId: mediaItemId,
+                tmdbId: tmdbId,
+                tmdbMediaType: tmdbMediaType,
+                barcode: barcode,
+                titleSnapshot: titleSnapshot,
+                posterPathSnapshot: posterPathSnapshot,
+                tmdbRating: tmdbRating,
+                localRatingSnapshot: localRatingSnapshot,
+                watchlist: watchlist,
+                favorite: favorite,
+                listIdsJson: listIdsJson,
+                accountStateJson: accountStateJson,
+                localDirty: localDirty,
+                remoteDirty: remoteDirty,
+                lastPulledAt: lastPulledAt,
+                lastPushedAt: lastPushedAt,
+                lastError: lastError,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                Value<String?> mediaItemId = const Value.absent(),
+                required int tmdbId,
+                required String tmdbMediaType,
+                Value<String?> barcode = const Value.absent(),
+                Value<String?> titleSnapshot = const Value.absent(),
+                Value<String?> posterPathSnapshot = const Value.absent(),
+                Value<double?> tmdbRating = const Value.absent(),
+                Value<double?> localRatingSnapshot = const Value.absent(),
+                Value<int> watchlist = const Value.absent(),
+                Value<int> favorite = const Value.absent(),
+                Value<String> listIdsJson = const Value.absent(),
+                Value<String> accountStateJson = const Value.absent(),
+                Value<int> localDirty = const Value.absent(),
+                Value<int> remoteDirty = const Value.absent(),
+                Value<int?> lastPulledAt = const Value.absent(),
+                Value<int?> lastPushedAt = const Value.absent(),
+                Value<String?> lastError = const Value.absent(),
+                required int createdAt,
+                required int updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => TmdbAccountSyncItemsTableCompanion.insert(
+                id: id,
+                mediaItemId: mediaItemId,
+                tmdbId: tmdbId,
+                tmdbMediaType: tmdbMediaType,
+                barcode: barcode,
+                titleSnapshot: titleSnapshot,
+                posterPathSnapshot: posterPathSnapshot,
+                tmdbRating: tmdbRating,
+                localRatingSnapshot: localRatingSnapshot,
+                watchlist: watchlist,
+                favorite: favorite,
+                listIdsJson: listIdsJson,
+                accountStateJson: accountStateJson,
+                localDirty: localDirty,
+                remoteDirty: remoteDirty,
+                lastPulledAt: lastPulledAt,
+                lastPushedAt: lastPushedAt,
+                lastError: lastError,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$TmdbAccountSyncItemsTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $TmdbAccountSyncItemsTableTable,
+      TmdbAccountSyncItemsTableData,
+      $$TmdbAccountSyncItemsTableTableFilterComposer,
+      $$TmdbAccountSyncItemsTableTableOrderingComposer,
+      $$TmdbAccountSyncItemsTableTableAnnotationComposer,
+      $$TmdbAccountSyncItemsTableTableCreateCompanionBuilder,
+      $$TmdbAccountSyncItemsTableTableUpdateCompanionBuilder,
+      (
+        TmdbAccountSyncItemsTableData,
+        BaseReferences<
+          _$AppDatabase,
+          $TmdbAccountSyncItemsTableTable,
+          TmdbAccountSyncItemsTableData
+        >,
+      ),
+      TmdbAccountSyncItemsTableData,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -17413,4 +19110,9 @@ class $AppDatabaseManager {
       $$LocationsTableTableTableManager(_db, _db.locationsTable);
   $$SeriesTableTableTableManager get seriesTable =>
       $$SeriesTableTableTableManager(_db, _db.seriesTable);
+  $$TmdbAccountSyncItemsTableTableTableManager get tmdbAccountSyncItemsTable =>
+      $$TmdbAccountSyncItemsTableTableTableManager(
+        _db,
+        _db.tmdbAccountSyncItemsTable,
+      );
 }
