@@ -13,6 +13,7 @@ import 'package:mymediascanner/presentation/providers/replay_gain_provider.dart'
 import 'package:mymediascanner/presentation/screens/settings/widgets/api_key_form.dart';
 import 'package:mymediascanner/presentation/screens/settings/widgets/gnudb_settings_section.dart';
 import 'package:mymediascanner/presentation/screens/settings/widgets/tmdb_account_sync_section.dart';
+import 'package:mymediascanner/presentation/screens/settings/widgets/tmdb_lists_section.dart';
 import 'package:mymediascanner/presentation/providers/settings_provider.dart';
 import 'package:mymediascanner/presentation/screens/settings/widgets/sync_status_tile.dart';
 import 'package:mymediascanner/presentation/widgets/screen_header.dart';
@@ -70,7 +71,11 @@ class SettingsScreen extends ConsumerWidget {
             title: 'API Integrations',
             colors: colors,
             theme: theme,
-            children: const [ApiKeyForm(), TmdbAccountSyncSection()],
+            children: const [
+              ApiKeyForm(),
+              TmdbAccountSyncSection(),
+              TmdbListsSection(),
+            ],
           ),
           const SizedBox(height: 16),
 
