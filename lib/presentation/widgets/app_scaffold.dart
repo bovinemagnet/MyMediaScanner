@@ -7,6 +7,7 @@ import 'package:mymediascanner/app/theme/app_layout_extension.dart';
 import 'package:mymediascanner/app/theme/app_theme_extensions.dart';
 import 'package:mymediascanner/core/constants/app_constants.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
+import 'package:mymediascanner/domain/entities/tmdb_bridge_bucket.dart';
 import 'package:mymediascanner/domain/entities/tmdb_conflict_policy.dart';
 import 'package:mymediascanner/domain/entities/tmdb_connection_state.dart';
 import 'package:mymediascanner/presentation/providers/settings_provider.dart';
@@ -293,6 +294,13 @@ class _DesktopSidebar extends ConsumerWidget {
         settings.conflictPolicy == TmdbConflictPolicy.askUser &&
         conflictsCount > 0;
 
+    final savedCount = ref
+        .watch(tmdbBridgeBucketProvider(TmdbBridgeBucket.saved))
+        .maybeWhen(
+          data: (rows) => rows.length,
+          orElse: () => 0,
+        );
+
     // Build label with count so the user can see how many need resolving.
     final conflictsItem = _SidebarDestination(
         Icons.warning_amber_outlined,
@@ -309,26 +317,33 @@ class _DesktopSidebar extends ConsumerWidget {
       if (isTmdbConnected) AppScaffold._tmdbWatchlistSidebarItem,
       if (isTmdbConnected) AppScaffold._tmdbRatedSidebarItem,
       if (isTmdbConnected) AppScaffold._tmdbFavouritesSidebarItem,
+      if (isTmdbConnected && savedCount > 0)
+        _SidebarDestination(
+          Icons.cloud_outlined,
+          Icons.cloud,
+          'TMDB Saved ($savedCount)',
+        ),
       if (showConflicts) conflictsItem,
     ];
 
-    // Sidebar and shell branch indices are 1:1.
-    // Dashboard(0), Library(1), Scanner(2), Shelves(3), Batch(4),
-    // Insights(5), Settings(6), Rips(7), Wishlist(8), Locations(9),
-    // Series(10), Suggestions(11), Watchlist(12), Rated(13), Favourites(14),
-    // Resolve Conflicts(15)
-    //
     // Sidebar list positions map 1:1 to StatefulShellBranch indices in
-    // router.dart. This identity mapping holds today only because every
-    // pre-TMDB conditional (`show*` flags) is gated on `isDesktop`, which
-    // is constant within a single run. If any of those flags becomes
-    // user-configurable, the sidebar position will drift from the shell
-    // branch index and break navigation. The `showConflicts` entry (index 15)
-    // is additionally gated on policy==askUser AND conflicts.length>0; its
-    // branch (15) is always registered in the router so the index remains
-    // stable when the entry appears. When that happens, replace this
-    // mapping with an explicit lookup table or always-include-with-disabled
-    // pattern for the conditional items.
+    // router.dart. Order matters:
+    //   0–11: static (Home, Library, Scan, ..., Settings, Rips, Wishlist,
+    //          Locations, Series, Suggestions)
+    //   12–14: static TMDB (Watchlist, Rated, Favourites) — always present
+    //          when isTmdbConnected
+    //   15: conditional TMDB Saved — only when isTmdbConnected && savedCount > 0
+    //   16: conditional Resolve Conflicts — only when policy=askUser AND
+    //       conflictsCount > 0
+    //
+    // This identity mapping holds today only because every pre-TMDB
+    // conditional (`show*` flags) is gated on `isDesktop`, which is constant
+    // within a single run. If any of those flags becomes user-configurable,
+    // the sidebar position will drift from the shell branch index and break
+    // navigation. The conditional entries (indices 15 and 16) are gated on
+    // runtime state; their branches are always registered in the router so
+    // the indices remain stable when the entries appear. Replace this mapping
+    // with an explicit lookup table at that point.
     int sidebarToShellIndex(int sidebarIndex) => sidebarIndex;
 
     int shellToSidebarIndex(int shellIndex) => shellIndex;

@@ -15,6 +15,7 @@ class EditableMetadataForm extends StatefulWidget {
     required this.initial,
     required this.onSave,
     this.onSaveToWishlist,
+    this.onMetadataChanged,
     this.primarySaveLabel = 'Save to Collection',
     this.primarySaveIcon = Icons.save,
     this.enableOnlineLookup = false,
@@ -28,6 +29,14 @@ class EditableMetadataForm extends StatefulWidget {
   /// wishlist instead of the main collection. When non-null, a secondary
   /// "Save to Wishlist" button is rendered below the primary Save button.
   final Future<void> Function(MetadataResult edited)? onSaveToWishlist;
+
+  /// Optional callback fired whenever the form's underlying [MetadataResult]
+  /// changes — specifically after a successful "Search online" lookup populates
+  /// the form fields (including `extraMetadata['tmdb_id']`). The parent screen
+  /// can use this to reactively update its own state before the user taps Save,
+  /// enabling UI elements that depend on the resolved metadata (such as the
+  /// remote-first save-mode selector) to appear immediately after lookup.
+  final ValueChanged<MetadataResult>? onMetadataChanged;
 
   /// Label for the primary save button. The scan-time `SaveTarget` toggle
   /// drives this through [MetadataConfirmScreen], so the button reads
@@ -454,6 +463,10 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
   /// without discarding anything the user has typed where the result is
   /// silent (keeps existing field text when the result leaves the slot
   /// null).
+  ///
+  /// After updating state, fires [onMetadataChanged] with the merged result
+  /// so the parent screen can react before the user taps Save (e.g. to show
+  /// the remote-first save-mode selector as soon as a TMDB ID is resolved).
   void _applyMetadata(MetadataResult found) {
     setState(() {
       if (found.title != null && found.title!.isNotEmpty) {
@@ -499,6 +512,9 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
         _extraMetadata = {..._extraMetadata, ...found.extraMetadata};
       }
     });
+    // Notify the parent that the form's underlying metadata has changed.
+    // Called after setState so _buildEdited() reflects the new state.
+    widget.onMetadataChanged?.call(_buildEdited());
   }
 
   @override

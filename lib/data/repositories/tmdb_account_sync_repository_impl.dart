@@ -301,6 +301,14 @@ class TmdbAccountSyncRepositoryImpl implements ITmdbAccountSyncRepository {
     return mediaItemId;
   }
 
+  // ── Slice 3a — remote-first save ──────────────────────────────
+
+  @override
+  Future<void> upsertBridge(
+      TmdbAccountSyncItemsTableCompanion companion) async {
+    await dao.upsertByTmdbId(companion);
+  }
+
   // ── Slice 2 — push pipeline ────────────────────────────────────
 
   @override

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mymediascanner/domain/entities/tmdb_bridge_bucket.dart';
 import 'package:mymediascanner/domain/entities/tmdb_bridge_item.dart';
 import 'package:mymediascanner/domain/entities/tmdb_conflict_policy.dart';
 import 'package:mymediascanner/domain/entities/tmdb_connection_state.dart';
@@ -13,6 +14,7 @@ Widget harness({
   required TmdbConnectionState connection,
   required TmdbAccountSyncSettings settings,
   List<TmdbBridgeItem> conflicts = const [],
+  List<TmdbBridgeItem> savedRows = const [],
 }) {
   return ProviderScope(
     overrides: [
@@ -22,6 +24,8 @@ Widget harness({
           () => _StubSettingsNotifier(settings)),
       tmdbConflictedRowsProvider.overrideWith(
           (ref) => Stream<List<TmdbBridgeItem>>.value(conflicts)),
+      tmdbBridgeBucketProvider(TmdbBridgeBucket.saved).overrideWith(
+          (ref) => Stream<List<TmdbBridgeItem>>.value(savedRows)),
     ],
     child: MaterialApp.router(
       routerConfig: GoRouter(
@@ -48,6 +52,10 @@ Widget harness({
               path: '/tmdb/conflicts',
               builder: (context, state) =>
                   const Scaffold(body: Text('Conflicts'))),
+          GoRoute(
+              path: '/tmdb/saved',
+              builder: (context, state) =>
+                  const Scaffold(body: Text('Saved'))),
         ],
       ),
     ),
@@ -114,6 +122,32 @@ void main() {
     ));
     await tester.pumpAndSettle();
     expect(find.textContaining('Resolve Conflicts'), findsNothing);
+  });
+
+  testWidgets('shows TMDB Saved tile when there are saved bucket rows',
+      (tester) async {
+    const saved = TmdbBridgeItem(
+      id: 'br-saved',
+      tmdbId: 200,
+      mediaType: 'movie',
+    );
+    await tester.pumpWidget(harness(
+      connection: const TmdbConnected(accountId: 1, username: 'p'),
+      settings: const TmdbAccountSyncSettings(),
+      savedRows: [saved],
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('TMDB Saved (1)'), findsOneWidget);
+  });
+
+  testWidgets('hides TMDB Saved tile when bucket is empty', (tester) async {
+    await tester.pumpWidget(harness(
+      connection: const TmdbConnected(accountId: 1, username: 'p'),
+      settings: const TmdbAccountSyncSettings(),
+      savedRows: const [],
+    ));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('TMDB Saved'), findsNothing);
   });
 }
 

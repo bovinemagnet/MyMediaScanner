@@ -18,6 +18,7 @@ class TmdbBucketScreen extends ConsumerWidget {
         TmdbBridgeBucket.watchlist => 'TMDB Watchlist',
         TmdbBridgeBucket.rated => 'TMDB Rated',
         TmdbBridgeBucket.favourite => 'TMDB Favourites',
+        TmdbBridgeBucket.saved => 'TMDB Saved',
       };
 
   String get _emptyMessage => switch (bucket) {
@@ -30,6 +31,9 @@ class TmdbBucketScreen extends ConsumerWidget {
         TmdbBridgeBucket.favourite =>
           'No TMDB favourites yet. Mark some on themoviedb.org and run a '
               'sync.',
+        TmdbBridgeBucket.saved =>
+          'No remote-first saves yet. When you save a movie or TV title as '
+              'TMDB only, it will appear here.',
       };
 
   @override

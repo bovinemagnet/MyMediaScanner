@@ -235,4 +235,98 @@ void main() {
     expect(r.lastPushedAt, isNotNull);
     expect(r.localRatingSnapshot, 4.0);
   });
+
+  test('listByBucket(saved) returns orphan bridge rows only', () async {
+    // Orphan: no flags, no rating, no media-item link.
+    await db.tmdbAccountSyncDao.upsertByTmdbId(
+      TmdbAccountSyncItemsTableCompanion(
+        id: const Value('orphan'),
+        tmdbId: const Value(1),
+        tmdbMediaType: const Value('movie'),
+        createdAt: Value(DateTime.now().millisecondsSinceEpoch),
+        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+      ),
+    );
+    // Watchlisted — should NOT appear in saved bucket.
+    await db.tmdbAccountSyncDao.upsertByTmdbId(
+      TmdbAccountSyncItemsTableCompanion(
+        id: const Value('wl'),
+        tmdbId: const Value(2),
+        tmdbMediaType: const Value('movie'),
+        watchlist: const Value(true),
+        createdAt: Value(DateTime.now().millisecondsSinceEpoch),
+        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+      ),
+    );
+    // Rated — should NOT appear in saved bucket.
+    await db.tmdbAccountSyncDao.upsertByTmdbId(
+      TmdbAccountSyncItemsTableCompanion(
+        id: const Value('rt'),
+        tmdbId: const Value(3),
+        tmdbMediaType: const Value('movie'),
+        tmdbRating: const Value(8.0),
+        createdAt: Value(DateTime.now().millisecondsSinceEpoch),
+        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+      ),
+    );
+    // Favourited — should NOT appear in saved bucket.
+    await db.tmdbAccountSyncDao.upsertByTmdbId(
+      TmdbAccountSyncItemsTableCompanion(
+        id: const Value('fv'),
+        tmdbId: const Value(4),
+        tmdbMediaType: const Value('movie'),
+        favorite: const Value(true),
+        createdAt: Value(DateTime.now().millisecondsSinceEpoch),
+        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+      ),
+    );
+    // Linked to local item — should NOT appear in any bucket view.
+    await db.tmdbAccountSyncDao.upsertByTmdbId(
+      TmdbAccountSyncItemsTableCompanion(
+        id: const Value('linked'),
+        tmdbId: const Value(5),
+        tmdbMediaType: const Value('movie'),
+        mediaItemId: const Value('mi-1'),
+        createdAt: Value(DateTime.now().millisecondsSinceEpoch),
+        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+      ),
+    );
+
+    final saved = await db.tmdbAccountSyncDao
+        .listByBucket(TmdbBridgeBucket.saved);
+    expect(saved.map((r) => r.tmdbId), [1]);
+  });
+
+  test('listByBucket(saved) excludes a row that gains a flag', () async {
+    await db.tmdbAccountSyncDao.upsertByTmdbId(
+      TmdbAccountSyncItemsTableCompanion(
+        id: const Value('a'),
+        tmdbId: const Value(1),
+        tmdbMediaType: const Value('movie'),
+        createdAt: Value(DateTime.now().millisecondsSinceEpoch),
+        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+      ),
+    );
+    expect(
+        (await db.tmdbAccountSyncDao.listByBucket(TmdbBridgeBucket.saved))
+            .length,
+        1);
+
+    // Flip watchlist on.
+    await db.tmdbAccountSyncDao.upsertByTmdbId(
+      const TmdbAccountSyncItemsTableCompanion(
+        tmdbId: Value(1),
+        tmdbMediaType: Value('movie'),
+        watchlist: Value(true),
+      ),
+    );
+    expect(
+        (await db.tmdbAccountSyncDao.listByBucket(TmdbBridgeBucket.saved)),
+        isEmpty);
+    expect(
+        (await db.tmdbAccountSyncDao
+                .listByBucket(TmdbBridgeBucket.watchlist))
+            .length,
+        1);
+  });
 }

@@ -107,6 +107,11 @@ class TmdbAccountSyncDao extends DatabaseAccessor<AppDatabase>
         query.where((t) => t.favorite.equals(true));
       case TmdbBridgeBucket.rated:
         query.where((t) => t.tmdbRating.isNotNull());
+      case TmdbBridgeBucket.saved:
+        query.where((t) =>
+            t.watchlist.equals(false) &
+            t.favorite.equals(false) &
+            t.tmdbRating.isNull());
     }
     query.orderBy([(t) => OrderingTerm.desc(t.updatedAt)]);
     return query.get();
@@ -123,6 +128,11 @@ class TmdbAccountSyncDao extends DatabaseAccessor<AppDatabase>
         query.where((t) => t.favorite.equals(true));
       case TmdbBridgeBucket.rated:
         query.where((t) => t.tmdbRating.isNotNull());
+      case TmdbBridgeBucket.saved:
+        query.where((t) =>
+            t.watchlist.equals(false) &
+            t.favorite.equals(false) &
+            t.tmdbRating.isNull());
     }
     query.orderBy([(t) => OrderingTerm.desc(t.updatedAt)]);
     return query.watch();

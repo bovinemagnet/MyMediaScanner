@@ -5,6 +5,7 @@ import 'package:mymediascanner/presentation/providers/repository_providers.dart'
 import 'package:mymediascanner/presentation/providers/settings_provider.dart';
 import 'package:mymediascanner/presentation/providers/tmdb_account_sync_provider.dart';
 import 'package:mymediascanner/presentation/screens/settings/widgets/conflict_policy_selector.dart';
+import 'package:mymediascanner/presentation/screens/settings/widgets/remote_first_warning_dialog.dart';
 import 'package:mymediascanner/presentation/screens/settings/widgets/tmdb_connect_dialog.dart';
 import 'package:mymediascanner/presentation/screens/settings/widgets/tmdb_disconnect_warning_dialog.dart';
 import 'package:mymediascanner/presentation/screens/settings/widgets/tmdb_import_dialog.dart';
@@ -78,6 +79,16 @@ class TmdbAccountSyncSection extends ConsumerWidget {
                   ? (v) => ref
                       .read(tmdbAccountSyncSettingsProvider.notifier)
                       .setMirrorOwnership(v)
+                  : null,
+            ),
+            SwitchListTile(
+              title: const Text('Allow remote-first save (film/TV)'),
+              subtitle: const Text(
+                  'Save scanned or added titles to TMDB only — no local collection record.'),
+              value: settings.remoteFirstSaveEnabled,
+              onChanged: connectionAsync.value is TmdbConnected
+                  ? (v) => _toggleRemoteFirst(
+                      context, ref, v, settings.remoteFirstSaveEnabled)
                   : null,
             ),
             const SizedBox(height: 12),
@@ -229,6 +240,25 @@ Future<void> _disconnectWithCheck(
     await ref.read(disconnectTmdbAccountUseCaseProvider).call();
     await ref.read(tmdbAccountConnectionProvider.notifier).refresh();
   }
+}
+
+Future<void> _toggleRemoteFirst(
+  BuildContext context,
+  WidgetRef ref,
+  bool requested,
+  bool currentValue,
+) async {
+  // First flip-on shows the warning dialog; flip-off is unconditional.
+  if (requested && !currentValue) {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => const RemoteFirstWarningDialog(),
+    );
+    if (confirmed != true) return;
+  }
+  await ref
+      .read(tmdbAccountSyncSettingsProvider.notifier)
+      .setRemoteFirstSaveEnabled(requested);
 }
 
 class _LastSyncSummary extends StatelessWidget {

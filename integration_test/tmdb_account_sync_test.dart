@@ -22,6 +22,7 @@ import 'package:mymediascanner/data/remote/api/tmdb/models/tmdb_status_response_
 import 'package:mymediascanner/data/remote/api/tmdb/tmdb_account_api.dart';
 import 'package:mymediascanner/data/repositories/tmdb_account_sync_repository_impl.dart';
 import 'package:mymediascanner/domain/entities/tmdb_bridge_bucket.dart';
+import 'package:mymediascanner/domain/usecases/save_tmdb_only_usecase.dart';
 import 'package:mymediascanner/domain/entities/tmdb_connection_state.dart';
 import 'package:mymediascanner/domain/repositories/i_tmdb_account_sync_repository.dart';
 
@@ -260,5 +261,54 @@ void main() {
     final after = await db.tmdbAccountSyncDao.getByTmdbId(550, 'movie');
     expect(after?.localDirty, isFalse);
     expect(after?.localRatingSnapshot, 8.0);
+  });
+
+  testWidgets('save tmdb only creates an orphan bridge row', (tester) async {
+    final api = _MockApi();
+    final storage = _MockStorage();
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(() async => db.close());
+
+    // Storage stub.
+    final stored = <String, String>{
+      'tmdb.session_id': 'sess-1',
+      'tmdb.account_id': '1',
+      'tmdb.account_username': 'paul',
+    };
+    when(() => storage.read(key: any(named: 'key')))
+        .thenAnswer((inv) async => stored[inv.namedArguments[#key]]);
+    when(() => storage.write(
+            key: any(named: 'key'), value: any(named: 'value')))
+        .thenAnswer((inv) async {
+      stored[inv.namedArguments[#key] as String] =
+          inv.namedArguments[#value] as String;
+    });
+    when(() => storage.delete(key: any(named: 'key')))
+        .thenAnswer((inv) async {
+      stored.remove(inv.namedArguments[#key]);
+    });
+
+    final repo = TmdbAccountSyncRepositoryImpl(
+      api: api,
+      dao: db.tmdbAccountSyncDao,
+      mediaItemsDao: db.mediaItemsDao,
+      storage: storage,
+    );
+    final useCase = SaveTmdbOnlyUseCase(repo);
+
+    await useCase(
+      tmdbId: 550,
+      mediaType: 'movie',
+      title: 'Fight Club',
+      posterPath: '/p.jpg',
+      barcode: '5051892002172',
+    );
+
+    final saved = await db.tmdbAccountSyncDao
+        .listByBucket(TmdbBridgeBucket.saved);
+    expect(saved.length, 1);
+    expect(saved.first.tmdbId, 550);
+    expect(saved.first.mediaItemId, isNull);
+    expect(saved.first.barcode, '5051892002172');
   });
 }
