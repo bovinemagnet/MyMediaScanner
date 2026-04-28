@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mymediascanner/core/utils/platform_utils.dart';
 import 'package:mymediascanner/domain/entities/tmdb_connection_state.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/settings_provider.dart';
@@ -10,14 +9,12 @@ import 'package:mymediascanner/presentation/screens/settings/widgets/tmdb_connec
 import 'package:mymediascanner/presentation/screens/settings/widgets/tmdb_disconnect_warning_dialog.dart';
 import 'package:mymediascanner/presentation/screens/settings/widgets/tmdb_import_dialog.dart';
 
-/// Settings card for TMDB account sync. Desktop only.
+/// Settings card for TMDB account sync.
 class TmdbAccountSyncSection extends ConsumerWidget {
   const TmdbAccountSyncSection({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (!PlatformCapability.isDesktop) return const SizedBox.shrink();
-
     final tmdbKey = (ref.watch(apiKeysProvider).value ?? {})['tmdb'] ?? '';
     if (tmdbKey.trim().isEmpty) return const SizedBox.shrink();
 
