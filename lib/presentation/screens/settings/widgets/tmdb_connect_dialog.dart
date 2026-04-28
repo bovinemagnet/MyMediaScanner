@@ -48,10 +48,12 @@ class _TmdbConnectDialogState extends ConsumerState<TmdbConnectDialog> {
   @override
   void dispose() {
     _eventSub?.cancel();
-    final notifier = _visibleNotifier;
-    if (notifier != null) {
-      Future.microtask(() => notifier.hide());
-    }
+    // Best-effort hide; the notifier may already be disposed if the entire
+    // ProviderScope is being torn down with the widget. The SnackBar listener
+    // disappears alongside it, so the visibility flag is moot in that case.
+    try {
+      _visibleNotifier?.hide();
+    } catch (_) {}
     super.dispose();
   }
 
