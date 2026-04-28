@@ -10185,25 +10185,31 @@ class $TmdbAccountSyncItemsTableTable extends TmdbAccountSyncItemsTable
     'watchlist',
   );
   @override
-  late final GeneratedColumn<int> watchlist = GeneratedColumn<int>(
+  late final GeneratedColumn<bool> watchlist = GeneratedColumn<bool>(
     'watchlist',
     aliasedName,
     false,
-    type: DriftSqlType.int,
+    type: DriftSqlType.bool,
     requiredDuringInsert: false,
-    defaultValue: const Constant(0),
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("watchlist" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
   );
   static const VerificationMeta _favoriteMeta = const VerificationMeta(
     'favorite',
   );
   @override
-  late final GeneratedColumn<int> favorite = GeneratedColumn<int>(
+  late final GeneratedColumn<bool> favorite = GeneratedColumn<bool>(
     'favorite',
     aliasedName,
     false,
-    type: DriftSqlType.int,
+    type: DriftSqlType.bool,
     requiredDuringInsert: false,
-    defaultValue: const Constant(0),
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("favorite" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
   );
   static const VerificationMeta _listIdsJsonMeta = const VerificationMeta(
     'listIdsJson',
@@ -10233,25 +10239,31 @@ class $TmdbAccountSyncItemsTableTable extends TmdbAccountSyncItemsTable
     'localDirty',
   );
   @override
-  late final GeneratedColumn<int> localDirty = GeneratedColumn<int>(
+  late final GeneratedColumn<bool> localDirty = GeneratedColumn<bool>(
     'local_dirty',
     aliasedName,
     false,
-    type: DriftSqlType.int,
+    type: DriftSqlType.bool,
     requiredDuringInsert: false,
-    defaultValue: const Constant(0),
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("local_dirty" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
   );
   static const VerificationMeta _remoteDirtyMeta = const VerificationMeta(
     'remoteDirty',
   );
   @override
-  late final GeneratedColumn<int> remoteDirty = GeneratedColumn<int>(
+  late final GeneratedColumn<bool> remoteDirty = GeneratedColumn<bool>(
     'remote_dirty',
     aliasedName,
     false,
-    type: DriftSqlType.int,
+    type: DriftSqlType.bool,
     requiredDuringInsert: false,
-    defaultValue: const Constant(0),
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("remote_dirty" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
   );
   static const VerificationMeta _lastPulledAtMeta = const VerificationMeta(
     'lastPulledAt',
@@ -10553,11 +10565,11 @@ class $TmdbAccountSyncItemsTableTable extends TmdbAccountSyncItemsTable
         data['${effectivePrefix}local_rating_snapshot'],
       ),
       watchlist: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
+        DriftSqlType.bool,
         data['${effectivePrefix}watchlist'],
       )!,
       favorite: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
+        DriftSqlType.bool,
         data['${effectivePrefix}favorite'],
       )!,
       listIdsJson: attachedDatabase.typeMapping.read(
@@ -10569,11 +10581,11 @@ class $TmdbAccountSyncItemsTableTable extends TmdbAccountSyncItemsTable
         data['${effectivePrefix}account_state_json'],
       )!,
       localDirty: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
+        DriftSqlType.bool,
         data['${effectivePrefix}local_dirty'],
       )!,
       remoteDirty: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
+        DriftSqlType.bool,
         data['${effectivePrefix}remote_dirty'],
       )!,
       lastPulledAt: attachedDatabase.typeMapping.read(
@@ -10616,12 +10628,12 @@ class TmdbAccountSyncItemsTableData extends DataClass
   final String? posterPathSnapshot;
   final double? tmdbRating;
   final double? localRatingSnapshot;
-  final int watchlist;
-  final int favorite;
+  final bool watchlist;
+  final bool favorite;
   final String listIdsJson;
   final String accountStateJson;
-  final int localDirty;
-  final int remoteDirty;
+  final bool localDirty;
+  final bool remoteDirty;
   final int? lastPulledAt;
   final int? lastPushedAt;
   final String? lastError;
@@ -10673,12 +10685,12 @@ class TmdbAccountSyncItemsTableData extends DataClass
     if (!nullToAbsent || localRatingSnapshot != null) {
       map['local_rating_snapshot'] = Variable<double>(localRatingSnapshot);
     }
-    map['watchlist'] = Variable<int>(watchlist);
-    map['favorite'] = Variable<int>(favorite);
+    map['watchlist'] = Variable<bool>(watchlist);
+    map['favorite'] = Variable<bool>(favorite);
     map['list_ids_json'] = Variable<String>(listIdsJson);
     map['account_state_json'] = Variable<String>(accountStateJson);
-    map['local_dirty'] = Variable<int>(localDirty);
-    map['remote_dirty'] = Variable<int>(remoteDirty);
+    map['local_dirty'] = Variable<bool>(localDirty);
+    map['remote_dirty'] = Variable<bool>(remoteDirty);
     if (!nullToAbsent || lastPulledAt != null) {
       map['last_pulled_at'] = Variable<int>(lastPulledAt);
     }
@@ -10755,12 +10767,12 @@ class TmdbAccountSyncItemsTableData extends DataClass
       localRatingSnapshot: serializer.fromJson<double?>(
         json['localRatingSnapshot'],
       ),
-      watchlist: serializer.fromJson<int>(json['watchlist']),
-      favorite: serializer.fromJson<int>(json['favorite']),
+      watchlist: serializer.fromJson<bool>(json['watchlist']),
+      favorite: serializer.fromJson<bool>(json['favorite']),
       listIdsJson: serializer.fromJson<String>(json['listIdsJson']),
       accountStateJson: serializer.fromJson<String>(json['accountStateJson']),
-      localDirty: serializer.fromJson<int>(json['localDirty']),
-      remoteDirty: serializer.fromJson<int>(json['remoteDirty']),
+      localDirty: serializer.fromJson<bool>(json['localDirty']),
+      remoteDirty: serializer.fromJson<bool>(json['remoteDirty']),
       lastPulledAt: serializer.fromJson<int?>(json['lastPulledAt']),
       lastPushedAt: serializer.fromJson<int?>(json['lastPushedAt']),
       lastError: serializer.fromJson<String?>(json['lastError']),
@@ -10781,12 +10793,12 @@ class TmdbAccountSyncItemsTableData extends DataClass
       'posterPathSnapshot': serializer.toJson<String?>(posterPathSnapshot),
       'tmdbRating': serializer.toJson<double?>(tmdbRating),
       'localRatingSnapshot': serializer.toJson<double?>(localRatingSnapshot),
-      'watchlist': serializer.toJson<int>(watchlist),
-      'favorite': serializer.toJson<int>(favorite),
+      'watchlist': serializer.toJson<bool>(watchlist),
+      'favorite': serializer.toJson<bool>(favorite),
       'listIdsJson': serializer.toJson<String>(listIdsJson),
       'accountStateJson': serializer.toJson<String>(accountStateJson),
-      'localDirty': serializer.toJson<int>(localDirty),
-      'remoteDirty': serializer.toJson<int>(remoteDirty),
+      'localDirty': serializer.toJson<bool>(localDirty),
+      'remoteDirty': serializer.toJson<bool>(remoteDirty),
       'lastPulledAt': serializer.toJson<int?>(lastPulledAt),
       'lastPushedAt': serializer.toJson<int?>(lastPushedAt),
       'lastError': serializer.toJson<String?>(lastError),
@@ -10805,12 +10817,12 @@ class TmdbAccountSyncItemsTableData extends DataClass
     Value<String?> posterPathSnapshot = const Value.absent(),
     Value<double?> tmdbRating = const Value.absent(),
     Value<double?> localRatingSnapshot = const Value.absent(),
-    int? watchlist,
-    int? favorite,
+    bool? watchlist,
+    bool? favorite,
     String? listIdsJson,
     String? accountStateJson,
-    int? localDirty,
-    int? remoteDirty,
+    bool? localDirty,
+    bool? remoteDirty,
     Value<int?> lastPulledAt = const Value.absent(),
     Value<int?> lastPushedAt = const Value.absent(),
     Value<String?> lastError = const Value.absent(),
@@ -10982,12 +10994,12 @@ class TmdbAccountSyncItemsTableCompanion
   final Value<String?> posterPathSnapshot;
   final Value<double?> tmdbRating;
   final Value<double?> localRatingSnapshot;
-  final Value<int> watchlist;
-  final Value<int> favorite;
+  final Value<bool> watchlist;
+  final Value<bool> favorite;
   final Value<String> listIdsJson;
   final Value<String> accountStateJson;
-  final Value<int> localDirty;
-  final Value<int> remoteDirty;
+  final Value<bool> localDirty;
+  final Value<bool> remoteDirty;
   final Value<int?> lastPulledAt;
   final Value<int?> lastPushedAt;
   final Value<String?> lastError;
@@ -11054,12 +11066,12 @@ class TmdbAccountSyncItemsTableCompanion
     Expression<String>? posterPathSnapshot,
     Expression<double>? tmdbRating,
     Expression<double>? localRatingSnapshot,
-    Expression<int>? watchlist,
-    Expression<int>? favorite,
+    Expression<bool>? watchlist,
+    Expression<bool>? favorite,
     Expression<String>? listIdsJson,
     Expression<String>? accountStateJson,
-    Expression<int>? localDirty,
-    Expression<int>? remoteDirty,
+    Expression<bool>? localDirty,
+    Expression<bool>? remoteDirty,
     Expression<int>? lastPulledAt,
     Expression<int>? lastPushedAt,
     Expression<String>? lastError,
@@ -11104,12 +11116,12 @@ class TmdbAccountSyncItemsTableCompanion
     Value<String?>? posterPathSnapshot,
     Value<double?>? tmdbRating,
     Value<double?>? localRatingSnapshot,
-    Value<int>? watchlist,
-    Value<int>? favorite,
+    Value<bool>? watchlist,
+    Value<bool>? favorite,
     Value<String>? listIdsJson,
     Value<String>? accountStateJson,
-    Value<int>? localDirty,
-    Value<int>? remoteDirty,
+    Value<bool>? localDirty,
+    Value<bool>? remoteDirty,
     Value<int?>? lastPulledAt,
     Value<int?>? lastPushedAt,
     Value<String?>? lastError,
@@ -11175,10 +11187,10 @@ class TmdbAccountSyncItemsTableCompanion
       );
     }
     if (watchlist.present) {
-      map['watchlist'] = Variable<int>(watchlist.value);
+      map['watchlist'] = Variable<bool>(watchlist.value);
     }
     if (favorite.present) {
-      map['favorite'] = Variable<int>(favorite.value);
+      map['favorite'] = Variable<bool>(favorite.value);
     }
     if (listIdsJson.present) {
       map['list_ids_json'] = Variable<String>(listIdsJson.value);
@@ -11187,10 +11199,10 @@ class TmdbAccountSyncItemsTableCompanion
       map['account_state_json'] = Variable<String>(accountStateJson.value);
     }
     if (localDirty.present) {
-      map['local_dirty'] = Variable<int>(localDirty.value);
+      map['local_dirty'] = Variable<bool>(localDirty.value);
     }
     if (remoteDirty.present) {
-      map['remote_dirty'] = Variable<int>(remoteDirty.value);
+      map['remote_dirty'] = Variable<bool>(remoteDirty.value);
     }
     if (lastPulledAt.present) {
       map['last_pulled_at'] = Variable<int>(lastPulledAt.value);
@@ -18558,12 +18570,12 @@ typedef $$TmdbAccountSyncItemsTableTableCreateCompanionBuilder =
       Value<String?> posterPathSnapshot,
       Value<double?> tmdbRating,
       Value<double?> localRatingSnapshot,
-      Value<int> watchlist,
-      Value<int> favorite,
+      Value<bool> watchlist,
+      Value<bool> favorite,
       Value<String> listIdsJson,
       Value<String> accountStateJson,
-      Value<int> localDirty,
-      Value<int> remoteDirty,
+      Value<bool> localDirty,
+      Value<bool> remoteDirty,
       Value<int?> lastPulledAt,
       Value<int?> lastPushedAt,
       Value<String?> lastError,
@@ -18582,12 +18594,12 @@ typedef $$TmdbAccountSyncItemsTableTableUpdateCompanionBuilder =
       Value<String?> posterPathSnapshot,
       Value<double?> tmdbRating,
       Value<double?> localRatingSnapshot,
-      Value<int> watchlist,
-      Value<int> favorite,
+      Value<bool> watchlist,
+      Value<bool> favorite,
       Value<String> listIdsJson,
       Value<String> accountStateJson,
-      Value<int> localDirty,
-      Value<int> remoteDirty,
+      Value<bool> localDirty,
+      Value<bool> remoteDirty,
       Value<int?> lastPulledAt,
       Value<int?> lastPushedAt,
       Value<String?> lastError,
@@ -18650,12 +18662,12 @@ class $$TmdbAccountSyncItemsTableTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get watchlist => $composableBuilder(
+  ColumnFilters<bool> get watchlist => $composableBuilder(
     column: $table.watchlist,
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get favorite => $composableBuilder(
+  ColumnFilters<bool> get favorite => $composableBuilder(
     column: $table.favorite,
     builder: (column) => ColumnFilters(column),
   );
@@ -18670,12 +18682,12 @@ class $$TmdbAccountSyncItemsTableTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get localDirty => $composableBuilder(
+  ColumnFilters<bool> get localDirty => $composableBuilder(
     column: $table.localDirty,
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get remoteDirty => $composableBuilder(
+  ColumnFilters<bool> get remoteDirty => $composableBuilder(
     column: $table.remoteDirty,
     builder: (column) => ColumnFilters(column),
   );
@@ -18760,12 +18772,12 @@ class $$TmdbAccountSyncItemsTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get watchlist => $composableBuilder(
+  ColumnOrderings<bool> get watchlist => $composableBuilder(
     column: $table.watchlist,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get favorite => $composableBuilder(
+  ColumnOrderings<bool> get favorite => $composableBuilder(
     column: $table.favorite,
     builder: (column) => ColumnOrderings(column),
   );
@@ -18780,12 +18792,12 @@ class $$TmdbAccountSyncItemsTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get localDirty => $composableBuilder(
+  ColumnOrderings<bool> get localDirty => $composableBuilder(
     column: $table.localDirty,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get remoteDirty => $composableBuilder(
+  ColumnOrderings<bool> get remoteDirty => $composableBuilder(
     column: $table.remoteDirty,
     builder: (column) => ColumnOrderings(column),
   );
@@ -18864,10 +18876,10 @@ class $$TmdbAccountSyncItemsTableTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<int> get watchlist =>
+  GeneratedColumn<bool> get watchlist =>
       $composableBuilder(column: $table.watchlist, builder: (column) => column);
 
-  GeneratedColumn<int> get favorite =>
+  GeneratedColumn<bool> get favorite =>
       $composableBuilder(column: $table.favorite, builder: (column) => column);
 
   GeneratedColumn<String> get listIdsJson => $composableBuilder(
@@ -18880,12 +18892,12 @@ class $$TmdbAccountSyncItemsTableTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<int> get localDirty => $composableBuilder(
+  GeneratedColumn<bool> get localDirty => $composableBuilder(
     column: $table.localDirty,
     builder: (column) => column,
   );
 
-  GeneratedColumn<int> get remoteDirty => $composableBuilder(
+  GeneratedColumn<bool> get remoteDirty => $composableBuilder(
     column: $table.remoteDirty,
     builder: (column) => column,
   );
@@ -18965,12 +18977,12 @@ class $$TmdbAccountSyncItemsTableTableTableManager
                 Value<String?> posterPathSnapshot = const Value.absent(),
                 Value<double?> tmdbRating = const Value.absent(),
                 Value<double?> localRatingSnapshot = const Value.absent(),
-                Value<int> watchlist = const Value.absent(),
-                Value<int> favorite = const Value.absent(),
+                Value<bool> watchlist = const Value.absent(),
+                Value<bool> favorite = const Value.absent(),
                 Value<String> listIdsJson = const Value.absent(),
                 Value<String> accountStateJson = const Value.absent(),
-                Value<int> localDirty = const Value.absent(),
-                Value<int> remoteDirty = const Value.absent(),
+                Value<bool> localDirty = const Value.absent(),
+                Value<bool> remoteDirty = const Value.absent(),
                 Value<int?> lastPulledAt = const Value.absent(),
                 Value<int?> lastPushedAt = const Value.absent(),
                 Value<String?> lastError = const Value.absent(),
@@ -19011,12 +19023,12 @@ class $$TmdbAccountSyncItemsTableTableTableManager
                 Value<String?> posterPathSnapshot = const Value.absent(),
                 Value<double?> tmdbRating = const Value.absent(),
                 Value<double?> localRatingSnapshot = const Value.absent(),
-                Value<int> watchlist = const Value.absent(),
-                Value<int> favorite = const Value.absent(),
+                Value<bool> watchlist = const Value.absent(),
+                Value<bool> favorite = const Value.absent(),
                 Value<String> listIdsJson = const Value.absent(),
                 Value<String> accountStateJson = const Value.absent(),
-                Value<int> localDirty = const Value.absent(),
-                Value<int> remoteDirty = const Value.absent(),
+                Value<bool> localDirty = const Value.absent(),
+                Value<bool> remoteDirty = const Value.absent(),
                 Value<int?> lastPulledAt = const Value.absent(),
                 Value<int?> lastPushedAt = const Value.absent(),
                 Value<String?> lastError = const Value.absent(),

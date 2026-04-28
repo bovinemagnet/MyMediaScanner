@@ -13,12 +13,12 @@ class TmdbAccountSyncItemsTable extends Table {
   TextColumn get posterPathSnapshot => text().nullable()();
   RealColumn get tmdbRating => real().nullable()();
   RealColumn get localRatingSnapshot => real().nullable()();
-  IntColumn get watchlist => integer().withDefault(const Constant(0))();
-  IntColumn get favorite => integer().withDefault(const Constant(0))();
+  BoolColumn get watchlist => boolean().withDefault(const Constant(false))();
+  BoolColumn get favorite => boolean().withDefault(const Constant(false))();
   TextColumn get listIdsJson => text().withDefault(const Constant('[]'))();
   TextColumn get accountStateJson => text().withDefault(const Constant('{}'))();
-  IntColumn get localDirty => integer().withDefault(const Constant(0))();
-  IntColumn get remoteDirty => integer().withDefault(const Constant(0))();
+  BoolColumn get localDirty => boolean().withDefault(const Constant(false))();
+  BoolColumn get remoteDirty => boolean().withDefault(const Constant(false))();
   IntColumn get lastPulledAt => integer().nullable()();
   IntColumn get lastPushedAt => integer().nullable()();
   TextColumn get lastError => text().nullable()();

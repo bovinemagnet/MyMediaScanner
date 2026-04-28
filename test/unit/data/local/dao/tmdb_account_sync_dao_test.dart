@@ -17,8 +17,8 @@ void main() {
     required String id,
     required int tmdbId,
     String mediaType = 'movie',
-    int? watchlist,
-    int? favorite,
+    bool? watchlist,
+    bool? favorite,
     double? rating,
   }) {
     final now = DateTime.now().millisecondsSinceEpoch;
@@ -26,9 +26,9 @@ void main() {
       id: Value(id),
       tmdbId: Value(tmdbId),
       tmdbMediaType: Value(mediaType),
-      watchlist: Value(watchlist ?? 0),
-      favorite: Value(favorite ?? 0),
-      tmdbRating: Value(rating),
+      watchlist: watchlist == null ? const Value.absent() : Value(watchlist),
+      favorite: favorite == null ? const Value.absent() : Value(favorite),
+      tmdbRating: rating == null ? const Value.absent() : Value(rating),
       createdAt: Value(now),
       updatedAt: Value(now),
     );
@@ -40,37 +40,37 @@ void main() {
 
   test('upsertByTmdbId inserts a new row when none exists', () async {
     await db.tmdbAccountSyncDao.upsertByTmdbId(
-      row(id: 'a', tmdbId: 550, watchlist: 1),
+      row(id: 'a', tmdbId: 550, watchlist: true),
     );
 
     final found =
         await db.tmdbAccountSyncDao.getByTmdbId(550, 'movie');
     expect(found, isNotNull);
-    expect(found!.watchlist, 1);
+    expect(found!.watchlist, isTrue);
   });
 
   test('upsertByTmdbId merges when row exists', () async {
     await db.tmdbAccountSyncDao.upsertByTmdbId(
-      row(id: 'a', tmdbId: 550, watchlist: 1),
+      row(id: 'a', tmdbId: 550, watchlist: true),
     );
     await db.tmdbAccountSyncDao.upsertByTmdbId(
-      row(id: 'b', tmdbId: 550, favorite: 1, rating: 8.0),
+      row(id: 'b', tmdbId: 550, favorite: true, rating: 8.0),
     );
 
     final found =
         await db.tmdbAccountSyncDao.getByTmdbId(550, 'movie');
     expect(found, isNotNull);
-    expect(found!.watchlist, 1, reason: 'preserved from first upsert');
-    expect(found.favorite, 1, reason: 'set by second upsert');
+    expect(found!.watchlist, isTrue, reason: 'preserved from first upsert');
+    expect(found.favorite, isTrue, reason: 'set by second upsert');
     expect(found.tmdbRating, 8.0);
   });
 
   test('listByBucket returns only matching bucket rows', () async {
     await db.tmdbAccountSyncDao.upsertByTmdbId(
-      row(id: 'a', tmdbId: 1, watchlist: 1),
+      row(id: 'a', tmdbId: 1, watchlist: true),
     );
     await db.tmdbAccountSyncDao.upsertByTmdbId(
-      row(id: 'b', tmdbId: 2, favorite: 1),
+      row(id: 'b', tmdbId: 2, favorite: true),
     );
     await db.tmdbAccountSyncDao.upsertByTmdbId(
       row(id: 'c', tmdbId: 3, rating: 7.0),
@@ -91,7 +91,7 @@ void main() {
 
   test('listByBucket excludes rows linked to a media item', () async {
     await db.tmdbAccountSyncDao.upsertByTmdbId(
-      row(id: 'a', tmdbId: 1, watchlist: 1),
+      row(id: 'a', tmdbId: 1, watchlist: true),
     );
     await db.tmdbAccountSyncDao
         .linkToMediaItem(tmdbId: 1, mediaType: 'movie', mediaItemId: 'item-1');
@@ -105,13 +105,13 @@ void main() {
   test('pruneOrphans deletes only unlinked rows missing from keep set',
       () async {
     await db.tmdbAccountSyncDao.upsertByTmdbId(
-      row(id: 'a', tmdbId: 1, watchlist: 1),
+      row(id: 'a', tmdbId: 1, watchlist: true),
     );
     await db.tmdbAccountSyncDao.upsertByTmdbId(
-      row(id: 'b', tmdbId: 2, watchlist: 1),
+      row(id: 'b', tmdbId: 2, watchlist: true),
     );
     await db.tmdbAccountSyncDao.upsertByTmdbId(
-      row(id: 'c', tmdbId: 3, watchlist: 1),
+      row(id: 'c', tmdbId: 3, watchlist: true),
     );
     await db.tmdbAccountSyncDao
         .linkToMediaItem(tmdbId: 1, mediaType: 'movie', mediaItemId: 'item-1');
