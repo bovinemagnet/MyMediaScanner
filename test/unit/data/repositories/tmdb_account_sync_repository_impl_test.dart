@@ -218,4 +218,59 @@ void main() {
     expect(after?.localDirty, isTrue, reason: 'stays dirty for retry');
     expect(after?.lastError, isNotNull);
   });
+
+  test('toggleWatchlist updates bridge + pushes', () async {
+    await db.tmdbAccountSyncDao.upsertByTmdbId(
+      TmdbAccountSyncItemsTableCompanion(
+        id: const Value('br-1'),
+        tmdbId: const Value(100),
+        tmdbMediaType: const Value('movie'),
+        watchlist: const Value(false),
+        createdAt: Value(DateTime.now().millisecondsSinceEpoch),
+        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+      ),
+    );
+    when(() => api.setWatchlist(42, 'sess-123', any()))
+        .thenAnswer((_) async =>
+            const TmdbStatusResponseDto(statusCode: 1, success: true));
+    when(() => api.setFavorite(42, 'sess-123', any()))
+        .thenAnswer((_) async =>
+            const TmdbStatusResponseDto(statusCode: 1, success: true));
+
+    final result =
+        await repo.toggleWatchlist(tmdbId: 100, mediaType: 'movie', value: true);
+    expect(result.success, isTrue);
+
+    final after = await db.tmdbAccountSyncDao.getByTmdbId(100, 'movie');
+    expect(after?.watchlist, isTrue);
+    expect(after?.localDirty, isFalse);
+  });
+
+  test('updateRating with null clears the TMDB rating', () async {
+    await db.tmdbAccountSyncDao.upsertByTmdbId(
+      TmdbAccountSyncItemsTableCompanion(
+        id: const Value('br-1'),
+        tmdbId: const Value(100),
+        tmdbMediaType: const Value('movie'),
+        tmdbRating: const Value(8.0),
+        localRatingSnapshot: const Value(8.0),
+        createdAt: Value(DateTime.now().millisecondsSinceEpoch),
+        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+      ),
+    );
+    when(() => api.removeMovieRating(100, 'sess-123'))
+        .thenAnswer((_) async =>
+            const TmdbStatusResponseDto(statusCode: 13, success: true));
+    when(() => api.setWatchlist(42, 'sess-123', any()))
+        .thenAnswer((_) async =>
+            const TmdbStatusResponseDto(statusCode: 1, success: true));
+    when(() => api.setFavorite(42, 'sess-123', any()))
+        .thenAnswer((_) async =>
+            const TmdbStatusResponseDto(statusCode: 1, success: true));
+
+    final result = await repo.updateRating(
+        tmdbId: 100, mediaType: 'movie', localRating: null);
+    expect(result.success, isTrue);
+    verify(() => api.removeMovieRating(100, 'sess-123')).called(1);
+  });
 }

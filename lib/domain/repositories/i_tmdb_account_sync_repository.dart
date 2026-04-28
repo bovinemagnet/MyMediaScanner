@@ -66,6 +66,30 @@ abstract class ITmdbAccountSyncRepository {
 
   /// Count dirty rows — used by the disconnect dialog precondition.
   Future<int> countDirtyRows();
+
+  // ── Slice 2 — toggle helpers ───────────────────────────────────
+
+  /// Toggle the watchlist flag locally + push (regardless of two-way setting;
+  /// the use-case layer enforces the gate).
+  Future<TmdbPushResult> toggleWatchlist({
+    required int tmdbId,
+    required String mediaType,
+    required bool value,
+  });
+
+  /// Toggle the favourite flag locally + push.
+  Future<TmdbPushResult> toggleFavorite({
+    required int tmdbId,
+    required String mediaType,
+    required bool value,
+  });
+
+  /// Set local rating + push. Pass `null` to clear the rating on TMDB.
+  Future<TmdbPushResult> updateRating({
+    required int tmdbId,
+    required String mediaType,
+    required double? localRating, // 0–5 scale; null clears.
+  });
 }
 
 /// Single bucket selection for the import wizard.

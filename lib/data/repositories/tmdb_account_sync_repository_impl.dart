@@ -441,6 +441,62 @@ class TmdbAccountSyncRepositoryImpl implements ITmdbAccountSyncRepository {
   }
 
   @override
+  Future<TmdbPushResult> toggleWatchlist({
+    required int tmdbId,
+    required String mediaType,
+    required bool value,
+  }) async {
+    await dao.upsertByTmdbId(
+      TmdbAccountSyncItemsTableCompanion(
+        tmdbId: Value(tmdbId),
+        tmdbMediaType: Value(mediaType),
+        watchlist: Value(value),
+        localDirty: const Value(true),
+      ),
+    );
+    return pushOne(tmdbId: tmdbId, mediaType: mediaType);
+  }
+
+  @override
+  Future<TmdbPushResult> toggleFavorite({
+    required int tmdbId,
+    required String mediaType,
+    required bool value,
+  }) async {
+    await dao.upsertByTmdbId(
+      TmdbAccountSyncItemsTableCompanion(
+        tmdbId: Value(tmdbId),
+        tmdbMediaType: Value(mediaType),
+        favorite: Value(value),
+        localDirty: const Value(true),
+      ),
+    );
+    return pushOne(tmdbId: tmdbId, mediaType: mediaType);
+  }
+
+  @override
+  Future<TmdbPushResult> updateRating({
+    required int tmdbId,
+    required String mediaType,
+    required double? localRating,
+  }) async {
+    // Convert local 0–5 to TMDB 0.5–10. Null clears.
+    final tmdb = localRating == null
+        ? null
+        : TmdbAccountMapper.localToTmdbRating(localRating);
+
+    await dao.upsertByTmdbId(
+      TmdbAccountSyncItemsTableCompanion(
+        tmdbId: Value(tmdbId),
+        tmdbMediaType: Value(mediaType),
+        tmdbRating: Value(tmdb),
+        localDirty: const Value(true),
+      ),
+    );
+    return pushOne(tmdbId: tmdbId, mediaType: mediaType);
+  }
+
+  @override
   Future<TmdbPushSummary> pushAllDirty() async {
     final dirty = await dao.listDirty();
     int succeeded = 0;
