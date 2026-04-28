@@ -257,18 +257,7 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 20) {
             await m.createTable(tmdbAccountSyncItemsTable);
-            await customStatement(
-              'CREATE INDEX IF NOT EXISTS idx_tmdb_bridge_media_item_id '
-              'ON tmdb_account_sync_items(media_item_id)',
-            );
-            await customStatement(
-              'CREATE INDEX IF NOT EXISTS idx_tmdb_bridge_barcode '
-              'ON tmdb_account_sync_items(barcode)',
-            );
-            await customStatement(
-              'CREATE INDEX IF NOT EXISTS idx_tmdb_bridge_dirty '
-              'ON tmdb_account_sync_items(local_dirty, remote_dirty)',
-            );
+            await _createIndexes();
           }
         },
       );

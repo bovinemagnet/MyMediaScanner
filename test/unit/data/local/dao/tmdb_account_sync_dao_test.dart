@@ -125,4 +125,33 @@ void main() {
     expect(remaining.map((r) => r.tmdbId), unorderedEquals([1, 2]),
         reason: 'kept (2), and linked (1); orphan (3) pruned');
   });
+
+  test('pruneOrphans preserves rows with localDirty == true', () async {
+    // Three orphan rows; one is dirty.
+    await db.tmdbAccountSyncDao.upsertByTmdbId(
+      row(id: 'a', tmdbId: 1, watchlist: true),
+    );
+    await db.tmdbAccountSyncDao.upsertByTmdbId(
+      row(id: 'b', tmdbId: 2, watchlist: true),
+    );
+    await db.tmdbAccountSyncDao.upsertByTmdbId(
+      TmdbAccountSyncItemsTableCompanion(
+        id: const Value('c'),
+        tmdbId: const Value(3),
+        tmdbMediaType: const Value('movie'),
+        watchlist: const Value(true),
+        localDirty: const Value(true),
+        createdAt: Value(DateTime.now().millisecondsSinceEpoch),
+        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+      ),
+    );
+
+    // Empty keepKeys → would normally delete every orphan, but localDirty guard
+    // protects row 'c'.
+    await db.tmdbAccountSyncDao.pruneOrphans(keepKeys: const {});
+
+    final remaining = await (db.select(db.tmdbAccountSyncItemsTable)).get();
+    expect(remaining.map((r) => r.tmdbId), [3],
+        reason: 'localDirty=true row survives a full prune');
+  });
 }
