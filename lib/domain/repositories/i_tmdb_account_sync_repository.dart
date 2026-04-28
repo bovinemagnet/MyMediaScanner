@@ -46,6 +46,26 @@ abstract class ITmdbAccountSyncRepository {
   /// new media-item ID. Slice A creates the row with
   /// `OwnershipStatus.owned` and links the bridge row to it.
   Future<String> convertBridgeToLocalItem(String bridgeId);
+
+  // ── Slice 2 — push pipeline ────────────────────────────────────
+
+  /// Push any pending changes for the title `(tmdbId, mediaType)`.
+  Future<TmdbPushResult> pushOne({
+    required int tmdbId,
+    required String mediaType,
+  });
+
+  /// Push every dirty row sequentially. Used by "Push pending now".
+  Future<TmdbPushSummary> pushAllDirty();
+
+  /// Watch the count of dirty rows for UI badging.
+  Stream<int> watchDirtyCount();
+
+  /// Stream conflicted rows (those needing user resolution).
+  Stream<List<TmdbBridgeItem>> watchConflicts();
+
+  /// Count dirty rows — used by the disconnect dialog precondition.
+  Future<int> countDirtyRows();
 }
 
 /// Single bucket selection for the import wizard.
@@ -72,6 +92,25 @@ class TmdbSyncSummary {
   });
 
   final int pulled;
+  final int failed;
+  final String? lastError;
+}
+
+class TmdbPushResult {
+  const TmdbPushResult({required this.success, this.error});
+  final bool success;
+  final String? error;
+}
+
+class TmdbPushSummary {
+  const TmdbPushSummary({
+    required this.attempted,
+    required this.succeeded,
+    required this.failed,
+    this.lastError,
+  });
+  final int attempted;
+  final int succeeded;
   final int failed;
   final String? lastError;
 }

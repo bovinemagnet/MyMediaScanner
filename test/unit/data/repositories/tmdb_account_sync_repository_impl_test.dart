@@ -7,6 +7,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:mymediascanner/data/local/database/app_database.dart';
 import 'package:mymediascanner/data/remote/api/tmdb/tmdb_account_api.dart';
 import 'package:mymediascanner/data/remote/api/tmdb/models/tmdb_account_list_page_dto.dart';
+import 'package:mymediascanner/data/remote/api/tmdb/models/tmdb_status_response_dto.dart';
 import 'package:mymediascanner/data/repositories/tmdb_account_sync_repository_impl.dart';
 import 'package:mymediascanner/domain/entities/tmdb_bridge_bucket.dart';
 import 'package:mymediascanner/domain/repositories/i_tmdb_account_sync_repository.dart';
@@ -120,5 +121,70 @@ void main() {
     expect(mediaItem!.title, 'Fight Club');
     expect(mediaItem.userRating, 4.0,
         reason: 'TMDB 8.0 → local 4.0 (halved)');
+  });
+
+  test('pushOne with new rating posts to TMDB then clears dirty', () async {
+    await db.tmdbAccountSyncDao.upsertByTmdbId(
+      TmdbAccountSyncItemsTableCompanion(
+        id: const Value('br-1'),
+        tmdbId: const Value(550),
+        tmdbMediaType: const Value('movie'),
+        tmdbRating: const Value(9.0), // new desired rating
+        localRatingSnapshot: const Value(8.0), // last pushed
+        localDirty: const Value(true),
+        createdAt: Value(DateTime.now().millisecondsSinceEpoch),
+        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+      ),
+    );
+    when(() => api.addMovieRating(550, 'sess-123', any()))
+        .thenAnswer((_) async =>
+            const TmdbStatusResponseDto(statusCode: 1, success: true));
+    when(() => api.setWatchlist(42, 'sess-123', any()))
+        .thenAnswer((_) async =>
+            const TmdbStatusResponseDto(statusCode: 1, success: true));
+    when(() => api.setFavorite(42, 'sess-123', any()))
+        .thenAnswer((_) async =>
+            const TmdbStatusResponseDto(statusCode: 1, success: true));
+
+    final result = await repo.pushOne(tmdbId: 550, mediaType: 'movie');
+    expect(result.success, isTrue);
+
+    final after = await db.tmdbAccountSyncDao.getByTmdbId(550, 'movie');
+    expect(after?.localDirty, isFalse);
+    expect(after?.lastPushedAt, isNotNull);
+    expect(after?.localRatingSnapshot, 9.0);
+    verify(() => api.addMovieRating(550, 'sess-123', {'value': 9.0})).called(1);
+  });
+
+  test('pushOne with API error keeps row dirty and stores last_error',
+      () async {
+    await db.tmdbAccountSyncDao.upsertByTmdbId(
+      TmdbAccountSyncItemsTableCompanion(
+        id: const Value('br-1'),
+        tmdbId: const Value(550),
+        tmdbMediaType: const Value('movie'),
+        tmdbRating: const Value(7.0),
+        localRatingSnapshot: const Value(8.0),
+        localDirty: const Value(true),
+        createdAt: Value(DateTime.now().millisecondsSinceEpoch),
+        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+      ),
+    );
+    when(() => api.addMovieRating(550, 'sess-123', any()))
+        .thenThrow(DioException(
+      requestOptions: RequestOptions(path: ''),
+      response: Response(
+        requestOptions: RequestOptions(path: ''),
+        statusCode: 500,
+      ),
+    ));
+
+    final result = await repo.pushOne(tmdbId: 550, mediaType: 'movie');
+    expect(result.success, isFalse);
+    expect(result.error, isNotNull);
+
+    final after = await db.tmdbAccountSyncDao.getByTmdbId(550, 'movie');
+    expect(after?.localDirty, isTrue, reason: 'stays dirty for retry');
+    expect(after?.lastError, isNotNull);
   });
 }

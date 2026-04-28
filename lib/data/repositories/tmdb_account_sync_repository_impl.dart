@@ -13,6 +13,7 @@ import 'package:mymediascanner/domain/entities/ownership_status.dart';
 import 'package:mymediascanner/domain/entities/tmdb_bridge_bucket.dart';
 import 'package:mymediascanner/domain/entities/tmdb_bridge_item.dart';
 import 'package:mymediascanner/domain/entities/tmdb_connection_state.dart';
+import 'package:mymediascanner/domain/entities/tmdb_push_action.dart';
 import 'package:mymediascanner/domain/repositories/i_tmdb_account_sync_repository.dart';
 
 class TmdbAccountSyncRepositoryImpl implements ITmdbAccountSyncRepository {
@@ -31,6 +32,8 @@ class TmdbAccountSyncRepositoryImpl implements ITmdbAccountSyncRepository {
   static const _kSession = 'tmdb.session_id';
   static const _kAccountId = 'tmdb.account_id';
   static const _kUsername = 'tmdb.account_username';
+  // ignore: unused_field — reserved for Task 8 (list manager)
+  static const _kListId = 'tmdb.mymediascanner_list_id';
 
   // ── Connection state ──────────────────────────────────────────
 
@@ -296,6 +299,165 @@ class TmdbAccountSyncRepositoryImpl implements ITmdbAccountSyncRepository {
     );
 
     return mediaItemId;
+  }
+
+  // ── Slice 2 — push pipeline ────────────────────────────────────
+
+  @override
+  Future<int> countDirtyRows() => dao.countDirtyRows();
+
+  @override
+  Stream<int> watchDirtyCount() => dao.watchDirtyCount();
+
+  @override
+  Stream<List<TmdbBridgeItem>> watchConflicts() {
+    return dao.watchConflicts().map(
+        (rows) => rows.map(TmdbAccountMapper.rowToBridgeItem).toList());
+  }
+
+  @override
+  Future<TmdbPushResult> pushOne({
+    required int tmdbId,
+    required String mediaType,
+  }) async {
+    final state = await currentState();
+    if (state is! TmdbConnected) {
+      return const TmdbPushResult(
+          success: false, error: 'Not connected to TMDB');
+    }
+    final session = (await storage.read(key: _kSession))!;
+
+    final row = await dao.getByTmdbId(tmdbId, mediaType);
+    if (row == null) {
+      return const TmdbPushResult(
+          success: false, error: 'No bridge row');
+    }
+
+    final actions = <TmdbPushAction>[];
+    final desiredRating = row.tmdbRating;
+    final lastPushedRating = row.localRatingSnapshot;
+    if (desiredRating != lastPushedRating) {
+      if (desiredRating == null) {
+        actions.add(const RemoveRating());
+      } else {
+        actions.add(PushRating(desiredRating));
+      }
+    }
+
+    // Slice 2 simplification: when row is dirty, also push current
+    // watchlist + favourite state. TMDB POSTs are idempotent for these.
+    if (row.localDirty) {
+      actions.add(PushWatchlist(row.watchlist));
+      actions.add(PushFavorite(row.favorite));
+    }
+
+    if (actions.isEmpty) {
+      await dao.clearDirty(
+        tmdbId: tmdbId,
+        mediaType: mediaType,
+        pushedRating: desiredRating,
+      );
+      return const TmdbPushResult(success: true);
+    }
+
+    for (final action in actions) {
+      try {
+        await _executeAction(
+          action: action,
+          accountId: state.accountId,
+          sessionId: session,
+          tmdbId: tmdbId,
+          mediaType: mediaType,
+        );
+      } on DioException catch (e) {
+        if (e.response?.statusCode == 401) {
+          await _handle401();
+          await dao.recordPushError(
+            tmdbId: tmdbId,
+            mediaType: mediaType,
+            error: 'Session expired',
+          );
+          return const TmdbPushResult(
+              success: false, error: 'Session expired');
+        }
+        final msg = e.message ?? 'Network error';
+        await dao.recordPushError(
+            tmdbId: tmdbId, mediaType: mediaType, error: msg);
+        return TmdbPushResult(success: false, error: msg);
+      } catch (e) {
+        await dao.recordPushError(
+            tmdbId: tmdbId, mediaType: mediaType, error: e.toString());
+        return TmdbPushResult(success: false, error: e.toString());
+      }
+    }
+
+    await dao.clearDirty(
+      tmdbId: tmdbId,
+      mediaType: mediaType,
+      pushedRating: desiredRating,
+    );
+    return const TmdbPushResult(success: true);
+  }
+
+  Future<void> _executeAction({
+    required TmdbPushAction action,
+    required int accountId,
+    required String sessionId,
+    required int tmdbId,
+    required String mediaType,
+  }) async {
+    switch (action) {
+      case PushRating(value: final v):
+        if (mediaType == 'tv') {
+          await api.addTvRating(tmdbId, sessionId, {'value': v});
+        } else {
+          await api.addMovieRating(tmdbId, sessionId, {'value': v});
+        }
+      case RemoveRating():
+        if (mediaType == 'tv') {
+          await api.removeTvRating(tmdbId, sessionId);
+        } else {
+          await api.removeMovieRating(tmdbId, sessionId);
+        }
+      case PushWatchlist(value: final v):
+        await api.setWatchlist(accountId, sessionId, {
+          'media_type': mediaType,
+          'media_id': tmdbId,
+          'watchlist': v,
+        });
+      case PushFavorite(value: final v):
+        await api.setFavorite(accountId, sessionId, {
+          'media_type': mediaType,
+          'media_id': tmdbId,
+          'favorite': v,
+        });
+      case PushOwnership():
+        throw StateError('PushOwnership not handled in pushOne');
+    }
+  }
+
+  @override
+  Future<TmdbPushSummary> pushAllDirty() async {
+    final dirty = await dao.listDirty();
+    int succeeded = 0;
+    int failed = 0;
+    String? lastError;
+    for (final r in dirty) {
+      final result = await pushOne(
+          tmdbId: r.tmdbId, mediaType: r.tmdbMediaType);
+      if (result.success) {
+        succeeded++;
+      } else {
+        failed++;
+        lastError = result.error;
+      }
+    }
+    return TmdbPushSummary(
+      attempted: dirty.length,
+      succeeded: succeeded,
+      failed: failed,
+      lastError: lastError,
+    );
   }
 }
 
