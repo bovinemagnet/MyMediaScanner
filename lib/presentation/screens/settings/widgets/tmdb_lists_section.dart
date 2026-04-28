@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mymediascanner/domain/entities/tmdb_bridge_bucket.dart';
 import 'package:mymediascanner/domain/entities/tmdb_conflict_policy.dart';
 import 'package:mymediascanner/domain/entities/tmdb_connection_state.dart';
 import 'package:mymediascanner/presentation/providers/settings_provider.dart';
@@ -62,6 +63,18 @@ class TmdbListsSection extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => GoRouter.of(context).go('/tmdb/favourites'),
           ),
+          ref.watch(tmdbBridgeBucketProvider(TmdbBridgeBucket.saved)).maybeWhen(
+                data: (rows) => rows.isEmpty
+                    ? const SizedBox.shrink()
+                    : ListTile(
+                        leading: const Icon(Icons.cloud_outlined),
+                        title: Text('TMDB Saved (${rows.length})'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () =>
+                            GoRouter.of(context).go('/tmdb/saved'),
+                      ),
+                orElse: () => const SizedBox.shrink(),
+              ),
           if (showConflicts)
             ListTile(
               leading: Icon(Icons.warning_amber,
