@@ -76,7 +76,8 @@ final _rootNavigatorKey = GlobalKey<NavigatorState>();
 ///   12 = TMDB Watchlist (desktop sidebar, shown when TMDB connected)
 ///   13 = TMDB Rated     (desktop sidebar, shown when TMDB connected)
 ///   14 = TMDB Favourites (desktop sidebar, shown when TMDB connected)
-///   15 = TMDB Resolve Conflicts (desktop sidebar, shown when TMDB connected
+///   15 = TMDB Saved        (desktop sidebar, shown when TMDB connected)
+///   16 = TMDB Resolve Conflicts (desktop sidebar, shown when TMDB connected
 ///        AND conflict policy == askUser AND conflicts.length > 0)
 final router = GoRouter(
   navigatorKey: _rootNavigatorKey,
@@ -355,7 +356,18 @@ final router = GoRouter(
           ],
         ),
 
-        // 15 — TMDB Resolve Conflicts (desktop sidebar, conditional on
+        // 15 — TMDB Saved (desktop sidebar, shown when TMDB connected)
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/tmdb/saved',
+              pageBuilder: (context, state) => const NoTransitionPage(
+                  child: TmdbBucketScreen(bucket: TmdbBridgeBucket.saved)),
+            ),
+          ],
+        ),
+
+        // 16 — TMDB Resolve Conflicts (desktop sidebar, conditional on
         //       TMDB connected + policy==askUser + conflicts.length > 0)
         StatefulShellBranch(
           routes: [
