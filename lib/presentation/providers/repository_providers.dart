@@ -17,6 +17,7 @@ import 'package:mymediascanner/domain/usecases/push_tmdb_change_usecase.dart';
 import 'package:mymediascanner/domain/usecases/resolve_tmdb_conflict_usecase.dart';
 import 'package:mymediascanner/domain/usecases/sync_tmdb_account_usecase.dart';
 import 'package:mymediascanner/domain/usecases/toggle_tmdb_favorite_usecase.dart';
+import 'package:mymediascanner/domain/usecases/save_tmdb_only_usecase.dart';
 import 'package:mymediascanner/domain/usecases/toggle_tmdb_watchlist_usecase.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:mymediascanner/data/remote/api/discogs/discogs_api.dart';
@@ -322,4 +323,8 @@ final toggleTmdbWatchlistUseCaseProvider =
     Provider<ToggleTmdbWatchlistUseCase>((ref) {
   return ToggleTmdbWatchlistUseCase(
       ref.watch(tmdbAccountSyncRepositoryProvider));
+});
+
+final saveTmdbOnlyUseCaseProvider = Provider<SaveTmdbOnlyUseCase>((ref) {
+  return SaveTmdbOnlyUseCase(ref.watch(tmdbAccountSyncRepositoryProvider));
 });

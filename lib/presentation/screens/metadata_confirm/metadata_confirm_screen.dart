@@ -11,6 +11,7 @@ import 'package:mymediascanner/presentation/providers/tmdb_account_sync_provider
 import 'package:mymediascanner/domain/entities/metadata_result.dart';
 import 'package:mymediascanner/domain/entities/scan_result.dart';
 import 'package:mymediascanner/presentation/screens/metadata_confirm/widgets/editable_metadata_form.dart';
+import 'package:mymediascanner/presentation/screens/metadata_confirm/widgets/remote_first_save_mode_selector.dart';
 import 'package:mymediascanner/presentation/screens/metadata_confirm/widgets/tmdb_account_panel.dart';
 import 'package:mymediascanner/presentation/screens/metadata_confirm/widgets/title_search_field.dart';
 import 'package:mymediascanner/presentation/widgets/duplicate_check_helper.dart';
@@ -27,6 +28,10 @@ class MetadataConfirmScreen extends ConsumerStatefulWidget {
 class _MetadataConfirmScreenState extends ConsumerState<MetadataConfirmScreen> {
   /// Rating applied from the TMDB account panel. `null` means not set.
   double? _userRating;
+
+  /// Controls where the item is saved when the user presses Save.
+  /// Defaults to local-only. Updated by [RemoteFirstSaveModeSelector].
+  SaveMode _saveMode = SaveMode.saveLocally;
 
   @override
   void initState() {
@@ -129,6 +134,11 @@ class _MetadataConfirmScreenState extends ConsumerState<MetadataConfirmScreen> {
     final tmdbId = _resolveTmdbId();
     final apiMediaType = _resolveApiMediaType();
     final showPanel = settings.enabled &&
+        tmdbId != null &&
+        (apiMediaType == 'movie' || apiMediaType == 'tv');
+
+    final showSelector = settings.enabled &&
+        settings.remoteFirstSaveEnabled &&
         tmdbId != null &&
         (apiMediaType == 'movie' || apiMediaType == 'tv');
 
@@ -289,65 +299,101 @@ class _MetadataConfirmScreenState extends ConsumerState<MetadataConfirmScreen> {
                     );
                     debugPrint('[MMS-save] duplicate check proceed=$proceed');
                     if (!proceed) return;
-                    final useCase = ref.read(saveMediaItemUseCaseProvider);
-                    final savedItem = await useCase.execute(
-                      edited,
-                      ownershipStatus: targetsWishlist
-                          ? OwnershipStatus.wishlist
-                          : OwnershipStatus.owned,
-                    );
-                    debugPrint('[MMS-save] DB write complete');
+                    switch (_saveMode) {
+                      case SaveMode.saveLocally:
+                      case SaveMode.saveLocallyAndSync:
+                        final useCase =
+                            ref.read(saveMediaItemUseCaseProvider);
+                        final savedItem = await useCase.execute(
+                          edited,
+                          ownershipStatus: targetsWishlist
+                              ? OwnershipStatus.wishlist
+                              : OwnershipStatus.owned,
+                        );
+                        debugPrint('[MMS-save] DB write complete');
 
-                    // Apply TMDB-sourced rating if the user tapped
-                    // "Apply to local rating" from the account panel.
-                    // Guard on savedItem.userRating == null so that any
-                    // rating already embedded in the saved item (e.g. from
-                    // a future form field) is not clobbered.
-                    // Stamp a fresh updatedAt so sync's last-write-wins
-                    // conflict resolution sees this as a distinct write.
-                    final appliedRating = _userRating;
-                    if (appliedRating != null &&
-                        savedItem.userRating == null) {
-                      await repository.update(
-                        savedItem.copyWith(
-                          userRating: appliedRating,
-                          updatedAt: DateTime.now().millisecondsSinceEpoch,
-                        ),
-                      );
-                      debugPrint(
-                          '[MMS-save] TMDB rating applied: $appliedRating');
-                    }
+                        // Apply TMDB-sourced rating if the user tapped
+                        // "Apply to local rating" from the account panel.
+                        // Guard on savedItem.userRating == null so that any
+                        // rating already embedded in the saved item (e.g. from
+                        // a future form field) is not clobbered.
+                        // Stamp a fresh updatedAt so sync's last-write-wins
+                        // conflict resolution sees this as a distinct write.
+                        final appliedRating = _userRating;
+                        if (appliedRating != null &&
+                            savedItem.userRating == null) {
+                          await repository.update(
+                            savedItem.copyWith(
+                              userRating: appliedRating,
+                              updatedAt:
+                                  DateTime.now().millisecondsSinceEpoch,
+                            ),
+                          );
+                          debugPrint(
+                              '[MMS-save] TMDB rating applied: $appliedRating');
+                        }
 
-                    final scanner = ref.read(scannerProvider.notifier);
-                    final snackText = targetsWishlist
-                        ? '${edited.title ?? "Item"} added to wishlist'
-                        : '${edited.title ?? "Item"} saved';
+                        final scanner = ref.read(scannerProvider.notifier);
+                        final snackText = targetsWishlist
+                            ? '${edited.title ?? "Item"} added to wishlist'
+                            : '${edited.title ?? "Item"} saved';
 
-                    if (ref.read(scannerProvider).batchMode) {
-                      scanner.incrementBatchCount();
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(
-                          context,
-                        ).showSnackBar(SnackBar(content: Text(snackText)));
-                        debugPrint('[MMS-save] batch: navigate /scan');
-                        context.go('/scan');
-                      }
-                    } else {
-                      debugPrint('[MMS-save] calling scanner.reset()');
-                      scanner.reset();
-                      debugPrint('[MMS-save] scanner.reset() returned');
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(
-                          context,
-                        ).showSnackBar(SnackBar(content: Text(snackText)));
-                        final destination = targetsWishlist ? '/wishlist' : '/';
-                        debugPrint('[MMS-save] navigate $destination');
-                        context.go(destination);
-                      }
+                        if (ref.read(scannerProvider).batchMode) {
+                          scanner.incrementBatchCount();
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(snackText)));
+                            debugPrint('[MMS-save] batch: navigate /scan');
+                            context.go('/scan');
+                          }
+                        } else {
+                          debugPrint('[MMS-save] calling scanner.reset()');
+                          scanner.reset();
+                          debugPrint('[MMS-save] scanner.reset() returned');
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(snackText)));
+                            final destination =
+                                targetsWishlist ? '/wishlist' : '/';
+                            debugPrint('[MMS-save] navigate $destination');
+                            context.go(destination);
+                          }
+                        }
+                      case SaveMode.tmdbOnly:
+                        final resolvedTmdbId = _resolveTmdbId();
+                        final resolvedMediaType = _resolveApiMediaType();
+                        await ref
+                            .read(saveTmdbOnlyUseCaseProvider)
+                            .call(
+                              tmdbId: resolvedTmdbId!,
+                              mediaType: resolvedMediaType!,
+                              title: edited.title ?? '',
+                              posterPath: edited.coverUrl,
+                              barcode: edited.barcode,
+                            );
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Saved to TMDB')),
+                          );
+                          context.go('/scan');
+                          ref.read(scannerProvider.notifier).reset();
+                        }
                     }
                     debugPrint('[MMS-save] onSave done');
                   },
                 ),
+                // Remote-first save-mode selector — shown when account sync
+                // is enabled, remote-first toggle is on, and the item has
+                // a TMDB ID with a movie/tv media type.
+                if (showSelector)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 8),
+                    child: RemoteFirstSaveModeSelector(
+                      value: _saveMode,
+                      onChanged: (v) => setState(() => _saveMode = v),
+                    ),
+                  ),
                 // TMDB account-state panel — shown when account sync is
                 // enabled and a bridge row exists for the resolved title.
                 ?accountPanel,
