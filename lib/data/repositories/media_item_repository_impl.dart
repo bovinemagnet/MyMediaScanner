@@ -152,6 +152,7 @@ class MediaItemRepositoryImpl implements IMediaItemRepository {
 
   @override
   Future<void> softDelete(String id) async {
+    final previous = await getById(id);
     final now = DateTime.now().millisecondsSinceEpoch;
     await _mediaItemsDao.transaction(() async {
       await _mediaItemsDao.softDelete(id, now);
@@ -164,6 +165,9 @@ class MediaItemRepositoryImpl implements IMediaItemRepository {
         createdAt: Value(now),
       ));
     });
+    if (previous != null) {
+      _maybeMirrorOnSoftDelete(previous);
+    }
   }
 
   @override
@@ -322,7 +326,6 @@ class MediaItemRepositoryImpl implements IMediaItemRepository {
   }
 
   /// Fires `mirror.remove` when an owned movie is soft-deleted.
-  // ignore: unused_element
   void _maybeMirrorOnSoftDelete(MediaItem previous) {
     final mirror = _mirror;
     final readEnabled = _readMirrorEnabled;

@@ -294,5 +294,37 @@ void main() {
 
       verifyNever(() => mirror.add(tmdbId: any(named: 'tmdbId')));
     });
+
+    test('softDelete on owned movie fires mirror.remove', () async {
+      final r = makeRepo();
+      await seed(movieItem(id: 'g', ownership: OwnershipStatus.owned));
+
+      await r.softDelete('g');
+
+      verify(() => mirror.remove(tmdbId: 550)).called(1);
+    });
+
+    test('softDelete on non-owned item does not fire mirror', () async {
+      final r = makeRepo();
+      await seed(movieItem(id: 'h', ownership: OwnershipStatus.wishlist));
+
+      await r.softDelete('h');
+
+      verifyNever(() => mirror.remove(tmdbId: any(named: 'tmdbId')));
+    });
+
+    test('softDelete on owned TV item does not fire mirror', () async {
+      final r = makeRepo();
+      final tvOwned = movieItem(
+        id: 'i',
+        ownership: OwnershipStatus.owned,
+        mediaType: 'tv',
+      );
+      await seed(tvOwned);
+
+      await r.softDelete('i');
+
+      verifyNever(() => mirror.remove(tmdbId: any(named: 'tmdbId')));
+    });
   });
 }
