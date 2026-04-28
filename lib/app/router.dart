@@ -28,6 +28,8 @@ import 'package:mymediascanner/presentation/screens/about/about_screen.dart';
 import 'package:mymediascanner/presentation/screens/borrowers/borrowers_screen.dart';
 import 'package:mymediascanner/presentation/screens/borrowers/borrower_detail_screen.dart';
 import 'package:mymediascanner/presentation/widgets/app_scaffold.dart';
+import 'package:mymediascanner/domain/entities/tmdb_bridge_bucket.dart';
+import 'package:mymediascanner/presentation/screens/tmdb/tmdb_bucket_screen.dart';
 
 /// Fade + slide up transition for detail/modal routes.
 CustomTransitionPage<void> _fadeSlideTransition(
@@ -58,15 +60,21 @@ final _rootNavigatorKey = GlobalKey<NavigatorState>();
 /// Route branches (indices must match sidebar/bottom-nav mapping in
 /// [AppScaffold]):
 ///
-///   0 = Dashboard      (desktop sidebar + mobile bottom nav)
-///   1 = Collection     (desktop sidebar + mobile bottom nav as "Library")
-///   2 = Scanner        (mobile bottom nav only)
-///   3 = Shelves        (desktop sidebar only)
-///   4 = Batch Editor   (desktop sidebar only)
-///   5 = Insights       (desktop sidebar + mobile bottom nav)
-///   6 = Settings       (desktop sidebar only)
-///   7 = Rips           (desktop sidebar only)
-///   8 = Wishlist       (desktop sidebar only)
+///   0  = Dashboard      (desktop sidebar + mobile bottom nav)
+///   1  = Collection     (desktop sidebar + mobile bottom nav as "Library")
+///   2  = Scanner        (mobile bottom nav only)
+///   3  = Shelves        (desktop sidebar only)
+///   4  = Batch Editor   (desktop sidebar only)
+///   5  = Insights       (desktop sidebar + mobile bottom nav)
+///   6  = Settings       (desktop sidebar only)
+///   7  = Rips           (desktop sidebar only)
+///   8  = Wishlist       (desktop sidebar only)
+///   9  = Locations      (desktop sidebar only)
+///   10 = Series         (desktop sidebar only)
+///   11 = Wishlist Suggestions (desktop sidebar only)
+///   12 = TMDB Watchlist (desktop sidebar, shown when TMDB connected)
+///   13 = TMDB Rated     (desktop sidebar, shown when TMDB connected)
+///   14 = TMDB Favourites (desktop sidebar, shown when TMDB connected)
 final router = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: '/',
@@ -304,6 +312,42 @@ final router = GoRouter(
               path: '/wishlist-suggestions',
               builder: (context, state) =>
                   const WishlistSuggestionsScreen(),
+            ),
+          ],
+        ),
+
+        // 12 — TMDB Watchlist (desktop sidebar, shown when TMDB connected)
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/tmdb/watchlist',
+              pageBuilder: (context, state) => const NoTransitionPage(
+                  child: TmdbBucketScreen(
+                      bucket: TmdbBridgeBucket.watchlist)),
+            ),
+          ],
+        ),
+
+        // 13 — TMDB Rated (desktop sidebar, shown when TMDB connected)
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/tmdb/rated',
+              pageBuilder: (context, state) => const NoTransitionPage(
+                  child: TmdbBucketScreen(
+                      bucket: TmdbBridgeBucket.rated)),
+            ),
+          ],
+        ),
+
+        // 14 — TMDB Favourites (desktop sidebar, shown when TMDB connected)
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/tmdb/favourites',
+              pageBuilder: (context, state) => const NoTransitionPage(
+                  child: TmdbBucketScreen(
+                      bucket: TmdbBridgeBucket.favourite)),
             ),
           ],
         ),
