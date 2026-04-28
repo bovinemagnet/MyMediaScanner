@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
@@ -10,17 +11,25 @@ import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/domain/entities/ownership_status.dart';
 import 'package:mymediascanner/domain/entities/progress_unit.dart';
 import 'package:mymediascanner/domain/repositories/i_media_item_repository.dart';
+import 'package:mymediascanner/domain/repositories/i_tmdb_account_sync_repository.dart';
+import 'package:mymediascanner/domain/usecases/mirror_ownership_change_usecase.dart';
 import 'package:uuid/uuid.dart';
 
 class MediaItemRepositoryImpl implements IMediaItemRepository {
   MediaItemRepositoryImpl({
     required MediaItemsDao mediaItemsDao,
     required SyncLogDao syncLogDao,
+    MirrorOwnershipChangeUseCase? mirror,
+    bool Function()? readMirrorEnabled,
   })  : _mediaItemsDao = mediaItemsDao,
-        _syncLogDao = syncLogDao;
+        _syncLogDao = syncLogDao,
+        _mirror = mirror,
+        _readMirrorEnabled = readMirrorEnabled;
 
   final MediaItemsDao _mediaItemsDao;
   final SyncLogDao _syncLogDao;
+  final MirrorOwnershipChangeUseCase? _mirror;
+  final bool Function()? _readMirrorEnabled;
   static const _uuid = Uuid();
 
   @override
@@ -277,6 +286,57 @@ class MediaItemRepositoryImpl implements IMediaItemRepository {
       payloadJson: Value(jsonEncode(_toSyncPayload(item))),
       createdAt: Value(DateTime.now().millisecondsSinceEpoch),
     ));
+  }
+
+  /// Fires `mirror.add` or `mirror.remove` when the ownership state of
+  /// a `media_items` row crosses the `owned` boundary. Gated on the
+  /// mirror toggle, presence of a TMDB ID, and movie media type.
+  ///
+  /// Fire-and-forget — failures land on the bridge row's `last_error`.
+  // ignore: unused_element
+  void _maybeMirrorOnTransition(MediaItem? previous, MediaItem next) {
+    final mirror = _mirror;
+    final readEnabled = _readMirrorEnabled;
+    if (mirror == null || readEnabled == null) return;
+    if (!readEnabled()) return;
+
+    final wasOwned = previous?.ownershipStatus == OwnershipStatus.owned;
+    final isOwned = next.ownershipStatus == OwnershipStatus.owned;
+    if (wasOwned == isOwned) return; // no transition
+
+    final tmdbId = next.extraMetadata['tmdb_id'];
+    if (tmdbId is! int) return;
+    final mediaType = next.extraMetadata['media_type'];
+    if (mediaType != 'movie') return;
+
+    if (isOwned) {
+      unawaited(mirror.add(tmdbId: tmdbId).catchError((_) {
+        return const TmdbPushResult(success: false);
+      }));
+    } else {
+      unawaited(mirror.remove(tmdbId: tmdbId).catchError((_) {
+        return const TmdbPushResult(success: false);
+      }));
+    }
+  }
+
+  /// Fires `mirror.remove` when an owned movie is soft-deleted.
+  // ignore: unused_element
+  void _maybeMirrorOnSoftDelete(MediaItem previous) {
+    final mirror = _mirror;
+    final readEnabled = _readMirrorEnabled;
+    if (mirror == null || readEnabled == null) return;
+    if (!readEnabled()) return;
+    if (previous.ownershipStatus != OwnershipStatus.owned) return;
+
+    final tmdbId = previous.extraMetadata['tmdb_id'];
+    if (tmdbId is! int) return;
+    final mediaType = previous.extraMetadata['media_type'];
+    if (mediaType != 'movie') return;
+
+    unawaited(mirror.remove(tmdbId: tmdbId).catchError((_) {
+      return const TmdbPushResult(success: false);
+    }));
   }
 
   /// Produce a snake_case map of every sync-relevant field on [item], in
