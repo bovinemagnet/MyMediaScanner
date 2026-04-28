@@ -30,6 +30,7 @@ import 'package:mymediascanner/data/local/database/tables/series_table.dart';
 import 'package:mymediascanner/data/local/dao/playlist_dao.dart';
 import 'package:mymediascanner/data/local/dao/locations_dao.dart';
 import 'package:mymediascanner/data/local/dao/series_dao.dart';
+import 'package:mymediascanner/data/local/dao/tmdb_account_sync_dao.dart';
 import 'package:mymediascanner/data/local/database/tables/tmdb_account_sync_items_table.dart';
 
 part 'app_database.g.dart';
@@ -71,6 +72,7 @@ part 'app_database.g.dart';
     PlaylistDao,
     LocationsDao,
     SeriesDao,
+    TmdbAccountSyncDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {

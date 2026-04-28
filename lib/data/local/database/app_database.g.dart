@@ -11289,6 +11289,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final PlaylistDao playlistDao = PlaylistDao(this as AppDatabase);
   late final LocationsDao locationsDao = LocationsDao(this as AppDatabase);
   late final SeriesDao seriesDao = SeriesDao(this as AppDatabase);
+  late final TmdbAccountSyncDao tmdbAccountSyncDao = TmdbAccountSyncDao(
+    this as AppDatabase,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
