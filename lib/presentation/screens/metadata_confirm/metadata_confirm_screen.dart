@@ -56,15 +56,15 @@ class _MetadataConfirmScreenState extends ConsumerState<MetadataConfirmScreen> {
     return null;
   }
 
-  /// Returns the TMDB API media-type string ('movie' or 'tv') by normalising
-  /// the value stored by TmdbMapper ('film' → 'movie', 'tv' → 'tv').
+  /// Returns the TMDB API media-type string ('movie' or 'tv') from the
+  /// resolved metadata's extraMetadata. TmdbMapper now writes 'movie'
+  /// directly, so no normalisation is required here.
   String? _resolveApiMediaType() {
     final meta = _resolvedMetadata();
     if (meta == null) return null;
     final raw = meta.extraMetadata['media_type'];
     if (raw is! String) return null;
-    // TmdbMapper writes 'film'; the bridge DB and API use 'movie'.
-    return raw == 'film' ? 'movie' : raw;
+    return raw;
   }
 
   MetadataResult? _resolvedMetadata() {
@@ -132,26 +132,26 @@ class _MetadataConfirmScreenState extends ConsumerState<MetadataConfirmScreen> {
         tmdbId != null &&
         (apiMediaType == 'movie' || apiMediaType == 'tv');
 
-    Widget? accountPanel;
-    if (showPanel) {
-      // Both tmdbId and apiMediaType are non-null when showPanel is true.
-      final bridgeAsync = ref.watch(
-        tmdbBridgeForIdProvider(
-          (tmdbId: tmdbId, mediaType: apiMediaType!),
-        ),
-      );
-      bridgeAsync.whenData((bridge) {
-        if (bridge != null) {
-          accountPanel = TmdbAccountPanel(
-            bridge: bridge,
-            localRating: _userRating,
-            onApplyRating: (rating) {
-              setState(() => _userRating = rating);
-            },
-          );
-        }
-      });
-    }
+    final accountPanel = showPanel
+        // Both tmdbId and apiMediaType are non-null when showPanel is true.
+        ? ref
+              .watch(
+                tmdbBridgeForIdProvider(
+                  (tmdbId: tmdbId, mediaType: apiMediaType!),
+                ),
+              )
+              .maybeWhen(
+                data: (bridge) => bridge == null
+                    ? null
+                    : TmdbAccountPanel(
+                        bridge: bridge,
+                        localRating: _userRating,
+                        onApplyRating: (rating) =>
+                            setState(() => _userRating = rating),
+                      ),
+                orElse: () => null,
+              )
+        : null;
 
     return PopScope(
       canPop: false,
@@ -300,10 +300,19 @@ class _MetadataConfirmScreenState extends ConsumerState<MetadataConfirmScreen> {
 
                     // Apply TMDB-sourced rating if the user tapped
                     // "Apply to local rating" from the account panel.
+                    // Guard on savedItem.userRating == null so that any
+                    // rating already embedded in the saved item (e.g. from
+                    // a future form field) is not clobbered.
+                    // Stamp a fresh updatedAt so sync's last-write-wins
+                    // conflict resolution sees this as a distinct write.
                     final appliedRating = _userRating;
-                    if (appliedRating != null) {
+                    if (appliedRating != null &&
+                        savedItem.userRating == null) {
                       await repository.update(
-                        savedItem.copyWith(userRating: appliedRating),
+                        savedItem.copyWith(
+                          userRating: appliedRating,
+                          updatedAt: DateTime.now().millisecondsSinceEpoch,
+                        ),
                       );
                       debugPrint(
                           '[MMS-save] TMDB rating applied: $appliedRating');
@@ -341,7 +350,7 @@ class _MetadataConfirmScreenState extends ConsumerState<MetadataConfirmScreen> {
                 ),
                 // TMDB account-state panel — shown when account sync is
                 // enabled and a bridge row exists for the resolved title.
-                if (accountPanel != null) accountPanel!,
+                ?accountPanel,
               ],
             ),
           ),
