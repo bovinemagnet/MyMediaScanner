@@ -30,6 +30,7 @@ import 'package:mymediascanner/presentation/screens/borrowers/borrower_detail_sc
 import 'package:mymediascanner/presentation/widgets/app_scaffold.dart';
 import 'package:mymediascanner/domain/entities/tmdb_bridge_bucket.dart';
 import 'package:mymediascanner/presentation/screens/tmdb/tmdb_bucket_screen.dart';
+import 'package:mymediascanner/presentation/screens/tmdb/tmdb_resolve_conflicts_screen.dart';
 
 /// Fade + slide up transition for detail/modal routes.
 CustomTransitionPage<void> _fadeSlideTransition(
@@ -75,6 +76,8 @@ final _rootNavigatorKey = GlobalKey<NavigatorState>();
 ///   12 = TMDB Watchlist (desktop sidebar, shown when TMDB connected)
 ///   13 = TMDB Rated     (desktop sidebar, shown when TMDB connected)
 ///   14 = TMDB Favourites (desktop sidebar, shown when TMDB connected)
+///   15 = TMDB Resolve Conflicts (desktop sidebar, shown when TMDB connected
+///        AND conflict policy == askUser AND conflicts.length > 0)
 final router = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: '/',
@@ -348,6 +351,18 @@ final router = GoRouter(
               pageBuilder: (context, state) => const NoTransitionPage(
                   child: TmdbBucketScreen(
                       bucket: TmdbBridgeBucket.favourite)),
+            ),
+          ],
+        ),
+
+        // 15 — TMDB Resolve Conflicts (desktop sidebar, conditional on
+        //       TMDB connected + policy==askUser + conflicts.length > 0)
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/tmdb/conflicts',
+              pageBuilder: (context, state) => const NoTransitionPage(
+                  child: TmdbResolveConflictsScreen()),
             ),
           ],
         ),
