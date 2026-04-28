@@ -6,6 +6,10 @@ MyMediaScanner can optionally sync collection data to a self-hosted PostgreSQL d
 The sync engine connects directly from the Dart client using the `postgres` package — there is no intermediary API or proxy service.
 All sync operations are performed over TLS by default.
 
+NOTE: This page describes *PostgreSQL replication* — the engine that copies your local SQLite collection to a self-hosted database server.
+If you are looking for information on syncing ratings, watchlists, and favourites with your themoviedb.org account, see xref:tmdb-account-sync.adoc[TMDB Account Sync] instead.
+The two systems are independent and do not interact.
+
 NOTE: Sync is entirely optional.
 The application works fully offline without any PostgreSQL configuration.
 
