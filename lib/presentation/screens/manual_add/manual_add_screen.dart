@@ -29,10 +29,11 @@ class _ManualAddScreenState extends ConsumerState<ManualAddScreen> {
   /// Defaults to local-only. Updated by [RemoteFirstSaveModeSelector].
   SaveMode _saveMode = SaveMode.saveLocally;
 
-  /// Tracks the latest edited [MetadataResult] passed to [_handleSave].
-  /// Used to resolve the TMDB id and media type for the save-mode selector
-  /// gate. Populated after the first save attempt so the selector can appear
-  /// on subsequent taps if an online lookup has populated a tmdb_id.
+  /// Tracks the latest [MetadataResult] as reported by the form's
+  /// [EditableMetadataForm.onMetadataChanged] callback. Updated reactively
+  /// whenever the form's metadata changes (e.g. after "Search online" resolves
+  /// a TMDB result), so the save-mode selector can appear before the user taps
+  /// Save.
   MetadataResult? _latestEdited;
 
   @override
@@ -70,12 +71,6 @@ class _ManualAddScreenState extends ConsumerState<ManualAddScreen> {
   }
 
   Future<void> _handleSave(MetadataResult edited) async {
-    // Capture the latest edited metadata so the selector can be shown on
-    // subsequent save attempts when an online lookup has populated a tmdb_id.
-    if (_latestEdited != edited) {
-      setState(() => _latestEdited = edited);
-    }
-
     final messenger = ScaffoldMessenger.of(context);
     final router = GoRouter.of(context);
 
@@ -147,6 +142,7 @@ class _ManualAddScreenState extends ConsumerState<ManualAddScreen> {
               EditableMetadataForm(
                 initial: _initial,
                 onSave: _handleSave,
+                onMetadataChanged: (m) => setState(() => _latestEdited = m),
                 primarySaveLabel: 'Save to Collection',
                 primarySaveIcon: Icons.save,
                 enableOnlineLookup: true,
