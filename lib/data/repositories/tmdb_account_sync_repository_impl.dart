@@ -352,11 +352,15 @@ class TmdbAccountSyncRepositoryImpl implements ITmdbAccountSyncRepository {
     }
 
     if (actions.isEmpty) {
-      await dao.clearDirty(
-        tmdbId: tmdbId,
-        mediaType: mediaType,
-        pushedRating: desiredRating,
-      );
+      // No-op fast path: only touch the DB if there's actually a dirty
+      // flag to clear. Avoids spurious `lastPushedAt` / `updatedAt` writes.
+      if (row.localDirty) {
+        await dao.clearDirty(
+          tmdbId: tmdbId,
+          mediaType: mediaType,
+          pushedRating: desiredRating,
+        );
+      }
       return const TmdbPushResult(success: true);
     }
 

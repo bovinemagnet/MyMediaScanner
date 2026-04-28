@@ -30,7 +30,7 @@ abstract class TmdbAccountApi {
   );
 
   @DELETE('/authentication/session')
-  Future<Map<String, dynamic>> deleteSession(
+  Future<void> deleteSession(
     @Body() Map<String, dynamic> body, // {'session_id': '...'}
   );
 

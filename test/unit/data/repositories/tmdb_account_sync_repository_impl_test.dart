@@ -156,6 +156,37 @@ void main() {
     verify(() => api.addMovieRating(550, 'sess-123', {'value': 9.0})).called(1);
   });
 
+  test('pushOne dirty with no rating change still pushes watchlist and favourite',
+      () async {
+    await db.tmdbAccountSyncDao.upsertByTmdbId(
+      TmdbAccountSyncItemsTableCompanion(
+        id: const Value('br-2'),
+        tmdbId: const Value(99),
+        tmdbMediaType: const Value('movie'),
+        tmdbRating: const Value(7.0),
+        localRatingSnapshot: const Value(7.0), // same — no rating delta
+        watchlist: const Value(true),
+        favorite: const Value(false),
+        localDirty: const Value(true),
+        createdAt: Value(DateTime.now().millisecondsSinceEpoch),
+        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+      ),
+    );
+    when(() => api.setWatchlist(42, 'sess-123', any())).thenAnswer((_) async =>
+        const TmdbStatusResponseDto(statusCode: 1, success: true));
+    when(() => api.setFavorite(42, 'sess-123', any())).thenAnswer((_) async =>
+        const TmdbStatusResponseDto(statusCode: 1, success: true));
+
+    final result = await repo.pushOne(tmdbId: 99, mediaType: 'movie');
+    expect(result.success, isTrue);
+    verifyNever(() => api.addMovieRating(any(), any(), any()));
+    verify(() => api.setWatchlist(42, 'sess-123', {
+          'media_type': 'movie',
+          'media_id': 99,
+          'watchlist': true,
+        })).called(1);
+  });
+
   test('pushOne with API error keeps row dirty and stores last_error',
       () async {
     await db.tmdbAccountSyncDao.upsertByTmdbId(
