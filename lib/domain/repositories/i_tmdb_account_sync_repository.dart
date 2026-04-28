@@ -1,3 +1,4 @@
+import 'package:mymediascanner/data/local/database/app_database.dart';
 import 'package:mymediascanner/domain/entities/tmdb_bridge_bucket.dart';
 import 'package:mymediascanner/domain/entities/tmdb_bridge_item.dart';
 import 'package:mymediascanner/domain/entities/tmdb_connection_state.dart';
@@ -102,6 +103,13 @@ abstract class ITmdbAccountSyncRepository {
     required String mediaType,
     required bool keepLocal,
   });
+
+  // ── Slice 3a — remote-first save ───────────────────────────────
+
+  /// Direct-write bridge upsert without any API call. Used by
+  /// `SaveTmdbOnlyUseCase` for remote-first saves where the bridge row
+  /// is the persisted state.
+  Future<void> upsertBridge(TmdbAccountSyncItemsTableCompanion companion);
 
   // ── Slice 2 — list mirror ──────────────────────────────────────
 
