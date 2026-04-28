@@ -11,7 +11,13 @@ import 'package:mymediascanner/domain/usecases/convert_bridge_to_local_item_usec
 import 'package:mymediascanner/domain/usecases/disconnect_tmdb_account_usecase.dart';
 import 'package:mymediascanner/domain/usecases/enrich_scan_with_tmdb_account_usecase.dart';
 import 'package:mymediascanner/domain/usecases/import_tmdb_account_usecase.dart';
+import 'package:mymediascanner/domain/usecases/mark_tmdb_watchlist_owned_usecase.dart';
+import 'package:mymediascanner/domain/usecases/mirror_ownership_change_usecase.dart';
+import 'package:mymediascanner/domain/usecases/push_tmdb_change_usecase.dart';
+import 'package:mymediascanner/domain/usecases/resolve_tmdb_conflict_usecase.dart';
 import 'package:mymediascanner/domain/usecases/sync_tmdb_account_usecase.dart';
+import 'package:mymediascanner/domain/usecases/toggle_tmdb_favorite_usecase.dart';
+import 'package:mymediascanner/domain/usecases/toggle_tmdb_watchlist_usecase.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:mymediascanner/data/remote/api/discogs/discogs_api.dart';
 import 'package:mymediascanner/data/remote/api/fanart/fanart_api.dart';
@@ -277,5 +283,43 @@ final enrichScanWithTmdbAccountUseCaseProvider =
 final convertBridgeToLocalItemUseCaseProvider =
     Provider<ConvertBridgeToLocalItemUseCase>((ref) {
   return ConvertBridgeToLocalItemUseCase(
+      ref.watch(tmdbAccountSyncRepositoryProvider));
+});
+
+final markTmdbWatchlistOwnedUseCaseProvider =
+    Provider<MarkTmdbWatchlistOwnedUseCase>((ref) {
+  return MarkTmdbWatchlistOwnedUseCase(
+    convert: ref.watch(convertBridgeToLocalItemUseCaseProvider),
+    toggleWatchlist: ref.watch(toggleTmdbWatchlistUseCaseProvider),
+    mirror: ref.watch(mirrorOwnershipChangeUseCaseProvider),
+  );
+});
+
+final mirrorOwnershipChangeUseCaseProvider =
+    Provider<MirrorOwnershipChangeUseCase>((ref) {
+  return MirrorOwnershipChangeUseCase(
+      ref.watch(tmdbAccountSyncRepositoryProvider));
+});
+
+final pushTmdbChangeUseCaseProvider =
+    Provider<PushTmdbChangeUseCase>((ref) {
+  return PushTmdbChangeUseCase(ref.watch(tmdbAccountSyncRepositoryProvider));
+});
+
+final resolveTmdbConflictUseCaseProvider =
+    Provider<ResolveTmdbConflictUseCase>((ref) {
+  return ResolveTmdbConflictUseCase(
+      ref.watch(tmdbAccountSyncRepositoryProvider));
+});
+
+final toggleTmdbFavoriteUseCaseProvider =
+    Provider<ToggleTmdbFavoriteUseCase>((ref) {
+  return ToggleTmdbFavoriteUseCase(
+      ref.watch(tmdbAccountSyncRepositoryProvider));
+});
+
+final toggleTmdbWatchlistUseCaseProvider =
+    Provider<ToggleTmdbWatchlistUseCase>((ref) {
+  return ToggleTmdbWatchlistUseCase(
       ref.watch(tmdbAccountSyncRepositoryProvider));
 });
