@@ -19,6 +19,9 @@ import 'package:mymediascanner/domain/usecases/sync_tmdb_account_usecase.dart';
 import 'package:mymediascanner/domain/usecases/toggle_tmdb_favorite_usecase.dart';
 import 'package:mymediascanner/domain/usecases/save_tmdb_only_usecase.dart';
 import 'package:mymediascanner/domain/usecases/toggle_tmdb_watchlist_usecase.dart';
+import 'package:app_links/app_links.dart';
+import 'package:mymediascanner/core/utils/platform_utils.dart';
+import 'package:mymediascanner/data/services/tmdb_deep_link_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:mymediascanner/data/remote/api/discogs/discogs_api.dart';
 import 'package:mymediascanner/data/remote/api/fanart/fanart_api.dart';
@@ -266,6 +269,9 @@ final connectTmdbAccountUseCaseProvider =
   return ConnectTmdbAccountUseCase(
     repo: ref.watch(tmdbAccountSyncRepositoryProvider),
     launchUrl: (uri) => launchUrl(uri, mode: LaunchMode.externalApplication),
+    redirectTo: PlatformCapability.isMobile
+        ? () => Uri.parse('mymediascanner://tmdb-callback')
+        : null,
   );
 });
 
@@ -338,4 +344,23 @@ final toggleTmdbWatchlistUseCaseProvider =
 
 final saveTmdbOnlyUseCaseProvider = Provider<SaveTmdbOnlyUseCase>((ref) {
   return SaveTmdbOnlyUseCase(ref.watch(tmdbAccountSyncRepositoryProvider));
+});
+
+/// Stream of inbound `mymediascanner://...` URIs from the system's
+/// deep-link plumbing. Tests override this to drive a fake stream.
+final appLinksUriStreamProvider = Provider<Stream<Uri>>((ref) {
+  return AppLinks().uriLinkStream;
+});
+
+/// Long-lived deep-link handler. Started eagerly on mobile from
+/// [App.build] so the URI listener is alive before any approval URL
+/// is launched.
+final tmdbDeepLinkHandlerProvider = Provider<TmdbDeepLinkHandler>((ref) {
+  final handler = TmdbDeepLinkHandler(
+    connect: ref.watch(connectTmdbAccountUseCaseProvider),
+    uriStream: ref.watch(appLinksUriStreamProvider),
+  );
+  if (PlatformCapability.isMobile) handler.start();
+  ref.onDispose(handler.dispose);
+  return handler;
 });

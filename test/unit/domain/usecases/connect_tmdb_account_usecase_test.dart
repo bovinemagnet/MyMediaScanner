@@ -55,4 +55,63 @@ void main() {
     expect(useCase.pendingRequestToken, isNull);
     verifyNever(() => repo.finishConnect(any()));
   });
+
+  group('redirect_to injection', () {
+    late _MockRepo repoLocal;
+    late List<Uri> launchedUris;
+
+    setUp(() {
+      repoLocal = _MockRepo();
+      launchedUris = [];
+      when(() => repoLocal.startConnect()).thenAnswer((_) async => (
+            requestToken: 'tok-1',
+            approvalUrl: Uri.parse(
+                'https://www.themoviedb.org/authenticate/tok-1'),
+          ));
+    });
+
+    Future<bool> launch(Uri uri) async {
+      launchedUris.add(uri);
+      return true;
+    }
+
+    test('with redirectTo null, the approval URL is unchanged', () async {
+      final uc = ConnectTmdbAccountUseCase(
+        repo: repoLocal,
+        launchUrl: launch,
+      );
+      await uc.startConnect();
+      expect(launchedUris.single.toString(),
+          'https://www.themoviedb.org/authenticate/tok-1');
+    });
+
+    test('with redirectTo set, ?redirect_to=... is appended', () async {
+      final uc = ConnectTmdbAccountUseCase(
+        repo: repoLocal,
+        launchUrl: launch,
+        redirectTo: () => Uri.parse('mymediascanner://tmdb-callback'),
+      );
+      await uc.startConnect();
+      final launched = launchedUris.single;
+      expect(launched.queryParameters['redirect_to'],
+          'mymediascanner://tmdb-callback');
+      expect(launched.path, '/authenticate/tok-1');
+    });
+
+    test('redirectTo is invoked at startConnect time, not constructor time',
+        () async {
+      var calls = 0;
+      final uc = ConnectTmdbAccountUseCase(
+        repo: repoLocal,
+        launchUrl: launch,
+        redirectTo: () {
+          calls++;
+          return Uri.parse('mymediascanner://tmdb-callback');
+        },
+      );
+      expect(calls, 0);
+      await uc.startConnect();
+      expect(calls, 1);
+    });
+  });
 }

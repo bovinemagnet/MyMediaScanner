@@ -70,5 +70,16 @@
 		</array>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<key>CFBundleURLTypes</key>
+		<array>
+			<dict>
+				<key>CFBundleURLName</key>
+				<string>com.mymediascanner.tmdb-callback</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>mymediascanner</string>
+				</array>
+			</dict>
+		</array>
 	</dict>
 </plist>
