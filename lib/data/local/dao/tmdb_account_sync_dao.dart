@@ -235,6 +235,20 @@ class TmdbAccountSyncDao extends DatabaseAccessor<AppDatabase>
     ));
   }
 
+  /// Clear `lastError` on a row without touching `localDirty` or other fields.
+  /// Used by conflict resolution when the user chooses "keep mine".
+  Future<void> clearLastError({
+    required int tmdbId,
+    required String mediaType,
+  }) {
+    return (update(tmdbAccountSyncItemsTable)
+          ..where((t) =>
+              t.tmdbId.equals(tmdbId) & t.tmdbMediaType.equals(mediaType)))
+        .write(const TmdbAccountSyncItemsTableCompanion(
+      lastError: Value(null),
+    ));
+  }
+
   Future<void> deleteAll() {
     return delete(tmdbAccountSyncItemsTable).go();
   }

@@ -91,6 +91,18 @@ abstract class ITmdbAccountSyncRepository {
     required double? localRating, // 0–5 scale; null clears.
   });
 
+  // ── Slice 2 — conflict resolution ─────────────────────────────
+
+  /// Apply a user resolution decision to a conflicted bridge row.
+  /// `keepLocal == true` clears the conflict marker but keeps the row dirty
+  /// (next push resolves). `keepLocal == false` clears dirty + last_error
+  /// and applies the remote state via a fresh enrichment call.
+  Future<void> applyConflictResolution({
+    required int tmdbId,
+    required String mediaType,
+    required bool keepLocal,
+  });
+
   // ── Slice 2 — list mirror ──────────────────────────────────────
 
   /// Lazy-resolve the MyMediaScanner private list ID. Looks up by name,

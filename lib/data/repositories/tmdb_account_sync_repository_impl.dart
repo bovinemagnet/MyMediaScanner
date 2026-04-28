@@ -520,6 +520,24 @@ class TmdbAccountSyncRepositoryImpl implements ITmdbAccountSyncRepository {
     );
   }
 
+  // ── Slice 2 — conflict resolution ─────────────────────────────
+
+  @override
+  Future<void> applyConflictResolution({
+    required int tmdbId,
+    required String mediaType,
+    required bool keepLocal,
+  }) async {
+    if (keepLocal) {
+      // Clear the conflict marker but keep dirty for next push.
+      await dao.clearLastError(tmdbId: tmdbId, mediaType: mediaType);
+    } else {
+      // Take TMDB side: re-fetch account state and overwrite.
+      await enrichOne(tmdbId: tmdbId, mediaType: mediaType);
+      await dao.clearDirty(tmdbId: tmdbId, mediaType: mediaType);
+    }
+  }
+
   // ── Slice 2 — list mirror ──────────────────────────────────────
 
   @override
