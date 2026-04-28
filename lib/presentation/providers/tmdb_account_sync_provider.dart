@@ -52,3 +52,19 @@ final tmdbConflictedRowsProvider =
     StreamProvider<List<TmdbBridgeItem>>((ref) {
   return ref.watch(tmdbAccountSyncRepositoryProvider).watchConflicts();
 });
+
+/// Tracks whether [TmdbConnectDialog] is currently mounted. The
+/// global deep-link SnackBar listener uses this to suppress
+/// duplicate notifications when the dialog is up (the dialog will
+/// surface its own feedback).
+class TmdbConnectDialogVisibleNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void show() => state = true;
+  void hide() => state = false;
+}
+
+final tmdbConnectDialogVisibleProvider =
+    NotifierProvider<TmdbConnectDialogVisibleNotifier, bool>(
+        TmdbConnectDialogVisibleNotifier.new);
