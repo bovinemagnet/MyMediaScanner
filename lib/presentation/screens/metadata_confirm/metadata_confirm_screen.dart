@@ -3,21 +3,80 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mymediascanner/domain/entities/ownership_status.dart';
-import 'package:mymediascanner/presentation/providers/series_provider.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/scanner_provider.dart';
+import 'package:mymediascanner/presentation/providers/series_provider.dart';
+import 'package:mymediascanner/presentation/providers/settings_provider.dart';
+import 'package:mymediascanner/presentation/providers/tmdb_account_sync_provider.dart';
 import 'package:mymediascanner/domain/entities/metadata_result.dart';
 import 'package:mymediascanner/domain/entities/scan_result.dart';
 import 'package:mymediascanner/presentation/screens/metadata_confirm/widgets/editable_metadata_form.dart';
+import 'package:mymediascanner/presentation/screens/metadata_confirm/widgets/tmdb_account_panel.dart';
 import 'package:mymediascanner/presentation/screens/metadata_confirm/widgets/title_search_field.dart';
 import 'package:mymediascanner/presentation/widgets/duplicate_check_helper.dart';
 import 'package:mymediascanner/presentation/widgets/ocr_confidence_indicator.dart';
 
-class MetadataConfirmScreen extends ConsumerWidget {
+class MetadataConfirmScreen extends ConsumerStatefulWidget {
   const MetadataConfirmScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MetadataConfirmScreen> createState() =>
+      _MetadataConfirmScreenState();
+}
+
+class _MetadataConfirmScreenState extends ConsumerState<MetadataConfirmScreen> {
+  /// Rating applied from the TMDB account panel. `null` means not set.
+  double? _userRating;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final settings = ref.read(tmdbAccountSyncSettingsProvider);
+      if (!settings.enabled || !settings.enrichScans) return;
+      final tmdbId = _resolveTmdbId();
+      final mediaType = _resolveApiMediaType();
+      if (tmdbId != null && (mediaType == 'movie' || mediaType == 'tv')) {
+        ref
+            .read(enrichScanWithTmdbAccountUseCaseProvider)
+            .call(tmdbId: tmdbId, mediaType: mediaType!);
+      }
+    });
+  }
+
+  /// Returns the TMDB integer ID from the resolved metadata's extraMetadata,
+  /// or null if not present.
+  int? _resolveTmdbId() {
+    final meta = _resolvedMetadata();
+    if (meta == null) return null;
+    final raw = meta.extraMetadata['tmdb_id'];
+    if (raw is int) return raw;
+    if (raw is num) return raw.toInt();
+    return null;
+  }
+
+  /// Returns the TMDB API media-type string ('movie' or 'tv') by normalising
+  /// the value stored by TmdbMapper ('film' → 'movie', 'tv' → 'tv').
+  String? _resolveApiMediaType() {
+    final meta = _resolvedMetadata();
+    if (meta == null) return null;
+    final raw = meta.extraMetadata['media_type'];
+    if (raw is! String) return null;
+    // TmdbMapper writes 'film'; the bridge DB and API use 'movie'.
+    return raw == 'film' ? 'movie' : raw;
+  }
+
+  MetadataResult? _resolvedMetadata() {
+    final scannerState = ref.read(scannerProvider);
+    return switch (scannerState.result) {
+      SingleScanResult(:final metadata) => metadata,
+      _ => null,
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final scannerState = ref.watch(scannerProvider);
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
@@ -62,6 +121,36 @@ class MetadataConfirmScreen extends ConsumerWidget {
           body: const Center(child: Text('No scan result')),
         ),
       );
+    }
+
+    // Resolve TMDB account-sync state for the panel (outside the save
+    // callback so it can be watched reactively).
+    final settings = ref.watch(tmdbAccountSyncSettingsProvider);
+    final tmdbId = _resolveTmdbId();
+    final apiMediaType = _resolveApiMediaType();
+    final showPanel = settings.enabled &&
+        tmdbId != null &&
+        (apiMediaType == 'movie' || apiMediaType == 'tv');
+
+    Widget? accountPanel;
+    if (showPanel) {
+      // Both tmdbId and apiMediaType are non-null when showPanel is true.
+      final bridgeAsync = ref.watch(
+        tmdbBridgeForIdProvider(
+          (tmdbId: tmdbId, mediaType: apiMediaType!),
+        ),
+      );
+      bridgeAsync.whenData((bridge) {
+        if (bridge != null) {
+          accountPanel = TmdbAccountPanel(
+            bridge: bridge,
+            localRating: _userRating,
+            onApplyRating: (rating) {
+              setState(() => _userRating = rating);
+            },
+          );
+        }
+      });
     }
 
     return PopScope(
@@ -201,13 +290,24 @@ class MetadataConfirmScreen extends ConsumerWidget {
                     debugPrint('[MMS-save] duplicate check proceed=$proceed');
                     if (!proceed) return;
                     final useCase = ref.read(saveMediaItemUseCaseProvider);
-                    await useCase.execute(
+                    final savedItem = await useCase.execute(
                       edited,
                       ownershipStatus: targetsWishlist
                           ? OwnershipStatus.wishlist
                           : OwnershipStatus.owned,
                     );
                     debugPrint('[MMS-save] DB write complete');
+
+                    // Apply TMDB-sourced rating if the user tapped
+                    // "Apply to local rating" from the account panel.
+                    final appliedRating = _userRating;
+                    if (appliedRating != null) {
+                      await repository.update(
+                        savedItem.copyWith(userRating: appliedRating),
+                      );
+                      debugPrint(
+                          '[MMS-save] TMDB rating applied: $appliedRating');
+                    }
 
                     final scanner = ref.read(scannerProvider.notifier);
                     final snackText = targetsWishlist
@@ -239,6 +339,9 @@ class MetadataConfirmScreen extends ConsumerWidget {
                     debugPrint('[MMS-save] onSave done');
                   },
                 ),
+                // TMDB account-state panel — shown when account sync is
+                // enabled and a bridge row exists for the resolved title.
+                if (accountPanel != null) accountPanel!,
               ],
             ),
           ),
