@@ -21,7 +21,7 @@ abstract final class TmdbMapper {
       description: dto.overview,
       extraMetadata: {
         'tmdb_id': dto.id,
-        if (isTV) 'media_type': 'tv' else 'media_type': 'film',
+        if (isTV) 'media_type': 'tv' else 'media_type': 'movie',
       },
       sourceApis: ['tmdb'],
       criticScore: dto.voteAverage, // TMDB is already 0-10 scale

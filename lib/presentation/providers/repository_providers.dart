@@ -1,6 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/core/constants/api_constants.dart';
+import 'package:mymediascanner/data/local/dao/tmdb_account_sync_dao.dart';
 import 'package:mymediascanner/data/remote/api/dio_factory.dart';
+import 'package:mymediascanner/data/remote/api/tmdb/tmdb_account_api.dart';
+import 'package:mymediascanner/data/remote/api/tmdb/tmdb_account_rate_limit_interceptor.dart';
+import 'package:mymediascanner/data/repositories/tmdb_account_sync_repository_impl.dart';
+import 'package:mymediascanner/domain/repositories/i_tmdb_account_sync_repository.dart';
+import 'package:mymediascanner/domain/usecases/connect_tmdb_account_usecase.dart';
+import 'package:mymediascanner/domain/usecases/convert_bridge_to_local_item_usecase.dart';
+import 'package:mymediascanner/domain/usecases/disconnect_tmdb_account_usecase.dart';
+import 'package:mymediascanner/domain/usecases/enrich_scan_with_tmdb_account_usecase.dart';
+import 'package:mymediascanner/domain/usecases/import_tmdb_account_usecase.dart';
+import 'package:mymediascanner/domain/usecases/sync_tmdb_account_usecase.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:mymediascanner/data/remote/api/discogs/discogs_api.dart';
 import 'package:mymediascanner/data/remote/api/fanart/fanart_api.dart';
 import 'package:mymediascanner/data/remote/api/igdb/igdb_api.dart';
@@ -188,4 +200,82 @@ final syncRepositoryProvider = Provider<ISyncRepository?>((ref) {
   ref.onDispose(() async => repo.dispose());
 
   return repo;
+});
+
+// ── TMDB account sync ────────────────────────────────────────────────────────
+
+final tmdbAccountSyncDaoProvider = Provider<TmdbAccountSyncDao>((ref) {
+  return ref.watch(databaseProvider).tmdbAccountSyncDao;
+});
+
+final tmdbAccountApiProvider = Provider<TmdbAccountApi?>((ref) {
+  final apiKeys = ref.watch(apiKeysProvider).value ?? {};
+  final tmdbKey = apiKeys['tmdb']?.trim();
+  if (tmdbKey == null || tmdbKey.isEmpty) return null;
+
+  final dio = DioFactory.create(
+    baseUrl: ApiConstants.tmdbBaseUrl,
+    defaultHeaders: {
+      'Authorization': 'Bearer $tmdbKey',
+      'Content-Type': 'application/json',
+    },
+  );
+  final interceptor = TmdbAccountRateLimitInterceptor();
+  dio.interceptors.add(interceptor);
+  // Wire the interceptor's retry path back to this Dio so retries
+  // share the same adapter (matches the attachDio hook added in Task 6).
+  interceptor.attachDio(dio);
+  return TmdbAccountApi(dio);
+});
+
+final tmdbAccountSyncRepositoryProvider =
+    Provider<ITmdbAccountSyncRepository>((ref) {
+  final api = ref.watch(tmdbAccountApiProvider);
+  if (api == null) {
+    throw StateError(
+        'TMDB API key not configured — account sync unavailable');
+  }
+  return TmdbAccountSyncRepositoryImpl(
+    api: api,
+    dao: ref.watch(tmdbAccountSyncDaoProvider),
+    mediaItemsDao: ref.watch(mediaItemsDaoProvider),
+    storage: ref.watch(secureStorageProvider),
+  );
+});
+
+final connectTmdbAccountUseCaseProvider =
+    Provider<ConnectTmdbAccountUseCase>((ref) {
+  return ConnectTmdbAccountUseCase(
+    repo: ref.watch(tmdbAccountSyncRepositoryProvider),
+    launchUrl: (uri) => launchUrl(uri, mode: LaunchMode.externalApplication),
+  );
+});
+
+final disconnectTmdbAccountUseCaseProvider =
+    Provider<DisconnectTmdbAccountUseCase>((ref) {
+  return DisconnectTmdbAccountUseCase(
+      ref.watch(tmdbAccountSyncRepositoryProvider));
+});
+
+final importTmdbAccountUseCaseProvider =
+    Provider<ImportTmdbAccountUseCase>((ref) {
+  return ImportTmdbAccountUseCase(
+      ref.watch(tmdbAccountSyncRepositoryProvider));
+});
+
+final syncTmdbAccountUseCaseProvider =
+    Provider<SyncTmdbAccountUseCase>((ref) {
+  return SyncTmdbAccountUseCase(ref.watch(tmdbAccountSyncRepositoryProvider));
+});
+
+final enrichScanWithTmdbAccountUseCaseProvider =
+    Provider<EnrichScanWithTmdbAccountUseCase>((ref) {
+  return EnrichScanWithTmdbAccountUseCase(
+      ref.watch(tmdbAccountSyncRepositoryProvider));
+});
+
+final convertBridgeToLocalItemUseCaseProvider =
+    Provider<ConvertBridgeToLocalItemUseCase>((ref) {
+  return ConvertBridgeToLocalItemUseCase(
+      ref.watch(tmdbAccountSyncRepositoryProvider));
 });

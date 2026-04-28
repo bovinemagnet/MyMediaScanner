@@ -1,12 +1,14 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/app/theme/app_layout_extension.dart';
 import 'package:mymediascanner/app/theme/app_media_colors.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/presentation/widgets/desktop_context_menu.dart';
 import 'package:mymediascanner/presentation/widgets/procedural_cover_placeholder.dart';
+import 'package:mymediascanner/presentation/widgets/tmdb_bridge_badge.dart';
 
-class MediaItemCard extends StatelessWidget {
+class MediaItemCard extends ConsumerWidget {
   const MediaItemCard({
     super.key,
     required this.item,
@@ -23,7 +25,7 @@ class MediaItemCard extends StatelessWidget {
   final List<ContextMenuAction> contextMenuActions;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final mediaColors = context.mediaColors;
@@ -163,6 +165,22 @@ class MediaItemCard extends StatelessWidget {
                     ),
                   ),
                 ),
+              () {
+                final tmdbId = item.extraMetadata['tmdb_id'];
+                final mediaType = item.extraMetadata['media_type'];
+                if (tmdbId is int &&
+                    (mediaType == 'movie' || mediaType == 'tv')) {
+                  return Positioned(
+                    top: 4,
+                    right: 4,
+                    child: TmdbBridgeBadge(
+                      tmdbId: tmdbId,
+                      mediaType: mediaType as String,
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              }(),
             ],
           ),
         ),

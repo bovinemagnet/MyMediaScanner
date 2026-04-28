@@ -1,11 +1,14 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mymediascanner/app/theme/app_layout_extension.dart';
 import 'package:mymediascanner/app/theme/app_theme_extensions.dart';
 import 'package:mymediascanner/core/constants/app_constants.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
+import 'package:mymediascanner/domain/entities/tmdb_connection_state.dart';
+import 'package:mymediascanner/presentation/providers/tmdb_account_sync_provider.dart';
 import 'package:mymediascanner/presentation/widgets/desktop_shortcuts.dart';
 import 'package:mymediascanner/presentation/widgets/mini_player_bar.dart';
 import 'package:mymediascanner/presentation/widgets/sync_badge.dart';
@@ -51,6 +54,15 @@ class AppScaffold extends StatelessWidget {
       Icons.tips_and_updates_outlined,
       Icons.tips_and_updates,
       'Suggestions');
+
+  static const _tmdbWatchlistSidebarItem = _SidebarDestination(
+      Icons.bookmarks_outlined, Icons.bookmarks, 'Watchlist');
+
+  static const _tmdbRatedSidebarItem = _SidebarDestination(
+      Icons.star_border, Icons.star, 'TMDB Rated');
+
+  static const _tmdbFavouritesSidebarItem = _SidebarDestination(
+      Icons.favorite_border_outlined, Icons.favorite_outlined, 'Favourites');
 
   // ── Mobile bottom nav destinations ─────────────────────────────────
   static const _mobileDestinations = [
@@ -238,7 +250,7 @@ class AppScaffold extends StatelessWidget {
 
 // ── Desktop sidebar ──────────────────────────────────────────────────
 
-class _DesktopSidebar extends StatelessWidget {
+class _DesktopSidebar extends ConsumerWidget {
   const _DesktopSidebar({
     required this.currentIndex,
     required this.onDestinationSelected,
@@ -260,10 +272,15 @@ class _DesktopSidebar extends StatelessWidget {
   final bool isExpanded;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final design = theme.extension<AppDesignExtension>();
+
+    final connectionAsync = ref.watch(tmdbAccountConnectionProvider);
+    final isTmdbConnected =
+        PlatformCapability.isDesktop &&
+        connectionAsync.value is TmdbConnected;
 
     final items = [
       ...AppScaffold._sidebarItems,
@@ -272,11 +289,24 @@ class _DesktopSidebar extends StatelessWidget {
       if (showLocations) AppScaffold._locationsSidebarItem,
       if (showSeries) AppScaffold._seriesSidebarItem,
       if (showSuggestions) AppScaffold._wishlistSuggestionsSidebarItem,
+      if (isTmdbConnected) AppScaffold._tmdbWatchlistSidebarItem,
+      if (isTmdbConnected) AppScaffold._tmdbRatedSidebarItem,
+      if (isTmdbConnected) AppScaffold._tmdbFavouritesSidebarItem,
     ];
 
-    // Sidebar and shell branch indices are now 1:1.
-    // Both: Dashboard(0), Library(1), Scanner(2), Shelves(3), Batch(4),
-    //       Insights(5), Settings(6), Rips(7), Wishlist(8)
+    // Sidebar and shell branch indices are 1:1.
+    // Dashboard(0), Library(1), Scanner(2), Shelves(3), Batch(4),
+    // Insights(5), Settings(6), Rips(7), Wishlist(8), Locations(9),
+    // Series(10), Suggestions(11), Watchlist(12), Rated(13), Favourites(14)
+    //
+    // Sidebar list positions map 1:1 to StatefulShellBranch indices in
+    // router.dart. This identity mapping holds today only because every
+    // pre-TMDB conditional (`show*` flags) is gated on `isDesktop`, which
+    // is constant within a single run. If any of those flags becomes
+    // user-configurable, the sidebar position will drift from the shell
+    // branch index and break navigation. When that happens, replace this
+    // mapping with an explicit lookup table or always-include-with-disabled
+    // pattern for the conditional items.
     int sidebarToShellIndex(int sidebarIndex) => sidebarIndex;
 
     int shellToSidebarIndex(int shellIndex) => shellIndex;

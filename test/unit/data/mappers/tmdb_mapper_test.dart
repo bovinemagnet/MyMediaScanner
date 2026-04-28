@@ -25,6 +25,9 @@ void main() {
       expect(result.coverUrl, contains('w500'));
       expect(result.sourceApis, ['tmdb']);
       expect(result.extraMetadata['tmdb_id'], 550);
+      // Must be 'movie' not 'film' — the bridge table and TMDB API both use
+      // 'movie', so TmdbMapper normalises at write time.
+      expect(result.extraMetadata['media_type'], 'movie');
       expect(result.criticScore, 8.4);
       expect(result.criticSource, 'TMDB');
     });

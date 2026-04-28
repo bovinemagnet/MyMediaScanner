@@ -32,6 +32,7 @@ import 'package:mymediascanner/presentation/screens/item_detail/widgets/star_rat
 import 'package:mymediascanner/presentation/screens/item_detail/widgets/tag_chips.dart';
 import 'package:mymediascanner/presentation/widgets/error_state.dart';
 import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
+import 'package:mymediascanner/presentation/widgets/tmdb_bridge_badge.dart';
 
 class ItemDetailScreen extends ConsumerWidget {
   const ItemDetailScreen({super.key, required this.itemId});
@@ -169,6 +170,25 @@ class ItemDetailScreen extends ConsumerWidget {
                     ),
                   ],
                   const SizedBox(height: 16),
+                  () {
+                    final tmdbId = item.extraMetadata['tmdb_id'];
+                    final mediaType = item.extraMetadata['media_type'];
+                    if (tmdbId is int &&
+                        (mediaType == 'movie' || mediaType == 'tv')) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 8,
+                          horizontal: 16,
+                        ),
+                        child: TmdbBridgeBadge(
+                          tmdbId: tmdbId,
+                          mediaType: mediaType as String,
+                          size: TmdbBridgeBadgeSize.detailStrip,
+                        ),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  }(),
                   TagChips(mediaItemId: item.id),
                   if (item.userReview != null &&
                       item.userReview!.isNotEmpty) ...[
