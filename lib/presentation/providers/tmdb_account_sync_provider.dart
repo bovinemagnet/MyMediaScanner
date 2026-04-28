@@ -41,3 +41,14 @@ final tmdbBridgeForIdProvider =
         .getByTmdbId(key.tmdbId, key.mediaType);
   },
 );
+
+/// Stream of dirty-row count for the settings card "X pending changes".
+final tmdbDirtyCountProvider = StreamProvider<int>((ref) {
+  return ref.watch(tmdbAccountSyncRepositoryProvider).watchDirtyCount();
+});
+
+/// Stream of conflicted bridge rows for the resolve-conflicts screen.
+final tmdbConflictedRowsProvider =
+    StreamProvider<List<TmdbBridgeItem>>((ref) {
+  return ref.watch(tmdbAccountSyncRepositoryProvider).watchConflicts();
+});

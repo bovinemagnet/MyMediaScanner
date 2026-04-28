@@ -33,8 +33,15 @@ class TmdbAccountSyncDao extends DatabaseAccessor<AppDatabase>
         companion.tmdbMediaType.value,
       );
       if (existing == null) {
+        // Auto-generate an id if the caller did not supply one.  All mutation
+        // helpers (toggleWatchlist, toggleFavorite, updateRating) omit the id
+        // because they only know the (tmdbId, mediaType) key; the DAO handles
+        // id assignment so callers stay simple.
+        final resolvedId =
+            companion.id.present ? companion.id : Value(_genId());
         await into(tmdbAccountSyncItemsTable).insert(
           companion.copyWith(
+            id: resolvedId,
             createdAt: Value(now),
             updatedAt: Value(now),
           ),
@@ -146,7 +153,123 @@ class TmdbAccountSyncDao extends DatabaseAccessor<AppDatabase>
         .go();
   }
 
+  /// Count rows with `localDirty == true`.
+  Future<int> countDirtyRows() async {
+    final res = await (selectOnly(tmdbAccountSyncItemsTable)
+          ..addColumns([tmdbAccountSyncItemsTable.id.count()])
+          ..where(tmdbAccountSyncItemsTable.localDirty.equals(true)))
+        .map((row) => row.read(tmdbAccountSyncItemsTable.id.count()) ?? 0)
+        .getSingle();
+    return res;
+  }
+
+  /// Watch the dirty count for the settings card's "X pending changes".
+  Stream<int> watchDirtyCount() {
+    return (selectOnly(tmdbAccountSyncItemsTable)
+          ..addColumns([tmdbAccountSyncItemsTable.id.count()])
+          ..where(tmdbAccountSyncItemsTable.localDirty.equals(true)))
+        .map((row) => row.read(tmdbAccountSyncItemsTable.id.count()) ?? 0)
+        .watchSingle();
+  }
+
+  /// All dirty rows, ordered oldest-first by updatedAt.
+  Future<List<TmdbAccountSyncItemsTableData>> listDirty() {
+    return (select(tmdbAccountSyncItemsTable)
+          ..where((t) => t.localDirty.equals(true))
+          ..orderBy([(t) => OrderingTerm.asc(t.updatedAt)]))
+        .get();
+  }
+
+  /// Stream conflicted rows for the resolve-conflicts screen.
+  /// A conflict is a dirty row whose `last_error` matches the conflict marker.
+  Stream<List<TmdbAccountSyncItemsTableData>> watchConflicts() {
+    return (select(tmdbAccountSyncItemsTable)
+          ..where((t) =>
+              t.localDirty.equals(true) &
+              t.lastError.equals('conflict:user-resolution-required'))
+          ..orderBy([(t) => OrderingTerm.asc(t.updatedAt)]))
+        .watch();
+  }
+
+  /// Mark a row dirty without changing other fields. Bumps updatedAt.
+  Future<void> markDirty({
+    required int tmdbId,
+    required String mediaType,
+  }) async {
+    await (update(tmdbAccountSyncItemsTable)
+          ..where((t) =>
+              t.tmdbId.equals(tmdbId) & t.tmdbMediaType.equals(mediaType)))
+        .write(TmdbAccountSyncItemsTableCompanion(
+      localDirty: const Value(true),
+      updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+    ));
+  }
+
+  /// Clear dirty flag after a successful push. Stores the pushed rating
+  /// in `localRatingSnapshot` so the next dirty-detect compares against it.
+  Future<void> clearDirty({
+    required int tmdbId,
+    required String mediaType,
+    double? pushedRating,
+  }) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await (update(tmdbAccountSyncItemsTable)
+          ..where((t) =>
+              t.tmdbId.equals(tmdbId) & t.tmdbMediaType.equals(mediaType)))
+        .write(TmdbAccountSyncItemsTableCompanion(
+      localDirty: const Value(false),
+      lastError: const Value(null),
+      lastPushedAt: Value(now),
+      localRatingSnapshot: pushedRating == null
+          ? const Value.absent()
+          : Value(pushedRating),
+      updatedAt: Value(now),
+    ));
+  }
+
+  /// Record a per-row push error and keep the row dirty.
+  Future<void> recordPushError({
+    required int tmdbId,
+    required String mediaType,
+    required String error,
+  }) async {
+    await (update(tmdbAccountSyncItemsTable)
+          ..where((t) =>
+              t.tmdbId.equals(tmdbId) & t.tmdbMediaType.equals(mediaType)))
+        .write(TmdbAccountSyncItemsTableCompanion(
+      lastError: Value(error),
+      updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+    ));
+  }
+
+  /// Clear `lastError` on a row without touching `localDirty` or other fields.
+  /// Used by conflict resolution when the user chooses "keep mine".
+  Future<void> clearLastError({
+    required int tmdbId,
+    required String mediaType,
+  }) {
+    return (update(tmdbAccountSyncItemsTable)
+          ..where((t) =>
+              t.tmdbId.equals(tmdbId) & t.tmdbMediaType.equals(mediaType)))
+        .write(const TmdbAccountSyncItemsTableCompanion(
+      lastError: Value(null),
+    ));
+  }
+
   Future<void> deleteAll() {
     return delete(tmdbAccountSyncItemsTable).go();
+  }
+
+  /// Generate a lightweight unique id for new bridge rows. Mirrors the
+  /// logic in `TmdbAccountMapper._uuidV4()` so the two formats are
+  /// visually consistent.  The bridge table id is internal-only and
+  /// collision risk on a single device is effectively zero.
+  static String _genId() {
+    final r =
+        DateTime.now().microsecondsSinceEpoch ^ identityHashCode(Object());
+    final hex = r.toRadixString(16).padLeft(16, '0');
+    return 'tmb-${hex.substring(0, 8)}-${hex.substring(8, 12)}'
+        '-${hex.substring(12, 16)}-'
+        '${DateTime.now().millisecondsSinceEpoch.toRadixString(16)}';
   }
 }

@@ -154,4 +154,85 @@ void main() {
     expect(remaining.map((r) => r.tmdbId), [3],
         reason: 'localDirty=true row survives a full prune');
   });
+
+  test('countDirtyRows counts only localDirty rows', () async {
+    await db.tmdbAccountSyncDao.upsertByTmdbId(row(id: 'a', tmdbId: 1));
+    await db.tmdbAccountSyncDao.upsertByTmdbId(
+      TmdbAccountSyncItemsTableCompanion(
+        id: const Value('b'),
+        tmdbId: const Value(2),
+        tmdbMediaType: const Value('movie'),
+        localDirty: const Value(true),
+        createdAt: Value(DateTime.now().millisecondsSinceEpoch),
+        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+      ),
+    );
+    await db.tmdbAccountSyncDao.upsertByTmdbId(
+      TmdbAccountSyncItemsTableCompanion(
+        id: const Value('c'),
+        tmdbId: const Value(3),
+        tmdbMediaType: const Value('movie'),
+        localDirty: const Value(true),
+        createdAt: Value(DateTime.now().millisecondsSinceEpoch),
+        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+      ),
+    );
+
+    expect(await db.tmdbAccountSyncDao.countDirtyRows(), 2);
+  });
+
+  test('listDirty returns only localDirty rows', () async {
+    await db.tmdbAccountSyncDao.upsertByTmdbId(row(id: 'a', tmdbId: 1));
+    await db.tmdbAccountSyncDao.upsertByTmdbId(
+      TmdbAccountSyncItemsTableCompanion(
+        id: const Value('b'),
+        tmdbId: const Value(2),
+        tmdbMediaType: const Value('movie'),
+        localDirty: const Value(true),
+        createdAt: Value(DateTime.now().millisecondsSinceEpoch),
+        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+      ),
+    );
+
+    final dirty = await db.tmdbAccountSyncDao.listDirty();
+    expect(dirty.map((r) => r.tmdbId), [2]);
+  });
+
+  test('markDirty sets localDirty=true and bumps updatedAt', () async {
+    await db.tmdbAccountSyncDao.upsertByTmdbId(row(id: 'a', tmdbId: 5));
+    final before = (await db.tmdbAccountSyncDao.getByTmdbId(5, 'movie'))!;
+    await Future<void>.delayed(const Duration(milliseconds: 5));
+
+    await db.tmdbAccountSyncDao.markDirty(tmdbId: 5, mediaType: 'movie');
+    final after = (await db.tmdbAccountSyncDao.getByTmdbId(5, 'movie'))!;
+    expect(after.localDirty, isTrue);
+    expect(after.updatedAt, greaterThan(before.updatedAt));
+  });
+
+  test('clearDirty sets localDirty=false, lastPushedAt=now, lastError=null',
+      () async {
+    await db.tmdbAccountSyncDao.upsertByTmdbId(
+      TmdbAccountSyncItemsTableCompanion(
+        id: const Value('a'),
+        tmdbId: const Value(7),
+        tmdbMediaType: const Value('movie'),
+        localDirty: const Value(true),
+        lastError: const Value('previous error'),
+        createdAt: Value(DateTime.now().millisecondsSinceEpoch),
+        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+      ),
+    );
+
+    await db.tmdbAccountSyncDao.clearDirty(
+      tmdbId: 7,
+      mediaType: 'movie',
+      pushedRating: 4.0,
+    );
+
+    final r = (await db.tmdbAccountSyncDao.getByTmdbId(7, 'movie'))!;
+    expect(r.localDirty, isFalse);
+    expect(r.lastError, isNull);
+    expect(r.lastPushedAt, isNotNull);
+    expect(r.localRatingSnapshot, 4.0);
+  });
 }

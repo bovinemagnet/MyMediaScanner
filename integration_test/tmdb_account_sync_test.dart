@@ -18,6 +18,7 @@ import 'package:mymediascanner/data/remote/api/tmdb/models/tmdb_account_dto.dart
 import 'package:mymediascanner/data/remote/api/tmdb/models/tmdb_account_list_page_dto.dart';
 import 'package:mymediascanner/data/remote/api/tmdb/models/tmdb_request_token_dto.dart';
 import 'package:mymediascanner/data/remote/api/tmdb/models/tmdb_session_dto.dart';
+import 'package:mymediascanner/data/remote/api/tmdb/models/tmdb_status_response_dto.dart';
 import 'package:mymediascanner/data/remote/api/tmdb/tmdb_account_api.dart';
 import 'package:mymediascanner/data/repositories/tmdb_account_sync_repository_impl.dart';
 import 'package:mymediascanner/domain/entities/tmdb_bridge_bucket.dart';
@@ -30,6 +31,10 @@ class _MockStorage extends Mock implements FlutterSecureStorage {}
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+
+  setUpAll(() {
+    registerFallbackValue(<String, dynamic>{});
+  });
 
   testWidgets('connect → import populates bridge buckets', (tester) async {
     final api = _MockApi();
@@ -205,5 +210,55 @@ void main() {
 
     final state = await repo.currentState();
     expect(state, isA<TmdbDisconnected>());
+  });
+
+  testWidgets('push rating end-to-end', (tester) async {
+    final api = _MockApi();
+    final storage = _MockStorage();
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(() async => db.close());
+
+    // Seed connected state.
+    final stored = <String, String>{};
+    stored['tmdb.session_id'] = 'sess-1';
+    stored['tmdb.account_id'] = '1';
+    stored['tmdb.account_username'] = 'paul';
+    when(() => storage.read(key: any(named: 'key')))
+        .thenAnswer((inv) async => stored[inv.namedArguments[#key]]);
+    when(() => storage.write(key: any(named: 'key'), value: any(named: 'value')))
+        .thenAnswer((inv) async {
+      stored[inv.namedArguments[#key] as String] =
+          inv.namedArguments[#value] as String;
+    });
+    when(() => storage.delete(key: any(named: 'key')))
+        .thenAnswer((inv) async {
+      stored.remove(inv.namedArguments[#key]);
+    });
+
+    // Mock the rating push and watchlist/favourite re-push endpoints.
+    when(() => api.addMovieRating(550, 'sess-1', any())).thenAnswer((_) async =>
+        const TmdbStatusResponseDto(statusCode: 1, success: true));
+    when(() => api.setWatchlist(1, 'sess-1', any())).thenAnswer((_) async =>
+        const TmdbStatusResponseDto(statusCode: 1, success: true));
+    when(() => api.setFavorite(1, 'sess-1', any())).thenAnswer((_) async =>
+        const TmdbStatusResponseDto(statusCode: 1, success: true));
+
+    final repo = TmdbAccountSyncRepositoryImpl(
+      api: api,
+      dao: db.tmdbAccountSyncDao,
+      mediaItemsDao: db.mediaItemsDao,
+      storage: storage,
+    );
+
+    // Update local rating to 4.0 (= TMDB 8.0). Expect a push to fire.
+    final result = await repo.updateRating(
+        tmdbId: 550, mediaType: 'movie', localRating: 4.0);
+
+    expect(result.success, isTrue);
+    verify(() => api.addMovieRating(550, 'sess-1', {'value': 8.0})).called(1);
+
+    final after = await db.tmdbAccountSyncDao.getByTmdbId(550, 'movie');
+    expect(after?.localDirty, isFalse);
+    expect(after?.localRatingSnapshot, 8.0);
   });
 }

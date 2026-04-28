@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mymediascanner/data/remote/sync/postgres_sync_client.dart';
+import 'package:mymediascanner/domain/entities/tmdb_conflict_policy.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // ── Theme choice (palette family × brightness) ───────────────────────
@@ -267,6 +268,9 @@ class TmdbAccountSyncSettings {
   const TmdbAccountSyncSettings({
     this.enabled = false,
     this.enrichScans = true,
+    this.twoWaySync = true,
+    this.mirrorOwnership = false,
+    this.conflictPolicy = TmdbConflictPolicy.preferLatestTimestamp,
     this.lastSyncAt,
     this.lastSyncPulled = 0,
     this.lastSyncFailed = 0,
@@ -275,6 +279,9 @@ class TmdbAccountSyncSettings {
 
   final bool enabled;
   final bool enrichScans;
+  final bool twoWaySync;
+  final bool mirrorOwnership;
+  final TmdbConflictPolicy conflictPolicy;
   final DateTime? lastSyncAt;
   final int lastSyncPulled;
   final int lastSyncFailed;
@@ -283,6 +290,9 @@ class TmdbAccountSyncSettings {
   TmdbAccountSyncSettings copyWith({
     bool? enabled,
     bool? enrichScans,
+    bool? twoWaySync,
+    bool? mirrorOwnership,
+    TmdbConflictPolicy? conflictPolicy,
     DateTime? lastSyncAt,
     int? lastSyncPulled,
     int? lastSyncFailed,
@@ -292,6 +302,9 @@ class TmdbAccountSyncSettings {
       TmdbAccountSyncSettings(
         enabled: enabled ?? this.enabled,
         enrichScans: enrichScans ?? this.enrichScans,
+        twoWaySync: twoWaySync ?? this.twoWaySync,
+        mirrorOwnership: mirrorOwnership ?? this.mirrorOwnership,
+        conflictPolicy: conflictPolicy ?? this.conflictPolicy,
         lastSyncAt: lastSyncAt ?? this.lastSyncAt,
         lastSyncPulled: lastSyncPulled ?? this.lastSyncPulled,
         lastSyncFailed: lastSyncFailed ?? this.lastSyncFailed,
@@ -303,6 +316,9 @@ class TmdbAccountSyncSettingsNotifier
     extends Notifier<TmdbAccountSyncSettings> {
   static const _kEnabled = 'tmdb.account_sync.enabled';
   static const _kEnrichScans = 'tmdb.account_sync.enrich_scans';
+  static const _kTwoWay = 'tmdb.account_sync.two_way_sync';
+  static const _kMirror = 'tmdb.account_sync.mirror_ownership';
+  static const _kConflictPolicy = 'tmdb.account_sync.conflict_policy';
   static const _kLastSyncAt = 'tmdb.account_sync.last_sync_at';
   static const _kLastPulled = 'tmdb.account_sync.last_sync_pulled';
   static const _kLastFailed = 'tmdb.account_sync.last_sync_failed';
@@ -321,6 +337,9 @@ class TmdbAccountSyncSettingsNotifier
     state = TmdbAccountSyncSettings(
       enabled: p.getBool(_kEnabled) ?? false,
       enrichScans: p.getBool(_kEnrichScans) ?? true,
+      twoWaySync: p.getBool(_kTwoWay) ?? true,
+      mirrorOwnership: p.getBool(_kMirror) ?? false,
+      conflictPolicy: TmdbConflictPolicy.fromName(p.getString(_kConflictPolicy)),
       lastSyncAt: lastSyncMs == null
           ? null
           : DateTime.fromMillisecondsSinceEpoch(lastSyncMs),
@@ -340,6 +359,24 @@ class TmdbAccountSyncSettingsNotifier
     state = state.copyWith(enrichScans: v);
     final p = await SharedPreferences.getInstance();
     await p.setBool(_kEnrichScans, v);
+  }
+
+  Future<void> setTwoWaySync(bool v) async {
+    state = state.copyWith(twoWaySync: v);
+    final p = await SharedPreferences.getInstance();
+    await p.setBool(_kTwoWay, v);
+  }
+
+  Future<void> setMirrorOwnership(bool v) async {
+    state = state.copyWith(mirrorOwnership: v);
+    final p = await SharedPreferences.getInstance();
+    await p.setBool(_kMirror, v);
+  }
+
+  Future<void> setConflictPolicy(TmdbConflictPolicy policy) async {
+    state = state.copyWith(conflictPolicy: policy);
+    final p = await SharedPreferences.getInstance();
+    await p.setString(_kConflictPolicy, policy.name);
   }
 
   Future<void> recordSyncResult({

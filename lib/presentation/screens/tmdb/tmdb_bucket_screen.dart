@@ -5,6 +5,7 @@ import 'package:mymediascanner/core/utils/platform_utils.dart';
 import 'package:mymediascanner/domain/entities/tmdb_bridge_bucket.dart';
 import 'package:mymediascanner/domain/entities/tmdb_bridge_item.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
+import 'package:mymediascanner/presentation/providers/settings_provider.dart';
 import 'package:mymediascanner/presentation/providers/tmdb_account_sync_provider.dart';
 import 'package:mymediascanner/presentation/widgets/screen_header.dart';
 
@@ -99,6 +100,58 @@ class _BridgeRowTile extends ConsumerWidget {
       title: Text(item.title ?? '#${item.tmdbId}'),
       subtitle: Text('$mediaTypeLabel$ratingLabel'),
       trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+        if (bucket == TmdbBridgeBucket.watchlist) ...[
+          IconButton(
+            tooltip: 'Mark as owned',
+            icon: const Icon(Icons.check_circle_outline),
+            onPressed: () async {
+              final messenger = ScaffoldMessenger.of(context);
+              final mirrorEnabled = ref
+                  .read(tmdbAccountSyncSettingsProvider)
+                  .mirrorOwnership;
+              final result = await ref
+                  .read(markTmdbWatchlistOwnedUseCaseProvider)
+                  .call(
+                    bridgeId: item.id,
+                    tmdbId: item.tmdbId,
+                    mediaType: item.mediaType,
+                    mirrorEnabled: mirrorEnabled,
+                  );
+              if (result.fullSuccess) {
+                messenger.showSnackBar(const SnackBar(
+                    content: Text('Marked as owned and removed from watchlist')));
+              } else {
+                final issues = [
+                  if (result.convertError != null) 'convert: ${result.convertError}',
+                  if (result.watchlistError != null)
+                    'watchlist: ${result.watchlistError}',
+                  if (result.mirrorError != null) 'mirror: ${result.mirrorError}',
+                ].join('; ');
+                messenger.showSnackBar(SnackBar(
+                    content: Text('Partial success — $issues')));
+              }
+            },
+          ),
+          IconButton(
+            tooltip: 'Remove from TMDB watchlist',
+            icon: const Icon(Icons.bookmark_remove),
+            onPressed: () async {
+              final messenger = ScaffoldMessenger.of(context);
+              final result = await ref
+                  .read(toggleTmdbWatchlistUseCaseProvider)
+                  .call(
+                    tmdbId: item.tmdbId,
+                    mediaType: item.mediaType,
+                    value: false,
+                  );
+              messenger.showSnackBar(SnackBar(
+                content: Text(result.success
+                    ? 'Removed from TMDB watchlist'
+                    : 'Remove failed: ${result.error}'),
+              ));
+            },
+          ),
+        ],
         IconButton(
           tooltip: 'Open on TMDB',
           icon: const Icon(Icons.open_in_new),

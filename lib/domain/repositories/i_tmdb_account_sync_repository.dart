@@ -46,6 +46,74 @@ abstract class ITmdbAccountSyncRepository {
   /// new media-item ID. Slice A creates the row with
   /// `OwnershipStatus.owned` and links the bridge row to it.
   Future<String> convertBridgeToLocalItem(String bridgeId);
+
+  // ── Slice 2 — push pipeline ────────────────────────────────────
+
+  /// Push any pending changes for the title `(tmdbId, mediaType)`.
+  Future<TmdbPushResult> pushOne({
+    required int tmdbId,
+    required String mediaType,
+  });
+
+  /// Push every dirty row sequentially. Used by "Push pending now".
+  Future<TmdbPushSummary> pushAllDirty();
+
+  /// Watch the count of dirty rows for UI badging.
+  Stream<int> watchDirtyCount();
+
+  /// Stream conflicted rows (those needing user resolution).
+  Stream<List<TmdbBridgeItem>> watchConflicts();
+
+  /// Count dirty rows — used by the disconnect dialog precondition.
+  Future<int> countDirtyRows();
+
+  // ── Slice 2 — toggle helpers ───────────────────────────────────
+
+  /// Toggle the watchlist flag locally + push (regardless of two-way setting;
+  /// the use-case layer enforces the gate).
+  Future<TmdbPushResult> toggleWatchlist({
+    required int tmdbId,
+    required String mediaType,
+    required bool value,
+  });
+
+  /// Toggle the favourite flag locally + push.
+  Future<TmdbPushResult> toggleFavorite({
+    required int tmdbId,
+    required String mediaType,
+    required bool value,
+  });
+
+  /// Set local rating + push. Pass `null` to clear the rating on TMDB.
+  Future<TmdbPushResult> updateRating({
+    required int tmdbId,
+    required String mediaType,
+    required double? localRating, // 0–5 scale; null clears.
+  });
+
+  // ── Slice 2 — conflict resolution ─────────────────────────────
+
+  /// Apply a user resolution decision to a conflicted bridge row.
+  /// `keepLocal == true` clears the conflict marker but keeps the row dirty
+  /// (next push resolves). `keepLocal == false` clears dirty + last_error
+  /// and applies the remote state via a fresh enrichment call.
+  Future<void> applyConflictResolution({
+    required int tmdbId,
+    required String mediaType,
+    required bool keepLocal,
+  });
+
+  // ── Slice 2 — list mirror ──────────────────────────────────────
+
+  /// Lazy-resolve the MyMediaScanner private list ID. Looks up by name,
+  /// creates if missing, caches in secure storage.
+  Future<int> ensureMyMediaScannerListId();
+
+  /// Add a movie to the MyMediaScanner list. No-op for TV (v3 list limit).
+  Future<TmdbPushResult> mirrorAddOwnership({required int tmdbId});
+
+  /// Remove a movie from the MyMediaScanner list.
+  Future<TmdbPushResult> mirrorRemoveOwnership({required int tmdbId});
 }
 
 /// Single bucket selection for the import wizard.
@@ -72,6 +140,25 @@ class TmdbSyncSummary {
   });
 
   final int pulled;
+  final int failed;
+  final String? lastError;
+}
+
+class TmdbPushResult {
+  const TmdbPushResult({required this.success, this.error});
+  final bool success;
+  final String? error;
+}
+
+class TmdbPushSummary {
+  const TmdbPushSummary({
+    required this.attempted,
+    required this.succeeded,
+    required this.failed,
+    this.lastError,
+  });
+  final int attempted;
+  final int succeeded;
   final int failed;
   final String? lastError;
 }
