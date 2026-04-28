@@ -1,5 +1,5 @@
 /// Identifies which TMDB account-state bucket a bridge row belongs to.
-enum TmdbBridgeBucket { watchlist, rated, favourite }
+enum TmdbBridgeBucket { watchlist, rated, favourite, saved }
 
 /// Composite key used by the bridge table to identify a TMDB title.
 class TmdbBridgeKey {
