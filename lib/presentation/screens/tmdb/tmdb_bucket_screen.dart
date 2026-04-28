@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:mymediascanner/core/utils/platform_utils.dart';
 import 'package:mymediascanner/domain/entities/tmdb_bridge_bucket.dart';
 import 'package:mymediascanner/domain/entities/tmdb_bridge_item.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/tmdb_account_sync_provider.dart';
+import 'package:mymediascanner/presentation/widgets/screen_header.dart';
 
 class TmdbBucketScreen extends ConsumerWidget {
   const TmdbBucketScreen({super.key, required this.bucket});
@@ -32,29 +34,40 @@ class TmdbBucketScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncRows = ref.watch(tmdbBridgeBucketProvider(bucket));
+    final isDesktop = PlatformCapability.isDesktop;
+
+    Widget body = asyncRows.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('Error: $e')),
+      data: (rows) {
+        if (rows.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(_emptyMessage, textAlign: TextAlign.center),
+            ),
+          );
+        }
+        return ListView.separated(
+          itemCount: rows.length,
+          separatorBuilder: (_, _) => const Divider(height: 1),
+          itemBuilder: (context, i) =>
+              _BridgeRowTile(item: rows[i], bucket: bucket),
+        );
+      },
+    );
 
     return Scaffold(
-      appBar: AppBar(title: Text(_title)),
-      body: asyncRows.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
-        data: (rows) {
-          if (rows.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(_emptyMessage, textAlign: TextAlign.center),
-              ),
-            );
-          }
-          return ListView.separated(
-            itemCount: rows.length,
-            separatorBuilder: (context, index) => const Divider(height: 1),
-            itemBuilder: (context, i) =>
-                _BridgeRowTile(item: rows[i], bucket: bucket),
-          );
-        },
-      ),
+      appBar: isDesktop ? null : AppBar(title: Text(_title)),
+      body: isDesktop
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ScreenHeader(title: _title),
+                Expanded(child: body),
+              ],
+            )
+          : body,
     );
   }
 }
@@ -97,11 +110,16 @@ class _BridgeRowTile extends ConsumerWidget {
           icon: const Icon(Icons.add_box_outlined),
           onPressed: () async {
             final messenger = ScaffoldMessenger.of(context);
-            await ref
-                .read(convertBridgeToLocalItemUseCaseProvider)
-                .call(item.id);
-            messenger.showSnackBar(const SnackBar(
-                content: Text('Added to local collection')));
+            try {
+              await ref
+                  .read(convertBridgeToLocalItemUseCaseProvider)
+                  .call(item.id);
+              messenger.showSnackBar(
+                  const SnackBar(content: Text('Added to local collection')));
+            } catch (e) {
+              messenger.showSnackBar(
+                  SnackBar(content: Text('Could not convert item: $e')));
+            }
           },
         ),
       ]),

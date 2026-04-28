@@ -298,6 +298,15 @@ class _DesktopSidebar extends ConsumerWidget {
     // Dashboard(0), Library(1), Scanner(2), Shelves(3), Batch(4),
     // Insights(5), Settings(6), Rips(7), Wishlist(8), Locations(9),
     // Series(10), Suggestions(11), Watchlist(12), Rated(13), Favourites(14)
+    //
+    // Sidebar list positions map 1:1 to StatefulShellBranch indices in
+    // router.dart. This identity mapping holds today only because every
+    // pre-TMDB conditional (`show*` flags) is gated on `isDesktop`, which
+    // is constant within a single run. If any of those flags becomes
+    // user-configurable, the sidebar position will drift from the shell
+    // branch index and break navigation. When that happens, replace this
+    // mapping with an explicit lookup table or always-include-with-disabled
+    // pattern for the conditional items.
     int sidebarToShellIndex(int sidebarIndex) => sidebarIndex;
 
     int shellToSidebarIndex(int shellIndex) => shellIndex;
