@@ -5,7 +5,9 @@ import 'package:mymediascanner/domain/entities/tmdb_connection_state.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/settings_provider.dart';
 import 'package:mymediascanner/presentation/providers/tmdb_account_sync_provider.dart';
+import 'package:mymediascanner/presentation/screens/settings/widgets/conflict_policy_selector.dart';
 import 'package:mymediascanner/presentation/screens/settings/widgets/tmdb_connect_dialog.dart';
+import 'package:mymediascanner/presentation/screens/settings/widgets/tmdb_disconnect_warning_dialog.dart';
 import 'package:mymediascanner/presentation/screens/settings/widgets/tmdb_import_dialog.dart';
 
 /// Settings card for TMDB account sync. Desktop only.
@@ -60,18 +62,59 @@ class TmdbAccountSyncSection extends ConsumerWidget {
                       .setEnrichScans(v)
                   : null,
             ),
-            const SwitchListTile(
-              title: Text('Two-way sync (coming in next release)'),
-              subtitle: Text('Available in slice 2.'),
-              value: false,
-              onChanged: null,
+            SwitchListTile(
+              title: const Text('Push local changes to TMDB'),
+              subtitle: const Text('Two-way sync — your edits propagate.'),
+              value: settings.twoWaySync,
+              onChanged: connectionAsync.value is TmdbConnected
+                  ? (v) => ref
+                      .read(tmdbAccountSyncSettingsProvider.notifier)
+                      .setTwoWaySync(v)
+                  : null,
             ),
-            const SwitchListTile(
-              title: Text(
-                  'Mirror ownership to TMDB list (coming in next release)'),
-              subtitle: Text('Available in slice 2.'),
-              value: false,
-              onChanged: null,
+            SwitchListTile(
+              title: const Text('Mirror ownership to TMDB list (movies only)'),
+              subtitle: const Text(
+                  'Owned movies are added to a private TMDB list called "MyMediaScanner".'),
+              value: settings.mirrorOwnership,
+              onChanged: connectionAsync.value is TmdbConnected
+                  ? (v) => ref
+                      .read(tmdbAccountSyncSettingsProvider.notifier)
+                      .setMirrorOwnership(v)
+                  : null,
+            ),
+            const SizedBox(height: 12),
+            ConflictPolicySelector(
+                enabled: connectionAsync.value is TmdbConnected),
+            const SizedBox(height: 12),
+            ref.watch(tmdbDirtyCountProvider).when(
+              loading: () => const SizedBox.shrink(),
+              error: (_, stack) => const SizedBox.shrink(),
+              data: (count) {
+                if (count == 0) return const SizedBox.shrink();
+                return Row(children: [
+                  Icon(Icons.cloud_upload,
+                      size: 16,
+                      color: Theme.of(context).colorScheme.primary),
+                  const SizedBox(width: 6),
+                  Expanded(
+                      child: Text('$count pending change'
+                          '${count == 1 ? '' : 's'} to push')),
+                  TextButton.icon(
+                    icon: const Icon(Icons.sync, size: 16),
+                    label: const Text('Push pending now'),
+                    onPressed: () async {
+                      final messenger = ScaffoldMessenger.of(context);
+                      final summary =
+                          await ref.read(pushTmdbChangeUseCaseProvider).all();
+                      messenger.showSnackBar(SnackBar(
+                        content: Text('Pushed ${summary.succeeded} of '
+                            '${summary.attempted}; ${summary.failed} failed.'),
+                      ));
+                    },
+                  ),
+                ]);
+              },
             ),
             const SizedBox(height: 8),
             Wrap(spacing: 8, runSpacing: 8, children: [
@@ -154,14 +197,7 @@ class _ConnectionRow extends ConsumerWidget {
       ),
       if (isConnected)
         TextButton(
-          onPressed: () async {
-            await ref
-                .read(disconnectTmdbAccountUseCaseProvider)
-                .call();
-            await ref
-                .read(tmdbAccountConnectionProvider.notifier)
-                .refresh();
-          },
+          onPressed: () => _disconnectWithCheck(context, ref),
           child: const Text('Disconnect'),
         )
       else
@@ -179,6 +215,22 @@ class _ConnectionRow extends ConsumerWidget {
           child: const Text('Connect'),
         ),
     ]);
+  }
+}
+
+Future<void> _disconnectWithCheck(
+    BuildContext context, WidgetRef ref) async {
+  final dirty =
+      await ref.read(tmdbAccountSyncRepositoryProvider).countDirtyRows();
+  if (dirty > 0 && context.mounted) {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => TmdbDisconnectWarningDialog(dirtyCount: dirty),
+    );
+  } else {
+    await ref.read(disconnectTmdbAccountUseCaseProvider).call();
+    await ref.read(tmdbAccountConnectionProvider.notifier).refresh();
   }
 }
 
