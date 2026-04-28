@@ -90,6 +90,18 @@ abstract class ITmdbAccountSyncRepository {
     required String mediaType,
     required double? localRating, // 0–5 scale; null clears.
   });
+
+  // ── Slice 2 — list mirror ──────────────────────────────────────
+
+  /// Lazy-resolve the MyMediaScanner private list ID. Looks up by name,
+  /// creates if missing, caches in secure storage.
+  Future<int> ensureMyMediaScannerListId();
+
+  /// Add a movie to the MyMediaScanner list. No-op for TV (v3 list limit).
+  Future<TmdbPushResult> mirrorAddOwnership({required int tmdbId});
+
+  /// Remove a movie from the MyMediaScanner list.
+  Future<TmdbPushResult> mirrorRemoveOwnership({required int tmdbId});
 }
 
 /// Single bucket selection for the import wizard.

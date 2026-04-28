@@ -32,7 +32,6 @@ class TmdbAccountSyncRepositoryImpl implements ITmdbAccountSyncRepository {
   static const _kSession = 'tmdb.session_id';
   static const _kAccountId = 'tmdb.account_id';
   static const _kUsername = 'tmdb.account_username';
-  // ignore: unused_field — reserved for Task 8 (list manager)
   static const _kListId = 'tmdb.mymediascanner_list_id';
 
   // ── Connection state ──────────────────────────────────────────
@@ -97,6 +96,7 @@ class TmdbAccountSyncRepositoryImpl implements ITmdbAccountSyncRepository {
     await storage.delete(key: _kSession);
     await storage.delete(key: _kAccountId);
     await storage.delete(key: _kUsername);
+    await storage.delete(key: _kListId);
   }
 
   // ── Bridge data ───────────────────────────────────────────────
@@ -518,6 +518,94 @@ class TmdbAccountSyncRepositoryImpl implements ITmdbAccountSyncRepository {
       failed: failed,
       lastError: lastError,
     );
+  }
+
+  // ── Slice 2 — list mirror ──────────────────────────────────────
+
+  @override
+  Future<int> ensureMyMediaScannerListId() async {
+    final cached = await storage.read(key: _kListId);
+    if (cached != null) {
+      final parsed = int.tryParse(cached);
+      if (parsed != null) return parsed;
+    }
+    final state = await currentState();
+    if (state is! TmdbConnected) {
+      throw StateError('Not connected — cannot resolve TMDB list');
+    }
+    final session = (await storage.read(key: _kSession))!;
+
+    // Look up by name across pages.
+    var page = 1;
+    while (true) {
+      final pageDto = await api.getAccountLists(
+          state.accountId, session, page: page);
+      for (final list in pageDto.results) {
+        if (list.name == 'MyMediaScanner') {
+          await storage.write(key: _kListId, value: list.id.toString());
+          return list.id;
+        }
+      }
+      if (page >= pageDto.totalPages) break;
+      page++;
+    }
+
+    // Not found → create.
+    final created = await api.createList(session, {
+      'name': 'MyMediaScanner',
+      'description':
+          'Mirrored from MyMediaScanner — owned items in your collection.',
+      'language': 'en',
+    });
+    if (!created.success) {
+      throw const TmdbConnectException(
+          'TMDB rejected the MyMediaScanner list creation');
+    }
+    await storage.write(
+        key: _kListId, value: created.listId.toString());
+    return created.listId;
+  }
+
+  @override
+  Future<TmdbPushResult> mirrorAddOwnership({required int tmdbId}) {
+    return _mirrorMutate(tmdbId: tmdbId, add: true);
+  }
+
+  @override
+  Future<TmdbPushResult> mirrorRemoveOwnership({required int tmdbId}) {
+    return _mirrorMutate(tmdbId: tmdbId, add: false);
+  }
+
+  Future<TmdbPushResult> _mirrorMutate({
+    required int tmdbId,
+    required bool add,
+  }) async {
+    try {
+      final state = await currentState();
+      if (state is! TmdbConnected) {
+        return const TmdbPushResult(
+            success: false, error: 'Not connected to TMDB');
+      }
+      final session = (await storage.read(key: _kSession))!;
+      final listId = await ensureMyMediaScannerListId();
+      final body = {'media_id': tmdbId};
+      if (add) {
+        await api.addItemToList(listId, session, body);
+      } else {
+        await api.removeItemFromList(listId, session, body);
+      }
+      return const TmdbPushResult(success: true);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        await _handle401();
+        return const TmdbPushResult(
+            success: false, error: 'Session expired');
+      }
+      return TmdbPushResult(
+          success: false, error: e.message ?? 'Network error');
+    } catch (e) {
+      return TmdbPushResult(success: false, error: e.toString());
+    }
   }
 }
 

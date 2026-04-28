@@ -7,6 +7,8 @@ import 'package:mocktail/mocktail.dart';
 import 'package:mymediascanner/data/local/database/app_database.dart';
 import 'package:mymediascanner/data/remote/api/tmdb/tmdb_account_api.dart';
 import 'package:mymediascanner/data/remote/api/tmdb/models/tmdb_account_list_page_dto.dart';
+import 'package:mymediascanner/data/remote/api/tmdb/models/tmdb_account_lists_page_dto.dart';
+import 'package:mymediascanner/data/remote/api/tmdb/models/tmdb_list_create_response_dto.dart';
 import 'package:mymediascanner/data/remote/api/tmdb/models/tmdb_status_response_dto.dart';
 import 'package:mymediascanner/data/repositories/tmdb_account_sync_repository_impl.dart';
 import 'package:mymediascanner/domain/entities/tmdb_bridge_bucket.dart';
@@ -272,5 +274,57 @@ void main() {
         tmdbId: 100, mediaType: 'movie', localRating: null);
     expect(result.success, isTrue);
     verify(() => api.removeMovieRating(100, 'sess-123')).called(1);
+  });
+
+  test('ensureMyMediaScannerListId reuses existing list found by name',
+      () async {
+    // No cached list ID.
+    when(() => storage.read(key: 'tmdb.mymediascanner_list_id'))
+        .thenAnswer((_) async => null);
+    when(() => storage.write(
+            key: 'tmdb.mymediascanner_list_id', value: any(named: 'value')))
+        .thenAnswer((_) async {});
+    when(() => api.getAccountLists(42, 'sess-123', page: any(named: 'page')))
+        .thenAnswer((_) async => const TmdbAccountListsPageDto(
+              page: 1,
+              totalPages: 1,
+              totalResults: 1,
+              results: [
+                TmdbAccountListSummaryDto(id: 999, name: 'MyMediaScanner'),
+              ],
+            ));
+
+    final id = await repo.ensureMyMediaScannerListId();
+    expect(id, 999);
+    verifyNever(() => api.createList(any(), any()));
+  });
+
+  test('ensureMyMediaScannerListId creates list when none exists', () async {
+    when(() => storage.read(key: 'tmdb.mymediascanner_list_id'))
+        .thenAnswer((_) async => null);
+    when(() => storage.write(
+            key: 'tmdb.mymediascanner_list_id', value: any(named: 'value')))
+        .thenAnswer((_) async {});
+    when(() => api.getAccountLists(42, 'sess-123', page: any(named: 'page')))
+        .thenAnswer((_) async => const TmdbAccountListsPageDto(
+              page: 1, totalPages: 1, totalResults: 0, results: [],
+            ));
+    when(() => api.createList('sess-123', any())).thenAnswer((_) async =>
+        const TmdbListCreateResponseDto(success: true, listId: 1234));
+
+    final id = await repo.ensureMyMediaScannerListId();
+    expect(id, 1234);
+    verify(() => api.createList('sess-123', any())).called(1);
+  });
+
+  test('ensureMyMediaScannerListId returns cached id without API calls',
+      () async {
+    when(() => storage.read(key: 'tmdb.mymediascanner_list_id'))
+        .thenAnswer((_) async => '777');
+
+    final id = await repo.ensureMyMediaScannerListId();
+    expect(id, 777);
+    verifyNever(() => api.getAccountLists(any(), any(), page: any(named: 'page')));
+    verifyNever(() => api.createList(any(), any()));
   });
 }
