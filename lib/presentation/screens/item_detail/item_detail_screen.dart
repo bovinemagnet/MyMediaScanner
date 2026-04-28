@@ -32,6 +32,7 @@ import 'package:mymediascanner/presentation/screens/item_detail/widgets/star_rat
 import 'package:mymediascanner/presentation/screens/item_detail/widgets/tag_chips.dart';
 import 'package:mymediascanner/presentation/widgets/error_state.dart';
 import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
+import 'package:mymediascanner/presentation/screens/item_detail/widgets/tmdb_account_controls_section.dart';
 import 'package:mymediascanner/presentation/widgets/tmdb_bridge_badge.dart';
 
 class ItemDetailScreen extends ConsumerWidget {
@@ -185,6 +186,18 @@ class ItemDetailScreen extends ConsumerWidget {
                           mediaType: mediaType as String,
                           size: TmdbBridgeBadgeSize.detailStrip,
                         ),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  }(),
+                  () {
+                    final tmdbId = item.extraMetadata['tmdb_id'];
+                    final mediaType = item.extraMetadata['media_type'];
+                    if (tmdbId is int &&
+                        (mediaType == 'movie' || mediaType == 'tv')) {
+                      return TmdbAccountControlsSection(
+                        tmdbId: tmdbId,
+                        mediaType: mediaType as String,
                       );
                     }
                     return const SizedBox.shrink();
