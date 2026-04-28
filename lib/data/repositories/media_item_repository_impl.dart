@@ -309,8 +309,8 @@ class MediaItemRepositoryImpl implements IMediaItemRepository {
     final isOwned = next.ownershipStatus == OwnershipStatus.owned;
     if (wasOwned == isOwned) return; // no transition
 
-    final tmdbId = next.extraMetadata['tmdb_id'];
-    if (tmdbId is! int) return;
+    final tmdbId = _asInt(next.extraMetadata['tmdb_id']);
+    if (tmdbId == null) return;
     final mediaType = next.extraMetadata['media_type'];
     if (mediaType != 'movie') return;
 
@@ -333,14 +333,24 @@ class MediaItemRepositoryImpl implements IMediaItemRepository {
     if (!readEnabled()) return;
     if (previous.ownershipStatus != OwnershipStatus.owned) return;
 
-    final tmdbId = previous.extraMetadata['tmdb_id'];
-    if (tmdbId is! int) return;
+    final tmdbId = _asInt(previous.extraMetadata['tmdb_id']);
+    if (tmdbId == null) return;
     final mediaType = previous.extraMetadata['media_type'];
     if (mediaType != 'movie') return;
 
     unawaited(mirror.remove(tmdbId: tmdbId).catchError((_) {
       return const TmdbPushResult(success: false);
     }));
+  }
+
+  /// Coerces [value] to [int]. Handles the case where JSON round-trips
+  /// deserialise numeric fields as [double] on some platforms, or where a
+  /// caller stored the TMDB ID as a string. Mirrors `SaveMediaItemUseCase._asInt`.
+  static int? _asInt(Object? value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value);
+    return null;
   }
 
   /// Produce a snake_case map of every sync-relevant field on [item], in

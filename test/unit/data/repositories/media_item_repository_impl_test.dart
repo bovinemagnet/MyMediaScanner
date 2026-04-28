@@ -169,7 +169,7 @@ void main() {
     });
   });
 
-  group('mirror auto-remove hook on update', () {
+  group('mirror auto-remove hook (update + softDelete)', () {
     late _MockMirror mirror;
     late bool mirrorEnabled;
 
@@ -325,6 +325,31 @@ void main() {
       await r.softDelete('i');
 
       verifyNever(() => mirror.remove(tmdbId: any(named: 'tmdbId')));
+    });
+
+    test('update fires mirror.add when tmdb_id is stored as a String',
+        () async {
+      // Mirrors the importer path that round-trips ids as strings.
+      final r = makeRepo();
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final wishlist = MediaItem(
+        id: 'j',
+        title: 'Fight Club',
+        mediaType: MediaType.film,
+        ownershipStatus: OwnershipStatus.wishlist,
+        barcode: '',
+        barcodeType: '',
+        extraMetadata: const {'tmdb_id': '550', 'media_type': 'movie'},
+        dateAdded: now,
+        dateScanned: now,
+        updatedAt: now,
+      );
+      await seed(wishlist);
+
+      await r.update(
+          wishlist.copyWith(ownershipStatus: OwnershipStatus.owned));
+
+      verify(() => mirror.add(tmdbId: 550)).called(1);
     });
   });
 }
