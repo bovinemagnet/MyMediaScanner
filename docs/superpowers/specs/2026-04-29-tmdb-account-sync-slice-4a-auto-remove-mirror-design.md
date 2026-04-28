@@ -86,7 +86,8 @@ Hooking the repository instead of each use case means future transition paths in
 | any | any | off | — | — | no-op (gate fails) |
 | any | any | on | null | — | no-op (gate fails) |
 | any | any | on | int | tv / book / music / game / other | no-op (movies-only) |
-| (row missing — first insert) | any | — | — | — | no-op (treat as no transition; SaveMediaItemUseCase covers initial saves) |
+| (row missing — programming error: `update()` on a non-existent id) | owned | on | int | movie | `mirror.add` (idempotent — `previous` is null so `wasOwned=false` and the helper treats it as a transition; harmless because `mirror.add` is idempotent and `SaveMediaItemUseCase` covers the legitimate initial-save path) |
+| (row missing — programming error) | not-owned | — | — | — | no-op (`wasOwned=false`, `isOwned=false` → no transition) |
 
 ### `softDelete(id)` decision table
 

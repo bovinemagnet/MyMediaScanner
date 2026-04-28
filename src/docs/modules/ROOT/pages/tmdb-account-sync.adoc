@@ -134,7 +134,7 @@ Mirror updates fire automatically whenever a movie's ownership status crosses th
 * Soft-deleting an owned movie removes it from the *MyMediaScanner* TMDB list.
 
 Mirror calls run in the background and do not block the local save.
-A failed call surfaces under the settings card's *Push pending now* affordance for retry.
+A failed mirror call is logged but is not retried automatically; re-toggling the mirror setting or re-changing the item's ownership is the user-visible recovery path.
 This behaviour is gated on the *Mirror ownership to TMDB list (movies only)* toggle and only applies to titles that have a TMDB ID.
 TV titles are not mirrored — TMDB v3 lists support movies only.
 
