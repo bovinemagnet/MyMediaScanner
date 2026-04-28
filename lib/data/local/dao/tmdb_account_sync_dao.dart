@@ -33,8 +33,15 @@ class TmdbAccountSyncDao extends DatabaseAccessor<AppDatabase>
         companion.tmdbMediaType.value,
       );
       if (existing == null) {
+        // Auto-generate an id if the caller did not supply one.  All mutation
+        // helpers (toggleWatchlist, toggleFavorite, updateRating) omit the id
+        // because they only know the (tmdbId, mediaType) key; the DAO handles
+        // id assignment so callers stay simple.
+        final resolvedId =
+            companion.id.present ? companion.id : Value(_genId());
         await into(tmdbAccountSyncItemsTable).insert(
           companion.copyWith(
+            id: resolvedId,
             createdAt: Value(now),
             updatedAt: Value(now),
           ),
@@ -251,5 +258,18 @@ class TmdbAccountSyncDao extends DatabaseAccessor<AppDatabase>
 
   Future<void> deleteAll() {
     return delete(tmdbAccountSyncItemsTable).go();
+  }
+
+  /// Generate a lightweight unique id for new bridge rows. Mirrors the
+  /// logic in `TmdbAccountMapper._uuidV4()` so the two formats are
+  /// visually consistent.  The bridge table id is internal-only and
+  /// collision risk on a single device is effectively zero.
+  static String _genId() {
+    final r =
+        DateTime.now().microsecondsSinceEpoch ^ identityHashCode(Object());
+    final hex = r.toRadixString(16).padLeft(16, '0');
+    return 'tmb-${hex.substring(0, 8)}-${hex.substring(8, 12)}'
+        '-${hex.substring(12, 16)}-'
+        '${DateTime.now().millisecondsSinceEpoch.toRadixString(16)}';
   }
 }
