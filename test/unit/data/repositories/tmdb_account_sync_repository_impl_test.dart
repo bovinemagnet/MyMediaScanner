@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -87,5 +88,37 @@ void main() {
 
     expect(summary.lastError, 'Session expired');
     verify(() => storage.delete(key: 'tmdb.session_id')).called(1);
+  });
+
+  test('convertBridgeToLocalItem creates a media_items row and links bridge',
+      () async {
+    // Seed a bridge row.
+    await db.tmdbAccountSyncDao.upsertByTmdbId(
+      TmdbAccountSyncItemsTableCompanion(
+        id: const Value('bridge-1'),
+        tmdbId: const Value(550),
+        tmdbMediaType: const Value('movie'),
+        titleSnapshot: const Value('Fight Club'),
+        posterPathSnapshot: const Value('/poster.jpg'),
+        tmdbRating: const Value(8.0),
+        watchlist: const Value(false),
+        favorite: const Value(true),
+        createdAt: Value(DateTime.now().millisecondsSinceEpoch),
+        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+      ),
+    );
+
+    final mediaItemId = await repo.convertBridgeToLocalItem('bridge-1');
+
+    expect(mediaItemId, isNotEmpty);
+
+    final row = await db.tmdbAccountSyncDao.getByTmdbId(550, 'movie');
+    expect(row?.mediaItemId, mediaItemId);
+
+    final mediaItem = await db.mediaItemsDao.getById(mediaItemId);
+    expect(mediaItem, isNotNull);
+    expect(mediaItem!.title, 'Fight Club');
+    expect(mediaItem.userRating, 4.0,
+        reason: 'TMDB 8.0 → local 4.0 (halved)');
   });
 }

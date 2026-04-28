@@ -1,10 +1,15 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
+import 'package:drift/drift.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mymediascanner/data/local/dao/media_items_dao.dart';
 import 'package:mymediascanner/data/local/dao/tmdb_account_sync_dao.dart';
+import 'package:mymediascanner/data/local/database/app_database.dart';
 import 'package:mymediascanner/data/mappers/tmdb_account_mapper.dart';
 import 'package:mymediascanner/data/remote/api/tmdb/tmdb_account_api.dart';
 import 'package:mymediascanner/data/remote/api/tmdb/models/tmdb_account_list_page_dto.dart';
+import 'package:mymediascanner/domain/entities/ownership_status.dart';
 import 'package:mymediascanner/domain/entities/tmdb_bridge_bucket.dart';
 import 'package:mymediascanner/domain/entities/tmdb_bridge_item.dart';
 import 'package:mymediascanner/domain/entities/tmdb_connection_state.dart';
@@ -251,13 +256,46 @@ class TmdbAccountSyncRepositoryImpl implements ITmdbAccountSyncRepository {
 
   // ── Convert ───────────────────────────────────────────────────
 
-  /// IMPORTANT: This method is a stub for Task 8. The actual
-  /// implementation lives in Task 11 (ConvertBridgeToLocalItem use case).
-  /// Throws UnimplementedError for now.
   @override
   Future<String> convertBridgeToLocalItem(String bridgeId) async {
-    throw UnimplementedError(
-        'convertBridgeToLocalItem is implemented in task 11');
+    final row = await (dao.select(dao.tmdbAccountSyncItemsTable)
+          ..where((t) => t.id.equals(bridgeId)))
+        .getSingleOrNull();
+    if (row == null) {
+      throw ArgumentError('No bridge row with id=$bridgeId');
+    }
+
+    final mediaItemId = 'mi-${DateTime.now().microsecondsSinceEpoch}';
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final mediaType = row.tmdbMediaType == 'tv' ? 'tv' : 'film';
+    final coverUrl = row.posterPathSnapshot == null
+        ? null
+        : 'https://image.tmdb.org/t/p/w500${row.posterPathSnapshot}';
+    final userRating =
+        row.tmdbRating == null ? null : row.tmdbRating! / 2;
+
+    await mediaItemsDao.insertItem(MediaItemsTableCompanion(
+      id: Value(mediaItemId),
+      barcode: const Value(''),
+      barcodeType: const Value(''),
+      mediaType: Value(mediaType),
+      title: Value(row.titleSnapshot ?? 'Unknown'),
+      coverUrl: Value(coverUrl),
+      userRating: Value(userRating),
+      ownershipStatus: Value(OwnershipStatus.owned.dbValue),
+      extraMetadata: Value(jsonEncode({'tmdb_id': row.tmdbId})),
+      dateAdded: Value(now),
+      dateScanned: Value(now),
+      updatedAt: Value(now),
+    ));
+
+    await dao.linkToMediaItem(
+      tmdbId: row.tmdbId,
+      mediaType: row.tmdbMediaType,
+      mediaItemId: mediaItemId,
+    );
+
+    return mediaItemId;
   }
 }
 
