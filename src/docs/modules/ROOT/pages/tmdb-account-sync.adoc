@@ -49,6 +49,16 @@ You can run the import immediately or skip it and run it later from the settings
 TIP: The approval step uses a manual continue button so that you can take as long as you need in the browser.
 The app does not time out waiting for you to tap continue.
 
+=== Automatic return on mobile
+
+On Android and iOS the app registers a custom URL scheme (`mymediascanner://tmdb-callback`).
+After you approve in the system browser, TMDB redirects back to MyMediaScanner and the connection completes automatically — usually within a couple of seconds — so you do not need to tap *I've approved it — continue*.
+
+The manual button remains as a fallback for desktop and for the rare case where the deep link fails (for example, if the browser blocks the redirect).
+
+If you force-quit MyMediaScanner while the browser is still open, the in-memory request token is lost.
+When the deep link fires you will see *Approval link arrived but no connection was in progress — please tap Connect again.*; restart the connect flow to recover.
+
 == Importing Existing TMDB Content
 
 The import dialog lets you choose which buckets to pull from your TMDB account.
