@@ -270,6 +270,7 @@ class TmdbAccountSyncSettings {
     this.enrichScans = true,
     this.twoWaySync = true,
     this.mirrorOwnership = false,
+    this.remoteFirstSaveEnabled = false,
     this.conflictPolicy = TmdbConflictPolicy.preferLatestTimestamp,
     this.lastSyncAt,
     this.lastSyncPulled = 0,
@@ -281,6 +282,7 @@ class TmdbAccountSyncSettings {
   final bool enrichScans;
   final bool twoWaySync;
   final bool mirrorOwnership;
+  final bool remoteFirstSaveEnabled;
   final TmdbConflictPolicy conflictPolicy;
   final DateTime? lastSyncAt;
   final int lastSyncPulled;
@@ -292,6 +294,7 @@ class TmdbAccountSyncSettings {
     bool? enrichScans,
     bool? twoWaySync,
     bool? mirrorOwnership,
+    bool? remoteFirstSaveEnabled,
     TmdbConflictPolicy? conflictPolicy,
     DateTime? lastSyncAt,
     int? lastSyncPulled,
@@ -304,6 +307,8 @@ class TmdbAccountSyncSettings {
         enrichScans: enrichScans ?? this.enrichScans,
         twoWaySync: twoWaySync ?? this.twoWaySync,
         mirrorOwnership: mirrorOwnership ?? this.mirrorOwnership,
+        remoteFirstSaveEnabled:
+            remoteFirstSaveEnabled ?? this.remoteFirstSaveEnabled,
         conflictPolicy: conflictPolicy ?? this.conflictPolicy,
         lastSyncAt: lastSyncAt ?? this.lastSyncAt,
         lastSyncPulled: lastSyncPulled ?? this.lastSyncPulled,
@@ -318,6 +323,7 @@ class TmdbAccountSyncSettingsNotifier
   static const _kEnrichScans = 'tmdb.account_sync.enrich_scans';
   static const _kTwoWay = 'tmdb.account_sync.two_way_sync';
   static const _kMirror = 'tmdb.account_sync.mirror_ownership';
+  static const _kRemoteFirst = 'tmdb.account_sync.remote_first_save_enabled';
   static const _kConflictPolicy = 'tmdb.account_sync.conflict_policy';
   static const _kLastSyncAt = 'tmdb.account_sync.last_sync_at';
   static const _kLastPulled = 'tmdb.account_sync.last_sync_pulled';
@@ -339,6 +345,7 @@ class TmdbAccountSyncSettingsNotifier
       enrichScans: p.getBool(_kEnrichScans) ?? true,
       twoWaySync: p.getBool(_kTwoWay) ?? true,
       mirrorOwnership: p.getBool(_kMirror) ?? false,
+      remoteFirstSaveEnabled: p.getBool(_kRemoteFirst) ?? false,
       conflictPolicy: TmdbConflictPolicy.fromName(p.getString(_kConflictPolicy)),
       lastSyncAt: lastSyncMs == null
           ? null
@@ -371,6 +378,12 @@ class TmdbAccountSyncSettingsNotifier
     state = state.copyWith(mirrorOwnership: v);
     final p = await SharedPreferences.getInstance();
     await p.setBool(_kMirror, v);
+  }
+
+  Future<void> setRemoteFirstSaveEnabled(bool v) async {
+    state = state.copyWith(remoteFirstSaveEnabled: v);
+    final p = await SharedPreferences.getInstance();
+    await p.setBool(_kRemoteFirst, v);
   }
 
   Future<void> setConflictPolicy(TmdbConflictPolicy policy) async {
