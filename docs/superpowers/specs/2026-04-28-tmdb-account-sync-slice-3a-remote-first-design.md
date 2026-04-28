@@ -1,0 +1,428 @@
+# Design: TMDB Account Sync — Slice 3a (remote-first save mode)
+
+**Status:** Approved (brainstorm 2026-04-28)
+**Author:** Paul Snow
+**Created:** 2026-04-28
+**Implements:** PRD requirements TMDB-SYNC-16, TMDB-SYNC-17, TMDB-SYNC-18 from `docs/superpowers/plans/2026-04-28-tmdb-account-sync.md`. Builds on slices A (#70), 2 (#71), and 3b (#72).
+**Target platforms:** All — same widget code as the rest of the feature.
+
+---
+
+## Scope
+
+Lets users save a scanned or manually-added movie/TV title as a TMDB-only bridge row instead of a full local `media_items` entry. The user opts into this mode globally via a Settings toggle (with a confirmation dialog explaining the data limitations); each save action then offers three radio options.
+
+### In scope
+
+1. **Settings master toggle** — "Allow remote-first save (film/TV)". OFF by default. First flip-on shows a warning dialog with the PRD-specified text. Tapping confirm flips the toggle.
+2. **Three-option save selector** on the metadata-confirm and manual-add screens. Visible when account sync enabled, master toggle on, and the item has a TMDB ID + media type ∈ {movie, tv}. Options:
+   - Save locally (default)
+   - Save locally and sync to TMDB
+   - TMDB only
+3. **`SaveTmdbOnlyUseCase`** — creates a bridge row with `media_item_id = null`, no flags set unless slice-2 toggle helpers are also invoked separately. Returns the bridge row ID.
+4. **New `TmdbBridgeBucket.saved` enum value** — filters bridge rows where `media_item_id IS NULL` AND watchlist=false AND favourite=false AND tmdb_rating IS NULL. Surfaces orphan bridge rows that wouldn't otherwise appear in the existing three buckets.
+5. **TMDB Saved bucket view** — reuses the existing `TmdbBucketScreen`, parameterised by the new `saved` enum value. Reachable via:
+   - Settings → TMDB Lists → "TMDB Saved (N)" tile (visible when count > 0)
+   - Desktop sidebar → 4th conditional TMDB entry (visible when count > 0)
+6. **Router** — adds `/tmdb/saved` route (becomes branch index 16 in `StatefulShellRoute.indexedStack`).
+7. **No changes** to the slice-2 push pipeline. Bridge-only saves don't mark dirty; they're written-and-done.
+
+### Out of scope (slice 3c or later)
+
+- TV ownership mirror via TMDB v4 access tokens.
+- Remote-first for music / books / games (PRD restricts to film/TV).
+- Auto-merge when a user later scans a disc whose TMDB ID matches an existing TMDB-only row (current behaviour: the existing slice-A `enrichOne` upserts by `(tmdb_id, mediaType)` so the bridge row updates automatically; the user can use "Convert to local item" if they want a full `media_items` row).
+- Background or scheduled sync.
+
+---
+
+## Open questions resolved during brainstorm
+
+| Question | Resolution |
+|---|---|
+| PRD Q3 — Where do remote-first rows appear? | Bucket views only — never in the main collection grid. |
+| PRD Q7 — What "remote-first" means | No local `media_items` row is created. The bridge row is the entity. The user can later convert via slice-A's `ConvertBridgeToLocalItemUseCase`. |
+| Orphan bridge rows (no flags set) — where do they go? | New 4th bucket `TmdbBridgeBucket.saved` for unflagged bridge rows. Visible in the TMDB Lists section + desktop sidebar only when count > 0. |
+| Save UI shape | Three radio options on metadata-confirm and manual-add, gated on remote-first toggle + media type + TMDB ID. |
+| Settings master toggle | New "Allow remote-first save (film/TV)" toggle with first-flip-on warning dialog. OFF by default. |
+
+---
+
+## Architecture
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                     Save flow (movies / TV)                      │
+│                                                                  │
+│   metadata_confirm_screen.dart    OR    manual_add_screen.dart   │
+│                                                                  │
+│   if (remoteFirstEnabled                                         │
+│       && tmdbId is int                                           │
+│       && mediaType ∈ {movie, tv}):                               │
+│     show RemoteFirstSaveModeSelector                             │
+│                                                                  │
+│   On Save tap:                                                   │
+│     mode == saveLocally        →  SaveMediaItemUseCase  (slice A)│
+│     mode == saveLocallyAndSync →  SaveMediaItemUseCase           │
+│                                   (mirror push fires via slice 2)│
+│     mode == tmdbOnly           →  SaveTmdbOnlyUseCase   (NEW)    │
+└──────────────────────────────────────────────────────────────────┘
+                                          │
+                                          ▼
+                ┌────────────────────────────────────────────┐
+                │  bridge row inserted via                   │
+                │  TmdbAccountSyncDao.upsertByTmdbId         │
+                │   - id (auto-generated by upsertByTmdbId)  │
+                │   - tmdb_id, tmdb_media_type               │
+                │   - title_snapshot, poster_path_snapshot   │
+                │   - barcode (if scanned)                   │
+                │   - media_item_id = NULL                   │
+                │   - watchlist = favorite = false           │
+                │   - tmdb_rating = NULL                     │
+                │   - localDirty = false                     │
+                └────────────────────────────────────────────┘
+```
+
+### TmdbBridgeBucket extension
+
+The existing enum (slice A) is `{watchlist, rated, favourite}`. Slice 3a adds a 4th value:
+
+```dart
+enum TmdbBridgeBucket { watchlist, rated, favourite, saved }
+```
+
+The DAO's `listByBucket` and `watchByBucket` switch arms gain a `case TmdbBridgeBucket.saved:` branch:
+
+```dart
+case TmdbBridgeBucket.saved:
+  // Orphan bridge rows: no media_item_id, no flags, no rating.
+  query.where((t) =>
+    t.watchlist.equals(false) &
+    t.favorite.equals(false) &
+    t.tmdbRating.isNull());
+```
+
+The base `mediaItemId.isNull()` filter (slice A) already excludes rows promoted to local items. Combined, this returns rows where the user has done nothing further with the title — the "I just want it on TMDB" case.
+
+### Why this works
+
+Slice A's import flow already creates bridge rows for watchlist/rated/favourite imports. Slice 2's enrichment flow upserts when the user scans a title. The bridge table was always designed to support orphan rows — slice 3a just gives those rows a UI home for the new save path.
+
+---
+
+## UI flows
+
+### Settings — adding the master toggle
+
+In `TmdbAccountSyncSection`, alongside the existing slice-2 toggles ("Push local changes to TMDB", "Mirror ownership to TMDB list"), add a third toggle:
+
+```dart
+SwitchListTile(
+  title: const Text('Allow remote-first save (film/TV)'),
+  subtitle: const Text(
+    'Save scanned or added titles to TMDB only — no local collection record.'),
+  value: settings.remoteFirstSaveEnabled,
+  onChanged: connectionAsync.value is TmdbConnected
+      ? (v) => _toggleRemoteFirst(context, ref, v)
+      : null,
+),
+```
+
+The `_toggleRemoteFirst` helper:
+
+```dart
+Future<void> _toggleRemoteFirst(
+    BuildContext context, WidgetRef ref, bool requested) async {
+  if (requested) {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => const RemoteFirstWarningDialog(),
+    );
+    if (confirmed != true) return;
+  }
+  await ref
+      .read(tmdbAccountSyncSettingsProvider.notifier)
+      .setRemoteFirstSaveEnabled(requested);
+}
+```
+
+### `RemoteFirstWarningDialog`
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│ Enable remote-first save?                                    │
+│                                                              │
+│ TMDB can store your ratings, favourites, watchlist and list  │
+│ memberships, but it cannot store MyMediaScanner collection   │
+│ details such as barcode, shelf, location, purchase details,  │
+│ lending, tags, reviews, or scan history. In remote-first     │
+│ mode these details are not kept locally and may be           │
+│ unavailable offline.                                         │
+│                                                              │
+│  [ Cancel ]                              [ Enable anyway ]   │
+└──────────────────────────────────────────────────────────────┘
+```
+
+`AlertDialog` with the PRD-specified text. Returns `bool` via `Navigator.pop(context, true|false)`.
+
+### `RemoteFirstSaveModeSelector`
+
+A row of three radio options, embedded near the Save button on metadata-confirm and manual-add screens:
+
+```dart
+enum SaveMode { saveLocally, saveLocallyAndSync, tmdbOnly }
+
+class RemoteFirstSaveModeSelector extends StatelessWidget {
+  const RemoteFirstSaveModeSelector({
+    super.key,
+    required this.value,
+    required this.onChanged,
+  });
+  final SaveMode value;
+  final ValueChanged<SaveMode> onChanged;
+  ...
+}
+```
+
+Visible **only** when:
+- `accountSyncEnabled == true`
+- `remoteFirstSaveEnabled == true`
+- The item has `extraMetadata['tmdb_id'] is int`
+- `extraMetadata['media_type'] == 'movie' || 'tv'`
+
+When any of those is false, the selector renders `SizedBox.shrink()` and the screen's existing save behaviour (always-local) prevails.
+
+### Save dispatch on metadata-confirm
+
+The screen already knows when to fire `SaveMediaItemUseCase`. We branch on the selector's selected mode:
+
+```dart
+final mode = _saveMode; // SaveMode.saveLocally by default
+switch (mode) {
+  case SaveMode.saveLocally:
+  case SaveMode.saveLocallyAndSync:
+    // Existing slice-A save path. Slice 2's mirror trigger
+    // automatically fires when ownership is owned + mirror toggle
+    // is enabled — no special handling here.
+    final saved = await ref
+        .read(saveMediaItemUseCaseProvider)
+        .execute(...);
+    // Slice 2 enrichment / push hooks already run.
+    break;
+  case SaveMode.tmdbOnly:
+    await ref
+        .read(saveTmdbOnlyUseCaseProvider)
+        .call(
+          tmdbId: tmdbId!,
+          mediaType: mediaType!,
+          title: edited.title,
+          posterPath: edited.coverPath, // already a TMDB path
+          barcode: scannedBarcode, // null when from manual-add
+        );
+    // No further push needed — bridge row is the persisted state.
+    break;
+}
+```
+
+Manual-add screen mirrors this dispatch logic.
+
+### TMDB Saved bucket view
+
+`TmdbBucketScreen(bucket: TmdbBridgeBucket.saved)` renders the same way as the other three buckets. The screen's `_title` and `_emptyMessage` getters gain new cases:
+
+```dart
+String get _title => switch (bucket) {
+  TmdbBridgeBucket.watchlist => 'TMDB Watchlist',
+  TmdbBridgeBucket.rated => 'TMDB Rated',
+  TmdbBridgeBucket.favourite => 'TMDB Favourites',
+  TmdbBridgeBucket.saved => 'TMDB Saved',
+};
+
+String get _emptyMessage => switch (bucket) {
+  ...
+  TmdbBridgeBucket.saved =>
+    'No remote-first saves yet. When you save a movie or TV title '
+    'as TMDB only, it will appear here.',
+};
+```
+
+The existing per-row actions (Open on TMDB, Convert to local item) work unchanged. The slice-2 watchlist-only actions ("Mark as owned", "Remove from TMDB watchlist") are still gated on `bucket == TmdbBridgeBucket.watchlist` — unchanged.
+
+### TmdbListsSection — 4th tile
+
+```dart
+// inside the Card, after the three existing tiles, before the
+// conditional Resolve Conflicts tile:
+ref.watch(tmdbBridgeBucketProvider(TmdbBridgeBucket.saved)).maybeWhen(
+  data: (rows) => rows.isEmpty
+      ? const SizedBox.shrink()
+      : ListTile(
+          leading: const Icon(Icons.cloud_outlined),
+          title: Text('TMDB Saved (${rows.length})'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => GoRouter.of(context).go('/tmdb/saved'),
+        ),
+  orElse: () => const SizedBox.shrink(),
+),
+```
+
+### Desktop sidebar — 4th TMDB entry
+
+In `_DesktopSidebar`, after the three existing TMDB sidebar items, add a conditional 4th:
+
+```dart
+final savedAsync = ref.watch(tmdbBridgeBucketProvider(TmdbBridgeBucket.saved));
+final savedCount = savedAsync.maybeWhen(
+  data: (rows) => rows.length,
+  orElse: () => 0,
+);
+if (showTmdb && savedCount > 0)
+  _SidebarDestination(
+    Icons.cloud_outlined,
+    Icons.cloud_outlined,
+    'TMDB Saved ($savedCount)',
+  ),
+```
+
+Branch index alignment: the existing identity-mapping comment from slice A still applies. The TMDB Saved entry sits at sidebar position 16 → router branch 16. The Resolve Conflicts entry from slice 2 was previously at branch 15 — now shifts to 17 (or stays at 15 with branch 16 being TMDB Saved, depending on declaration order). Lock down the order in the router file: TMDB Saved before Resolve Conflicts so saved is branch 15 and conflicts is branch 16. Update the sidebar mapping comment accordingly.
+
+Actually — re-checking: slice 2's resolve-conflicts is branch 15. The new TMDB Saved becomes branch 16. Both sidebar items are conditional. As long as they're appended in sidebar order matching their router branch order, the identity mapping holds.
+
+### Router branch addition
+
+Add to `lib/app/router.dart`:
+
+```dart
+StatefulShellBranch(routes: [
+  GoRoute(
+    path: '/tmdb/saved',
+    pageBuilder: (_, _) => const NoTransitionPage(
+        child: TmdbBucketScreen(bucket: TmdbBridgeBucket.saved)),
+  ),
+]),
+```
+
+Position this branch before the slice-2 resolve-conflicts branch (so TMDB Saved is branch 15 and Resolve Conflicts becomes branch 16). This keeps the existing slice-A 12/13/14 unchanged.
+
+---
+
+## Data flow examples
+
+### Scan a movie → save TMDB only
+
+1. User scans a Blu-ray. Metadata lookup finds TMDB ID 550 (Fight Club).
+2. Metadata-confirm screen renders. Account sync is enabled, remote-first is enabled, item is movie with TMDB ID — `RemoteFirstSaveModeSelector` is visible.
+3. User picks "TMDB only", taps Save.
+4. `SaveTmdbOnlyUseCase.call(tmdbId: 550, mediaType: 'movie', title: 'Fight Club', posterPath: '/poster.jpg', barcode: '5051892002172')`.
+5. Repository upserts a bridge row with the supplied fields, all flags false, `media_item_id = null`.
+6. Snackbar: "Saved to TMDB". Screen pops back.
+7. The new bridge row appears in TMDB Saved bucket. Optional: when the user opens metadata-confirm or item-detail later for the same title, slice A's `enrichOne` flow updates the row with TMDB account state.
+
+### Scan, save TMDB only, later add to watchlist
+
+Slice 2's `ToggleTmdbWatchlistUseCase` operates on the bridge row by `(tmdb_id, mediaType)`. After flipping the watchlist on, the row now appears in TMDB Watchlist instead of TMDB Saved (the saved-bucket filter excludes flagged rows).
+
+### Scan, save TMDB only, later acquire the disc
+
+User finds a physical copy. They scan it again. Metadata-confirm finds the existing bridge row (slice A's enrichment). They choose "Save locally" or "Convert to local item" from the bucket view. The bridge row's `media_item_id` is populated; the new local row carries the rating + watchlist state forward.
+
+---
+
+## Mobile readiness
+
+Slice 3a introduces no platform-specific code. The new widgets (`RemoteFirstSaveModeSelector`, `RemoteFirstWarningDialog`) are standard Material 3. The new bucket view reuses the slice-A `TmdbBucketScreen` which already conditional-renders `ScreenHeader` on desktop and `AppBar` on mobile.
+
+The settings master toggle joins the existing slice-2 toggles in the cross-platform `TmdbAccountSyncSection` (un-gated for mobile in slice 3b). Mobile users get the full feature.
+
+---
+
+## Testing
+
+### Unit tests
+
+- `save_tmdb_only_usecase_test.dart` — happy path (creates bridge row), idempotent re-save (upsert merges), mediaType validation (movie/tv only — throws on others), missing TMDB ID guard (throws).
+- `tmdb_account_sync_dao_test.dart` (extend) — `listByBucket(TmdbBridgeBucket.saved)` returns only orphan rows; flagged rows go to their respective buckets, not saved.
+
+### Widget tests
+
+- `remote_first_save_mode_selector_test.dart` — three radios visible when settings + media type + TMDB ID gates pass; hidden otherwise.
+- `remote_first_warning_dialog_test.dart` — confirm/cancel return correct bool.
+- `tmdb_lists_section_test.dart` (extend slice 3b's) — TMDB Saved tile appears when bucket count > 0; absent when count == 0.
+
+### Integration test
+
+- Extend `integration_test/tmdb_account_sync_test.dart` — connect → enable remote-first → save TMDB only → verify bridge row exists with `media_item_id = null` and no flags set → verify it appears in `listByBucket(TmdbBridgeBucket.saved)`.
+
+---
+
+## Files
+
+### Create (3)
+
+- `lib/domain/usecases/save_tmdb_only_usecase.dart`
+- `lib/presentation/screens/metadata_confirm/widgets/remote_first_save_mode_selector.dart`
+- `lib/presentation/screens/settings/widgets/remote_first_warning_dialog.dart`
+
+### Modify (~10)
+
+- `lib/domain/entities/tmdb_bridge_bucket.dart` — add `saved` enum value.
+- `lib/data/local/dao/tmdb_account_sync_dao.dart` — extend `listByBucket`/`watchByBucket` switch arms for `saved`.
+- `lib/presentation/providers/settings_provider.dart` — add `remoteFirstSaveEnabled` field, setter, SharedPreferences key, in `TmdbAccountSyncSettings` and `TmdbAccountSyncSettingsNotifier`.
+- `lib/presentation/providers/repository_providers.dart` — register `saveTmdbOnlyUseCaseProvider`.
+- `lib/presentation/screens/settings/widgets/tmdb_account_sync_section.dart` — add the new toggle + warning-dialog hook.
+- `lib/presentation/screens/settings/widgets/tmdb_lists_section.dart` — add 4th tile gated on bucket count.
+- `lib/presentation/screens/metadata_confirm/metadata_confirm_screen.dart` — embed selector + branch on save mode.
+- `lib/presentation/screens/manual_add/manual_add_screen.dart` — same.
+- `lib/presentation/screens/tmdb/tmdb_bucket_screen.dart` — add `saved` to title/empty-message switch.
+- `lib/app/router.dart` — add `/tmdb/saved` route (positioned before the slice-2 resolve-conflicts branch).
+- `lib/presentation/widgets/app_scaffold.dart` — add 4th conditional sidebar entry; update branch-index mapping comment.
+
+### Tests (4 new + 1 extension)
+
+- `test/unit/domain/usecases/save_tmdb_only_usecase_test.dart`
+- `test/unit/data/local/dao/tmdb_account_sync_dao_test.dart` (extend)
+- `test/widget/screens/metadata_confirm/widgets/remote_first_save_mode_selector_test.dart`
+- `test/widget/screens/settings/widgets/remote_first_warning_dialog_test.dart`
+- `integration_test/tmdb_account_sync_test.dart` (extend)
+
+---
+
+## Acceptance criteria
+
+- A user can enable "Allow remote-first save (film/TV)" in Settings, view the warning dialog, and confirm to flip the toggle.
+- After enabling, scanning a movie or TV title shows three save options on metadata-confirm. Manual-add shows the same.
+- Picking "TMDB only" creates a bridge row with `media_item_id = null` and no flags set. The row appears in the TMDB Saved bucket view.
+- The main collection grid does NOT show TMDB-only rows.
+- "Convert to local item" from the bucket view promotes the bridge row to a full `media_items` entry (slice A behaviour, unchanged).
+- The selector is hidden when remote-first toggle is off, when account sync is disabled, when the item is not movie/tv, or when the item lacks a TMDB ID.
+- All slice A/2/3b tests still pass.
+- iOS / Android / Linux compile builds succeed.
+- `flutter analyze` clean.
+
+---
+
+## Risks and mitigations
+
+| Risk | Mitigation |
+|---|---|
+| Branch-index alignment in router/sidebar drifts | Document the order explicitly (TMDB Saved before Resolve Conflicts in both router and sidebar). Update the slice-A identity-mapping comment. |
+| Users confuse "TMDB only" with "Save locally and sync" | Selector subtitle text spells out the trade-off. Three distinct radio options eliminate ambiguity. |
+| User toggles remote-first on, scans a title, picks "TMDB only", later wants the local entry | Slice A's `ConvertBridgeToLocalItemUseCase` already handles this — no work needed. Document in settings subtitle. |
+| Auto-fired enrichment on a TMDB-only saved row creates duplicate entries | Slice A's `enrichOne` upserts by `(tmdb_id, mediaType)` — same row updates. No duplication risk. |
+| Bucket index out of sync (e.g., a saved row gains a watchlist flag — does it move to Watchlist bucket?) | Yes, by design. The DAO's bucket filters are on flag values, not on row history. As soon as a flag flips, the row moves. The `listByBucket(saved)` filter excludes any flagged row. |
+
+---
+
+## Implementation order (high level — detailed plan in writing-plans output)
+
+1. Add `TmdbBridgeBucket.saved` enum value and DAO bucket-switch branch.
+2. `SaveTmdbOnlyUseCase` + tests.
+3. Settings: `remoteFirstSaveEnabled` field + notifier setter + SharedPreferences key + `RemoteFirstWarningDialog` widget.
+4. Settings card: embed the new toggle + warning-dialog hook.
+5. `RemoteFirstSaveModeSelector` widget + tests.
+6. Wire selector + dispatch into metadata-confirm and manual-add screens.
+7. `TmdbBucketScreen` title/empty-message extension for `saved`.
+8. `TmdbListsSection` 4th tile.
+9. Router `/tmdb/saved` branch + sidebar entry.
+10. Integration test extension.
+11. Final verification (analyzer + tests + Linux/Android builds).
