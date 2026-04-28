@@ -17,6 +17,8 @@ Use TMDB Account Sync if you:
 * Want rating, watchlist, and favourite changes you make in MyMediaScanner to be reflected on TMDB automatically.
 * Would like to mirror your physical ownership of movies to a private TMDB list so other TMDB-aware services can see what you own.
 * Scan or save movies and TV shows and want to see at a glance whether you have already rated or watchlisted that title on TMDB.
+* Want to record a movie or TV title on TMDB without adding it to your local collection — for example, titles you have watched but do not physically own and do not intend to track locally.
+  Enable remote-first save mode (see <<_remote_first_save_film_tv>>) to keep these titles on TMDB only.
 
 The feature covers film and TV items only.
 Music, books, games, and other media types are not synchronised to TMDB.
@@ -123,6 +125,100 @@ TMDB v3 list endpoints support movies exclusively — TV series ownership cannot
 When you mark a film as owned (for example by scanning a Blu-ray or tapping *Mark as Owned* in the TMDB Watchlist view), the app adds it to the mirror list.
 When a movie is removed from your collection, it is removed from the list.
 
+== Remote-First Save (Film/TV)
+
+Remote-first save mode lets you store a film or TV title on TMDB without creating a local collection entry.
+This is useful when you have watched something, want it on TMDB, but do not own a physical copy and have no need for MyMediaScanner-specific tracking details such as barcodes, shelves, or lending history.
+
+=== Enabling the Toggle
+
+A *Allow remote-first save (film/TV)* toggle appears on the *TMDB Account Sync* settings card.
+It is *off by default* and is disabled until your TMDB account is connected.
+
+When you flip the toggle on for the first time (and on every subsequent OFF→ON transition), a warning dialog is shown:
+
+____
+TMDB can store your ratings, favourites, watchlist and list memberships, but it cannot store MyMediaScanner collection details such as barcode, shelf, location, purchase details, lending, tags, reviews, or scan history.
+In remote-first mode these details are not kept locally and may be unavailable offline.
+____
+
+Tap *Enable anyway* to confirm and activate the toggle.
+Tap *Cancel* to leave the toggle off.
+
+=== Save Destination Selector
+
+When remote-first save mode is active a three-option selector appears on two screens:
+
+* The *metadata-confirm* screen (shown immediately after a successful barcode scan, because the scanner already resolved the TMDB ID before the screen opened).
+* The *manual-add* screen (the selector appears as soon as you pick a TMDB-resolved result from the search step, reacting to the form's metadata-changed callback).
+
+The selector is only shown when *all* of the following are true:
+
+* Your TMDB account is connected.
+* The *Allow remote-first save* toggle is on.
+* The title has a TMDB ID.
+* The media type is movie or TV series.
+
+The three options are:
+
+Save locally (default)::
+Adds the title to your collection as a standard `media_items` record.
+Nothing is pushed to TMDB.
+Choose this for items you own physically and want to track with full MyMediaScanner detail.
+
+Save locally and sync to TMDB::
+Adds the title to your local collection *and* immediately pushes any rating, watchlist flag, and favourite flag to TMDB via the two-way sync pipeline.
+Use this when you own the item and also want it reflected on your TMDB account.
+
+TMDB only::
+Stores the title on TMDB only — no local `media_items` record is created.
+A lightweight bridge row is written internally so the title can be found and promoted later.
+The title appears in the <<_tmdb_saved_bucket, TMDB Saved>> bucket view; it does *not* appear in your main collection grid.
+
+NOTE: The *Save locally* option is the default.
+If you scan a title and do not change the selector, behaviour is identical to scanning before this feature existed — the item goes straight into your local collection.
+
+=== TMDB Saved Bucket
+
+[[_tmdb_saved_bucket]]
+Titles saved with the *TMDB only* option are bridge rows with no linked `media_items` entry.
+They are filtered into a dedicated fourth bucket called *TMDB Saved*, separate from Watchlist, Rated, and Favourites.
+
+The bucket is reachable in two ways:
+
+* *Desktop sidebar* — a conditional *TMDB Saved (N)* entry appears beneath the other TMDB sidebar entries, but only when the count is greater than zero.
+* *Settings → API Integrations → TMDB Account Sync → TMDB Lists tiles* — a *TMDB Saved (N)* tile appears at the bottom of the list, again only when the count is greater than zero.
+
+Each row shows a poster thumbnail, title, and media type.
+Available actions are the standard *Open on TMDB* and *Convert to local item*.
+The watchlist-specific actions (*Mark as owned* and *Remove from TMDB watchlist*) do not appear in this bucket.
+
+The empty state message reads: _No remote-first saves yet.
+When you save a movie or TV title as TMDB only, it will appear here._
+
+=== Promoting a TMDB-Only Title
+
+A title in the TMDB Saved bucket is not lost.
+Tap *Convert to local item* on any row to create a full `media_items` record, picking up any rating, watchlist flag, or favourite flag the bridge row has accumulated.
+
+If you add a watchlist flag or favourite flag to a title that is currently in the Saved bucket, the bridge row moves out of Saved and into the Watchlist or Favourites bucket automatically.
+Setting a rating on a Saved-bucket title moves it to the Rated bucket.
+The bucket a title appears in is determined entirely by its current flag state, not by how it was originally saved.
+
+=== Disconnecting and Bridge Rows
+
+Disconnecting your TMDB account does *not* delete bridge rows created in remote-first mode.
+Re-connecting brings the same rows back into the TMDB Saved (and other) bucket views.
+If you want to remove them permanently, use *Settings → Storage → Clear TMDB bridge data* after disconnecting.
+
+=== Limitations
+
+Remote-first save applies to film and TV only.
+Music albums, books, and games always save locally regardless of the toggle state.
+
+TMDB cannot store MyMediaScanner-specific fields such as barcode, shelf assignment, purchase details, lending records, tags, reviews, or scan history.
+If you need any of those fields, choose *Save locally* instead.
+
 == Conflict Policy
 
 A conflict arises when both the local value and the TMDB value for the same field (such as a rating) have changed since the last sync.
@@ -149,16 +245,20 @@ The <<_resolve_conflicts_screen>> becomes accessible and lists all rows awaiting
 
 == TMDB Lists Views
 
-Three dedicated views surface the content imported from your TMDB account:
+Four dedicated views surface the content linked to your TMDB account:
 
 * *TMDB Watchlist* — movies and TV series on your TMDB watchlist.
 * *TMDB Rated* — movies and TV series you have rated on TMDB.
 * *TMDB Favourites* — movies and TV series you have marked as a favourite on TMDB.
+* *TMDB Saved* — titles saved in remote-first mode with no local collection entry (see <<_tmdb_saved_bucket>>).
+  This view appears only when there is at least one title in the bucket.
 
 On desktop, these appear as entries in the sidebar under a *TMDB* group when your account is connected.
+The TMDB Saved entry is conditional and only appears when its count is greater than zero.
 
 On mobile, navigate to *Settings → API Integrations → TMDB Account Sync* and scroll down.
-A *TMDB Lists* section provides tiles for each of the three views.
+A *TMDB Lists* section provides tiles for each view.
+The TMDB Saved tile appears only when its count is greater than zero.
 
 === Rows and Actions
 
@@ -279,6 +379,29 @@ Log in to `https://www.themoviedb.org/` and check your ratings, watchlist, and f
 
 If the conflict policy is set to *Ask me each time* and two-way sync is on, each pull can introduce new conflicts if both sides are being edited.
 Consider switching the policy to *Prefer latest timestamp* for less active accounts.
+
+=== The save destination selector does not appear
+
+The three-option save selector is gated by four conditions that must all be true simultaneously:
+your TMDB account is connected, the *Allow remote-first save (film/TV)* toggle is on, the title has a resolved TMDB ID, and the media type is movie or TV series.
+
+If the selector is missing, check each condition in turn.
+If the toggle is greyed out, connect your TMDB account first.
+
+=== A TMDB-only title has disappeared from the Saved bucket
+
+If you (or another device via two-way sync) added a watchlist flag, favourite flag, or rating to the title, the bridge row moved to the appropriate bucket (Watchlist, Favourites, or Rated) and no longer satisfies the Saved filter.
+Navigate to that bucket to find it.
+
+=== Remote-first save does not appear for music, books, or games
+
+Remote-first save applies to film and TV items only.
+TMDB does not provide rating or list endpoints for other media types, so those items always save locally.
+
+=== Collection details are missing for a TMDB-only title after converting it to a local item
+
+Titles saved with *TMDB only* do not carry MyMediaScanner-specific fields such as barcode, shelf, location, purchase details, lending records, tags, reviews, or scan history — those details were never stored.
+After converting to a local item you can add all of those fields manually from the item-detail screen.
 
 == Related Pages
 
