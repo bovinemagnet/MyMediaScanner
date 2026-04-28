@@ -230,6 +230,13 @@ Standard scanning use is well within limits.
   If the barcode belongs to a specific season box set, the description may reflect the overall series rather than the season.
   Edit the item's metadata manually after saving.
 
+==== TMDB Account Sync
+
+In addition to metadata lookup, MyMediaScanner can connect to your personal TMDB account to import ratings, watchlist entries, and favourites, and optionally push local changes back to TMDB.
+This is an optional, opt-in feature that operates independently of your metadata API key and of PostgreSQL sync.
+
+See xref:tmdb-account-sync.adoc[TMDB Account Sync] for a full setup and usage guide.
+
 ---
 
 [#imdb-id-scanning]
