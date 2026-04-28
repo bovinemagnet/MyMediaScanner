@@ -125,6 +125,19 @@ TMDB v3 list endpoints support movies exclusively — TV series ownership cannot
 When you mark a film as owned (for example by scanning a Blu-ray or tapping *Mark as Owned* in the TMDB Watchlist view), the app adds it to the mirror list.
 When a movie is removed from your collection, it is removed from the list.
 
+=== Automatic mirroring on ownership changes
+
+Mirror updates fire automatically whenever a movie's ownership status crosses the owned boundary:
+
+* Marking an owned movie as wishlist, sold, lent, borrowed, or returned removes it from the *MyMediaScanner* TMDB list.
+* Promoting a wishlist movie to owned — for example via the *Convert to owned* action on a wishlist row — adds it to the *MyMediaScanner* TMDB list.
+* Soft-deleting an owned movie removes it from the *MyMediaScanner* TMDB list.
+
+Mirror calls run in the background and do not block the local save.
+A failed mirror call is logged but is not retried automatically; re-toggling the mirror setting or re-changing the item's ownership is the user-visible recovery path.
+This behaviour is gated on the *Mirror ownership to TMDB list (movies only)* toggle and only applies to titles that have a TMDB ID.
+TV titles are not mirrored — TMDB v3 lists support movies only.
+
 == Remote-First Save (Film/TV)
 
 Remote-first save mode lets you store a film or TV title on TMDB without creating a local collection entry.

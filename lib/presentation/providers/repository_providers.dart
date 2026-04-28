@@ -54,9 +54,20 @@ import 'package:mymediascanner/presentation/providers/database_provider.dart';
 import 'package:mymediascanner/presentation/providers/settings_provider.dart';
 
 final mediaItemRepositoryProvider = Provider<IMediaItemRepository>((ref) {
+  // Optional mirror dep — null when TMDB API key isn't configured. The
+  // repository tolerates a null mirror and skips the auto-remove hook.
+  MirrorOwnershipChangeUseCase? mirror;
+  try {
+    mirror = ref.watch(mirrorOwnershipChangeUseCaseProvider);
+  } catch (_) {
+    mirror = null;
+  }
   return MediaItemRepositoryImpl(
     mediaItemsDao: ref.watch(mediaItemsDaoProvider),
     syncLogDao: ref.watch(syncLogDaoProvider),
+    mirror: mirror,
+    readMirrorEnabled: () =>
+        ref.read(tmdbAccountSyncSettingsProvider).mirrorOwnership,
   );
 });
 

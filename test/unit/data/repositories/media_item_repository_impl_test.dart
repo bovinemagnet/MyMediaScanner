@@ -1,10 +1,15 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:mymediascanner/data/local/database/app_database.dart';
 import 'package:mymediascanner/data/repositories/media_item_repository_impl.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/domain/entities/ownership_status.dart';
+import 'package:mymediascanner/domain/repositories/i_tmdb_account_sync_repository.dart';
+import 'package:mymediascanner/domain/usecases/mirror_ownership_change_usecase.dart';
+
+class _MockMirror extends Mock implements MirrorOwnershipChangeUseCase {}
 
 void main() {
   late AppDatabase db;
@@ -161,6 +166,190 @@ void main() {
           .watchAll(searchQuery: 'Dune', tagIds: const ['t1'])
           .first;
       expect(filtered.map((e) => e.id).toSet(), {'b'});
+    });
+  });
+
+  group('mirror auto-remove hook (update + softDelete)', () {
+    late _MockMirror mirror;
+    late bool mirrorEnabled;
+
+    setUp(() {
+      mirror = _MockMirror();
+      mirrorEnabled = true;
+      when(() => mirror.add(tmdbId: any(named: 'tmdbId'))).thenAnswer(
+          (_) async => const TmdbPushResult(success: true));
+      when(() => mirror.remove(tmdbId: any(named: 'tmdbId'))).thenAnswer(
+          (_) async => const TmdbPushResult(success: true));
+    });
+
+    MediaItemRepositoryImpl makeRepo() => MediaItemRepositoryImpl(
+          mediaItemsDao: db.mediaItemsDao,
+          syncLogDao: db.syncLogDao,
+          mirror: mirror,
+          readMirrorEnabled: () => mirrorEnabled,
+        );
+
+    MediaItem movieItem({
+      required String id,
+      required OwnershipStatus ownership,
+      int? tmdbId = 550,
+      String mediaType = 'movie',
+    }) {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      return MediaItem(
+        id: id,
+        title: 'Fight Club',
+        mediaType: MediaType.film,
+        ownershipStatus: ownership,
+        barcode: '',
+        barcodeType: '',
+        extraMetadata: {
+          'tmdb_id': tmdbId,
+          'media_type': mediaType,
+        }..removeWhere((_, v) => v == null),
+        dateAdded: now,
+        dateScanned: now,
+        updatedAt: now,
+      );
+    }
+
+    // Seed using repo.save — same insertion path used by all other tests in
+    // this file.  We must not use repo.update here because that would invoke
+    // the very hook under test.
+    Future<void> seed(MediaItem item) => repo.save(item);
+
+    test('update non-owned → owned fires mirror.add', () async {
+      final r = makeRepo();
+      final wishlist =
+          movieItem(id: 'a', ownership: OwnershipStatus.wishlist);
+      await seed(wishlist);
+
+      await r.update(movieItem(id: 'a', ownership: OwnershipStatus.owned));
+
+      verify(() => mirror.add(tmdbId: 550)).called(1);
+      verifyNever(() => mirror.remove(tmdbId: any(named: 'tmdbId')));
+    });
+
+    test('update owned → not-owned fires mirror.remove', () async {
+      final r = makeRepo();
+      await seed(movieItem(id: 'b', ownership: OwnershipStatus.owned));
+
+      await r.update(
+          movieItem(id: 'b', ownership: OwnershipStatus.wishlist));
+
+      verify(() => mirror.remove(tmdbId: 550)).called(1);
+      verifyNever(() => mirror.add(tmdbId: any(named: 'tmdbId')));
+    });
+
+    test('update owned → owned (rating-only) does not fire mirror', () async {
+      final r = makeRepo();
+      await seed(movieItem(id: 'c', ownership: OwnershipStatus.owned));
+
+      await r.update(
+        movieItem(id: 'c', ownership: OwnershipStatus.owned)
+            .copyWith(userRating: 4.5),
+      );
+
+      verifyNever(() => mirror.add(tmdbId: any(named: 'tmdbId')));
+      verifyNever(() => mirror.remove(tmdbId: any(named: 'tmdbId')));
+    });
+
+    test('update with mirror disabled does not fire mirror', () async {
+      mirrorEnabled = false;
+      final r = makeRepo();
+      await seed(movieItem(id: 'd', ownership: OwnershipStatus.wishlist));
+
+      await r.update(
+          movieItem(id: 'd', ownership: OwnershipStatus.owned));
+
+      verifyNever(() => mirror.add(tmdbId: any(named: 'tmdbId')));
+    });
+
+    test('update non-owned → owned for TV does not fire mirror', () async {
+      final r = makeRepo();
+      final tvItem = movieItem(
+        id: 'e',
+        ownership: OwnershipStatus.wishlist,
+        mediaType: 'tv',
+      );
+      await seed(tvItem);
+
+      await r.update(tvItem.copyWith(ownershipStatus: OwnershipStatus.owned));
+
+      verifyNever(() => mirror.add(tmdbId: any(named: 'tmdbId')));
+    });
+
+    test('update non-owned → owned without TMDB ID does not fire mirror',
+        () async {
+      final r = makeRepo();
+      final noTmdb = movieItem(
+        id: 'f',
+        ownership: OwnershipStatus.wishlist,
+        tmdbId: null,
+      );
+      await seed(noTmdb);
+
+      await r.update(
+          noTmdb.copyWith(ownershipStatus: OwnershipStatus.owned));
+
+      verifyNever(() => mirror.add(tmdbId: any(named: 'tmdbId')));
+    });
+
+    test('softDelete on owned movie fires mirror.remove', () async {
+      final r = makeRepo();
+      await seed(movieItem(id: 'g', ownership: OwnershipStatus.owned));
+
+      await r.softDelete('g');
+
+      verify(() => mirror.remove(tmdbId: 550)).called(1);
+    });
+
+    test('softDelete on non-owned item does not fire mirror', () async {
+      final r = makeRepo();
+      await seed(movieItem(id: 'h', ownership: OwnershipStatus.wishlist));
+
+      await r.softDelete('h');
+
+      verifyNever(() => mirror.remove(tmdbId: any(named: 'tmdbId')));
+    });
+
+    test('softDelete on owned TV item does not fire mirror', () async {
+      final r = makeRepo();
+      final tvOwned = movieItem(
+        id: 'i',
+        ownership: OwnershipStatus.owned,
+        mediaType: 'tv',
+      );
+      await seed(tvOwned);
+
+      await r.softDelete('i');
+
+      verifyNever(() => mirror.remove(tmdbId: any(named: 'tmdbId')));
+    });
+
+    test('update fires mirror.add when tmdb_id is stored as a String',
+        () async {
+      // Mirrors the importer path that round-trips ids as strings.
+      final r = makeRepo();
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final wishlist = MediaItem(
+        id: 'j',
+        title: 'Fight Club',
+        mediaType: MediaType.film,
+        ownershipStatus: OwnershipStatus.wishlist,
+        barcode: '',
+        barcodeType: '',
+        extraMetadata: const {'tmdb_id': '550', 'media_type': 'movie'},
+        dateAdded: now,
+        dateScanned: now,
+        updatedAt: now,
+      );
+      await seed(wishlist);
+
+      await r.update(
+          wishlist.copyWith(ownershipStatus: OwnershipStatus.owned));
+
+      verify(() => mirror.add(tmdbId: 550)).called(1);
     });
   });
 }
