@@ -260,3 +260,113 @@ class PostgresConfigNotifier extends AsyncNotifier<PostgresConfig?> {
     ref.invalidateSelf();
   }
 }
+
+// ── TMDB account-sync prefs ─────────────────────────────────────
+
+class TmdbAccountSyncSettings {
+  const TmdbAccountSyncSettings({
+    this.enabled = false,
+    this.enrichScans = true,
+    this.lastSyncAt,
+    this.lastSyncPulled = 0,
+    this.lastSyncFailed = 0,
+    this.lastError,
+  });
+
+  final bool enabled;
+  final bool enrichScans;
+  final DateTime? lastSyncAt;
+  final int lastSyncPulled;
+  final int lastSyncFailed;
+  final String? lastError;
+
+  TmdbAccountSyncSettings copyWith({
+    bool? enabled,
+    bool? enrichScans,
+    DateTime? lastSyncAt,
+    int? lastSyncPulled,
+    int? lastSyncFailed,
+    String? lastError,
+    bool clearLastError = false,
+  }) =>
+      TmdbAccountSyncSettings(
+        enabled: enabled ?? this.enabled,
+        enrichScans: enrichScans ?? this.enrichScans,
+        lastSyncAt: lastSyncAt ?? this.lastSyncAt,
+        lastSyncPulled: lastSyncPulled ?? this.lastSyncPulled,
+        lastSyncFailed: lastSyncFailed ?? this.lastSyncFailed,
+        lastError: clearLastError ? null : (lastError ?? this.lastError),
+      );
+}
+
+class TmdbAccountSyncSettingsNotifier
+    extends Notifier<TmdbAccountSyncSettings> {
+  static const _kEnabled = 'tmdb.account_sync.enabled';
+  static const _kEnrichScans = 'tmdb.account_sync.enrich_scans';
+  static const _kLastSyncAt = 'tmdb.account_sync.last_sync_at';
+  static const _kLastPulled = 'tmdb.account_sync.last_sync_pulled';
+  static const _kLastFailed = 'tmdb.account_sync.last_sync_failed';
+  static const _kLastError = 'tmdb.account_sync.last_error';
+
+  @override
+  TmdbAccountSyncSettings build() {
+    _load();
+    return const TmdbAccountSyncSettings();
+  }
+
+  Future<void> _load() async {
+    final p = await SharedPreferences.getInstance();
+    if (!ref.mounted) return;
+    final lastSyncMs = p.getInt(_kLastSyncAt);
+    state = TmdbAccountSyncSettings(
+      enabled: p.getBool(_kEnabled) ?? false,
+      enrichScans: p.getBool(_kEnrichScans) ?? true,
+      lastSyncAt: lastSyncMs == null
+          ? null
+          : DateTime.fromMillisecondsSinceEpoch(lastSyncMs),
+      lastSyncPulled: p.getInt(_kLastPulled) ?? 0,
+      lastSyncFailed: p.getInt(_kLastFailed) ?? 0,
+      lastError: p.getString(_kLastError),
+    );
+  }
+
+  Future<void> setEnabled(bool v) async {
+    state = state.copyWith(enabled: v);
+    final p = await SharedPreferences.getInstance();
+    await p.setBool(_kEnabled, v);
+  }
+
+  Future<void> setEnrichScans(bool v) async {
+    state = state.copyWith(enrichScans: v);
+    final p = await SharedPreferences.getInstance();
+    await p.setBool(_kEnrichScans, v);
+  }
+
+  Future<void> recordSyncResult({
+    required int pulled,
+    required int failed,
+    String? error,
+  }) async {
+    final now = DateTime.now();
+    state = state.copyWith(
+      lastSyncAt: now,
+      lastSyncPulled: pulled,
+      lastSyncFailed: failed,
+      lastError: error,
+      clearLastError: error == null,
+    );
+    final p = await SharedPreferences.getInstance();
+    await p.setInt(_kLastSyncAt, now.millisecondsSinceEpoch);
+    await p.setInt(_kLastPulled, pulled);
+    await p.setInt(_kLastFailed, failed);
+    if (error == null) {
+      await p.remove(_kLastError);
+    } else {
+      await p.setString(_kLastError, error);
+    }
+  }
+}
+
+final tmdbAccountSyncSettingsProvider = NotifierProvider<
+    TmdbAccountSyncSettingsNotifier,
+    TmdbAccountSyncSettings>(TmdbAccountSyncSettingsNotifier.new);
