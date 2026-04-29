@@ -27,7 +27,18 @@ class _AppState extends ConsumerState<App> {
     // Eagerly construct the handler so the URI listener is alive
     // before any approval URL is launched. Provider's `onDispose`
     // owns teardown.
-    ref.read(tmdbDeepLinkHandlerProvider);
+    //
+    // Wrapped in try/catch because the handler chain depends on
+    // `tmdbAccountSyncRepositoryProvider`, which throws `StateError`
+    // when no TMDB API key is configured. In that case the user has
+    // no TMDB connection flow yet, so silently skipping the eager
+    // read is correct — the handler will be lazily constructed if
+    // and when the API key is supplied later.
+    try {
+      ref.read(tmdbDeepLinkHandlerProvider);
+    } catch (_) {
+      // No-op.
+    }
   }
 
   @override
