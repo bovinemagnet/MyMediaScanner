@@ -7,6 +7,7 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:mymediascanner/core/utils/flac_decoder.dart';
+import 'package:mymediascanner/core/utils/flac_reader.dart';
 import 'package:dart_accuraterip/dart_accuraterip.dart';
 import 'package:mymediascanner/domain/entities/rip_track.dart';
 import 'package:mymediascanner/domain/repositories/i_rip_library_repository.dart';
@@ -65,6 +66,12 @@ void main() {
   late MockRipLibraryRepository mockRepo;
   late MockFlacDecoder mockFlacDecoder;
   late MockAccurateRipClient mockArClient;
+
+  setUpAll(() {
+    // The AR-path tests use `mockArClient.queryDisc(any())`, which forces
+    // mocktail to register a fallback value for AccurateRipDiscId.
+    registerFallbackValue(AccurateRipDiscId.fromTrackSampleCounts(const [1]));
+  });
 
   setUp(() {
     mockRepo = MockRipLibraryRepository();
@@ -333,6 +340,168 @@ End of status report
         // AccurateRip is unreachable when sample counts are unknown, so the
         // client should not be touched at all.
         verifyZeroInteractions(mockArClient);
+      });
+    });
+
+    group('AccurateRip verified path', () {
+      test(
+          'execute_withMatchingArEntry_marksTrackVerifiedWithConfidence',
+          () async {
+        // Arrange
+        // 0.1 s of 16-bit stereo silence at 44.1 kHz. The exact bytes do
+        // not matter — what matters is that the locally computed v1/v2
+        // CRC for this buffer exactly equals the entry CRC we seed in
+        // the AR result, so production code takes the "match" branch.
+        final track = _track(id: 'track-1', trackNumber: 1);
+        final pcmData = Uint8List(17640);
+
+        // Compute the expected v1 CRC the same way the use case does.
+        // isFirst/isLast are true because this is the only track in the
+        // album.
+        final expectedV1 = computeArV1(
+          pcmData,
+          isFirstTrack: true,
+          isLastTrack: true,
+        );
+
+        // Stand up an AR response whose only entry's CRC equals the
+        // locally computed v1, with a non-zero confidence so we can
+        // assert it was forwarded to the repository.
+        final arResult = AccurateRipDiscResult(tracks: [
+          AccurateRipTrackResult(
+            trackNumber: 1,
+            entries: [
+              AccurateRipEntry(
+                confidence: 7,
+                crc: expectedV1,
+                frame450Crc: 0,
+              ),
+            ],
+          ),
+        ]);
+
+        when(() => mockRepo.getTracksForAlbum('album-1'))
+            .thenAnswer((_) async => [track]);
+        when(() => mockFlacDecoder.isAvailable())
+            .thenAnswer((_) async => true);
+        when(() => mockFlacDecoder.decode(any()))
+            .thenAnswer((_) async => pcmData);
+        when(() => mockArClient.queryDisc(any()))
+            .thenAnswer((_) async => arResult);
+        when(() => mockRepo.updateTrackQuality(
+              any(),
+              arStatus: any(named: 'arStatus'),
+              arConfidence: any(named: 'arConfidence'),
+              arCrcV1: any(named: 'arCrcV1'),
+              arCrcV2: any(named: 'arCrcV2'),
+              qualityCheckedAt: any(named: 'qualityCheckedAt'),
+            )).thenAnswer((_) async {});
+
+        // Build a use case whose metadata reader returns synthetic
+        // STREAMINFO with non-zero totalSamples so the AR query path is
+        // reachable (the default reader returns null for fake paths).
+        useCase = AnalyseRipQualityUseCase(
+          repository: mockRepo,
+          flacDecoder: mockFlacDecoder,
+          accurateRipClient: mockArClient,
+          isolateRunner: _syncIsolateRunner,
+          flacMetadataReader: (_) async =>
+              const FlacMetadata(totalSamples: 4410),
+        );
+
+        // Act
+        await useCase.execute('album-1').drain<void>();
+
+        // Assert — verified branch: confidence forwarded, CRCs in hex.
+        final expectedV1Hex =
+            expectedV1.toRadixString(16).padLeft(8, '0').toUpperCase();
+        verify(() => mockRepo.updateTrackQuality(
+              'track-1',
+              arStatus: 'verified',
+              arConfidence: 7,
+              arCrcV1: expectedV1Hex,
+              arCrcV2: any(named: 'arCrcV2'),
+              qualityCheckedAt: any(named: 'qualityCheckedAt'),
+            )).called(1);
+        // Click detection must not run when AR verified the track.
+        verifyNever(() => mockRepo.updateTrackQuality(
+              'track-1',
+              arStatus: 'not_found',
+              clickCount: any(named: 'clickCount'),
+              qualityCheckedAt: any(named: 'qualityCheckedAt'),
+            ));
+      });
+    });
+
+    group('AccurateRip mismatch path', () {
+      test(
+          'execute_withNonMatchingArEntry_marksTrackMismatchAndSkipsClickDetection',
+          () async {
+        // Arrange — same shape as the verified test, but the AR entry's
+        // CRC is deliberately set to a value that cannot match either
+        // computed v1 or v2 (silence's locally computed CRCs are not
+        // 0xDEADBEEF).
+        final track = _track(id: 'track-1', trackNumber: 1);
+        final pcmData = Uint8List(17640);
+
+        const arResult = AccurateRipDiscResult(tracks: [
+          AccurateRipTrackResult(
+            trackNumber: 1,
+            entries: [
+              AccurateRipEntry(
+                confidence: 3,
+                crc: 0xDEADBEEF,
+                frame450Crc: 0,
+              ),
+            ],
+          ),
+        ]);
+
+        when(() => mockRepo.getTracksForAlbum('album-1'))
+            .thenAnswer((_) async => [track]);
+        when(() => mockFlacDecoder.isAvailable())
+            .thenAnswer((_) async => true);
+        when(() => mockFlacDecoder.decode(any()))
+            .thenAnswer((_) async => pcmData);
+        when(() => mockArClient.queryDisc(any()))
+            .thenAnswer((_) async => arResult);
+        when(() => mockRepo.updateTrackQuality(
+              any(),
+              arStatus: any(named: 'arStatus'),
+              arCrcV1: any(named: 'arCrcV1'),
+              arCrcV2: any(named: 'arCrcV2'),
+              qualityCheckedAt: any(named: 'qualityCheckedAt'),
+            )).thenAnswer((_) async {});
+
+        useCase = AnalyseRipQualityUseCase(
+          repository: mockRepo,
+          flacDecoder: mockFlacDecoder,
+          accurateRipClient: mockArClient,
+          isolateRunner: _syncIsolateRunner,
+          flacMetadataReader: (_) async =>
+              const FlacMetadata(totalSamples: 4410),
+        );
+
+        // Act
+        await useCase.execute('album-1').drain<void>();
+
+        // Assert — mismatch branch: CRCs forwarded but no confidence
+        // (the entry was wrong, so no submission's confidence applies).
+        verify(() => mockRepo.updateTrackQuality(
+              'track-1',
+              arStatus: 'mismatch',
+              arCrcV1: any(named: 'arCrcV1'),
+              arCrcV2: any(named: 'arCrcV2'),
+              qualityCheckedAt: any(named: 'qualityCheckedAt'),
+            )).called(1);
+        // Click detection must NOT run when AR returned a (mismatching)
+        // entry — the mismatch branch is terminal for this track.
+        verifyNever(() => mockRepo.updateTrackQuality(
+              'track-1',
+              arStatus: 'not_found',
+              clickCount: any(named: 'clickCount'),
+              qualityCheckedAt: any(named: 'qualityCheckedAt'),
+            ));
       });
     });
   });
