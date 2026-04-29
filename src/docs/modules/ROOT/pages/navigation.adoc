@@ -9,7 +9,11 @@ The shell adapts its chrome to the host platform: a glassmorphism bottom navigat
 
 == Route Structure
 
-The following diagram shows the full route tree, including nested routes and platform-specific navigation chrome.
+The shell-and-branches view below shows the high-level layout: a single `StatefulShellRoute` wraps the app, and each branch carries an independent navigation stack so users can switch between (say) Library and Scanner without losing their place in either.
+
+image::diagrams/navigation-shell.svg[GoRouter shell wrapping the StatefulShellBranch entries, role=diagram]
+
+The flow diagram below drills into the full route tree, including nested routes (`item/:id`, `series/:id`, etc.) and the platform-specific navigation chrome that lives outside the shell branches.
 
 [{MERMAID}]
 ....

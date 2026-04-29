@@ -8,6 +8,10 @@ This page covers every external service that MyMediaScanner contacts during norm
 For each provider you will find a brief description of what it does, how it fits into the app's lookup flow, step-by-step setup instructions (where a key or account is required), what rate limits or usage policies apply, and guidance on diagnosing common problems.
 For a full explanation of how the app decides which providers to call and in what order, see xref:metadata-lookup.adoc[Metadata Lookup].
 
+The diagram below groups every integration by media domain (music, film/TV, books, games, artwork) and indicates which providers require an API key versus which are open and keyless.
+
+image::diagrams/external-apis.svg[External metadata APIs grouped by media domain, with key requirements indicated, role=diagram]
+
 == Music
 
 === MusicBrainz
