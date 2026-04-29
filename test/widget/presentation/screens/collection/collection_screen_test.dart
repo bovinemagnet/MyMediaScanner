@@ -21,6 +21,7 @@ import 'package:mymediascanner/domain/repositories/i_media_item_repository.dart'
 import 'package:mymediascanner/domain/repositories/i_rip_library_repository.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/screens/collection/collection_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -56,6 +57,16 @@ MediaItem _item({
     updatedAt: _ts++,
     ownershipStatus: OwnershipStatus.owned,
   );
+}
+
+/// Sets a desktop-sized viewport (1280×800) so [CollectionScreen]'s
+/// desktop layout (`ScreenHeader`, `MasterDetailLayout`, grid) has room
+/// to lay out without overflowing.
+void _configureDesktopViewport(WidgetTester tester) {
+  tester.view.physicalSize = const Size(1280, 800);
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
 }
 
 /// Wraps [CollectionScreen] in a minimal GoRouter + ProviderScope so that
@@ -146,6 +157,10 @@ void main() {
     late MockRipLibraryRepository ripRepo;
 
     setUp(() {
+      // Mock SharedPreferences so any provider that reads it (e.g. the
+      // split-ratio provider used by MasterDetailLayout) resolves
+      // synchronously instead of hanging the platform channel.
+      SharedPreferences.setMockInitialValues(<String, Object>{});
       mediaRepo = MockMediaItemRepository();
       loanRepo = MockLoanRepository();
       borrowerRepo = MockBorrowerRepository();
@@ -155,6 +170,7 @@ void main() {
     testWidgets(
       'renders the empty state when the collection is empty',
       (tester) async {
+        _configureDesktopViewport(tester);
         _stubEmpty(mediaRepo, loanRepo, ripRepo);
 
         await tester.pumpWidget(
@@ -172,11 +188,17 @@ void main() {
           findsOneWidget,
         );
       },
+      // Force the desktop branch of CollectionScreen — the mobile branch
+      // puts a SortSelector (DropdownButton in a Flexible) into
+      // AppBar.actions where the unbounded width trips a layout assert.
+      variant: TargetPlatformVariant.desktop(),
     );
 
     testWidgets(
       'renders a card per item when the list is non-empty',
       (tester) async {
+        _configureDesktopViewport(tester);
+
         final items = [
           _item(id: 'i1', title: 'Film One'),
           _item(id: 'i2', title: 'Film Two'),
@@ -206,11 +228,14 @@ void main() {
         expect(find.text('Film Two'), findsOneWidget);
         expect(find.text('Film Three'), findsOneWidget);
       },
+      variant: TargetPlatformVariant.desktop(),
     );
 
     testWidgets(
       'filter-by-type restricts the visible items',
       (tester) async {
+        _configureDesktopViewport(tester);
+
         // Three items: two films, one music album.
         final filmOne = _item(id: 'f1', title: 'Action Film', mediaType: MediaType.film);
         final filmTwo = _item(id: 'f2', title: 'Drama Film', mediaType: MediaType.film);
@@ -259,11 +284,14 @@ void main() {
         expect(find.text('Drama Film'), findsOneWidget);
         expect(find.text('Rock Album'), findsNothing);
       },
+      variant: TargetPlatformVariant.desktop(),
     );
 
     testWidgets(
       'search input filters by title',
       (tester) async {
+        _configureDesktopViewport(tester);
+
         final items = [
           _item(id: 's1', title: 'Blade Runner'),
           _item(id: 's2', title: 'The Matrix'),
@@ -321,6 +349,7 @@ void main() {
         expect(find.text('Blade II'), findsOneWidget);
         expect(find.text('The Matrix'), findsNothing);
       },
+      variant: TargetPlatformVariant.desktop(),
     );
   });
 }
