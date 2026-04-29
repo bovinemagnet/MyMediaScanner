@@ -7,16 +7,16 @@
 //      phase.
 //   3. A result summary ("Imported N items") is shown after import completes.
 //   4. An error message is surfaced when the phase is error.
-//
-// NOTE: Tests that require real file_picker interaction are intentionally
-// skipped because FilePicker.platform cannot be overridden in a widget test
-// environment without platform-channel stubs.
-// TODO: add file-picker integration tests in integration_test/ using a mock
-//       file picker method-channel implementation.
+//   5. The Choose-file… button drives FilePicker.platform.pickFiles with the
+//      source's expected extension and forwards the picked bytes to the
+//      ImportNotifier (uses the fake_file_picker scaffolding under
+//      test/_fakes/).
 //
 // Author: Paul Snow
 // Since: 0.0.0
 library;
+
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,6 +27,8 @@ import 'package:mymediascanner/domain/entities/import_source.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/presentation/providers/import_provider.dart';
 import 'package:mymediascanner/presentation/screens/import/import_screen.dart';
+
+import '../../../../_fakes/fake_file_picker.dart';
 
 // ---------------------------------------------------------------------------
 // Stub notifier — lets tests pre-seed [ImportState] without the real use case.
@@ -46,6 +48,20 @@ class _StubImportNotifier extends ImportNotifier {
   // Public helper to drive state from outside the notifier.
   // ignore: use_setters_to_change_properties
   void setStateForTest(ImportState s) => state = s;
+
+  /// Captured arguments from the most recent [startImport] call. Set by
+  /// [startImport]; read by tests after triggering the file-pick flow.
+  ImportSource? lastImportSource;
+  String? lastImportContent;
+
+  @override
+  Future<void> startImport({
+    required ImportSource source,
+    required String content,
+  }) async {
+    lastImportSource = source;
+    lastImportContent = content;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -271,6 +287,57 @@ void main() {
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
       expect(find.text('Saving items…'), findsOneWidget);
+    });
+  });
+
+  group('ImportScreen — Choose-file flow', () {
+    testWidgets(
+        'pickFiles is called with the source extension and the picked '
+        'bytes are forwarded to startImport',
+        (tester) async {
+      const csv = 'Title,Author\nNeuromancer,William Gibson\n';
+      final fake = installFakeFilePicker(
+        tester,
+        result: buildBytesResult(
+          name: 'goodreads_library_export.csv',
+          bytes: utf8.encode(csv),
+        ),
+      );
+
+      final stub = _notifier(const ImportState());
+
+      await tester.pumpWidget(_wrap(stub));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Choose file…'));
+      await tester.pumpAndSettle();
+
+      // The screen requested CSV files with bytes inlined.
+      expect(fake.lastCall, isNotNull);
+      expect(fake.lastCall!.allowedExtensions, ['csv']);
+      expect(fake.lastCall!.withData, isTrue);
+      expect(fake.lastCall!.allowMultiple, isFalse);
+
+      // The notifier received the file's bytes and the active source.
+      expect(stub.lastImportSource, ImportSource.goodreads);
+      expect(stub.lastImportContent, csv);
+    });
+
+    testWidgets(
+        'no startImport call when the user cancels the picker',
+        (tester) async {
+      installFakeFilePicker(tester); // result: null → user cancelled
+
+      final stub = _notifier(const ImportState());
+
+      await tester.pumpWidget(_wrap(stub));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Choose file…'));
+      await tester.pumpAndSettle();
+
+      expect(stub.lastImportSource, isNull);
+      expect(stub.lastImportContent, isNull);
     });
   });
 }
