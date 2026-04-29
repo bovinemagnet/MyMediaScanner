@@ -41,6 +41,7 @@ class ScreenHeader extends StatelessWidget {
                     Text(
                       title,
                       style: theme.textTheme.headlineLarge,
+                      softWrap: true,
                     ),
                     if (subtitle != null) ...[
                       const SizedBox(height: 4),
@@ -49,15 +50,24 @@ class ScreenHeader extends StatelessWidget {
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: colors.onSurfaceVariant,
                         ),
+                        softWrap: true,
                       ),
                     ],
                   ],
                 ),
               ),
               if (actions != null && actions!.isNotEmpty)
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: actions!,
+                // OverflowBar switches to a Column when the actions
+                // can't fit in the available width on the same row,
+                // preventing the bare-Row overflow that surfaced on
+                // narrow desktop windows / the master pane.
+                Flexible(
+                  child: OverflowBar(
+                    alignment: MainAxisAlignment.end,
+                    spacing: 8,
+                    overflowSpacing: 4,
+                    children: actions!,
+                  ),
                 ),
             ],
           ),
