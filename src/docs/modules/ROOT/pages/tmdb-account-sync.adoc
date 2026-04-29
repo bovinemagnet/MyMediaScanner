@@ -112,10 +112,21 @@ When two-way sync is on, the following changes push to TMDB immediately:
 * Favourite toggle on the item-detail screen or in the TMDB Lists views.
 
 If a push fails (for example because of a temporary network error), the row is flagged internally and a count of pending changes appears on the settings card.
-Tap *Push pending now* to retry all flagged rows.
 
 If a push fails because the session has expired (HTTP 401), the card shows a *Session expired — reconnect* message.
 Reconnect using the same *Connect* flow described above.
+
+=== Reviewing and retrying pending changes
+
+When the *TMDB Account Sync* settings card shows pending changes, two affordances appear next to the count:
+
+* *View & retry* opens a dialog listing each pending change with its title, the action(s) it represents (rating, watchlist, favourite), and any error from the previous push attempt.
+  Tap the refresh icon on a row to retry just that change, or *Retry all failed* in the dialog header to retry every row whose previous push failed.
+* *Push all now* is the quick-fire equivalent — it pushes every pending change in one go and reports the result via a SnackBar.
+
+While a push is running, the dialog shows a determinate progress bar (`Pushing X of Y…`) and cannot be dismissed until the operation completes.
+
+Conflict rows — bridge rows that need user resolution because the local and remote values diverged — are surfaced in a separate row below the pending count: *N conflict(s) need resolution* with a *Resolve* button that opens the dedicated conflict resolution screen.
 
 NOTE: TMDB ratings use a 0.5–10 scale.
 MyMediaScanner stores ratings on a 0–5 scale and converts automatically (pull: `local = tmdb / 2`; push: `tmdb = local × 2`).

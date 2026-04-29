@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mymediascanner/domain/entities/tmdb_bridge_bucket.dart';
 import 'package:mymediascanner/domain/entities/tmdb_connection_state.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/settings_provider.dart';
@@ -9,6 +11,7 @@ import 'package:mymediascanner/presentation/screens/settings/widgets/remote_firs
 import 'package:mymediascanner/presentation/screens/settings/widgets/tmdb_connect_dialog.dart';
 import 'package:mymediascanner/presentation/screens/settings/widgets/tmdb_disconnect_warning_dialog.dart';
 import 'package:mymediascanner/presentation/screens/settings/widgets/tmdb_import_dialog.dart';
+import 'package:mymediascanner/presentation/screens/settings/widgets/tmdb_pending_changes_dialog.dart';
 
 /// Settings card for TMDB account sync.
 class TmdbAccountSyncSection extends ConsumerWidget {
@@ -95,26 +98,41 @@ class TmdbAccountSyncSection extends ConsumerWidget {
             ConflictPolicySelector(
                 enabled: connectionAsync.value is TmdbConnected),
             const SizedBox(height: 12),
-            ref.watch(tmdbDirtyCountProvider).when(
+            // Pending row — non-conflict dirty changes.
+            ref.watch(tmdbPendingChangesProvider).when(
               loading: () => const SizedBox.shrink(),
-              error: (_, stack) => const SizedBox.shrink(),
-              data: (count) {
-                if (count == 0) return const SizedBox.shrink();
+              error: (err, _) => const SizedBox.shrink(),
+              data: (pending) {
+                if (pending.isEmpty) return const SizedBox.shrink();
                 return Row(children: [
                   Icon(Icons.cloud_upload,
                       size: 16,
                       color: Theme.of(context).colorScheme.primary),
                   const SizedBox(width: 6),
                   Expanded(
-                      child: Text('$count pending change'
-                          '${count == 1 ? '' : 's'} to push')),
+                      child: Text('${pending.length} pending change'
+                          '${pending.length == 1 ? '' : 's'} to push')),
+                  TextButton.icon(
+                    icon: const Icon(Icons.list, size: 16),
+                    label: const Text('View & retry'),
+                    onPressed: () => showDialog<void>(
+                      context: context,
+                      builder: (_) => const TmdbPendingChangesDialog(),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
                   TextButton.icon(
                     icon: const Icon(Icons.sync, size: 16),
-                    label: const Text('Push pending now'),
+                    label: const Text('Push all now'),
                     onPressed: () async {
                       final messenger = ScaffoldMessenger.of(context);
+                      final keys = pending
+                          .map((p) => TmdbBridgeKey(
+                              tmdbId: p.tmdbId, mediaType: p.mediaType))
+                          .toList();
                       final summary =
-                          await ref.read(pushTmdbChangeUseCaseProvider).all();
+                          await ref.read(retryPushUseCaseProvider).retry(keys);
+                      if (!context.mounted) return;
                       messenger.showSnackBar(SnackBar(
                         content: Text('Pushed ${summary.succeeded} of '
                             '${summary.attempted}; ${summary.failed} failed.'),
@@ -122,6 +140,31 @@ class TmdbAccountSyncSection extends ConsumerWidget {
                     },
                   ),
                 ]);
+              },
+            ),
+            // Conflict row — only when at least one conflict exists.
+            ref.watch(tmdbConflictCountProvider).when(
+              loading: () => const SizedBox.shrink(),
+              error: (err, _) => const SizedBox.shrink(),
+              data: (count) {
+                if (count == 0) return const SizedBox.shrink();
+                return Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Row(children: [
+                    Icon(Icons.warning_amber,
+                        size: 16,
+                        color: Theme.of(context).colorScheme.error),
+                    const SizedBox(width: 6),
+                    Expanded(
+                        child: Text('$count conflict'
+                            '${count == 1 ? '' : 's'} need resolution')),
+                    TextButton.icon(
+                      icon: const Icon(Icons.rule, size: 16),
+                      label: const Text('Resolve'),
+                      onPressed: () => context.go('/tmdb/conflicts'),
+                    ),
+                  ]),
+                );
               },
             ),
             const SizedBox(height: 8),

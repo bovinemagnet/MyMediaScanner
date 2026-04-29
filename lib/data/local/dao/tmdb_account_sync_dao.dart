@@ -201,6 +201,19 @@ class TmdbAccountSyncDao extends DatabaseAccessor<AppDatabase>
         .watch();
   }
 
+  /// Stream of dirty rows for the new pending-changes dialog. Excludes
+  /// conflict-marker rows — those go through [watchConflicts] and the
+  /// existing `TmdbResolveConflictsScreen`.
+  Stream<List<TmdbAccountSyncItemsTableData>> watchPendingDirty() {
+    return (select(tmdbAccountSyncItemsTable)
+          ..where((t) =>
+              t.localDirty.equals(true) &
+              (t.lastError.isNull() |
+                  t.lastError.equals('conflict:user-resolution-required').not()))
+          ..orderBy([(t) => OrderingTerm.asc(t.updatedAt)]))
+        .watch();
+  }
+
   /// Mark a row dirty without changing other fields. Bumps updatedAt.
   Future<void> markDirty({
     required int tmdbId,

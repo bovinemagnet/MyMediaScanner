@@ -2,6 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/domain/entities/tmdb_bridge_bucket.dart';
 import 'package:mymediascanner/domain/entities/tmdb_bridge_item.dart';
 import 'package:mymediascanner/domain/entities/tmdb_connection_state.dart';
+import 'package:mymediascanner/domain/entities/tmdb_pending_change.dart';
+import 'package:mymediascanner/domain/entities/tmdb_push_progress.dart';
+import 'package:mymediascanner/domain/usecases/retry_push_usecase.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 
 class TmdbAccountConnectionNotifier
@@ -68,3 +71,65 @@ class TmdbConnectDialogVisibleNotifier extends Notifier<bool> {
 final tmdbConnectDialogVisibleProvider =
     NotifierProvider<TmdbConnectDialogVisibleNotifier, bool>(
         TmdbConnectDialogVisibleNotifier.new);
+
+/// Stream of pending changes (dirty bridge rows excluding conflicts)
+/// rendered by [TmdbPendingChangesDialog]. Each row is composed in
+/// memory from the bridge row itself; titles come from
+/// `titleSnapshot` and don't require a media-items join.
+final tmdbPendingChangesProvider =
+    StreamProvider<List<TmdbPendingChange>>((ref) {
+  final dao = ref.watch(tmdbAccountSyncDaoProvider);
+  return dao.watchPendingDirty().map((rows) => rows
+      .map((r) => TmdbPendingChange(
+            tmdbId: r.tmdbId,
+            mediaType: r.tmdbMediaType,
+            title: r.titleSnapshot,
+            actions: derivePendingActions(
+              watchlist: r.watchlist,
+              favorite: r.favorite,
+              localRatingSnapshot: r.localRatingSnapshot,
+            ),
+            lastPushedAt: r.lastPushedAt,
+            lastError: r.lastError,
+          ))
+      .toList());
+});
+
+/// Stream of the conflict count for the section card's second row.
+final tmdbConflictCountProvider = StreamProvider<int>((ref) {
+  final dao = ref.watch(tmdbAccountSyncDaoProvider);
+  return dao.watchConflicts().map((list) => list.length);
+});
+
+/// Live progress of any active push-retry. The dialog and any caller
+/// observe this for the determinate progress indicator.
+class TmdbPushProgressNotifier extends Notifier<TmdbPushProgress> {
+  @override
+  TmdbPushProgress build() => TmdbPushProgress.idle();
+
+  void start(int total) {
+    state = TmdbPushProgress(inFlight: true, current: 0, total: total);
+  }
+
+  void advance() {
+    state = state.copyWith(current: state.current + 1);
+  }
+
+  void finish() {
+    state = TmdbPushProgress.idle();
+  }
+}
+
+final tmdbPushProgressProvider =
+    NotifierProvider<TmdbPushProgressNotifier, TmdbPushProgress>(
+        TmdbPushProgressNotifier.new);
+
+final retryPushUseCaseProvider = Provider<RetryPushUseCase>((ref) {
+  final notifier = ref.watch(tmdbPushProgressProvider.notifier);
+  return RetryPushUseCase(
+    repo: ref.watch(tmdbAccountSyncRepositoryProvider),
+    startProgress: notifier.start,
+    advanceProgress: notifier.advance,
+    finishProgress: notifier.finish,
+  );
+});
