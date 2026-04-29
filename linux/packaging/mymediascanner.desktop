@@ -1,9 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=MyMediaScanner
-Comment=Scan and catalogue movies, books, CDs, Blu-rays and video games
-Exec=mymediascanner
-Icon=mymediascanner
-Terminal=false
-Categories=Utility;AudioVideo;Database;
-StartupNotify=true
