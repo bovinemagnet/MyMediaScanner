@@ -329,4 +329,73 @@ void main() {
             .length,
         1);
   });
+
+  group('watchPendingDirty', () {
+    test('emits only dirty non-conflict rows', () async {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      // Clean row.
+      await db.into(db.tmdbAccountSyncItemsTable).insert(
+            TmdbAccountSyncItemsTableCompanion.insert(
+              id: 'r1',
+              tmdbId: 1,
+              tmdbMediaType: 'movie',
+              createdAt: now,
+              updatedAt: now,
+            ),
+          );
+      // Dirty row.
+      await db.into(db.tmdbAccountSyncItemsTable).insert(
+            TmdbAccountSyncItemsTableCompanion.insert(
+              id: 'r2',
+              tmdbId: 2,
+              tmdbMediaType: 'movie',
+              localDirty: const Value(true),
+              titleSnapshot: const Value('Fight Club'),
+              createdAt: now,
+              updatedAt: now,
+            ),
+          );
+      // Conflict row.
+      await db.into(db.tmdbAccountSyncItemsTable).insert(
+            TmdbAccountSyncItemsTableCompanion.insert(
+              id: 'r3',
+              tmdbId: 3,
+              tmdbMediaType: 'movie',
+              localDirty: const Value(true),
+              lastError: const Value('conflict:user-resolution-required'),
+              createdAt: now,
+              updatedAt: now,
+            ),
+          );
+
+      final emitted = await db.tmdbAccountSyncDao.watchPendingDirty().first;
+      expect(emitted.map((r) => r.id), ['r2']);
+    });
+
+    test('orders by updatedAt ascending (oldest first)', () async {
+      await db.into(db.tmdbAccountSyncItemsTable).insert(
+            TmdbAccountSyncItemsTableCompanion.insert(
+              id: 'r-newer',
+              tmdbId: 10,
+              tmdbMediaType: 'movie',
+              localDirty: const Value(true),
+              createdAt: 1000,
+              updatedAt: 2000,
+            ),
+          );
+      await db.into(db.tmdbAccountSyncItemsTable).insert(
+            TmdbAccountSyncItemsTableCompanion.insert(
+              id: 'r-older',
+              tmdbId: 11,
+              tmdbMediaType: 'movie',
+              localDirty: const Value(true),
+              createdAt: 1000,
+              updatedAt: 1500,
+            ),
+          );
+
+      final emitted = await db.tmdbAccountSyncDao.watchPendingDirty().first;
+      expect(emitted.map((r) => r.id), ['r-older', 'r-newer']);
+    });
+  });
 }
