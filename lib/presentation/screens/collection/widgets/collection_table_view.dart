@@ -97,6 +97,12 @@ class _CollectionTableViewState extends ConsumerState<CollectionTableView> {
       child: PaginatedDataTable2(
         columnSpacing: 12,
         horizontalMargin: 16,
+        // Sum of fixed-width columns (520) plus reasonable minimums for
+        // the variable Title/Artist columns (~280) plus spacing.
+        // Below this width, the table scrolls horizontally so DataTable2
+        // doesn't trip its `totalFixedWidth < totalColAvailableWidth`
+        // assertion when the master-detail pane is narrow.
+        minWidth: 900,
         rowsPerPage: 50,
         sortColumnIndex: _sortColumnIndex(filter.sortBy),
         sortAscending: filter.ascending,

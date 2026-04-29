@@ -219,7 +219,7 @@ class _StatusRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(children: [Text(text)]);
+    return Row(children: [Expanded(child: Text(text, softWrap: true))]);
   }
 }
 

@@ -32,15 +32,23 @@ class ScreenHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
+          // Outer Wrap so on narrow windows the actions group flows to
+          // a new line below the title rather than overflowing.
+          Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 16,
+            runSpacing: 8,
             children: [
-              Expanded(
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       title,
                       style: theme.textTheme.headlineLarge,
+                      softWrap: true,
                     ),
                     if (subtitle != null) ...[
                       const SizedBox(height: 4),
@@ -49,14 +57,19 @@ class ScreenHeader extends StatelessWidget {
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: colors.onSurfaceVariant,
                         ),
+                        softWrap: true,
                       ),
                     ],
                   ],
                 ),
               ),
               if (actions != null && actions!.isNotEmpty)
-                Row(
-                  mainAxisSize: MainAxisSize.min,
+                // Inner Wrap so individual action widgets reflow onto
+                // multiple lines instead of being squeezed and clipping.
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 8,
+                  runSpacing: 4,
                   children: actions!,
                 ),
             ],
