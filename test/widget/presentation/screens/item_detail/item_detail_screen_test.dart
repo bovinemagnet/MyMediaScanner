@@ -287,10 +287,15 @@ void main() {
     );
 
     // -----------------------------------------------------------------------
-    // 4. Lend button / loan creation — skipped
-    // TODO: The BorrowerPickerDialog resolves borrowers through provider
-    // chains that require a live Drift DAO; properly isolating this requires
-    // production-code changes.  Covered by integration_test/.
+    // 4. Lend button / loan creation — exercised elsewhere
+    //
+    // Covered by test/widget/presentation/screens/item_detail/widgets/
+    // borrower_picker_dialog_test.dart, which mocks the loan/borrower repos
+    // and verifies: listing borrowers, tap-to-create-loan dismissing the
+    // dialog and calling loanRepo.createLoan, and the "Add new borrower"
+    // button opening the form.  Driving the flow from this screen's Lend
+    // button would require live Drift DAOs, so the picker is tested in
+    // isolation.
     // -----------------------------------------------------------------------
 
     // -----------------------------------------------------------------------

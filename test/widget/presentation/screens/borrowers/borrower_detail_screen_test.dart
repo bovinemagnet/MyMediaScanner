@@ -6,9 +6,11 @@
 //   3. returnLoan — the "Return" flow triggers loanRepository.returnItem.
 //
 // Note: BorrowerDetailScreen does not expose a "Return" button directly;
-// it renders read-only _LoanCard widgets.  Returning a loan is handled via
-// ItemDetailScreen / LoanSection.  Test 3 is therefore skipped with a TODO
-// explaining the tight coupling.
+// it renders read-only _LoanCard widgets.  The Return action is wired
+// inline inside ItemDetailScreen (see lib/presentation/screens/item_detail/
+// item_detail_screen.dart, the FilledButton.tonal that calls
+// ReturnItemUseCase).  Test 3 is therefore skipped because exercising it
+// requires the ItemDetailScreen widget tree, not BorrowerDetailScreen.
 //
 // Author: Paul Snow
 // Since: 0.0.0
@@ -145,11 +147,14 @@ void main() {
   });
 
   // --------------------------------------------------------------------------
-  // Test 3: return loan — skipped due to tight coupling
+  // Test 3: return loan — gap, no widget-level coverage
   // --------------------------------------------------------------------------
-  // TODO: BorrowerDetailScreen renders read-only _LoanCard widgets with no
-  // "Return" action button.  The return-loan interaction is handled inside
-  // ItemDetailScreen / LoanSection and cannot be triggered from this screen
-  // without navigating there.  A dedicated LoanSection widget test covers
-  // that behaviour instead.
+  // BorrowerDetailScreen renders read-only _LoanCard widgets with no "Return"
+  // button.  The return-loan action is the FilledButton.tonal inside
+  // ItemDetailScreen which invokes ReturnItemUseCase directly (see
+  // lib/presentation/screens/item_detail/item_detail_screen.dart).  That
+  // button is not currently covered by any widget or integration test —
+  // exercising it would either require a dedicated ItemDetailScreen widget
+  // test that stubs an active loan, or a new lending integration test that
+  // drives the screen end-to-end.
 }
