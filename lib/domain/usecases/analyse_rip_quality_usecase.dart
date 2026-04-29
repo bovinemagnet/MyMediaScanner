@@ -44,6 +44,14 @@ class QualityAnalysisProgress {
 typedef IsolateRunner = Future<R> Function<R>(
     FutureOr<R> Function() computation);
 
+/// Signature for reading FLAC metadata from a file path.
+///
+/// Defaults to [FlacReader.readMetadata]; tests inject a fake that
+/// returns synthetic [FlacMetadata] for known fake paths so they can
+/// drive the AccurateRip query path (which requires non-zero per-track
+/// sample counts) without writing real FLAC files to disk.
+typedef FlacMetadataReader = Future<FlacMetadata?> Function(String filePath);
+
 /// Analyses the audio quality of all tracks in a rip album.
 class AnalyseRipQualityUseCase {
   AnalyseRipQualityUseCase({
@@ -52,10 +60,12 @@ class AnalyseRipQualityUseCase {
     required ar.AccurateRipClient accurateRipClient,
     this.sensitivity = add.Sensitivity.medium,
     IsolateRunner? isolateRunner,
+    FlacMetadataReader? flacMetadataReader,
   })  : _repository = repository,
         _flacDecoder = flacDecoder,
         _arClient = accurateRipClient,
-        _isolateRunner = isolateRunner ?? _defaultIsolateRunner;
+        _isolateRunner = isolateRunner ?? _defaultIsolateRunner,
+        _metadataReader = flacMetadataReader ?? FlacReader.readMetadata;
 
   static Future<R> _defaultIsolateRunner<R>(
           FutureOr<R> Function() computation) =>
@@ -66,6 +76,7 @@ class AnalyseRipQualityUseCase {
   final ar.AccurateRipClient _arClient;
   final add.Sensitivity sensitivity;
   final IsolateRunner _isolateRunner;
+  final FlacMetadataReader _metadataReader;
 
   /// Execute the analysis pipeline for the given album.
   ///
@@ -141,7 +152,7 @@ class AnalyseRipQualityUseCase {
     // Gather sample counts for disc ID computation
     final sampleCounts = <int>[];
     for (final track in tracks) {
-      final metadata = await FlacReader.readMetadata(track.filePath);
+      final metadata = await _metadataReader(track.filePath);
       if (metadata?.totalSamples != null) {
         sampleCounts.add(metadata!.totalSamples!);
       } else if (metadata?.durationMs != null) {
