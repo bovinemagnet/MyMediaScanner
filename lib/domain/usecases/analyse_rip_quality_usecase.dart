@@ -35,6 +35,15 @@ class QualityAnalysisProgress {
   final String currentStep;
 }
 
+/// Signature for executing a CPU-bound computation off the main thread.
+///
+/// Defaults to [Isolate.run]; tests inject a synchronous runner so they
+/// can drive the FLAC-decode, AccurateRip, and click-detection paths
+/// without spinning up real isolates (closures captured in tests reach
+/// into mocks that are not isolate-safe).
+typedef IsolateRunner = Future<R> Function<R>(
+    FutureOr<R> Function() computation);
+
 /// Analyses the audio quality of all tracks in a rip album.
 class AnalyseRipQualityUseCase {
   AnalyseRipQualityUseCase({
@@ -42,14 +51,21 @@ class AnalyseRipQualityUseCase {
     required FlacDecoder flacDecoder,
     required ar.AccurateRipClient accurateRipClient,
     this.sensitivity = add.Sensitivity.medium,
+    IsolateRunner? isolateRunner,
   })  : _repository = repository,
         _flacDecoder = flacDecoder,
-        _arClient = accurateRipClient;
+        _arClient = accurateRipClient,
+        _isolateRunner = isolateRunner ?? _defaultIsolateRunner;
+
+  static Future<R> _defaultIsolateRunner<R>(
+          FutureOr<R> Function() computation) =>
+      Isolate.run(computation);
 
   final IRipLibraryRepository _repository;
   final FlacDecoder _flacDecoder;
   final ar.AccurateRipClient _arClient;
   final add.Sensitivity sensitivity;
+  final IsolateRunner _isolateRunner;
 
   /// Execute the analysis pipeline for the given album.
   ///
@@ -170,7 +186,8 @@ class AnalyseRipQualityUseCase {
 
       Uint8List pcmData;
       try {
-        pcmData = await Isolate.run(() => _flacDecoder.decode(track.filePath));
+        pcmData =
+            await _isolateRunner(() => _flacDecoder.decode(track.filePath));
       } catch (_) {
         await _repository.updateTrackQuality(
           track.id,
@@ -187,7 +204,7 @@ class AnalyseRipQualityUseCase {
         currentStep: 'Computing checksums for track ${track.trackNumber}',
       );
 
-      final crcResults = await Isolate.run(() {
+      final crcResults = await _isolateRunner(() {
         final v1 = ar.computeArV1(pcmData,
             isFirstTrack: isFirst, isLastTrack: isLast);
         final v2 = ar.computeArV2(pcmData,
@@ -247,7 +264,7 @@ class AnalyseRipQualityUseCase {
         currentStep: 'Detecting clicks on track ${track.trackNumber}',
       );
 
-      final clickResult = await Isolate.run(() {
+      final clickResult = await _isolateRunner(() {
         return add.analysePcm(
           pcmData,
           format: const add.PcmFormat(

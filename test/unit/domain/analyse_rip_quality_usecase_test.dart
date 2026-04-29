@@ -1,6 +1,8 @@
 // Author: Paul Snow
 
+import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -9,6 +11,17 @@ import 'package:dart_accuraterip/dart_accuraterip.dart';
 import 'package:mymediascanner/domain/entities/rip_track.dart';
 import 'package:mymediascanner/domain/repositories/i_rip_library_repository.dart';
 import 'package:mymediascanner/domain/usecases/analyse_rip_quality_usecase.dart';
+
+// ---------------------------------------------------------------------------
+// Synchronous IsolateRunner — runs the closure inline on the test thread so
+// tests can drive the FLAC decode, AccurateRip CRC, and click-detection
+// paths without spinning up real isolates (closures capture mocks that are
+// not isolate-safe).
+// ---------------------------------------------------------------------------
+
+Future<R> _syncIsolateRunner<R>(FutureOr<R> Function() computation) async {
+  return await computation();
+}
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -62,11 +75,9 @@ void main() {
       repository: mockRepo,
       flacDecoder: mockFlacDecoder,
       accurateRipClient: mockArClient,
+      isolateRunner: _syncIsolateRunner,
     );
   });
-
-  // TODO: Tests for AccurateRip and click detection paths require refactoring
-  // Isolate.run to be injectable.
 
   group('execute', () {
     group('returns empty stream when album has no tracks', () {
@@ -274,6 +285,54 @@ End of status report
               arStatus: 'not_checked',
               qualityCheckedAt: any(named: 'qualityCheckedAt'),
             ));
+      });
+    });
+
+    group(
+        'falls through to click detection when AccurateRip is unreachable',
+        () {
+      test(
+          'execute_withFlacAvailable_andUnknownSampleCounts_runsClickDetection',
+          () async {
+        // Arrange
+        // The fake file path means _tryParseLog fails (no log) and
+        // FlacReader.readMetadata returns null, which makes
+        // sampleCounts.every((c) => c > 0) false, so the AR query is
+        // skipped and the pipeline falls into step 3 (click detection).
+        final track = _track(id: 'track-1', trackNumber: 1);
+        // 0.1 s of 16-bit stereo silence at 44.1 kHz: 4 bytes/frame *
+        // 4410 frames = 17 640 bytes. Silence has no clicks/pops, so the
+        // detector returns an empty defects list deterministically.
+        final pcmData = Uint8List(17640);
+
+        when(() => mockRepo.getTracksForAlbum('album-1'))
+            .thenAnswer((_) async => [track]);
+        when(() => mockFlacDecoder.isAvailable())
+            .thenAnswer((_) async => true);
+        when(() => mockFlacDecoder.decode(any()))
+            .thenAnswer((_) async => pcmData);
+        when(() => mockRepo.updateTrackQuality(
+              any(),
+              arStatus: any(named: 'arStatus'),
+              clickCount: any(named: 'clickCount'),
+              qualityCheckedAt: any(named: 'qualityCheckedAt'),
+            )).thenAnswer((_) async {});
+
+        // Act
+        await useCase.execute('album-1').drain<void>();
+
+        // Assert — track is marked not_found (AR could not verify) with a
+        // clickCount derived from the click-detection pass. AccurateRip
+        // must NOT be queried because sample counts were unknown.
+        verify(() => mockRepo.updateTrackQuality(
+              'track-1',
+              arStatus: 'not_found',
+              clickCount: 0,
+              qualityCheckedAt: any(named: 'qualityCheckedAt'),
+            )).called(1);
+        // AccurateRip is unreachable when sample counts are unknown, so the
+        // client should not be touched at all.
+        verifyZeroInteractions(mockArClient);
       });
     });
   });
