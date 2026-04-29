@@ -18,6 +18,9 @@ Widget harness({
 }) {
   return ProviderScope(
     overrides: [
+      // The section short-circuits when no TMDB token is configured —
+      // stub the provider so the connected-state tests reach the body.
+      apiKeysProvider.overrideWith(_StubApiKeysNotifier.new),
       tmdbAccountConnectionProvider.overrideWith(
           () => _StubConnectionNotifier(connection)),
       tmdbAccountSyncSettingsProvider.overrideWith(
@@ -149,6 +152,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.textContaining('TMDB Saved'), findsNothing);
   });
+}
+
+class _StubApiKeysNotifier extends ApiKeysNotifier {
+  @override
+  Future<Map<String, String?>> build() async => {'tmdb': 'stub-token'};
 }
 
 class _StubConnectionNotifier extends TmdbAccountConnectionNotifier {

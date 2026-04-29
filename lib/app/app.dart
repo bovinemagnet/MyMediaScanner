@@ -95,7 +95,18 @@ class _AppState extends ConsumerState<App> {
 
 /// Bridges the deep-link handler's broadcast stream into Riverpod so
 /// `ref.listen` can observe events.
+///
+/// `tmdbDeepLinkHandlerProvider` transitively depends on
+/// `tmdbAccountSyncRepositoryProvider`, which throws `StateError` when
+/// no TMDB Read Access Token is configured. We swallow that here so the
+/// app can boot without a token; the handler will be re-evaluated when
+/// the user enters one (provider invalidation propagates from the
+/// `apiKeysProvider`).
 final _deepLinkEventStreamProvider =
     StreamProvider.autoDispose<TmdbDeepLinkEvent>((ref) {
-  return ref.watch(tmdbDeepLinkHandlerProvider).events;
+  try {
+    return ref.watch(tmdbDeepLinkHandlerProvider).events;
+  } on StateError {
+    return const Stream<TmdbDeepLinkEvent>.empty();
+  }
 });

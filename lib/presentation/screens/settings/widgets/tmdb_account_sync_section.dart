@@ -20,7 +20,7 @@ class TmdbAccountSyncSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tmdbKey = (ref.watch(apiKeysProvider).value ?? {})['tmdb'] ?? '';
-    if (tmdbKey.trim().isEmpty) return const SizedBox.shrink();
+    if (tmdbKey.trim().isEmpty) return const _TmdbAccountSyncCta();
 
     final connectionAsync = ref.watch(tmdbAccountConnectionProvider);
     final settings = ref.watch(tmdbAccountSyncSettingsProvider);
@@ -302,6 +302,39 @@ Future<void> _toggleRemoteFirst(
   await ref
       .read(tmdbAccountSyncSettingsProvider.notifier)
       .setRemoteFirstSaveEnabled(requested);
+}
+
+/// Placeholder rendered in place of the full sync card when no TMDB
+/// Read Access Token is configured. Surfaces the precondition the user
+/// must satisfy before any account-sync provider is reachable, instead
+/// of leaving the section silently empty (or letting downstream
+/// providers throw `StateError`).
+class _TmdbAccountSyncCta extends StatelessWidget {
+  const _TmdbAccountSyncCta();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('TMDB Account Sync', style: theme.textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Text(
+              'Add your TMDB Read Access Token under "API Keys" above to '
+              'enable account sync. Once it is set, you can sign in to '
+              'TMDB to import your ratings, watchlist, and favourites.',
+              style: theme.textTheme.bodyMedium,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _LastSyncSummary extends StatelessWidget {

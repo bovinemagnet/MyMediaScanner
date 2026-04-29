@@ -20,6 +20,13 @@ class TmdbListsSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Short-circuit when no TMDB token is configured — watching
+    // `tmdbAccountConnectionProvider` in that state would surface the
+    // `StateError: TMDB API key not configured` from
+    // `tmdbAccountSyncRepositoryProvider`.
+    final tmdbKey = (ref.watch(apiKeysProvider).value ?? {})['tmdb'] ?? '';
+    if (tmdbKey.trim().isEmpty) return const SizedBox.shrink();
+
     final connectionAsync = ref.watch(tmdbAccountConnectionProvider);
     final isConnected = connectionAsync.value is TmdbConnected;
     if (!isConnected) return const SizedBox.shrink();
