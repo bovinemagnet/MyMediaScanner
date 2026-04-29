@@ -1,0 +1,100 @@
+<mxfile host="app.diagrams.net" modified="2026-04-29T00:00:00.000Z" agent="MyMediaScanner-docs" version="22.0.0">
+  <diagram id="external-apis" name="External APIs">
+    <mxGraphModel dx="1422" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1300" pageHeight="900" math="0" shadow="0" adaptiveColors="auto">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="External metadata APIs" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontStyle=1;fontColor=#0E0E0E;" vertex="1" parent="1">
+          <mxGeometry x="450" y="20" width="400" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" value="Grouped by media type · auth requirements · MetadataRepository routing" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=2;fontColor=#555555;" vertex="1" parent="1">
+          <mxGeometry x="350" y="50" width="600" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="repo" value="&lt;b&gt;MetadataRepository.lookupBarcode()&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;i&gt;Routes by detected barcode type and media-type hint&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00647A;strokeColor=#004D5C;fontColor=#FFFFFF;fontSize=13;align=center;verticalAlign=middle;arcSize=12;" vertex="1" parent="1">
+          <mxGeometry x="475" y="100" width="350" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="grp_filmtv" value="Film &amp; TV" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#6DDDFF;fontColor=#0E0E0E;fontSize=14;fontStyle=1;align=center;verticalAlign=top;arcSize=8;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="60" y="220" width="280" height="320" as="geometry" />
+        </mxCell>
+        <mxCell id="api_tmdb" value="&lt;b&gt;TMDB&lt;/b&gt;&lt;br&gt;The Movie Database&lt;br&gt;&lt;br&gt;&#127902; Film &amp; TV by EAN / IMDb ID&lt;br&gt;&#128273; API key required" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#01B4E4;strokeColor=#01587E;fontColor=#FFFFFF;fontSize=11;align=center;verticalAlign=middle;arcSize=10;" vertex="1" parent="1">
+          <mxGeometry x="80" y="260" width="240" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="api_tvdb" value="&lt;b&gt;TVDB&lt;/b&gt;&lt;br&gt;TheTVDB&lt;br&gt;&lt;br&gt;&#128250; TV series enrichment&lt;br&gt;&#128273; API key required" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#6CD491;strokeColor=#2A6B40;fontColor=#0E0E0E;fontSize=11;align=center;verticalAlign=middle;arcSize=10;" vertex="1" parent="1">
+          <mxGeometry x="80" y="350" width="240" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="api_fanart" value="&lt;b&gt;Fanart.tv&lt;/b&gt;&lt;br&gt;&lt;br&gt;&#127912; Hi-res artwork&lt;br&gt;(film, TV, music)&lt;br&gt;&#128273; API key required" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3F86C2;strokeColor=#1F4360;fontColor=#FFFFFF;fontSize=11;align=center;verticalAlign=middle;arcSize=10;" vertex="1" parent="1">
+          <mxGeometry x="80" y="440" width="240" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="grp_music" value="Music" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#44AA88;fontColor=#0E0E0E;fontSize=14;fontStyle=1;align=center;verticalAlign=top;arcSize=8;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="370" y="220" width="280" height="410" as="geometry" />
+        </mxCell>
+        <mxCell id="api_mb" value="&lt;b&gt;MusicBrainz&lt;/b&gt;&lt;br&gt;&lt;br&gt;&#127925; Music releases (primary)&lt;br&gt;&#128274; No key — User-Agent only" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BA478F;strokeColor=#5C2347;fontColor=#FFFFFF;fontSize=11;align=center;verticalAlign=middle;arcSize=10;" vertex="1" parent="1">
+          <mxGeometry x="390" y="260" width="240" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="api_caa" value="&lt;b&gt;Cover Art Archive&lt;/b&gt;&lt;br&gt;&lt;br&gt;&#127908; Front cover artwork&lt;br&gt;(MusicBrainz release IDs)&lt;br&gt;&#128274; No key" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#A66238;strokeColor=#53301B;fontColor=#FFFFFF;fontSize=11;align=center;verticalAlign=middle;arcSize=10;" vertex="1" parent="1">
+          <mxGeometry x="390" y="350" width="240" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="api_discogs" value="&lt;b&gt;Discogs&lt;/b&gt;&lt;br&gt;&lt;br&gt;&#127908; Music releases (fallback)&lt;br&gt;&#128273; Personal token" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0E0E0E;strokeColor=#000000;fontColor=#FFFFFF;fontSize=11;align=center;verticalAlign=middle;arcSize=10;" vertex="1" parent="1">
+          <mxGeometry x="390" y="440" width="240" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="api_audiodb" value="&lt;b&gt;TheAudioDB&lt;/b&gt;&lt;br&gt;&lt;br&gt;&#127911; Artist / album enrichment&lt;br&gt;&#128274; No key" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFA200;strokeColor=#7A4F00;fontColor=#0E0E0E;fontSize=11;align=center;verticalAlign=middle;arcSize=10;" vertex="1" parent="1">
+          <mxGeometry x="390" y="530" width="240" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="grp_books" value="Books" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#FFB347;fontColor=#0E0E0E;fontSize=14;fontStyle=1;align=center;verticalAlign=top;arcSize=8;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="680" y="220" width="280" height="230" as="geometry" />
+        </mxCell>
+        <mxCell id="api_gbooks" value="&lt;b&gt;Google Books&lt;/b&gt;&lt;br&gt;&lt;br&gt;&#128214; Books by ISBN (primary)&lt;br&gt;&#128274; No key (rate-limited)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4285F4;strokeColor=#1A4FB8;fontColor=#FFFFFF;fontSize=11;align=center;verticalAlign=middle;arcSize=10;" vertex="1" parent="1">
+          <mxGeometry x="700" y="260" width="240" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="api_ol" value="&lt;b&gt;Open Library&lt;/b&gt;&lt;br&gt;&lt;br&gt;&#128218; Books by ISBN (fallback)&lt;br&gt;&#128274; No key" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#993300;strokeColor=#4D1A00;fontColor=#FFFFFF;fontSize=11;align=center;verticalAlign=middle;arcSize=10;" vertex="1" parent="1">
+          <mxGeometry x="700" y="350" width="240" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="grp_fb" value="Generic / fallback" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#FFEEAA;fontColor=#0E0E0E;fontSize=14;fontStyle=1;align=center;verticalAlign=top;arcSize=8;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="990" y="220" width="280" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="api_upc" value="&lt;b&gt;UPCitemdb&lt;/b&gt;&lt;br&gt;&lt;br&gt;&#127991; Generic UPC / EAN&lt;br&gt;Last-resort fallback&lt;br&gt;&#128273; API key (free tier)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4A4A1A;strokeColor=#888822;fontColor=#FFEEAA;fontSize=11;align=center;verticalAlign=middle;arcSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1010" y="260" width="240" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="cache" value="&lt;b&gt;barcode_cache (SQLite)&lt;/b&gt;&lt;br&gt;&lt;br&gt;Caches every raw response · 7-day TTL · keyed by barcode" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1A4A3A;strokeColor=#44AA88;fontColor=#AAFFCC;fontSize=12;align=center;verticalAlign=middle;arcSize=10;" vertex="1" parent="1">
+          <mxGeometry x="475" y="710" width="350" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="e_repo_tmdb" value="film/TV" style="endArrow=classic;html=1;rounded=0;strokeColor=#01587E;fontSize=10;fontStyle=2;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="repo" target="api_tmdb">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_tmdb_tvdb" value="enrich" style="endArrow=classic;html=1;rounded=0;strokeColor=#2A6B40;fontSize=10;fontStyle=2;dashed=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="api_tmdb" target="api_tvdb">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_tvdb_fanart" value="artwork" style="endArrow=classic;html=1;rounded=0;strokeColor=#1F4360;fontSize=10;fontStyle=2;dashed=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="api_tvdb" target="api_fanart">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_repo_mb" value="music" style="endArrow=classic;html=1;rounded=0;strokeColor=#5C2347;fontSize=10;fontStyle=2;exitX=0.4;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="repo" target="api_mb">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_mb_caa" value="art lookup" style="endArrow=classic;html=1;rounded=0;strokeColor=#53301B;fontSize=10;fontStyle=2;dashed=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="api_mb" target="api_caa">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_mb_discogs" value="empty / 503" style="endArrow=classic;html=1;rounded=0;strokeColor=#000000;fontSize=10;fontStyle=2;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="api_mb" target="api_discogs">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_discogs_audiodb" value="enrich" style="endArrow=classic;html=1;rounded=0;strokeColor=#7A4F00;fontSize=10;fontStyle=2;dashed=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="api_discogs" target="api_audiodb">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_repo_gbooks" value="ISBN" style="endArrow=classic;html=1;rounded=0;strokeColor=#1A4FB8;fontSize=10;fontStyle=2;exitX=0.7;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="repo" target="api_gbooks">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_gbooks_ol" value="not found" style="endArrow=classic;html=1;rounded=0;strokeColor=#4D1A00;fontSize=10;fontStyle=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="api_gbooks" target="api_ol">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_repo_upc" value="unknown / fallback" style="endArrow=classic;html=1;rounded=0;strokeColor=#888822;fontSize=10;fontStyle=2;dashed=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="repo" target="api_upc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_repo_cache_in" value="check first" style="endArrow=classic;startArrow=classic;html=1;rounded=0;strokeColor=#44AA88;fontSize=10;fontStyle=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="repo" target="cache">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="legend" value="&lt;b&gt;Legend&lt;/b&gt;&lt;br&gt;&#9472; primary call from repository&lt;br&gt;&#9476; fallback / enrichment hop&lt;br&gt;&#128273; user-supplied API key (flutter_secure_storage)&lt;br&gt;&#128274; no key required" style="text;html=1;strokeColor=#888888;fillColor=#F5F6F7;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10;fontColor=#0E0E0E;" vertex="1" parent="1">
+          <mxGeometry x="60" y="710" width="320" height="100" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

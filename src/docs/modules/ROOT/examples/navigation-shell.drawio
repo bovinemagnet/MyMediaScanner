@@ -1,0 +1,85 @@
+<mxfile host="app.diagrams.net" modified="2026-04-29T00:00:00.000Z" agent="MyMediaScanner-docs" version="22.0.0">
+  <diagram id="navigation-shell" name="Navigation Shell">
+    <mxGraphModel dx="1422" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1300" pageHeight="850" math="0" shadow="0" adaptiveColors="auto">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="GoRouter — StatefulShellRoute branches" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontStyle=1;fontColor=#0E0E0E;" vertex="1" parent="1">
+          <mxGeometry x="400" y="20" width="500" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" value="8 branches mapped to desktop sidebar (always visible) and mobile bottom-nav (subset)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=2;fontColor=#555555;" vertex="1" parent="1">
+          <mxGeometry x="350" y="50" width="600" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="shell" value="&lt;b&gt;StatefulShellRoute.indexedStack&lt;/b&gt;&lt;br&gt;Maintains independent navigation state per branch" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00647A;strokeColor=#004D5C;fontColor=#FFFFFF;fontSize=13;align=center;verticalAlign=middle;arcSize=12;" vertex="1" parent="1">
+          <mxGeometry x="475" y="100" width="350" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="b0" value="&lt;b&gt;0 · Dashboard&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#888888&quot;&gt;/&lt;/font&gt;&lt;br&gt;&lt;br&gt;Hero text · quick-scan CTA · recent additions" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1A3A4A;strokeColor=#6DDDFF;fontColor=#6DDDFF;fontSize=11;align=center;verticalAlign=middle;arcSize=10;" vertex="1" parent="1">
+          <mxGeometry x="60" y="200" width="180" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="b1" value="&lt;b&gt;1 · Collection&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#888888&quot;&gt;/collection&lt;/font&gt;&lt;br&gt;&lt;br&gt;Library grid / table · master-detail · keyboard nav" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1A3A4A;strokeColor=#6DDDFF;fontColor=#6DDDFF;fontSize=11;align=center;verticalAlign=middle;arcSize=10;" vertex="1" parent="1">
+          <mxGeometry x="260" y="200" width="180" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="b2" value="&lt;b&gt;2 · Scanner&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#888888&quot;&gt;/scan&lt;/font&gt;&lt;br&gt;&lt;br&gt;Camera · keyboard wedge · webcam · batch mode" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1A3A4A;strokeColor=#6DDDFF;fontColor=#6DDDFF;fontSize=11;align=center;verticalAlign=middle;arcSize=10;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="460" y="200" width="180" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="b3" value="&lt;b&gt;3 · Shelves&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#888888&quot;&gt;/shelves&lt;/font&gt;&lt;br&gt;&lt;br&gt;Shelf management · drag-reorder" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2A2A2A;strokeColor=#888888;fontColor=#F5F6F7;fontSize=11;align=center;verticalAlign=middle;arcSize=10;" vertex="1" parent="1">
+          <mxGeometry x="660" y="200" width="180" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="b4" value="&lt;b&gt;4 · Batch&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#888888&quot;&gt;/batch&lt;/font&gt;&lt;br&gt;&lt;br&gt;Batch editor · queue review · bulk save" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2A2A2A;strokeColor=#888888;fontColor=#F5F6F7;fontSize=11;align=center;verticalAlign=middle;arcSize=10;" vertex="1" parent="1">
+          <mxGeometry x="860" y="200" width="180" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="b5" value="&lt;b&gt;5 · Insights&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#888888&quot;&gt;/insights&lt;/font&gt;&lt;br&gt;&lt;br&gt;Statistics · CSV / JSON export" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1A3A4A;strokeColor=#6DDDFF;fontColor=#6DDDFF;fontSize=11;align=center;verticalAlign=middle;arcSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1060" y="200" width="180" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="b6" value="&lt;b&gt;6 · Settings&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#888888&quot;&gt;/settings&lt;/font&gt;&lt;br&gt;&lt;br&gt;API keys · sync config · theme · FLAC library" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2A2A2A;strokeColor=#888888;fontColor=#F5F6F7;fontSize=11;align=center;verticalAlign=middle;arcSize=10;" vertex="1" parent="1">
+          <mxGeometry x="160" y="340" width="180" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="b7" value="&lt;b&gt;7 · Rips&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#888888&quot;&gt;/rips&lt;/font&gt;&lt;br&gt;&lt;br&gt;FLAC / MP3 library · coverage · quality analysis&lt;br&gt;&lt;b&gt;desktop only&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2A2A2A;strokeColor=#888888;fontColor=#F5F6F7;fontSize=11;align=center;verticalAlign=middle;arcSize=10;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="360" y="340" width="180" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="nested" value="&lt;b&gt;Nested under Collection&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#888888&quot;&gt;/collection/item/:id&lt;/font&gt;&lt;br&gt;&lt;br&gt;Item detail · cover hero · lending · rip status · metadata sections" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1A4A3A;strokeColor=#44AA88;fontColor=#AAFFCC;fontSize=11;align=center;verticalAlign=middle;arcSize=10;" vertex="1" parent="1">
+          <mxGeometry x="600" y="340" width="280" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="postscan" value="&lt;b&gt;Post-scan flow&lt;/b&gt;&lt;br&gt;Metadata Confirm · Disambiguation&lt;br&gt;&lt;br&gt;Reached from Scanner; not in shell" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1A4A3A;strokeColor=#44AA88;fontColor=#AAFFCC;fontSize=11;align=center;verticalAlign=middle;arcSize=10;" vertex="1" parent="1">
+          <mxGeometry x="900" y="340" width="280" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="e_shell_b0" style="endArrow=classic;html=1;rounded=0;strokeColor=#0E0E0E;exitX=0.1;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="shell" target="b0">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_shell_b1" style="endArrow=classic;html=1;rounded=0;strokeColor=#0E0E0E;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="shell" target="b1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_shell_b2" style="endArrow=classic;html=1;rounded=0;strokeColor=#0E0E0E;exitX=0.4;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="shell" target="b2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_shell_b3" style="endArrow=classic;html=1;rounded=0;strokeColor=#0E0E0E;exitX=0.55;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="shell" target="b3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_shell_b4" style="endArrow=classic;html=1;rounded=0;strokeColor=#0E0E0E;exitX=0.7;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="shell" target="b4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_shell_b5" style="endArrow=classic;html=1;rounded=0;strokeColor=#0E0E0E;exitX=0.85;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="shell" target="b5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_b1_b6" style="endArrow=classic;html=1;rounded=0;strokeColor=#0E0E0E;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="shell" target="b6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_b1_b7" style="endArrow=classic;html=1;rounded=0;strokeColor=#0E0E0E;dashed=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="shell" target="b7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_b1_nested" value="item tap" style="endArrow=classic;html=1;rounded=0;strokeColor=#44AA88;fontSize=10;fontStyle=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="b1" target="nested">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_b2_postscan" value="barcode lookup" style="endArrow=classic;html=1;rounded=0;strokeColor=#44AA88;fontSize=10;fontStyle=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="b2" target="postscan">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="legend" value="&lt;b&gt;Legend&lt;/b&gt;&lt;br&gt;&#9632; cyan branch — visible in mobile bottom-nav (Home · Library · Scan · Insights)&lt;br&gt;&#9633; grey branch — desktop sidebar only&lt;br&gt;&#9676; dashed — desktop-only branch (Rips)&lt;br&gt;&#9656; green — nested or post-scan route, outside the shell" style="text;html=1;strokeColor=#888888;fillColor=#F5F6F7;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10;fontColor=#0E0E0E;" vertex="1" parent="1">
+          <mxGeometry x="60" y="490" width="600" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="chrome" value="&lt;b&gt;Navigation chrome by form factor&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;b&gt;Desktop wide:&lt;/b&gt; persistent sidebar shows all 8 branches.&lt;br&gt;&lt;b&gt;Desktop narrow:&lt;/b&gt; sidebar auto-collapses into a drawer.&lt;br&gt;&lt;b&gt;Mobile:&lt;/b&gt; glassmorphism bottom-nav with raised Scan FAB shows Home, Library, Scan, Insights. Shelves accessed via Library AppBar; Settings via overflow." style="text;html=1;strokeColor=#6DDDFF;fillColor=#0E1A20;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=11;fontColor=#E5F5FB;" vertex="1" parent="1">
+          <mxGeometry x="680" y="490" width="560" height="120" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
