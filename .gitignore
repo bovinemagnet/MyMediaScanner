@@ -55,6 +55,7 @@ app.*.map.json
 keys.txt
 .claude/
 .codex
+.mcp.json
 AGENTS.md
 devtools_options.yaml
 .worktrees/
