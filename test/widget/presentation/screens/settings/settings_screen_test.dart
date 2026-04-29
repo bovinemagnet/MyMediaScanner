@@ -178,13 +178,13 @@ void main() {
 
     // Scroll until the TMDB field is visible.
     await tester.scrollUntilVisible(
-      find.widgetWithText(TextField, 'TMDB API Key'),
+      find.widgetWithText(TextField, 'TMDB Read Access Token (v4)'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
 
     await tester.enterText(
-      find.widgetWithText(TextField, 'TMDB API Key'),
+      find.widgetWithText(TextField, 'TMDB Read Access Token (v4)'),
       'my-tmdb-key',
     );
     await tester.pump();
@@ -204,7 +204,9 @@ void main() {
         )).called(1);
 
     // Snackbar should confirm the save.
-    expect(find.textContaining('TMDB API Key saved'), findsOneWidget);
+    expect(
+        find.textContaining('TMDB Read Access Token (v4) saved'),
+        findsOneWidget);
   });
 
   // -------------------------------------------------------------------------
@@ -329,7 +331,7 @@ void main() {
 
     expect(find.textContaining('MusicBrainz'), findsOneWidget);
     expect(find.textContaining('no key'), findsOneWidget);
-    expect(find.widgetWithText(TextField, 'TMDB API Key'), findsOneWidget);
+    expect(find.widgetWithText(TextField, 'TMDB Read Access Token (v4)'), findsOneWidget);
   });
 }
 

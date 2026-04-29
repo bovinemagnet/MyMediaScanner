@@ -90,8 +90,18 @@ class _ApiKeyFormState extends ConsumerState<ApiKeyForm> {
         // Primary sources
         Text('Primary Sources',
             style: Theme.of(context).textTheme.labelLarge),
+        const SizedBox(height: 4),
+        Text(
+          'TMDB needs the v4 "API Read Access Token" (a long ~250-char '
+          'string starting with "eyJ…") — not the 32-char v3 API Key. '
+          'Find it on themoviedb.org → Settings → API → '
+          '"API Read Access Token (v4 auth)".',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.outline,
+              ),
+        ),
         const SizedBox(height: 8),
-        _keyField('TMDB API Key', _tmdbController, (key) {
+        _keyField('TMDB Read Access Token (v4)', _tmdbController, (key) {
           ref.read(apiKeysProvider.notifier).setTmdbKey(key);
         }),
         const SizedBox(height: 12),
@@ -160,21 +170,65 @@ class _ApiKeyFormState extends ConsumerState<ApiKeyForm> {
     TextEditingController controller,
     Function(String) onSave,
   ) {
-    return TextField(
+    return _ApiKeyField(
+      label: label,
       controller: controller,
+      onSave: onSave,
+    );
+  }
+}
+
+/// A masked API-key field with a per-field reveal toggle and a save
+/// button. Visibility state is local so revealing one key does not
+/// expose the others.
+class _ApiKeyField extends StatefulWidget {
+  const _ApiKeyField({
+    required this.label,
+    required this.controller,
+    required this.onSave,
+  });
+
+  final String label;
+  final TextEditingController controller;
+  final void Function(String) onSave;
+
+  @override
+  State<_ApiKeyField> createState() => _ApiKeyFieldState();
+}
+
+class _ApiKeyFieldState extends State<_ApiKeyField> {
+  bool _obscured = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: widget.controller,
+      obscureText: _obscured,
       decoration: InputDecoration(
-        labelText: label,
-        suffixIcon: IconButton(
-          icon: const Icon(Icons.save),
-          onPressed: () {
-            onSave(controller.text.trim());
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('$label saved')),
-            );
-          },
+        labelText: widget.label,
+        suffixIcon: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: Icon(
+                _obscured ? Icons.visibility : Icons.visibility_off,
+              ),
+              tooltip: _obscured ? 'Reveal' : 'Hide',
+              onPressed: () => setState(() => _obscured = !_obscured),
+            ),
+            IconButton(
+              icon: const Icon(Icons.save),
+              tooltip: 'Save',
+              onPressed: () {
+                widget.onSave(widget.controller.text.trim());
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('${widget.label} saved')),
+                );
+              },
+            ),
+          ],
         ),
       ),
-      obscureText: true,
     );
   }
 }
