@@ -2,7 +2,9 @@
 //
 // Covers:
 //   1. Renders the shelf name ("Shelf" AppBar title) and item list.
-//   2. Remove-from-shelf — skipped: ShelfDetailScreen renders a
+//   2. Reorder — drives ReorderableListView.onReorder and asserts the
+//      new ordering is persisted via shelfRepository.reorderItems.
+//   3. Remove-from-shelf — skipped: ShelfDetailScreen renders a
 //      ReorderableListView with no remove action; removal is only
 //      triggered from ItemDetailScreen / context menus.
 //
@@ -127,12 +129,57 @@ void main() {
   });
 
   // --------------------------------------------------------------------------
-  // Test 2: remove-from-shelf — skipped due to tight coupling
+  // Test 2: reorder persists the new ordering through the shelf repository
   // --------------------------------------------------------------------------
-  // TODO: ShelfDetailScreen uses a ReorderableListView and exposes no
-  // "remove" button.  The shelfRepository.removeItem call is only
-  // reachable via a right-click ContextMenu (desktop) or from
-  // ItemDetailScreen, neither of which is part of this screen's widget
-  // tree.  Removal logic should be covered in an ItemDetailScreen or
-  // integration test instead.
+  testWidgets(
+    'dragging an item reorders the list and calls reorderItems',
+    (tester) async {
+      // Three items in initial order.
+      const itemIds = ['item1', 'item2', 'item3'];
+      when(() => shelfRepo.getMediaItemIdsForShelf(_kShelfId))
+          .thenAnswer((_) async => itemIds);
+      for (final id in itemIds) {
+        when(() => mediaItemRepo.getById(id)).thenAnswer(
+          (_) async => _mediaItem(id: id, title: 'Title $id'),
+        );
+      }
+      when(() => shelfRepo.reorderItems(_kShelfId, any()))
+          .thenAnswer((_) async {});
+
+      await tester.pumpWidget(
+          _wrap(shelfRepo: shelfRepo, mediaItemRepo: mediaItemRepo));
+      await tester.pumpAndSettle();
+
+      // Sanity-check all three tiles rendered.
+      expect(find.text('Title item1'), findsOneWidget);
+      expect(find.text('Title item2'), findsOneWidget);
+      expect(find.text('Title item3'), findsOneWidget);
+
+      // Invoke onReorder directly — the gesture-driven drag is fragile in
+      // a headless test, but onReorder carries all of the production
+      // logic (index adjustment + persistence) so calling it is sufficient
+      // to cover the behaviour. Move item3 to the front.
+      final list =
+          tester.widget<ReorderableListView>(find.byType(ReorderableListView));
+      list.onReorder(2, 0);
+      await tester.pumpAndSettle();
+
+      // The screen reorders the in-memory list and persists the new order.
+      // Moving index 2 → index 0 yields ['item3', 'item1', 'item2'].
+      verify(() => shelfRepo.reorderItems(
+            _kShelfId,
+            ['item3', 'item1', 'item2'],
+          )).called(1);
+    },
+  );
+
+  // --------------------------------------------------------------------------
+  // Test 3: remove-from-shelf — gap, no widget-level coverage
+  // --------------------------------------------------------------------------
+  // ShelfDetailScreen uses a ReorderableListView and exposes no "remove"
+  // button.  The shelfRepository.removeItem call is only reachable via a
+  // right-click ContextMenu (desktop) or from ItemDetailScreen, neither of
+  // which is part of this screen's widget tree.  Removal logic should be
+  // covered by a dedicated ItemDetailScreen widget test or an integration
+  // test that drives the context menu.
 }
