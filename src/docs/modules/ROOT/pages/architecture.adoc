@@ -7,6 +7,13 @@ include::_attributes.adoc[]
 MyMediaScanner follows clean architecture principles with a strict, one-way dependency rule: the `domain/` layer has *zero* dependencies on `data/` or `presentation/`.
 All business logic lives in the domain layer; outer layers depend inward, never the other way around.
 
+== System Context
+
+Before drilling into the internal layers, it helps to see the app inside its operating environment.
+The user interacts with the app on a single device while the app reaches out to several external services for metadata, optional cloud sync, and platform hardware (camera, USB scanner).
+
+image::diagrams/system-context.svg[System context: the device, the app's local stores, external metadata APIs, and the optional self-hosted PostgreSQL sync target, role=diagram]
+
 == Layer Overview
 
 The following diagram illustrates the five top-level layers and the direction of their dependencies.
@@ -113,3 +120,10 @@ Section layout:: Content sections use tonal containers (`surfaceContainerHigh` c
 Dividers are not used.
 Database migrations:: Every schema change requires a new migration entry in `AppDatabase`.
 The current schema version is {schema-version}.
+
+== Platform Support
+
+MyMediaScanner targets five platforms but a few features depend on platform-specific hardware or APIs that are not universally available.
+The matrix below summarises which capabilities are wired up where; refer to the dedicated feature pages for the underlying implementation details.
+
+image::diagrams/platform-matrix.svg[Platform support matrix showing which features are available on Android, iOS, macOS, Windows, and Linux, role=diagram]
