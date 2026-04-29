@@ -136,3 +136,22 @@ if(NOT CMAKE_BUILD_TYPE MATCHES "Debug")
   install(FILES "${AOT_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
     COMPONENT Runtime)
 endif()
+
+# === freedesktop.org integration ===
+# Install the .desktop entry and hicolor icon set at standard paths
+# (relative to CMAKE_INSTALL_PREFIX). Bundle installs (the default,
+# where the prefix is the build's bundle/ dir) get them at
+# bundle/share/applications/ and bundle/share/icons/hicolor/, ready to
+# be picked up by a downstream packager (deb, rpm, snap, flatpak,
+# AppImage). System installs (e.g. -DCMAKE_INSTALL_PREFIX=/usr or
+# ~/.local) place them where GNOME, KDE, and XFCE will see them.
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/${APPLICATION_ID}.desktop"
+  DESTINATION "share/applications"
+  COMPONENT Runtime)
+
+foreach(icon_size 16 24 32 48 64 128 256 512)
+  install(FILES
+    "${CMAKE_CURRENT_SOURCE_DIR}/packaging/icons/hicolor/${icon_size}x${icon_size}/apps/${APPLICATION_ID}.png"
+    DESTINATION "share/icons/hicolor/${icon_size}x${icon_size}/apps"
+    COMPONENT Runtime)
+endforeach()
