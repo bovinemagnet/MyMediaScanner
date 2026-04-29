@@ -32,11 +32,18 @@ class ScreenHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
+          // Outer Wrap so on narrow windows the actions group flows to
+          // a new line below the title rather than overflowing.
+          Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 16,
+            runSpacing: 8,
             children: [
-              Expanded(
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       title,
@@ -57,17 +64,13 @@ class ScreenHeader extends StatelessWidget {
                 ),
               ),
               if (actions != null && actions!.isNotEmpty)
-                // OverflowBar switches to a Column when the actions
-                // can't fit in the available width on the same row,
-                // preventing the bare-Row overflow that surfaced on
-                // narrow desktop windows / the master pane.
-                Flexible(
-                  child: OverflowBar(
-                    alignment: MainAxisAlignment.end,
-                    spacing: 8,
-                    overflowSpacing: 4,
-                    children: actions!,
-                  ),
+                // Inner Wrap so individual action widgets reflow onto
+                // multiple lines instead of being squeezed and clipping.
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: actions!,
                 ),
             ],
           ),

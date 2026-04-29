@@ -19,18 +19,27 @@ class SortSelector extends ConsumerWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        DropdownButton<String>(
-          value: filter.sortBy,
-          underline: const SizedBox.shrink(),
-          items: _options.entries
-              .map((e) =>
-                  DropdownMenuItem(value: e.key, child: Text(e.value)))
-              .toList(),
-          onChanged: (value) {
-            if (value != null) {
-              ref.read(collectionFilterProvider.notifier).setSort(value);
-            }
-          },
+        // Flexible + isExpanded lets the dropdown shrink when the
+        // selector lives in a narrow OverflowBar slot (master pane,
+        // stacked actions). Text overflow ellipsises.
+        Flexible(
+          child: DropdownButton<String>(
+            value: filter.sortBy,
+            isExpanded: true,
+            underline: const SizedBox.shrink(),
+            items: _options.entries
+                .map((e) => DropdownMenuItem(
+                      value: e.key,
+                      child: Text(e.value,
+                          overflow: TextOverflow.ellipsis),
+                    ))
+                .toList(),
+            onChanged: (value) {
+              if (value != null) {
+                ref.read(collectionFilterProvider.notifier).setSort(value);
+              }
+            },
+          ),
         ),
         IconButton(
           icon: Icon(filter.ascending
