@@ -9,6 +9,7 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
+import 'package:mymediascanner/domain/entities/rip_track.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
 
@@ -76,8 +77,7 @@ final mediaItemRipStatusProvider =
   if (tracksWithData.isEmpty) return RipStatus.ripped;
 
   final hasIssues = tracksWithData.any((t) =>
-      t.accurateRipStatus != 'verified' ||
-      (t.clickCount != null && t.clickCount! > 0));
+      t.accurateRipStatus != 'verified' || t.totalDefects > 0);
   if (hasIssues) return RipStatus.qualityIssues;
 
   return RipStatus.verified;
@@ -162,7 +162,7 @@ final ripQualityStatusCacheProvider =
     final hasIssues = tracksWithData.any((t) =>
         (t.accurateRipStatus != null &&
             t.accurateRipStatus != 'verified') ||
-        (t.clickCount != null && t.clickCount! > 0));
+        t.totalDefects > 0);
     cache[itemId] =
         hasIssues ? RipStatus.qualityIssues : RipStatus.verified;
   }

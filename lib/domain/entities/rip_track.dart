@@ -23,7 +23,23 @@ sealed class RipTrack with _$RipTrack {
     double? trackQuality,
     String? copyCrc,
     int? clickCount,
+    int? popCount,
+    int? clippingCount,
+    int? dropoutCount,
+    double? defectConfidence,
     String? ripLogSource,
     int? qualityCheckedAt,
   }) = _RipTrack;
+}
+
+extension RipTrackDefects on RipTrack {
+  /// Sum of every recorded defect-type count, or 0 if no detector run has
+  /// happened yet. UI predicates that previously asked `clickCount > 0`
+  /// should consult this instead so pops, clipping, and dropouts also
+  /// trigger the warning state.
+  int get totalDefects =>
+      (clickCount ?? 0) +
+      (popCount ?? 0) +
+      (clippingCount ?? 0) +
+      (dropoutCount ?? 0);
 }

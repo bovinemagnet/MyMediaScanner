@@ -3,7 +3,8 @@
 /// Implements a three-tier analysis pipeline:
 /// 1. Parse rip log files (cheapest)
 /// 2. Query AccurateRip database
-/// 3. Statistical click/pop detection (most expensive)
+/// 3. Statistical defect detection — clicks, pops, clipping, and
+///    dropouts via [package:audio_defect_detector] (most expensive)
 ///
 /// Author: Paul Snow
 /// Since: 0.0.0
@@ -52,6 +53,19 @@ typedef IsolateRunner = Future<R> Function<R>(
 /// sample counts) without writing real FLAC files to disk.
 typedef FlacMetadataReader = Future<FlacMetadata?> Function(String filePath);
 
+/// Signature for the audio defect detection step.
+///
+/// Defaults to a thin wrapper around [add.analysePcm]; tests inject a
+/// fake that returns a curated [add.AnalysisResult] so the per-DefectType
+/// partition can be verified deterministically without having to craft
+/// PCM data that produces clicks/pops/clipping/dropouts in the real
+/// detector.
+typedef DefectDetector = add.AnalysisResult Function(
+  Uint8List pcmData, {
+  required add.PcmFormat format,
+  required add.DetectorConfig config,
+});
+
 /// Analyses the audio quality of all tracks in a rip album.
 class AnalyseRipQualityUseCase {
   AnalyseRipQualityUseCase({
@@ -61,15 +75,24 @@ class AnalyseRipQualityUseCase {
     this.sensitivity = add.Sensitivity.medium,
     IsolateRunner? isolateRunner,
     FlacMetadataReader? flacMetadataReader,
+    DefectDetector? defectDetector,
   })  : _repository = repository,
         _flacDecoder = flacDecoder,
         _arClient = accurateRipClient,
         _isolateRunner = isolateRunner ?? _defaultIsolateRunner,
-        _metadataReader = flacMetadataReader ?? FlacReader.readMetadata;
+        _metadataReader = flacMetadataReader ?? FlacReader.readMetadata,
+        _defectDetector = defectDetector ?? _defaultDefectDetector;
 
   static Future<R> _defaultIsolateRunner<R>(
           FutureOr<R> Function() computation) =>
       Isolate.run(computation);
+
+  static add.AnalysisResult _defaultDefectDetector(
+    Uint8List pcmData, {
+    required add.PcmFormat format,
+    required add.DetectorConfig config,
+  }) =>
+      add.analysePcm(pcmData, format: format, config: config);
 
   final IRipLibraryRepository _repository;
   final FlacDecoder _flacDecoder;
@@ -77,6 +100,7 @@ class AnalyseRipQualityUseCase {
   final add.Sensitivity sensitivity;
   final IsolateRunner _isolateRunner;
   final FlacMetadataReader _metadataReader;
+  final DefectDetector _defectDetector;
 
   /// Execute the analysis pipeline for the given album.
   ///
@@ -268,29 +292,49 @@ class AnalyseRipQualityUseCase {
         }
       }
 
-      // Step 3: No AR data — run click detection
+      // Step 3: No AR data — run defect detection
       yield QualityAnalysisProgress(
         currentTrack: i + 1,
         totalTracks: totalTracks,
-        currentStep: 'Detecting clicks on track ${track.trackNumber}',
+        currentStep: 'Detecting defects on track ${track.trackNumber}',
       );
 
-      final clickResult = await _isolateRunner(() {
-        return add.analysePcm(
+      // Capture the detector and sensitivity for the isolate closure so
+      // we don't reach back through `this` once we cross the isolate
+      // boundary.
+      final detector = _defectDetector;
+      final detectorSensitivity = sensitivity;
+      final detectionResult = await _isolateRunner(() {
+        return detector(
           pcmData,
           format: const add.PcmFormat(
             sampleRate: 44100,
             bitDepth: 16,
             channels: 2,
           ),
-          config: add.DetectorConfig(sensitivity: sensitivity),
+          config: add.DetectorConfig(sensitivity: detectorSensitivity),
         );
       });
+
+      // Partition defects by DefectType. Initialising every type to 0
+      // means tracks with no detections of a given type record an
+      // explicit zero rather than NULL, so UI predicates can treat
+      // "checked" as "non-null".
+      final byType = <add.DefectType, int>{
+        for (final type in add.DefectType.values) type: 0,
+      };
+      for (final defect in detectionResult.defects) {
+        byType[defect.type] = (byType[defect.type] ?? 0) + 1;
+      }
 
       await _repository.updateTrackQuality(
         track.id,
         arStatus: 'not_found',
-        clickCount: clickResult.defects.length,
+        clickCount: byType[add.DefectType.click] ?? 0,
+        popCount: byType[add.DefectType.pop] ?? 0,
+        clippingCount: byType[add.DefectType.clipping] ?? 0,
+        dropoutCount: byType[add.DefectType.dropout] ?? 0,
+        defectConfidence: detectionResult.aggregateConfidence,
         qualityCheckedAt: now,
       );
     }

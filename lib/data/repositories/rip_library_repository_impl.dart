@@ -86,29 +86,7 @@ class RipLibraryRepositoryImpl implements IRipLibraryRepository {
 
   @override
   Future<void> insertTracks(List<RipTrack> tracks) async {
-    final companions = tracks
-        .map((t) => RipTracksTableCompanion(
-              id: Value(t.id),
-              ripAlbumId: Value(t.ripAlbumId),
-              discNumber: Value(t.discNumber),
-              trackNumber: Value(t.trackNumber),
-              title: Value(t.title),
-              filePath: Value(t.filePath),
-              durationMs: Value(t.durationMs),
-              fileSizeBytes: Value(t.fileSizeBytes),
-              updatedAt: Value(t.updatedAt),
-              accurateripStatus: Value(t.accurateRipStatus),
-              accurateripConfidence: Value(t.accurateRipConfidence),
-              accurateripCrcV1: Value(t.accurateRipCrcV1),
-              accurateripCrcV2: Value(t.accurateRipCrcV2),
-              peakLevel: Value(t.peakLevel),
-              trackQuality: Value(t.trackQuality),
-              copyCrc: Value(t.copyCrc),
-              clickCount: Value(t.clickCount),
-              ripLogSource: Value(t.ripLogSource),
-              qualityCheckedAt: Value(t.qualityCheckedAt),
-            ))
-        .toList();
+    final companions = tracks.map(_trackCompanion).toList();
     await _dao.insertTracks(companions);
   }
 
@@ -171,6 +149,10 @@ class RipLibraryRepositoryImpl implements IRipLibraryRepository {
         trackQuality: Value(t.trackQuality),
         copyCrc: Value(t.copyCrc),
         clickCount: Value(t.clickCount),
+        popCount: Value(t.popCount),
+        clippingCount: Value(t.clippingCount),
+        dropoutCount: Value(t.dropoutCount),
+        defectConfidence: Value(t.defectConfidence),
         ripLogSource: Value(t.ripLogSource),
         qualityCheckedAt: Value(t.qualityCheckedAt),
       );
@@ -229,6 +211,10 @@ class RipLibraryRepositoryImpl implements IRipLibraryRepository {
     double? trackQuality,
     String? copyCrc,
     int? clickCount,
+    int? popCount,
+    int? clippingCount,
+    int? dropoutCount,
+    double? defectConfidence,
     String? ripLogSource,
     int? qualityCheckedAt,
   }) async {
@@ -242,6 +228,10 @@ class RipLibraryRepositoryImpl implements IRipLibraryRepository {
       trackQuality: trackQuality,
       copyCrc: copyCrc,
       clickCount: clickCount,
+      popCount: popCount,
+      clippingCount: clippingCount,
+      dropoutCount: dropoutCount,
+      defectConfidence: defectConfidence,
       ripLogSource: ripLogSource,
       qualityCheckedAt: qualityCheckedAt,
     );
@@ -265,6 +255,10 @@ class RipLibraryRepositoryImpl implements IRipLibraryRepository {
         trackQuality: row.trackQuality,
         copyCrc: row.copyCrc,
         clickCount: row.clickCount,
+        popCount: row.popCount,
+        clippingCount: row.clippingCount,
+        dropoutCount: row.dropoutCount,
+        defectConfidence: row.defectConfidence,
         ripLogSource: row.ripLogSource,
         qualityCheckedAt: row.qualityCheckedAt,
       );

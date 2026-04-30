@@ -5,6 +5,7 @@ import 'package:mymediascanner/app/theme/app_media_colors.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
+import 'package:mymediascanner/domain/entities/rip_track.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
 import 'package:mymediascanner/presentation/widgets/error_state.dart';
@@ -306,6 +307,6 @@ class _CoverageItemTile extends ConsumerWidget {
     if (!anyChecked) return false;
 
     return tracks.any((t) =>
-        t.accurateRipStatus == 'mismatch' || (t.clickCount ?? 0) > 0);
+        t.accurateRipStatus == 'mismatch' || t.totalDefects > 0);
   }
 }

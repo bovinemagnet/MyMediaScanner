@@ -6421,6 +6421,50 @@ class $RipTracksTableTable extends RipTracksTable
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _popCountMeta = const VerificationMeta(
+    'popCount',
+  );
+  @override
+  late final GeneratedColumn<int> popCount = GeneratedColumn<int>(
+    'pop_count',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _clippingCountMeta = const VerificationMeta(
+    'clippingCount',
+  );
+  @override
+  late final GeneratedColumn<int> clippingCount = GeneratedColumn<int>(
+    'clipping_count',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _dropoutCountMeta = const VerificationMeta(
+    'dropoutCount',
+  );
+  @override
+  late final GeneratedColumn<int> dropoutCount = GeneratedColumn<int>(
+    'dropout_count',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _defectConfidenceMeta = const VerificationMeta(
+    'defectConfidence',
+  );
+  @override
+  late final GeneratedColumn<double> defectConfidence = GeneratedColumn<double>(
+    'defect_confidence',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _ripLogSourceMeta = const VerificationMeta(
     'ripLogSource',
   );
@@ -6462,6 +6506,10 @@ class $RipTracksTableTable extends RipTracksTable
     trackQuality,
     copyCrc,
     clickCount,
+    popCount,
+    clippingCount,
+    dropoutCount,
+    defectConfidence,
     ripLogSource,
     qualityCheckedAt,
   ];
@@ -6612,6 +6660,39 @@ class $RipTracksTableTable extends RipTracksTable
         clickCount.isAcceptableOrUnknown(data['click_count']!, _clickCountMeta),
       );
     }
+    if (data.containsKey('pop_count')) {
+      context.handle(
+        _popCountMeta,
+        popCount.isAcceptableOrUnknown(data['pop_count']!, _popCountMeta),
+      );
+    }
+    if (data.containsKey('clipping_count')) {
+      context.handle(
+        _clippingCountMeta,
+        clippingCount.isAcceptableOrUnknown(
+          data['clipping_count']!,
+          _clippingCountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('dropout_count')) {
+      context.handle(
+        _dropoutCountMeta,
+        dropoutCount.isAcceptableOrUnknown(
+          data['dropout_count']!,
+          _dropoutCountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('defect_confidence')) {
+      context.handle(
+        _defectConfidenceMeta,
+        defectConfidence.isAcceptableOrUnknown(
+          data['defect_confidence']!,
+          _defectConfidenceMeta,
+        ),
+      );
+    }
     if (data.containsKey('rip_log_source')) {
       context.handle(
         _ripLogSourceMeta,
@@ -6707,6 +6788,22 @@ class $RipTracksTableTable extends RipTracksTable
         DriftSqlType.int,
         data['${effectivePrefix}click_count'],
       ),
+      popCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}pop_count'],
+      ),
+      clippingCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}clipping_count'],
+      ),
+      dropoutCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}dropout_count'],
+      ),
+      defectConfidence: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}defect_confidence'],
+      ),
       ripLogSource: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}rip_log_source'],
@@ -6743,6 +6840,10 @@ class RipTracksTableData extends DataClass
   final double? trackQuality;
   final String? copyCrc;
   final int? clickCount;
+  final int? popCount;
+  final int? clippingCount;
+  final int? dropoutCount;
+  final double? defectConfidence;
   final String? ripLogSource;
   final int? qualityCheckedAt;
   const RipTracksTableData({
@@ -6763,6 +6864,10 @@ class RipTracksTableData extends DataClass
     this.trackQuality,
     this.copyCrc,
     this.clickCount,
+    this.popCount,
+    this.clippingCount,
+    this.dropoutCount,
+    this.defectConfidence,
     this.ripLogSource,
     this.qualityCheckedAt,
   });
@@ -6805,6 +6910,18 @@ class RipTracksTableData extends DataClass
     }
     if (!nullToAbsent || clickCount != null) {
       map['click_count'] = Variable<int>(clickCount);
+    }
+    if (!nullToAbsent || popCount != null) {
+      map['pop_count'] = Variable<int>(popCount);
+    }
+    if (!nullToAbsent || clippingCount != null) {
+      map['clipping_count'] = Variable<int>(clippingCount);
+    }
+    if (!nullToAbsent || dropoutCount != null) {
+      map['dropout_count'] = Variable<int>(dropoutCount);
+    }
+    if (!nullToAbsent || defectConfidence != null) {
+      map['defect_confidence'] = Variable<double>(defectConfidence);
     }
     if (!nullToAbsent || ripLogSource != null) {
       map['rip_log_source'] = Variable<String>(ripLogSource);
@@ -6854,6 +6971,18 @@ class RipTracksTableData extends DataClass
       clickCount: clickCount == null && nullToAbsent
           ? const Value.absent()
           : Value(clickCount),
+      popCount: popCount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(popCount),
+      clippingCount: clippingCount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(clippingCount),
+      dropoutCount: dropoutCount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dropoutCount),
+      defectConfidence: defectConfidence == null && nullToAbsent
+          ? const Value.absent()
+          : Value(defectConfidence),
       ripLogSource: ripLogSource == null && nullToAbsent
           ? const Value.absent()
           : Value(ripLogSource),
@@ -6890,6 +7019,10 @@ class RipTracksTableData extends DataClass
       trackQuality: serializer.fromJson<double?>(json['trackQuality']),
       copyCrc: serializer.fromJson<String?>(json['copyCrc']),
       clickCount: serializer.fromJson<int?>(json['clickCount']),
+      popCount: serializer.fromJson<int?>(json['popCount']),
+      clippingCount: serializer.fromJson<int?>(json['clippingCount']),
+      dropoutCount: serializer.fromJson<int?>(json['dropoutCount']),
+      defectConfidence: serializer.fromJson<double?>(json['defectConfidence']),
       ripLogSource: serializer.fromJson<String?>(json['ripLogSource']),
       qualityCheckedAt: serializer.fromJson<int?>(json['qualityCheckedAt']),
     );
@@ -6915,6 +7048,10 @@ class RipTracksTableData extends DataClass
       'trackQuality': serializer.toJson<double?>(trackQuality),
       'copyCrc': serializer.toJson<String?>(copyCrc),
       'clickCount': serializer.toJson<int?>(clickCount),
+      'popCount': serializer.toJson<int?>(popCount),
+      'clippingCount': serializer.toJson<int?>(clippingCount),
+      'dropoutCount': serializer.toJson<int?>(dropoutCount),
+      'defectConfidence': serializer.toJson<double?>(defectConfidence),
       'ripLogSource': serializer.toJson<String?>(ripLogSource),
       'qualityCheckedAt': serializer.toJson<int?>(qualityCheckedAt),
     };
@@ -6938,6 +7075,10 @@ class RipTracksTableData extends DataClass
     Value<double?> trackQuality = const Value.absent(),
     Value<String?> copyCrc = const Value.absent(),
     Value<int?> clickCount = const Value.absent(),
+    Value<int?> popCount = const Value.absent(),
+    Value<int?> clippingCount = const Value.absent(),
+    Value<int?> dropoutCount = const Value.absent(),
+    Value<double?> defectConfidence = const Value.absent(),
     Value<String?> ripLogSource = const Value.absent(),
     Value<int?> qualityCheckedAt = const Value.absent(),
   }) => RipTracksTableData(
@@ -6966,6 +7107,14 @@ class RipTracksTableData extends DataClass
     trackQuality: trackQuality.present ? trackQuality.value : this.trackQuality,
     copyCrc: copyCrc.present ? copyCrc.value : this.copyCrc,
     clickCount: clickCount.present ? clickCount.value : this.clickCount,
+    popCount: popCount.present ? popCount.value : this.popCount,
+    clippingCount: clippingCount.present
+        ? clippingCount.value
+        : this.clippingCount,
+    dropoutCount: dropoutCount.present ? dropoutCount.value : this.dropoutCount,
+    defectConfidence: defectConfidence.present
+        ? defectConfidence.value
+        : this.defectConfidence,
     ripLogSource: ripLogSource.present ? ripLogSource.value : this.ripLogSource,
     qualityCheckedAt: qualityCheckedAt.present
         ? qualityCheckedAt.value
@@ -7012,6 +7161,16 @@ class RipTracksTableData extends DataClass
       clickCount: data.clickCount.present
           ? data.clickCount.value
           : this.clickCount,
+      popCount: data.popCount.present ? data.popCount.value : this.popCount,
+      clippingCount: data.clippingCount.present
+          ? data.clippingCount.value
+          : this.clippingCount,
+      dropoutCount: data.dropoutCount.present
+          ? data.dropoutCount.value
+          : this.dropoutCount,
+      defectConfidence: data.defectConfidence.present
+          ? data.defectConfidence.value
+          : this.defectConfidence,
       ripLogSource: data.ripLogSource.present
           ? data.ripLogSource.value
           : this.ripLogSource,
@@ -7041,6 +7200,10 @@ class RipTracksTableData extends DataClass
           ..write('trackQuality: $trackQuality, ')
           ..write('copyCrc: $copyCrc, ')
           ..write('clickCount: $clickCount, ')
+          ..write('popCount: $popCount, ')
+          ..write('clippingCount: $clippingCount, ')
+          ..write('dropoutCount: $dropoutCount, ')
+          ..write('defectConfidence: $defectConfidence, ')
           ..write('ripLogSource: $ripLogSource, ')
           ..write('qualityCheckedAt: $qualityCheckedAt')
           ..write(')'))
@@ -7048,7 +7211,7 @@ class RipTracksTableData extends DataClass
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     id,
     ripAlbumId,
     discNumber,
@@ -7066,9 +7229,13 @@ class RipTracksTableData extends DataClass
     trackQuality,
     copyCrc,
     clickCount,
+    popCount,
+    clippingCount,
+    dropoutCount,
+    defectConfidence,
     ripLogSource,
     qualityCheckedAt,
-  );
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -7090,6 +7257,10 @@ class RipTracksTableData extends DataClass
           other.trackQuality == this.trackQuality &&
           other.copyCrc == this.copyCrc &&
           other.clickCount == this.clickCount &&
+          other.popCount == this.popCount &&
+          other.clippingCount == this.clippingCount &&
+          other.dropoutCount == this.dropoutCount &&
+          other.defectConfidence == this.defectConfidence &&
           other.ripLogSource == this.ripLogSource &&
           other.qualityCheckedAt == this.qualityCheckedAt);
 }
@@ -7112,6 +7283,10 @@ class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
   final Value<double?> trackQuality;
   final Value<String?> copyCrc;
   final Value<int?> clickCount;
+  final Value<int?> popCount;
+  final Value<int?> clippingCount;
+  final Value<int?> dropoutCount;
+  final Value<double?> defectConfidence;
   final Value<String?> ripLogSource;
   final Value<int?> qualityCheckedAt;
   final Value<int> rowid;
@@ -7133,6 +7308,10 @@ class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
     this.trackQuality = const Value.absent(),
     this.copyCrc = const Value.absent(),
     this.clickCount = const Value.absent(),
+    this.popCount = const Value.absent(),
+    this.clippingCount = const Value.absent(),
+    this.dropoutCount = const Value.absent(),
+    this.defectConfidence = const Value.absent(),
     this.ripLogSource = const Value.absent(),
     this.qualityCheckedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -7155,6 +7334,10 @@ class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
     this.trackQuality = const Value.absent(),
     this.copyCrc = const Value.absent(),
     this.clickCount = const Value.absent(),
+    this.popCount = const Value.absent(),
+    this.clippingCount = const Value.absent(),
+    this.dropoutCount = const Value.absent(),
+    this.defectConfidence = const Value.absent(),
     this.ripLogSource = const Value.absent(),
     this.qualityCheckedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -7182,6 +7365,10 @@ class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
     Expression<double>? trackQuality,
     Expression<String>? copyCrc,
     Expression<int>? clickCount,
+    Expression<int>? popCount,
+    Expression<int>? clippingCount,
+    Expression<int>? dropoutCount,
+    Expression<double>? defectConfidence,
     Expression<String>? ripLogSource,
     Expression<int>? qualityCheckedAt,
     Expression<int>? rowid,
@@ -7205,6 +7392,10 @@ class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
       if (trackQuality != null) 'track_quality': trackQuality,
       if (copyCrc != null) 'copy_crc': copyCrc,
       if (clickCount != null) 'click_count': clickCount,
+      if (popCount != null) 'pop_count': popCount,
+      if (clippingCount != null) 'clipping_count': clippingCount,
+      if (dropoutCount != null) 'dropout_count': dropoutCount,
+      if (defectConfidence != null) 'defect_confidence': defectConfidence,
       if (ripLogSource != null) 'rip_log_source': ripLogSource,
       if (qualityCheckedAt != null) 'quality_checked_at': qualityCheckedAt,
       if (rowid != null) 'rowid': rowid,
@@ -7229,6 +7420,10 @@ class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
     Value<double?>? trackQuality,
     Value<String?>? copyCrc,
     Value<int?>? clickCount,
+    Value<int?>? popCount,
+    Value<int?>? clippingCount,
+    Value<int?>? dropoutCount,
+    Value<double?>? defectConfidence,
     Value<String?>? ripLogSource,
     Value<int?>? qualityCheckedAt,
     Value<int>? rowid,
@@ -7252,6 +7447,10 @@ class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
       trackQuality: trackQuality ?? this.trackQuality,
       copyCrc: copyCrc ?? this.copyCrc,
       clickCount: clickCount ?? this.clickCount,
+      popCount: popCount ?? this.popCount,
+      clippingCount: clippingCount ?? this.clippingCount,
+      dropoutCount: dropoutCount ?? this.dropoutCount,
+      defectConfidence: defectConfidence ?? this.defectConfidence,
       ripLogSource: ripLogSource ?? this.ripLogSource,
       qualityCheckedAt: qualityCheckedAt ?? this.qualityCheckedAt,
       rowid: rowid ?? this.rowid,
@@ -7314,6 +7513,18 @@ class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
     if (clickCount.present) {
       map['click_count'] = Variable<int>(clickCount.value);
     }
+    if (popCount.present) {
+      map['pop_count'] = Variable<int>(popCount.value);
+    }
+    if (clippingCount.present) {
+      map['clipping_count'] = Variable<int>(clippingCount.value);
+    }
+    if (dropoutCount.present) {
+      map['dropout_count'] = Variable<int>(dropoutCount.value);
+    }
+    if (defectConfidence.present) {
+      map['defect_confidence'] = Variable<double>(defectConfidence.value);
+    }
     if (ripLogSource.present) {
       map['rip_log_source'] = Variable<String>(ripLogSource.value);
     }
@@ -7346,6 +7557,10 @@ class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
           ..write('trackQuality: $trackQuality, ')
           ..write('copyCrc: $copyCrc, ')
           ..write('clickCount: $clickCount, ')
+          ..write('popCount: $popCount, ')
+          ..write('clippingCount: $clippingCount, ')
+          ..write('dropoutCount: $dropoutCount, ')
+          ..write('defectConfidence: $defectConfidence, ')
           ..write('ripLogSource: $ripLogSource, ')
           ..write('qualityCheckedAt: $qualityCheckedAt, ')
           ..write('rowid: $rowid')
@@ -16048,6 +16263,10 @@ typedef $$RipTracksTableTableCreateCompanionBuilder =
       Value<double?> trackQuality,
       Value<String?> copyCrc,
       Value<int?> clickCount,
+      Value<int?> popCount,
+      Value<int?> clippingCount,
+      Value<int?> dropoutCount,
+      Value<double?> defectConfidence,
       Value<String?> ripLogSource,
       Value<int?> qualityCheckedAt,
       Value<int> rowid,
@@ -16071,6 +16290,10 @@ typedef $$RipTracksTableTableUpdateCompanionBuilder =
       Value<double?> trackQuality,
       Value<String?> copyCrc,
       Value<int?> clickCount,
+      Value<int?> popCount,
+      Value<int?> clippingCount,
+      Value<int?> dropoutCount,
+      Value<double?> defectConfidence,
       Value<String?> ripLogSource,
       Value<int?> qualityCheckedAt,
       Value<int> rowid,
@@ -16228,6 +16451,26 @@ class $$RipTracksTableTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<int> get popCount => $composableBuilder(
+    column: $table.popCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get clippingCount => $composableBuilder(
+    column: $table.clippingCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get dropoutCount => $composableBuilder(
+    column: $table.dropoutCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get defectConfidence => $composableBuilder(
+    column: $table.defectConfidence,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get ripLogSource => $composableBuilder(
     column: $table.ripLogSource,
     builder: (column) => ColumnFilters(column),
@@ -16376,6 +16619,26 @@ class $$RipTracksTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get popCount => $composableBuilder(
+    column: $table.popCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get clippingCount => $composableBuilder(
+    column: $table.clippingCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get dropoutCount => $composableBuilder(
+    column: $table.dropoutCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get defectConfidence => $composableBuilder(
+    column: $table.defectConfidence,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get ripLogSource => $composableBuilder(
     column: $table.ripLogSource,
     builder: (column) => ColumnOrderings(column),
@@ -16484,6 +16747,24 @@ class $$RipTracksTableTableAnnotationComposer
 
   GeneratedColumn<int> get clickCount => $composableBuilder(
     column: $table.clickCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get popCount =>
+      $composableBuilder(column: $table.popCount, builder: (column) => column);
+
+  GeneratedColumn<int> get clippingCount => $composableBuilder(
+    column: $table.clippingCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get dropoutCount => $composableBuilder(
+    column: $table.dropoutCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get defectConfidence => $composableBuilder(
+    column: $table.defectConfidence,
     builder: (column) => column,
   );
 
@@ -16597,6 +16878,10 @@ class $$RipTracksTableTableTableManager
                 Value<double?> trackQuality = const Value.absent(),
                 Value<String?> copyCrc = const Value.absent(),
                 Value<int?> clickCount = const Value.absent(),
+                Value<int?> popCount = const Value.absent(),
+                Value<int?> clippingCount = const Value.absent(),
+                Value<int?> dropoutCount = const Value.absent(),
+                Value<double?> defectConfidence = const Value.absent(),
                 Value<String?> ripLogSource = const Value.absent(),
                 Value<int?> qualityCheckedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -16618,6 +16903,10 @@ class $$RipTracksTableTableTableManager
                 trackQuality: trackQuality,
                 copyCrc: copyCrc,
                 clickCount: clickCount,
+                popCount: popCount,
+                clippingCount: clippingCount,
+                dropoutCount: dropoutCount,
+                defectConfidence: defectConfidence,
                 ripLogSource: ripLogSource,
                 qualityCheckedAt: qualityCheckedAt,
                 rowid: rowid,
@@ -16641,6 +16930,10 @@ class $$RipTracksTableTableTableManager
                 Value<double?> trackQuality = const Value.absent(),
                 Value<String?> copyCrc = const Value.absent(),
                 Value<int?> clickCount = const Value.absent(),
+                Value<int?> popCount = const Value.absent(),
+                Value<int?> clippingCount = const Value.absent(),
+                Value<int?> dropoutCount = const Value.absent(),
+                Value<double?> defectConfidence = const Value.absent(),
                 Value<String?> ripLogSource = const Value.absent(),
                 Value<int?> qualityCheckedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -16662,6 +16955,10 @@ class $$RipTracksTableTableTableManager
                 trackQuality: trackQuality,
                 copyCrc: copyCrc,
                 clickCount: clickCount,
+                popCount: popCount,
+                clippingCount: clippingCount,
+                dropoutCount: dropoutCount,
+                defectConfidence: defectConfidence,
                 ripLogSource: ripLogSource,
                 qualityCheckedAt: qualityCheckedAt,
                 rowid: rowid,

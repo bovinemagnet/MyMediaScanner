@@ -39,6 +39,10 @@ abstract interface class IRipLibraryRepository {
     double? trackQuality,
     String? copyCrc,
     int? clickCount,
+    int? popCount,
+    int? clippingCount,
+    int? dropoutCount,
+    double? defectConfidence,
     String? ripLogSource,
     int? qualityCheckedAt,
   });

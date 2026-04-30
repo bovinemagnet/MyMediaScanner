@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:audio_defect_detector/audio_defect_detector.dart' as add;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:mymediascanner/core/utils/flac_decoder.dart';
@@ -296,16 +297,16 @@ End of status report
     });
 
     group(
-        'falls through to click detection when AccurateRip is unreachable',
+        'falls through to defect detection when AccurateRip is unreachable',
         () {
       test(
-          'execute_withFlacAvailable_andUnknownSampleCounts_runsClickDetection',
+          'execute_withFlacAvailable_andUnknownSampleCounts_runsDefectDetection',
           () async {
         // Arrange
         // The fake file path means _tryParseLog fails (no log) and
         // FlacReader.readMetadata returns null, which makes
         // sampleCounts.every((c) => c > 0) false, so the AR query is
-        // skipped and the pipeline falls into step 3 (click detection).
+        // skipped and the pipeline falls into step 3 (defect detection).
         final track = _track(id: 'track-1', trackNumber: 1);
         // 0.1 s of 16-bit stereo silence at 44.1 kHz: 4 bytes/frame *
         // 4410 frames = 17 640 bytes. Silence has no clicks/pops, so the
@@ -322,24 +323,133 @@ End of status report
               any(),
               arStatus: any(named: 'arStatus'),
               clickCount: any(named: 'clickCount'),
+              popCount: any(named: 'popCount'),
+              clippingCount: any(named: 'clippingCount'),
+              dropoutCount: any(named: 'dropoutCount'),
+              defectConfidence: any(named: 'defectConfidence'),
               qualityCheckedAt: any(named: 'qualityCheckedAt'),
             )).thenAnswer((_) async {});
 
         // Act
         await useCase.execute('album-1').drain<void>();
 
-        // Assert — track is marked not_found (AR could not verify) with a
-        // clickCount derived from the click-detection pass. AccurateRip
-        // must NOT be queried because sample counts were unknown.
+        // Assert — track is marked not_found (AR could not verify) with
+        // every defect-type count explicitly zeroed (silence in, no
+        // defects out). AccurateRip must NOT be queried because sample
+        // counts were unknown.
         verify(() => mockRepo.updateTrackQuality(
               'track-1',
               arStatus: 'not_found',
               clickCount: 0,
+              popCount: 0,
+              clippingCount: 0,
+              dropoutCount: 0,
+              defectConfidence: any(named: 'defectConfidence'),
               qualityCheckedAt: any(named: 'qualityCheckedAt'),
             )).called(1);
         // AccurateRip is unreachable when sample counts are unknown, so the
         // client should not be touched at all.
         verifyZeroInteractions(mockArClient);
+      });
+
+      test(
+          'execute_withInjectedDetector_partitionsDefectsByType',
+          () async {
+        // Arrange — inject a fake DefectDetector returning one defect of
+        // each DefectType plus a known aggregateConfidence so we can
+        // assert the use case partitions counts correctly and forwards
+        // the confidence verbatim.
+        final track = _track(id: 'track-1', trackNumber: 1);
+        final pcmData = Uint8List(17640);
+
+        const aggregate = 0.42;
+        const result = add.AnalysisResult(
+          defects: [
+            add.Defect(
+              offset: Duration.zero,
+              length: Duration(milliseconds: 1),
+              type: add.DefectType.click,
+              confidence: 0.9,
+              channel: 0,
+              sampleIndex: 100,
+              amplitude: 0.95,
+            ),
+            add.Defect(
+              offset: Duration(milliseconds: 50),
+              length: Duration(milliseconds: 5),
+              type: add.DefectType.pop,
+              confidence: 0.8,
+              channel: 1,
+              sampleIndex: 2205,
+              amplitude: 0.85,
+            ),
+            add.Defect(
+              offset: Duration(milliseconds: 200),
+              length: Duration(milliseconds: 1),
+              type: add.DefectType.clipping,
+              confidence: 0.95,
+              channel: 0,
+              sampleIndex: 8820,
+              amplitude: 0.99,
+            ),
+            add.Defect(
+              offset: Duration(milliseconds: 500),
+              length: Duration(milliseconds: 20),
+              type: add.DefectType.dropout,
+              confidence: 0.7,
+              channel: 1,
+              sampleIndex: 22050,
+              amplitude: 0.0,
+            ),
+          ],
+          aggregateConfidence: aggregate,
+          metadata: add.AudioMetadata(
+            sampleRate: 44100,
+            bitDepth: 16,
+            channels: 2,
+            duration: Duration(milliseconds: 100),
+          ),
+        );
+
+        when(() => mockRepo.getTracksForAlbum('album-1'))
+            .thenAnswer((_) async => [track]);
+        when(() => mockFlacDecoder.isAvailable())
+            .thenAnswer((_) async => true);
+        when(() => mockFlacDecoder.decode(any()))
+            .thenAnswer((_) async => pcmData);
+        when(() => mockRepo.updateTrackQuality(
+              any(),
+              arStatus: any(named: 'arStatus'),
+              clickCount: any(named: 'clickCount'),
+              popCount: any(named: 'popCount'),
+              clippingCount: any(named: 'clippingCount'),
+              dropoutCount: any(named: 'dropoutCount'),
+              defectConfidence: any(named: 'defectConfidence'),
+              qualityCheckedAt: any(named: 'qualityCheckedAt'),
+            )).thenAnswer((_) async {});
+
+        useCase = AnalyseRipQualityUseCase(
+          repository: mockRepo,
+          flacDecoder: mockFlacDecoder,
+          accurateRipClient: mockArClient,
+          isolateRunner: _syncIsolateRunner,
+          defectDetector: (_, {required format, required config}) => result,
+        );
+
+        // Act
+        await useCase.execute('album-1').drain<void>();
+
+        // Assert — one defect per type, aggregate confidence forwarded.
+        verify(() => mockRepo.updateTrackQuality(
+              'track-1',
+              arStatus: 'not_found',
+              clickCount: 1,
+              popCount: 1,
+              clippingCount: 1,
+              dropoutCount: 1,
+              defectConfidence: aggregate,
+              qualityCheckedAt: any(named: 'qualityCheckedAt'),
+            )).called(1);
       });
     });
 

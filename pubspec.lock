@@ -85,10 +85,10 @@ packages:
     dependency: "direct main"
     description:
       name: audio_defect_detector
-      sha256: "0fa5d7eddf042d810071d86509b1ea621a2f81b1a904fa0b812b27451b9ee984"
+      sha256: "4097162d046b519ab0149ae8e5e522eb36dc96a1f4a683afd6541d30b6aab27f"
       url: "https://pub.dev"
     source: hosted
-    version: "0.0.3"
+    version: "0.2.0"
   audio_session:
     dependency: transitive
     description:
