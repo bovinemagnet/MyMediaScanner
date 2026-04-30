@@ -33,13 +33,13 @@ class QualityIcon extends StatelessWidget {
 
   IconData _icon() {
     if (track.qualityCheckedAt == null) return Icons.help_outline;
-    if (track.accurateRipStatus == 'verified' &&
-        (track.clickCount ?? 0) > 0) {
+    final hasDefects = track.totalDefects > 0;
+    if (track.accurateRipStatus == 'verified' && hasDefects) {
       return Icons.warning_amber;
     }
     if (track.accurateRipStatus == 'verified') return Icons.check_circle;
     if (track.accurateRipStatus == 'mismatch') return Icons.cancel;
-    if ((track.clickCount ?? 0) > 0) return Icons.warning_amber;
+    if (hasDefects) return Icons.warning_amber;
     return Icons.help_outline;
   }
 
@@ -47,13 +47,13 @@ class QualityIcon extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final mediaColors = context.mediaColors;
     if (track.qualityCheckedAt == null) return colors.outline;
-    if (track.accurateRipStatus == 'verified' &&
-        (track.clickCount ?? 0) > 0) {
+    final hasDefects = track.totalDefects > 0;
+    if (track.accurateRipStatus == 'verified' && hasDefects) {
       return mediaColors.tv; // amber-like warning
     }
     if (track.accurateRipStatus == 'verified') return mediaColors.book;
     if (track.accurateRipStatus == 'mismatch') return colors.error;
-    if ((track.clickCount ?? 0) > 0) return mediaColors.tv;
+    if (hasDefects) return mediaColors.tv;
     return colors.outline;
   }
 
@@ -71,8 +71,21 @@ class QualityIcon extends StatelessWidget {
     if (track.peakLevel != null) {
       lines.add('Peak: ${track.peakLevel}');
     }
-    if (track.clickCount != null) {
-      lines.add('Clicks: ${track.clickCount}');
+    // Per-DefectType counts: only emit a line for types that recorded
+    // a non-zero count, so well-ripped tracks read cleanly. clickCount
+    // surfaces independently from popCount/clipping/dropout because
+    // each carries different remediation advice.
+    if ((track.clickCount ?? 0) > 0) lines.add('Clicks: ${track.clickCount}');
+    if ((track.popCount ?? 0) > 0) lines.add('Pops: ${track.popCount}');
+    if ((track.clippingCount ?? 0) > 0) {
+      lines.add('Clipping: ${track.clippingCount}');
+    }
+    if ((track.dropoutCount ?? 0) > 0) {
+      lines.add('Dropouts: ${track.dropoutCount}');
+    }
+    if (track.defectConfidence != null && track.totalDefects > 0) {
+      final pct = (track.defectConfidence! * 100).toStringAsFixed(0);
+      lines.add('Confidence: $pct%');
     }
     return lines.isEmpty ? 'Analysed' : lines.join('\n');
   }

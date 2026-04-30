@@ -91,7 +91,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 20;
+  int get schemaVersion => 21;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -269,6 +269,40 @@ class AppDatabase extends _$AppDatabase {
               'CREATE INDEX IF NOT EXISTS idx_tmdb_bridge_dirty '
               'ON tmdb_account_sync_items(local_dirty, remote_dirty)',
             );
+          }
+          if (from < 21) {
+            // audio_defect_detector 0.2.0 partitions defects into four
+            // DefectType buckets (click/pop/clipping/dropout) and reports
+            // an aggregate confidence per analysis. Existing rows keep
+            // their clickCount; the new columns are nullable so a re-run
+            // of "Analyse Quality" is what backfills them.
+            //
+            // The v17 branch above drops and recreates rip_tracks using
+            // the *current* Dart definition, which now includes these
+            // four columns. Upgrades from < 17 therefore arrive here
+            // with the columns already present and addColumn would fail
+            // with `duplicate column name`. Guard on the live schema so
+            // the branch is a no-op when v17 already rebuilt the table
+            // at the v21 shape.
+            final tableInfo = await customSelect(
+              'PRAGMA table_info(rip_tracks)',
+            ).get();
+            final existing = tableInfo
+                .map((r) => r.read<String>('name'))
+                .toSet();
+            if (!existing.contains('pop_count')) {
+              await m.addColumn(ripTracksTable, ripTracksTable.popCount);
+            }
+            if (!existing.contains('clipping_count')) {
+              await m.addColumn(ripTracksTable, ripTracksTable.clippingCount);
+            }
+            if (!existing.contains('dropout_count')) {
+              await m.addColumn(ripTracksTable, ripTracksTable.dropoutCount);
+            }
+            if (!existing.contains('defect_confidence')) {
+              await m.addColumn(
+                  ripTracksTable, ripTracksTable.defectConfidence);
+            }
           }
         },
       );

@@ -25,6 +25,14 @@ class RipTracksTable extends Table {
   RealColumn get trackQuality => real().nullable()();
   TextColumn get copyCrc => text().nullable()();
   IntColumn get clickCount => integer().nullable()();
+  // Per-DefectType counts from audio_defect_detector >= 0.2.0. clickCount
+  // continues to track the `click` type so existing read sites keep working;
+  // these three sit alongside it for `pop`, `clipping`, and `dropout`.
+  IntColumn get popCount => integer().nullable()();
+  IntColumn get clippingCount => integer().nullable()();
+  IntColumn get dropoutCount => integer().nullable()();
+  // AnalysisResult.aggregateConfidence (0.0–1.0) from the detector run.
+  RealColumn get defectConfidence => real().nullable()();
   TextColumn get ripLogSource => text().nullable()();
   IntColumn get qualityCheckedAt => integer().nullable()();
 

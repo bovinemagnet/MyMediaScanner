@@ -171,6 +171,10 @@ class RipLibraryDao extends DatabaseAccessor<AppDatabase>
     double? trackQuality,
     String? copyCrc,
     int? clickCount,
+    int? popCount,
+    int? clippingCount,
+    int? dropoutCount,
+    double? defectConfidence,
     String? ripLogSource,
     int? qualityCheckedAt,
   }) {
@@ -190,6 +194,16 @@ class RipLibraryDao extends DatabaseAccessor<AppDatabase>
         copyCrc: copyCrc != null ? Value(copyCrc) : const Value.absent(),
         clickCount:
             clickCount != null ? Value(clickCount) : const Value.absent(),
+        popCount: popCount != null ? Value(popCount) : const Value.absent(),
+        clippingCount: clippingCount != null
+            ? Value(clippingCount)
+            : const Value.absent(),
+        dropoutCount: dropoutCount != null
+            ? Value(dropoutCount)
+            : const Value.absent(),
+        defectConfidence: defectConfidence != null
+            ? Value(defectConfidence)
+            : const Value.absent(),
         ripLogSource:
             ripLogSource != null ? Value(ripLogSource) : const Value.absent(),
         qualityCheckedAt: qualityCheckedAt != null

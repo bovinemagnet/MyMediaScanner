@@ -74,6 +74,10 @@ RipTracksTableData _makeTrackRow({
   double? trackQuality,
   String? copyCrc,
   int? clickCount,
+  int? popCount,
+  int? clippingCount,
+  int? dropoutCount,
+  double? defectConfidence,
   String? ripLogSource,
   int? qualityCheckedAt,
 }) =>
@@ -95,6 +99,10 @@ RipTracksTableData _makeTrackRow({
       trackQuality: trackQuality,
       copyCrc: copyCrc,
       clickCount: clickCount,
+      popCount: popCount,
+      clippingCount: clippingCount,
+      dropoutCount: dropoutCount,
+      defectConfidence: defectConfidence,
       ripLogSource: ripLogSource,
       qualityCheckedAt: qualityCheckedAt,
     );
@@ -236,6 +244,10 @@ void main() {
           trackQuality: 98.7,
           copyCrc: 'EFGH5678',
           clickCount: 3,
+          popCount: 2,
+          clippingCount: 1,
+          dropoutCount: 0,
+          defectConfidence: 0.42,
           ripLogSource: 'EAC',
           qualityCheckedAt: 1700000003000,
         );
@@ -263,8 +275,15 @@ void main() {
         expect(track.trackQuality, 98.7);
         expect(track.copyCrc, 'EFGH5678');
         expect(track.clickCount, 3);
+        expect(track.popCount, 2);
+        expect(track.clippingCount, 1);
+        expect(track.dropoutCount, 0);
+        expect(track.defectConfidence, 0.42);
         expect(track.ripLogSource, 'EAC');
         expect(track.qualityCheckedAt, 1700000003000);
+        // totalDefects extension sums every per-type count regardless of
+        // which ones happen to be zero.
+        expect(track.totalDefects, 6);
       },
     );
 
@@ -280,6 +299,10 @@ void main() {
           trackQuality: null,
           copyCrc: null,
           clickCount: null,
+          popCount: null,
+          clippingCount: null,
+          dropoutCount: null,
+          defectConfidence: null,
           ripLogSource: null,
           qualityCheckedAt: null,
         );
@@ -297,8 +320,15 @@ void main() {
         expect(track.trackQuality, isNull);
         expect(track.copyCrc, isNull);
         expect(track.clickCount, isNull);
+        expect(track.popCount, isNull);
+        expect(track.clippingCount, isNull);
+        expect(track.dropoutCount, isNull);
+        expect(track.defectConfidence, isNull);
         expect(track.ripLogSource, isNull);
         expect(track.qualityCheckedAt, isNull);
+        // Every per-type count NULL ⇒ totalDefects collapses to zero
+        // (the predicate must not page in NULL as a defect).
+        expect(track.totalDefects, 0);
       },
     );
 
@@ -383,6 +413,10 @@ void main() {
             trackQuality: 99.0,
             copyCrc: 'CCRC1',
             clickCount: 0,
+            popCount: 0,
+            clippingCount: 0,
+            dropoutCount: 0,
+            defectConfidence: 0.0,
             ripLogSource: 'dBpoweramp',
             qualityCheckedAt: 1700000002000,
           ),
@@ -422,6 +456,10 @@ void main() {
         expect(first.trackQuality.value, 99.0);
         expect(first.copyCrc.value, 'CCRC1');
         expect(first.clickCount.value, 0);
+        expect(first.popCount.value, 0);
+        expect(first.clippingCount.value, 0);
+        expect(first.dropoutCount.value, 0);
+        expect(first.defectConfidence.value, 0.0);
         expect(first.ripLogSource.value, 'dBpoweramp');
         expect(first.qualityCheckedAt.value, 1700000002000);
 
@@ -502,6 +540,10 @@ void main() {
             trackQuality: any(named: 'trackQuality'),
             copyCrc: any(named: 'copyCrc'),
             clickCount: any(named: 'clickCount'),
+            popCount: any(named: 'popCount'),
+            clippingCount: any(named: 'clippingCount'),
+            dropoutCount: any(named: 'dropoutCount'),
+            defectConfidence: any(named: 'defectConfidence'),
             ripLogSource: any(named: 'ripLogSource'),
             qualityCheckedAt: any(named: 'qualityCheckedAt'),
           ),
@@ -517,6 +559,10 @@ void main() {
           trackQuality: 97.3,
           copyCrc: 'CAFEBABE',
           clickCount: 2,
+          popCount: 1,
+          clippingCount: 0,
+          dropoutCount: 4,
+          defectConfidence: 0.62,
           ripLogSource: 'EAC',
           qualityCheckedAt: 1700000005000,
         );
@@ -532,6 +578,10 @@ void main() {
             trackQuality: 97.3,
             copyCrc: 'CAFEBABE',
             clickCount: 2,
+            popCount: 1,
+            clippingCount: 0,
+            dropoutCount: 4,
+            defectConfidence: 0.62,
             ripLogSource: 'EAC',
             qualityCheckedAt: 1700000005000,
           ),
@@ -553,6 +603,10 @@ void main() {
             trackQuality: any(named: 'trackQuality'),
             copyCrc: any(named: 'copyCrc'),
             clickCount: any(named: 'clickCount'),
+            popCount: any(named: 'popCount'),
+            clippingCount: any(named: 'clippingCount'),
+            dropoutCount: any(named: 'dropoutCount'),
+            defectConfidence: any(named: 'defectConfidence'),
             ripLogSource: any(named: 'ripLogSource'),
             qualityCheckedAt: any(named: 'qualityCheckedAt'),
           ),
@@ -571,6 +625,10 @@ void main() {
             trackQuality: null,
             copyCrc: null,
             clickCount: null,
+            popCount: null,
+            clippingCount: null,
+            dropoutCount: null,
+            defectConfidence: null,
             ripLogSource: null,
             qualityCheckedAt: null,
           ),

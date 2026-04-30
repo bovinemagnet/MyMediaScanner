@@ -371,7 +371,7 @@ class _RipAlbumCard extends ConsumerWidget {
     final tracks = tracksAsync.whenOrNull(data: (t) => t) ?? [];
     final arVerified =
         tracks.where((t) => t.accurateRipStatus == 'verified').length;
-    final withClicks = tracks.where((t) => (t.clickCount ?? 0) > 0).length;
+    final withDefects = tracks.where((t) => t.totalDefects > 0).length;
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -447,12 +447,12 @@ class _RipAlbumCard extends ConsumerWidget {
                       '$arVerified/${tracks.length} AR',
                       style: theme.textTheme.bodySmall,
                     ),
-                    if (withClicks > 0) ...[
+                    if (withDefects > 0) ...[
                       const SizedBox(width: 8),
                       Icon(Icons.warning_amber,
                           size: 14, color: mediaColors.tv),
                       const SizedBox(width: 4),
-                      Text('$withClicks clicks',
+                      Text('$withDefects defects',
                           style: theme.textTheme.bodySmall),
                     ],
                   ],

@@ -280,6 +280,10 @@ class _PlaylistDetailContent extends ConsumerWidget {
                         trackQuality: row.trackQuality,
                         copyCrc: row.copyCrc,
                         clickCount: row.clickCount,
+                        popCount: row.popCount,
+                        clippingCount: row.clippingCount,
+                        dropoutCount: row.dropoutCount,
+                        defectConfidence: row.defectConfidence,
                         ripLogSource: row.ripLogSource,
                         qualityCheckedAt: row.qualityCheckedAt,
                       );

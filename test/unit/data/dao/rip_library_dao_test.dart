@@ -602,6 +602,74 @@ void main() {
           expect(track.qualityCheckedAt, now);
         },
       );
+
+      test(
+        'partitioned defect counts and aggregate confidence round-trip and survive partial updates',
+        () async {
+          // Regression coverage for the audio_defect_detector 0.2.0 swap:
+          // updateTrackQuality must persist all four DefectType counts +
+          // defectConfidence, and a follow-on partial update that only
+          // touches AR fields must not clobber them.
+          final now = DateTime.now().millisecondsSinceEpoch;
+
+          await dao.insertAlbum(RipAlbumsTableCompanion(
+            id: const Value('rip-defects'),
+            libraryPath: const Value('Artist/Defects'),
+            trackCount: const Value(1),
+            totalSizeBytes: const Value(50000000),
+            lastScannedAt: Value(now),
+            updatedAt: Value(now),
+          ));
+          await dao.insertTracks([
+            RipTracksTableCompanion(
+              id: const Value('track-1'),
+              ripAlbumId: const Value('rip-defects'),
+              trackNumber: const Value(1),
+              filePath: const Value('/music/track1.flac'),
+              fileSizeBytes: const Value(50000000),
+              updatedAt: Value(now),
+            ),
+          ]);
+
+          // First call: detector partition fills in every count plus
+          // aggregate confidence.
+          await dao.updateTrackQuality(
+            'track-1',
+            arStatus: 'not_found',
+            clickCount: 4,
+            popCount: 2,
+            clippingCount: 1,
+            dropoutCount: 0,
+            defectConfidence: 0.62,
+            qualityCheckedAt: now,
+          );
+
+          var tracks = await dao.getTracksForAlbum('rip-defects');
+          expect(tracks.single.clickCount, 4);
+          expect(tracks.single.popCount, 2);
+          expect(tracks.single.clippingCount, 1);
+          expect(tracks.single.dropoutCount, 0);
+          expect(tracks.single.defectConfidence, closeTo(0.62, 1e-9));
+
+          // Second call: a later AR-only update must leave defect data
+          // alone (Value.absent() vs. Value(null) regression).
+          await dao.updateTrackQuality(
+            'track-1',
+            arStatus: 'mismatch',
+            arCrcV1: 'AAAA1111',
+            arCrcV2: 'BBBB2222',
+          );
+
+          tracks = await dao.getTracksForAlbum('rip-defects');
+          final track = tracks.single;
+          expect(track.accurateripStatus, 'mismatch');
+          expect(track.clickCount, 4);
+          expect(track.popCount, 2);
+          expect(track.clippingCount, 1);
+          expect(track.dropoutCount, 0);
+          expect(track.defectConfidence, closeTo(0.62, 1e-9));
+        },
+      );
     });
   });
 }

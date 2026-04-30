@@ -826,10 +826,10 @@ class _TrackQualityRow extends StatelessWidget {
         colour = Colors.red;
         label = 'AccurateRip CRC mismatch';
       case 'not_found':
-        if (track.clickCount != null && track.clickCount! > 0) {
+        if (track.totalDefects > 0) {
           icon = Icons.warning_amber;
           colour = Colors.amber;
-          label = '${track.clickCount} clicks detected';
+          label = _defectSummary(track);
         } else {
           icon = Icons.check_circle_outline;
           colour = Colors.green;
@@ -867,12 +867,52 @@ class _TrackQualityRow extends StatelessWidget {
                 Text('AR CRC v1: ${track.accurateRipCrcV1}'),
               if (track.accurateRipCrcV2 != null)
                 Text('AR CRC v2: ${track.accurateRipCrcV2}'),
-              if (track.clickCount != null) Text('Clicks: ${track.clickCount}'),
+              // Surface every non-zero defect-type count separately so
+              // the user can tell a clipping-heavy rip from a click-laden
+              // one without the breakdown being collapsed to a total.
+              if ((track.clickCount ?? 0) > 0)
+                Text('Clicks: ${track.clickCount}'),
+              if ((track.popCount ?? 0) > 0) Text('Pops: ${track.popCount}'),
+              if ((track.clippingCount ?? 0) > 0)
+                Text('Clipping: ${track.clippingCount}'),
+              if ((track.dropoutCount ?? 0) > 0)
+                Text('Dropouts: ${track.dropoutCount}'),
+              if (track.defectConfidence != null && track.totalDefects > 0)
+                Text(
+                  'Confidence: '
+                  '${(track.defectConfidence! * 100).toStringAsFixed(0)}%',
+                ),
             ],
           ),
         ),
       ],
     );
+  }
+
+  /// Builds a compact "N clicks, M dropouts" line for the not_found state
+  /// so the user can see _which_ defect categories fired without
+  /// expanding the row.
+  String _defectSummary(RipTrack track) {
+    final parts = <String>[];
+    if ((track.clickCount ?? 0) > 0) {
+      parts.add('${track.clickCount} click${track.clickCount! == 1 ? '' : 's'}');
+    }
+    if ((track.popCount ?? 0) > 0) {
+      parts.add('${track.popCount} pop${track.popCount! == 1 ? '' : 's'}');
+    }
+    if ((track.clippingCount ?? 0) > 0) {
+      parts.add(
+        '${track.clippingCount} clipping',
+      );
+    }
+    if ((track.dropoutCount ?? 0) > 0) {
+      parts.add(
+        '${track.dropoutCount} dropout${track.dropoutCount! == 1 ? '' : 's'}',
+      );
+    }
+    return parts.isEmpty
+        ? 'Defects detected'
+        : '${parts.join(', ')} detected';
   }
 }
 
