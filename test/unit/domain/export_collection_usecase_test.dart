@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:mymediascanner/domain/entities/item_condition.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/domain/repositories/i_media_item_repository.dart';
@@ -71,7 +72,8 @@ void main() {
         lines[0],
         equals(
           'barcode,barcodeType,mediaType,title,subtitle,year,publisher,'
-          'format,genres,userRating,userReview,dateAdded,dateScanned',
+          'format,genres,userRating,userReview,dateAdded,dateScanned,'
+          'condition,pricePaid,retailer,acquiredAt',
         ),
       );
 
@@ -144,6 +146,101 @@ void main() {
       final lines = content.split('\n');
 
       expect(lines[1], contains('"Greatest Hits, Vol. 1"'));
+    });
+
+    test('CSV export includes purchase info fields in header and rows',
+        () async {
+      final itemWithPurchase = [
+        const MediaItem(
+          id: 'id-purchase',
+          barcode: '1111111111111',
+          barcodeType: 'EAN-13',
+          mediaType: MediaType.music,
+          title: 'Test Album',
+          genres: [],
+          condition: ItemCondition.nearMint,
+          pricePaid: 24.99,
+          retailer: 'Local Record Shop',
+          acquiredAt: 1701000000,
+          dateAdded: 1700000000,
+          dateScanned: 1700000000,
+          updatedAt: 1700000000,
+        ),
+      ];
+
+      when(() => mockRepo.watchAll(
+            mediaType: any(named: 'mediaType'),
+            searchQuery: any(named: 'searchQuery'),
+            tagIds: any(named: 'tagIds'),
+            sortBy: any(named: 'sortBy'),
+            ascending: any(named: 'ascending'),
+          )).thenAnswer((_) => Stream.value(itemWithPurchase));
+
+      final content = await useCase.generateContent(ExportFormat.csv);
+      final lines = content.split('\n');
+
+      expect(lines[0], contains('condition'));
+      expect(lines[0], contains('pricePaid'));
+      expect(lines[0], contains('retailer'));
+      expect(lines[0], contains('acquiredAt'));
+
+      expect(lines[1], contains('nearMint'));
+      expect(lines[1], contains('24.99'));
+      expect(lines[1], contains('Local Record Shop'));
+      expect(lines[1], contains('1701000000'));
+    });
+
+    test('JSON export includes purchase info fields', () async {
+      final itemWithPurchase = [
+        const MediaItem(
+          id: 'id-purchase',
+          barcode: '1111111111111',
+          barcodeType: 'EAN-13',
+          mediaType: MediaType.music,
+          title: 'Test Album',
+          genres: [],
+          condition: ItemCondition.good,
+          pricePaid: 12.50,
+          retailer: 'Discogs',
+          acquiredAt: 1701000000,
+          dateAdded: 1700000000,
+          dateScanned: 1700000000,
+          updatedAt: 1700000000,
+        ),
+      ];
+
+      when(() => mockRepo.watchAll(
+            mediaType: any(named: 'mediaType'),
+            searchQuery: any(named: 'searchQuery'),
+            tagIds: any(named: 'tagIds'),
+            sortBy: any(named: 'sortBy'),
+            ascending: any(named: 'ascending'),
+          )).thenAnswer((_) => Stream.value(itemWithPurchase));
+
+      final content = await useCase.generateContent(ExportFormat.json);
+      final decoded = jsonDecode(content) as List<dynamic>;
+      final first = decoded.first as Map<String, dynamic>;
+
+      expect(first['condition'], equals('good'));
+      expect(first['pricePaid'], equals(12.50));
+      expect(first['retailer'], equals('Discogs'));
+      expect(first['acquiredAt'], equals(1701000000));
+    });
+
+    test('JSON export serialises null purchase fields as null', () async {
+      // testItems intentionally do not set purchase fields.
+      final content = await useCase.generateContent(ExportFormat.json);
+      final decoded = jsonDecode(content) as List<dynamic>;
+      final first = decoded.first as Map<String, dynamic>;
+
+      expect(first.containsKey('condition'), isTrue);
+      expect(first.containsKey('pricePaid'), isTrue);
+      expect(first.containsKey('retailer'), isTrue);
+      expect(first.containsKey('acquiredAt'), isTrue);
+      expect(first['condition'], isNull);
+      expect(first['pricePaid'], isNull);
+      expect(first['retailer'], isNull);
+      expect(first['acquiredAt'], isNull);
     });
 
     test('excludes deleted items from export', () async {

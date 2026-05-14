@@ -8,6 +8,14 @@ import 'package:mymediascanner/domain/entities/media_type.dart';
 
 part 'insights_data.freezed.dart';
 
+/// Summary of a single high-value owned item for the analytics dashboard.
+typedef TopValueItem = ({
+  String id,
+  String title,
+  MediaType mediaType,
+  double pricePaid,
+});
+
 @freezed
 sealed class InsightsData with _$InsightsData {
   const factory InsightsData({
@@ -50,5 +58,18 @@ sealed class InsightsData with _$InsightsData {
     /// Sum of `pricePaid` over owned items, ignoring nulls. `null` when
     /// no owned item has a recorded price.
     double? totalValue,
+
+    /// Top owned items by `pricePaid`, descending. Capped at five entries.
+    /// Empty when no owned item has a recorded price.
+    @Default(<TopValueItem>[]) List<TopValueItem> topValueItems,
+
+    /// Sum of `pricePaid` per media type over owned items. Excludes media
+    /// types with no priced items.
+    @Default(<MediaType, double>{}) Map<MediaType, double> valueByMediaType,
+
+    /// Sum of `pricePaid` per `yyyy-MM` of `acquiredAt` (falling back to
+    /// `dateAdded` when `acquiredAt` is null) over owned items. Empty
+    /// when no owned item has a recorded price.
+    @Default(<String, double>{}) Map<String, double> valueByAcquisitionMonth,
   }) = _InsightsData;
 }

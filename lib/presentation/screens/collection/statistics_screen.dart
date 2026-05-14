@@ -10,9 +10,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:mymediascanner/app/theme/app_media_colors.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
 import 'package:mymediascanner/domain/entities/insights_data.dart';
+import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/presentation/providers/collection_provider.dart';
+import 'package:mymediascanner/presentation/providers/insights_export_provider.dart';
 import 'package:mymediascanner/presentation/providers/statistics_provider.dart';
 import 'package:mymediascanner/presentation/screens/collection/widgets/export_action_bar.dart';
 import 'package:mymediascanner/presentation/screens/collection/widgets/growth_chart.dart';
@@ -83,6 +86,31 @@ class StatisticsScreen extends ConsumerWidget {
             ),
 
             const SizedBox(height: 16),
+
+            // ── Valuation breakdowns (hidden when no priced items) ───
+            if (insights.topValueItems.isNotEmpty) ...[
+              _TopValueItemsCard(
+                items: insights.topValueItems,
+                theme: theme,
+                colors: colors,
+              ),
+              const SizedBox(height: 16),
+              _ValueByMediaTypeCard(
+                byMediaType: insights.valueByMediaType,
+                totalValue: insights.totalValue ?? 0,
+                theme: theme,
+                colors: colors,
+              ),
+              const SizedBox(height: 16),
+              _AcquisitionTimelineCard(
+                byMonth: insights.valueByAcquisitionMonth,
+                theme: theme,
+                colors: colors,
+              ),
+              const SizedBox(height: 16),
+              const _ValuationReportActions(),
+              const SizedBox(height: 16),
+            ],
 
             // ── Middle row: Genre bars + Media type pie chart ────
             LayoutBuilder(
@@ -618,6 +646,377 @@ class _CollectionValueTile extends StatelessWidget {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Valuation report export actions — CSV + HTML insurance report
+// ═══════════════════════════════════════════════════════════════════════
+
+class _ValuationReportActions extends ConsumerWidget {
+  const _ValuationReportActions();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final state = ref.watch(valuationReportProvider);
+    final notifier = ref.read(valuationReportProvider.notifier);
+    final busy = state.status == ExportStatus.exporting;
+
+    return Container(
+      key: const Key('valuation-report-actions'),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'VALUATION REPORT',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: colors.onSurfaceVariant,
+              letterSpacing: 1.2,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Insurance-style export with per-item rows and totals by '
+            'media type. Only owned items with a recorded price are '
+            'included.',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: colors.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 12,
+            runSpacing: 8,
+            children: [
+              OutlinedButton.icon(
+                onPressed: busy
+                    ? null
+                    : () => notifier.export(ValuationReportFormat.csv),
+                icon: const Icon(Icons.table_chart_outlined, size: 18),
+                label: const Text('Export CSV'),
+              ),
+              FilledButton.icon(
+                onPressed: busy
+                    ? null
+                    : () => notifier.export(ValuationReportFormat.html),
+                icon: const Icon(Icons.description_outlined, size: 18),
+                label: const Text('Export HTML'),
+              ),
+            ],
+          ),
+          if (state.status == ExportStatus.success && state.filePath != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                'Saved to ${state.filePath}',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                ),
+              ),
+            ),
+          if (state.status == ExportStatus.error && state.error != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                state.error!,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colors.error,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Top value items — list of the most expensive owned items
+// ═══════════════════════════════════════════════════════════════════════
+
+class _TopValueItemsCard extends StatelessWidget {
+  const _TopValueItemsCard({
+    required this.items,
+    required this.theme,
+    required this.colors,
+  });
+
+  final List<TopValueItem> items;
+  final ThemeData theme;
+  final ColorScheme colors;
+
+  @override
+  Widget build(BuildContext context) {
+    final formatter = NumberFormat.simpleCurrency();
+    final mediaColors = context.mediaColors;
+
+    return Container(
+      key: const Key('top-value-items-card'),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'TOP VALUE ITEMS',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: colors.onSurfaceVariant,
+              letterSpacing: 1.2,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...items.map(
+            (item) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(
+                children: [
+                  Container(
+                    width: 8,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: mediaColors.solidFor(item.mediaType),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      item.title,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    formatter.format(item.pricePaid),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: colors.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Value by media type — proportional bars per media type
+// ═══════════════════════════════════════════════════════════════════════
+
+class _ValueByMediaTypeCard extends StatelessWidget {
+  const _ValueByMediaTypeCard({
+    required this.byMediaType,
+    required this.totalValue,
+    required this.theme,
+    required this.colors,
+  });
+
+  final Map<MediaType, double> byMediaType;
+  final double totalValue;
+  final ThemeData theme;
+  final ColorScheme colors;
+
+  @override
+  Widget build(BuildContext context) {
+    final formatter = NumberFormat.simpleCurrency();
+    final mediaColors = context.mediaColors;
+    final entries = byMediaType.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final maxValue = entries.isEmpty ? 0.0 : entries.first.value;
+
+    return Container(
+      key: const Key('value-by-type-card'),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'VALUE BY MEDIA TYPE',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: colors.onSurfaceVariant,
+              letterSpacing: 1.2,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...entries.map((entry) {
+            final fraction = maxValue > 0 ? entry.value / maxValue : 0.0;
+            final share = totalValue > 0
+                ? (entry.value / totalValue * 100).toStringAsFixed(0)
+                : '0';
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          _mediaTypeLabel(entry.key),
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '${formatter.format(entry.value)} ($share%)',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colors.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: fraction,
+                      minHeight: 8,
+                      backgroundColor:
+                          mediaColors.solidFor(entry.key).withValues(alpha: 0.15),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        mediaColors.solidFor(entry.key),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  static String _mediaTypeLabel(MediaType type) => switch (type) {
+        MediaType.film => 'Film',
+        MediaType.tv => 'TV',
+        MediaType.music => 'Music',
+        MediaType.book => 'Book',
+        MediaType.game => 'Game',
+        MediaType.unknown => 'Other',
+      };
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Acquisition timeline — value per month, ordered ascending
+// ═══════════════════════════════════════════════════════════════════════
+
+class _AcquisitionTimelineCard extends StatelessWidget {
+  const _AcquisitionTimelineCard({
+    required this.byMonth,
+    required this.theme,
+    required this.colors,
+  });
+
+  final Map<String, double> byMonth;
+  final ThemeData theme;
+  final ColorScheme colors;
+
+  @override
+  Widget build(BuildContext context) {
+    final formatter = NumberFormat.simpleCurrency();
+    final entries = byMonth.entries.toList()
+      ..sort((a, b) => a.key.compareTo(b.key));
+    final maxValue = entries.isEmpty
+        ? 0.0
+        : entries.map((e) => e.value).reduce(math.max);
+
+    return Container(
+      key: const Key('acquisition-timeline-card'),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'VALUE OVER TIME',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: colors.onSurfaceVariant,
+              letterSpacing: 1.2,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (entries.isEmpty)
+            Text(
+              'No acquisition history yet.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colors.onSurfaceVariant,
+              ),
+            )
+          else
+            SizedBox(
+              height: 140,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: entries.map((entry) {
+                  final fraction = maxValue > 0 ? entry.value / maxValue : 0.0;
+                  return Expanded(
+                    child: Tooltip(
+                      message:
+                          '${entry.key}: ${formatter.format(entry.value)}',
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 2),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Container(
+                              height: 120 * fraction.clamp(0.04, 1.0),
+                              decoration: BoxDecoration(
+                                color: colors.primary,
+                                borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(4),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              entry.key.substring(5),
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: colors.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
         ],
       ),
     );

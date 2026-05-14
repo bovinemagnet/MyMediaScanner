@@ -4,8 +4,11 @@
 // Author: Paul Snow
 // Since: 0.0.0
 
+import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/domain/usecases/export_collection_usecase.dart';
+import 'package:mymediascanner/domain/usecases/valuation_report_usecase.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -15,6 +18,13 @@ final exportUseCaseProvider = Provider<ExportCollectionUseCase>((ref) {
     repository: ref.watch(mediaItemRepositoryProvider),
   );
 });
+
+/// Provides a shared [ValuationReportUseCase] instance.
+final valuationReportUseCaseProvider =
+    Provider<ValuationReportUseCase>((ref) => const ValuationReportUseCase());
+
+/// Output formats for the valuation report.
+enum ValuationReportFormat { csv, html }
 
 /// State for the export operation.
 enum ExportStatus { idle, exporting, success, error }
@@ -57,3 +67,38 @@ class ExportNotifier extends Notifier<ExportState> {
 
 final insightsExportProvider =
     NotifierProvider<ExportNotifier, ExportState>(ExportNotifier.new);
+
+/// Notifier that manages valuation-report exports.
+class ValuationReportNotifier extends Notifier<ExportState> {
+  @override
+  ExportState build() => const ExportState();
+
+  /// Exports the valuation report in the given [format] and returns the
+  /// file path on success.
+  Future<String?> export(ValuationReportFormat format) async {
+    state = const ExportState(status: ExportStatus.exporting);
+    try {
+      final repo = ref.read(mediaItemRepositoryProvider);
+      final useCase = ref.read(valuationReportUseCaseProvider);
+      final items = await repo.watchAll().first;
+      final content = format == ValuationReportFormat.csv
+          ? useCase.generateCsv(items)
+          : useCase.generateHtml(items, generatedAt: DateTime.now().toUtc());
+      final extension = format == ValuationReportFormat.csv ? 'csv' : 'html';
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final directory = await getApplicationDocumentsDirectory();
+      final filePath =
+          '${directory.path}/valuation_report_$timestamp.$extension';
+      await File(filePath).writeAsString(content);
+      state = ExportState(status: ExportStatus.success, filePath: filePath);
+      return filePath;
+    } catch (e) {
+      state = ExportState(status: ExportStatus.error, error: e.toString());
+      return null;
+    }
+  }
+}
+
+final valuationReportProvider =
+    NotifierProvider<ValuationReportNotifier, ExportState>(
+        ValuationReportNotifier.new);

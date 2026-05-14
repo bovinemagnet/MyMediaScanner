@@ -175,14 +175,40 @@ InsightsData computeInsightsData({
   // ── Collection value ──────────────────────────────────────────────
   // Sum of pricePaid over owned items, ignoring nulls. `null` when no
   // owned item has a recorded price, so UI can render "—".
-  final ownedPrices = activeItems
-      .where((i) => i.ownershipStatus == OwnershipStatus.owned)
-      .map((i) => i.pricePaid)
-      .whereType<double>()
+  final pricedOwnedItems = activeItems
+      .where((i) =>
+          i.ownershipStatus == OwnershipStatus.owned && i.pricePaid != null)
       .toList();
-  final double? totalValue = ownedPrices.isEmpty
+  final double? totalValue = pricedOwnedItems.isEmpty
       ? null
-      : ownedPrices.fold<double>(0, (sum, p) => sum + p);
+      : pricedOwnedItems.fold<double>(0, (sum, i) => sum + i.pricePaid!);
+
+  final sortedByPrice = [...pricedOwnedItems]
+    ..sort((a, b) => b.pricePaid!.compareTo(a.pricePaid!));
+  final topValueItems = sortedByPrice
+      .take(5)
+      .map<TopValueItem>((i) => (
+            id: i.id,
+            title: i.title,
+            mediaType: i.mediaType,
+            pricePaid: i.pricePaid!,
+          ))
+      .toList(growable: false);
+
+  final valueByMediaType = <MediaType, double>{};
+  for (final item in pricedOwnedItems) {
+    valueByMediaType[item.mediaType] =
+        (valueByMediaType[item.mediaType] ?? 0) + item.pricePaid!;
+  }
+
+  final valueByAcquisitionMonth = <String, double>{};
+  for (final item in pricedOwnedItems) {
+    final stamp = item.acquiredAt ?? item.dateAdded;
+    final dt = DateTime.fromMillisecondsSinceEpoch(stamp);
+    final key = '${dt.year}-${dt.month.toString().padLeft(2, '0')}';
+    valueByAcquisitionMonth[key] =
+        (valueByAcquisitionMonth[key] ?? 0) + item.pricePaid!;
+  }
 
   return InsightsData(
     totalItems: stats.totalItems,
@@ -204,6 +230,9 @@ InsightsData computeInsightsData({
     musicItemsWithRips: musicItemsWithRips,
     totalMusicItems: musicItems.length,
     totalValue: totalValue,
+    topValueItems: topValueItems,
+    valueByMediaType: valueByMediaType,
+    valueByAcquisitionMonth: valueByAcquisitionMonth,
   );
 }
 

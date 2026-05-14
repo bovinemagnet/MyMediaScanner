@@ -33,6 +33,8 @@ class MediaItemsTable extends Table {
   RealColumn get pricePaid => real().nullable()();
   IntColumn get acquiredAt => integer().nullable()();
   TextColumn get retailer => text().nullable()();
+  RealColumn get currentValue => real().nullable()();
+  IntColumn get currentValueAsOf => integer().nullable()();
   TextColumn get locationId => text().nullable()();
   TextColumn get seriesId => text().nullable()();
   IntColumn get seriesPosition => integer().nullable()();

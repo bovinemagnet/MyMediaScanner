@@ -28,6 +28,7 @@ void main() {
       List<String> genres = const [],
       double? userRating,
       double? pricePaid,
+      int? acquiredAt,
       OwnershipStatus ownershipStatus = OwnershipStatus.owned,
     }) {
       return MediaItem(
@@ -43,6 +44,7 @@ void main() {
         genres: genres,
         userRating: userRating,
         pricePaid: pricePaid,
+        acquiredAt: acquiredAt,
         ownershipStatus: ownershipStatus,
       );
     }
@@ -333,6 +335,139 @@ void main() {
         );
 
         expect(result.totalValue, isNull);
+      });
+    });
+
+    group('valuation breakdowns', () {
+      test('topValueItems lists owned items by pricePaid descending', () {
+        final items = [
+          makeItem(id: 'a', pricePaid: 5.0),
+          makeItem(id: 'b', pricePaid: 50.0),
+          makeItem(id: 'c', pricePaid: 25.0),
+          makeItem(id: 'd'),
+        ];
+
+        final result = computeInsightsData(
+          items: items,
+          activeLoans: [],
+          allLoans: [],
+          borrowers: [],
+          ripAlbums: [],
+          rippedItemIds: {},
+        );
+
+        expect(result.topValueItems.map((e) => e.id).toList(),
+            equals(['b', 'c', 'a']));
+        expect(result.topValueItems.first.pricePaid, 50.0);
+        expect(result.topValueItems.first.title, 'Item b');
+      });
+
+      test('topValueItems caps at five entries', () {
+        final items = List.generate(
+          8,
+          (i) => makeItem(id: 'i$i', pricePaid: (i + 1).toDouble()),
+        );
+
+        final result = computeInsightsData(
+          items: items,
+          activeLoans: [],
+          allLoans: [],
+          borrowers: [],
+          ripAlbums: [],
+          rippedItemIds: {},
+        );
+
+        expect(result.topValueItems.length, 5);
+        expect(result.topValueItems.first.pricePaid, 8.0);
+      });
+
+      test('topValueItems excludes wishlist items', () {
+        final items = [
+          makeItem(id: 'owned', pricePaid: 10.0),
+          makeItem(
+            id: 'wish',
+            pricePaid: 100.0,
+            ownershipStatus: OwnershipStatus.wishlist,
+          ),
+        ];
+
+        final result = computeInsightsData(
+          items: items,
+          activeLoans: [],
+          allLoans: [],
+          borrowers: [],
+          ripAlbums: [],
+          rippedItemIds: {},
+        );
+
+        expect(result.topValueItems.map((e) => e.id), equals(['owned']));
+      });
+
+      test('valueByMediaType sums pricePaid per type', () {
+        final items = [
+          makeItem(id: 'f1', mediaType: MediaType.film, pricePaid: 10.0),
+          makeItem(id: 'f2', mediaType: MediaType.film, pricePaid: 5.0),
+          makeItem(id: 'm1', mediaType: MediaType.music, pricePaid: 20.0),
+          makeItem(id: 'b1', mediaType: MediaType.book),
+        ];
+
+        final result = computeInsightsData(
+          items: items,
+          activeLoans: [],
+          allLoans: [],
+          borrowers: [],
+          ripAlbums: [],
+          rippedItemIds: {},
+        );
+
+        expect(result.valueByMediaType[MediaType.film], 15.0);
+        expect(result.valueByMediaType[MediaType.music], 20.0);
+        expect(result.valueByMediaType.containsKey(MediaType.book), isFalse);
+      });
+
+      test(
+          'valueByAcquisitionMonth groups by acquiredAt (yyyy-MM), '
+          'falling back to dateAdded when null', () {
+        final jan = DateTime(2026, 1, 15).millisecondsSinceEpoch;
+        final feb = DateTime(2026, 2, 10).millisecondsSinceEpoch;
+        final items = [
+          makeItem(id: 'a', dateAdded: jan, pricePaid: 10.0, acquiredAt: jan),
+          makeItem(id: 'b', dateAdded: jan, pricePaid: 5.0, acquiredAt: feb),
+          makeItem(id: 'c', dateAdded: feb, pricePaid: 7.0),
+        ];
+
+        final result = computeInsightsData(
+          items: items,
+          activeLoans: [],
+          allLoans: [],
+          borrowers: [],
+          ripAlbums: [],
+          rippedItemIds: {},
+        );
+
+        expect(result.valueByAcquisitionMonth['2026-01'], 10.0);
+        expect(result.valueByAcquisitionMonth['2026-02'], closeTo(12.0, 1e-9));
+      });
+
+      test('valuation breakdowns are empty when no owned item has a price',
+          () {
+        final items = [
+          makeItem(id: 'a'),
+          makeItem(id: 'b'),
+        ];
+
+        final result = computeInsightsData(
+          items: items,
+          activeLoans: [],
+          allLoans: [],
+          borrowers: [],
+          ripAlbums: [],
+          rippedItemIds: {},
+        );
+
+        expect(result.topValueItems, isEmpty);
+        expect(result.valueByMediaType, isEmpty);
+        expect(result.valueByAcquisitionMonth, isEmpty);
       });
     });
 

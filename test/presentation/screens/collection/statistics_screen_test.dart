@@ -182,5 +182,147 @@ void main() {
 
       expect(find.text('—'), findsOneWidget);
     });
+
+    testWidgets('top value items card lists each entry by title',
+        (tester) async {
+      final insights = _sampleInsights.copyWith(
+        totalValue: 60.0,
+        topValueItems: const [
+          (
+            id: 'a',
+            title: 'Pricey Vinyl',
+            mediaType: MediaType.music,
+            pricePaid: 50.0
+          ),
+          (
+            id: 'b',
+            title: 'Cheap Book',
+            mediaType: MediaType.book,
+            pricePaid: 10.0
+          ),
+        ],
+      );
+      await tester.pumpWidget(_buildTestScreen(insights: insights));
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('top-value-items-card')),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('TOP VALUE ITEMS'), findsOneWidget);
+      expect(find.text('Pricey Vinyl'), findsOneWidget);
+      expect(find.text('Cheap Book'), findsOneWidget);
+    });
+
+    testWidgets('top value items card hidden when list empty',
+        (tester) async {
+      await tester.pumpWidget(_buildTestScreen());
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('top-value-items-card')), findsNothing);
+      expect(find.text('TOP VALUE ITEMS'), findsNothing);
+    });
+
+    testWidgets('value-by-type card shows breakdown header when populated',
+        (tester) async {
+      final insights = _sampleInsights.copyWith(
+        totalValue: 30.0,
+        topValueItems: const [
+          (
+            id: 'f1',
+            title: 'F',
+            mediaType: MediaType.film,
+            pricePaid: 20.0
+          ),
+        ],
+        valueByMediaType: const {
+          MediaType.film: 20.0,
+          MediaType.music: 10.0,
+        },
+      );
+      await tester.pumpWidget(_buildTestScreen(insights: insights));
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('value-by-type-card')),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('VALUE BY MEDIA TYPE'), findsOneWidget);
+    });
+
+    testWidgets('valuation report actions appear when priced items exist',
+        (tester) async {
+      final insights = _sampleInsights.copyWith(
+        totalValue: 60.0,
+        topValueItems: const [
+          (
+            id: 'a',
+            title: 'Pricey Vinyl',
+            mediaType: MediaType.music,
+            pricePaid: 50.0
+          ),
+        ],
+        valueByMediaType: const {MediaType.music: 50.0},
+        valueByAcquisitionMonth: const {'2026-01': 50.0},
+      );
+      await tester.pumpWidget(_buildTestScreen(insights: insights));
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('valuation-report-actions')),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('VALUATION REPORT'), findsOneWidget);
+      expect(find.text('Export CSV'), findsWidgets);
+      expect(find.text('Export HTML'), findsOneWidget);
+    });
+
+    testWidgets('valuation report actions hidden when no priced items',
+        (tester) async {
+      await tester.pumpWidget(_buildTestScreen());
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('valuation-report-actions')), findsNothing);
+      expect(find.text('VALUATION REPORT'), findsNothing);
+    });
+
+    testWidgets('acquisition timeline card renders when data exists',
+        (tester) async {
+      final insights = _sampleInsights.copyWith(
+        totalValue: 30.0,
+        topValueItems: const [
+          (
+            id: 'f1',
+            title: 'F',
+            mediaType: MediaType.film,
+            pricePaid: 20.0
+          ),
+        ],
+        valueByAcquisitionMonth: const {
+          '2026-01': 10.0,
+          '2026-02': 20.0,
+        },
+      );
+      await tester.pumpWidget(_buildTestScreen(insights: insights));
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('acquisition-timeline-card')),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('VALUE OVER TIME'), findsOneWidget);
+    });
   });
 }

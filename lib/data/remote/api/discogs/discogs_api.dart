@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:retrofit/retrofit.dart';
+import 'package:mymediascanner/data/remote/api/discogs/models/discogs_marketplace_stats_dto.dart';
 import 'package:mymediascanner/data/remote/api/discogs/models/discogs_release_dto.dart';
 
 part 'discogs_api.g.dart';
@@ -22,4 +23,10 @@ abstract class DiscogsApi {
 
   @GET('/releases/{id}')
   Future<DiscogsReleaseDto> getRelease(@Path('id') int id);
+
+  @GET('/marketplace/stats/{id}')
+  Future<DiscogsMarketplaceStatsDto> getMarketplaceStats(
+    @Path('id') int id, {
+    @Query('curr_abbr') String? currencyAbbreviation,
+  });
 }

@@ -653,6 +653,8 @@ class SyncRepositoryImpl implements ISyncRepository {
       pricePaid: Value(data['price_paid'] as double?),
       acquiredAt: Value(data['acquired_at'] as int?),
       retailer: Value(data['retailer'] as String?),
+      currentValue: Value(data['current_value'] as double?),
+      currentValueAsOf: Value(data['current_value_as_of'] as int?),
       locationId: Value(data['location_id'] as String?),
       seriesId: Value(data['series_id'] as String?),
       seriesPosition: Value(data['series_position'] as int?),

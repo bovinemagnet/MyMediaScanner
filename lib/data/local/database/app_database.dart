@@ -91,7 +91,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 21;
+  int get schemaVersion => 22;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -302,6 +302,28 @@ class AppDatabase extends _$AppDatabase {
             if (!existing.contains('defect_confidence')) {
               await m.addColumn(
                   ripTracksTable, ripTracksTable.defectConfidence);
+            }
+          }
+          if (from < 22) {
+            // Phase 4: external marketplace lookup populates current_value
+            // (REAL, null until first lookup) and stamps current_value_as_of
+            // (epoch millis). Both nullable so existing rows continue to
+            // work; the UI distinguishes "never looked up" from "looked up
+            // and unavailable" via current_value_as_of presence.
+            //
+            // Synthetic migration tests can seed only a subset of tables
+            // (e.g. just the rip tables for v17 regression coverage), so
+            // guard on media_items being present — a fresh setup builds
+            // the columns via the table definition in `onCreate`.
+            final mediaItemsExists = await customSelect(
+              'SELECT name FROM sqlite_master '
+              "WHERE type='table' AND name='media_items'",
+            ).get();
+            if (mediaItemsExists.isNotEmpty) {
+              await m.addColumn(
+                  mediaItemsTable, mediaItemsTable.currentValue);
+              await m.addColumn(
+                  mediaItemsTable, mediaItemsTable.currentValueAsOf);
             }
           }
         },

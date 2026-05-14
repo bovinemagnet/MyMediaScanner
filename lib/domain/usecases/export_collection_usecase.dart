@@ -54,7 +54,8 @@ class ExportCollectionUseCase {
   String _toCsv(List<MediaItem> items) {
     const header =
         'barcode,barcodeType,mediaType,title,subtitle,year,publisher,'
-        'format,genres,userRating,userReview,dateAdded,dateScanned';
+        'format,genres,userRating,userReview,dateAdded,dateScanned,'
+        'condition,pricePaid,retailer,acquiredAt';
 
     final rows = items.map((item) {
       return [
@@ -71,6 +72,10 @@ class ExportCollectionUseCase {
         _escapeCsv(item.userReview ?? ''),
         item.dateAdded.toString(),
         item.dateScanned.toString(),
+        _escapeCsv(item.condition?.name ?? ''),
+        item.pricePaid?.toString() ?? '',
+        _escapeCsv(item.retailer ?? ''),
+        item.acquiredAt?.toString() ?? '',
       ].join(',');
     });
 
@@ -98,6 +103,10 @@ class ExportCollectionUseCase {
         'dateAdded': item.dateAdded,
         'dateScanned': item.dateScanned,
         'updatedAt': item.updatedAt,
+        'condition': item.condition?.name,
+        'pricePaid': item.pricePaid,
+        'retailer': item.retailer,
+        'acquiredAt': item.acquiredAt,
       };
     }).toList();
 

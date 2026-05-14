@@ -25,6 +25,7 @@ import 'package:mymediascanner/presentation/screens/collection/widgets/shelf_pic
 import 'package:mymediascanner/presentation/screens/item_detail/widgets/borrower_picker_dialog.dart';
 import 'package:mymediascanner/presentation/screens/item_detail/widgets/cover_art_hero.dart';
 import 'package:mymediascanner/presentation/screens/item_detail/widgets/metadata_section.dart';
+import 'package:mymediascanner/presentation/screens/item_detail/widgets/current_value_section.dart';
 import 'package:mymediascanner/presentation/screens/item_detail/widgets/purchase_info_section.dart';
 import 'package:mymediascanner/presentation/screens/item_detail/widgets/location_section.dart';
 import 'package:mymediascanner/presentation/screens/item_detail/widgets/progress_section.dart';
@@ -238,6 +239,8 @@ class ItemDetailScreen extends ConsumerWidget {
                       }
                     },
                   ),
+                  const SizedBox(height: 16),
+                  CurrentValueSection(item: item),
                   const SizedBox(height: 16),
                   LocationSection(item: item),
                   const SizedBox(height: 16),

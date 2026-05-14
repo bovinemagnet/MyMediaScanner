@@ -32,6 +32,8 @@ sealed class MediaItem with _$MediaItem {
     double? pricePaid,
     int? acquiredAt,
     String? retailer,
+    double? currentValue,
+    int? currentValueAsOf,
     required int dateAdded,
     required int dateScanned,
     required int updatedAt,

@@ -26,7 +26,14 @@ mixin _$InsightsData {
  int get totalMusicItems;// ── Collection value ────────────────────────
 /// Sum of `pricePaid` over owned items, ignoring nulls. `null` when
 /// no owned item has a recorded price.
- double? get totalValue;
+ double? get totalValue;/// Top owned items by `pricePaid`, descending. Capped at five entries.
+/// Empty when no owned item has a recorded price.
+ List<TopValueItem> get topValueItems;/// Sum of `pricePaid` per media type over owned items. Excludes media
+/// types with no priced items.
+ Map<MediaType, double> get valueByMediaType;/// Sum of `pricePaid` per `yyyy-MM` of `acquiredAt` (falling back to
+/// `dateAdded` when `acquiredAt` is null) over owned items. Empty
+/// when no owned item has a recorded price.
+ Map<String, double> get valueByAcquisitionMonth;
 /// Create a copy of InsightsData
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -37,16 +44,16 @@ $InsightsDataCopyWith<InsightsData> get copyWith => _$InsightsDataCopyWithImpl<I
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is InsightsData&&(identical(other.totalItems, totalItems) || other.totalItems == totalItems)&&const DeepCollectionEquality().equals(other.byMediaType, byMediaType)&&const DeepCollectionEquality().equals(other.byYear, byYear)&&const DeepCollectionEquality().equals(other.byGenre, byGenre)&&(identical(other.averageRating, averageRating) || other.averageRating == averageRating)&&(identical(other.ratedCount, ratedCount) || other.ratedCount == ratedCount)&&const DeepCollectionEquality().equals(other.monthlyGrowth, monthlyGrowth)&&(identical(other.activeLoansCount, activeLoansCount) || other.activeLoansCount == activeLoansCount)&&(identical(other.overdueCount, overdueCount) || other.overdueCount == overdueCount)&&(identical(other.totalLoansAllTime, totalLoansAllTime) || other.totalLoansAllTime == totalLoansAllTime)&&const DeepCollectionEquality().equals(other.topBorrowers, topBorrowers)&&const DeepCollectionEquality().equals(other.mostBorrowedItems, mostBorrowedItems)&&(identical(other.totalRipAlbums, totalRipAlbums) || other.totalRipAlbums == totalRipAlbums)&&(identical(other.matchedRipAlbums, matchedRipAlbums) || other.matchedRipAlbums == matchedRipAlbums)&&(identical(other.unmatchedRipAlbums, unmatchedRipAlbums) || other.unmatchedRipAlbums == unmatchedRipAlbums)&&(identical(other.totalRipSizeBytes, totalRipSizeBytes) || other.totalRipSizeBytes == totalRipSizeBytes)&&(identical(other.musicItemsWithRips, musicItemsWithRips) || other.musicItemsWithRips == musicItemsWithRips)&&(identical(other.totalMusicItems, totalMusicItems) || other.totalMusicItems == totalMusicItems)&&(identical(other.totalValue, totalValue) || other.totalValue == totalValue));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is InsightsData&&(identical(other.totalItems, totalItems) || other.totalItems == totalItems)&&const DeepCollectionEquality().equals(other.byMediaType, byMediaType)&&const DeepCollectionEquality().equals(other.byYear, byYear)&&const DeepCollectionEquality().equals(other.byGenre, byGenre)&&(identical(other.averageRating, averageRating) || other.averageRating == averageRating)&&(identical(other.ratedCount, ratedCount) || other.ratedCount == ratedCount)&&const DeepCollectionEquality().equals(other.monthlyGrowth, monthlyGrowth)&&(identical(other.activeLoansCount, activeLoansCount) || other.activeLoansCount == activeLoansCount)&&(identical(other.overdueCount, overdueCount) || other.overdueCount == overdueCount)&&(identical(other.totalLoansAllTime, totalLoansAllTime) || other.totalLoansAllTime == totalLoansAllTime)&&const DeepCollectionEquality().equals(other.topBorrowers, topBorrowers)&&const DeepCollectionEquality().equals(other.mostBorrowedItems, mostBorrowedItems)&&(identical(other.totalRipAlbums, totalRipAlbums) || other.totalRipAlbums == totalRipAlbums)&&(identical(other.matchedRipAlbums, matchedRipAlbums) || other.matchedRipAlbums == matchedRipAlbums)&&(identical(other.unmatchedRipAlbums, unmatchedRipAlbums) || other.unmatchedRipAlbums == unmatchedRipAlbums)&&(identical(other.totalRipSizeBytes, totalRipSizeBytes) || other.totalRipSizeBytes == totalRipSizeBytes)&&(identical(other.musicItemsWithRips, musicItemsWithRips) || other.musicItemsWithRips == musicItemsWithRips)&&(identical(other.totalMusicItems, totalMusicItems) || other.totalMusicItems == totalMusicItems)&&(identical(other.totalValue, totalValue) || other.totalValue == totalValue)&&const DeepCollectionEquality().equals(other.topValueItems, topValueItems)&&const DeepCollectionEquality().equals(other.valueByMediaType, valueByMediaType)&&const DeepCollectionEquality().equals(other.valueByAcquisitionMonth, valueByAcquisitionMonth));
 }
 
 
 @override
-int get hashCode => Object.hashAll([runtimeType,totalItems,const DeepCollectionEquality().hash(byMediaType),const DeepCollectionEquality().hash(byYear),const DeepCollectionEquality().hash(byGenre),averageRating,ratedCount,const DeepCollectionEquality().hash(monthlyGrowth),activeLoansCount,overdueCount,totalLoansAllTime,const DeepCollectionEquality().hash(topBorrowers),const DeepCollectionEquality().hash(mostBorrowedItems),totalRipAlbums,matchedRipAlbums,unmatchedRipAlbums,totalRipSizeBytes,musicItemsWithRips,totalMusicItems,totalValue]);
+int get hashCode => Object.hashAll([runtimeType,totalItems,const DeepCollectionEquality().hash(byMediaType),const DeepCollectionEquality().hash(byYear),const DeepCollectionEquality().hash(byGenre),averageRating,ratedCount,const DeepCollectionEquality().hash(monthlyGrowth),activeLoansCount,overdueCount,totalLoansAllTime,const DeepCollectionEquality().hash(topBorrowers),const DeepCollectionEquality().hash(mostBorrowedItems),totalRipAlbums,matchedRipAlbums,unmatchedRipAlbums,totalRipSizeBytes,musicItemsWithRips,totalMusicItems,totalValue,const DeepCollectionEquality().hash(topValueItems),const DeepCollectionEquality().hash(valueByMediaType),const DeepCollectionEquality().hash(valueByAcquisitionMonth)]);
 
 @override
 String toString() {
-  return 'InsightsData(totalItems: $totalItems, byMediaType: $byMediaType, byYear: $byYear, byGenre: $byGenre, averageRating: $averageRating, ratedCount: $ratedCount, monthlyGrowth: $monthlyGrowth, activeLoansCount: $activeLoansCount, overdueCount: $overdueCount, totalLoansAllTime: $totalLoansAllTime, topBorrowers: $topBorrowers, mostBorrowedItems: $mostBorrowedItems, totalRipAlbums: $totalRipAlbums, matchedRipAlbums: $matchedRipAlbums, unmatchedRipAlbums: $unmatchedRipAlbums, totalRipSizeBytes: $totalRipSizeBytes, musicItemsWithRips: $musicItemsWithRips, totalMusicItems: $totalMusicItems, totalValue: $totalValue)';
+  return 'InsightsData(totalItems: $totalItems, byMediaType: $byMediaType, byYear: $byYear, byGenre: $byGenre, averageRating: $averageRating, ratedCount: $ratedCount, monthlyGrowth: $monthlyGrowth, activeLoansCount: $activeLoansCount, overdueCount: $overdueCount, totalLoansAllTime: $totalLoansAllTime, topBorrowers: $topBorrowers, mostBorrowedItems: $mostBorrowedItems, totalRipAlbums: $totalRipAlbums, matchedRipAlbums: $matchedRipAlbums, unmatchedRipAlbums: $unmatchedRipAlbums, totalRipSizeBytes: $totalRipSizeBytes, musicItemsWithRips: $musicItemsWithRips, totalMusicItems: $totalMusicItems, totalValue: $totalValue, topValueItems: $topValueItems, valueByMediaType: $valueByMediaType, valueByAcquisitionMonth: $valueByAcquisitionMonth)';
 }
 
 
@@ -57,7 +64,7 @@ abstract mixin class $InsightsDataCopyWith<$Res>  {
   factory $InsightsDataCopyWith(InsightsData value, $Res Function(InsightsData) _then) = _$InsightsDataCopyWithImpl;
 @useResult
 $Res call({
- int totalItems, Map<MediaType, int> byMediaType, Map<int, int> byYear, Map<String, int> byGenre, double? averageRating, int ratedCount, Map<String, int> monthlyGrowth, int activeLoansCount, int overdueCount, int totalLoansAllTime, Map<String, int> topBorrowers, Map<String, int> mostBorrowedItems, int totalRipAlbums, int matchedRipAlbums, int unmatchedRipAlbums, int totalRipSizeBytes, int musicItemsWithRips, int totalMusicItems, double? totalValue
+ int totalItems, Map<MediaType, int> byMediaType, Map<int, int> byYear, Map<String, int> byGenre, double? averageRating, int ratedCount, Map<String, int> monthlyGrowth, int activeLoansCount, int overdueCount, int totalLoansAllTime, Map<String, int> topBorrowers, Map<String, int> mostBorrowedItems, int totalRipAlbums, int matchedRipAlbums, int unmatchedRipAlbums, int totalRipSizeBytes, int musicItemsWithRips, int totalMusicItems, double? totalValue, List<TopValueItem> topValueItems, Map<MediaType, double> valueByMediaType, Map<String, double> valueByAcquisitionMonth
 });
 
 
@@ -74,7 +81,7 @@ class _$InsightsDataCopyWithImpl<$Res>
 
 /// Create a copy of InsightsData
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? totalItems = null,Object? byMediaType = null,Object? byYear = null,Object? byGenre = null,Object? averageRating = freezed,Object? ratedCount = null,Object? monthlyGrowth = null,Object? activeLoansCount = null,Object? overdueCount = null,Object? totalLoansAllTime = null,Object? topBorrowers = null,Object? mostBorrowedItems = null,Object? totalRipAlbums = null,Object? matchedRipAlbums = null,Object? unmatchedRipAlbums = null,Object? totalRipSizeBytes = null,Object? musicItemsWithRips = null,Object? totalMusicItems = null,Object? totalValue = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? totalItems = null,Object? byMediaType = null,Object? byYear = null,Object? byGenre = null,Object? averageRating = freezed,Object? ratedCount = null,Object? monthlyGrowth = null,Object? activeLoansCount = null,Object? overdueCount = null,Object? totalLoansAllTime = null,Object? topBorrowers = null,Object? mostBorrowedItems = null,Object? totalRipAlbums = null,Object? matchedRipAlbums = null,Object? unmatchedRipAlbums = null,Object? totalRipSizeBytes = null,Object? musicItemsWithRips = null,Object? totalMusicItems = null,Object? totalValue = freezed,Object? topValueItems = null,Object? valueByMediaType = null,Object? valueByAcquisitionMonth = null,}) {
   return _then(_self.copyWith(
 totalItems: null == totalItems ? _self.totalItems : totalItems // ignore: cast_nullable_to_non_nullable
 as int,byMediaType: null == byMediaType ? _self.byMediaType : byMediaType // ignore: cast_nullable_to_non_nullable
@@ -95,7 +102,10 @@ as int,totalRipSizeBytes: null == totalRipSizeBytes ? _self.totalRipSizeBytes : 
 as int,musicItemsWithRips: null == musicItemsWithRips ? _self.musicItemsWithRips : musicItemsWithRips // ignore: cast_nullable_to_non_nullable
 as int,totalMusicItems: null == totalMusicItems ? _self.totalMusicItems : totalMusicItems // ignore: cast_nullable_to_non_nullable
 as int,totalValue: freezed == totalValue ? _self.totalValue : totalValue // ignore: cast_nullable_to_non_nullable
-as double?,
+as double?,topValueItems: null == topValueItems ? _self.topValueItems : topValueItems // ignore: cast_nullable_to_non_nullable
+as List<TopValueItem>,valueByMediaType: null == valueByMediaType ? _self.valueByMediaType : valueByMediaType // ignore: cast_nullable_to_non_nullable
+as Map<MediaType, double>,valueByAcquisitionMonth: null == valueByAcquisitionMonth ? _self.valueByAcquisitionMonth : valueByAcquisitionMonth // ignore: cast_nullable_to_non_nullable
+as Map<String, double>,
   ));
 }
 
@@ -177,10 +187,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int totalItems,  Map<MediaType, int> byMediaType,  Map<int, int> byYear,  Map<String, int> byGenre,  double? averageRating,  int ratedCount,  Map<String, int> monthlyGrowth,  int activeLoansCount,  int overdueCount,  int totalLoansAllTime,  Map<String, int> topBorrowers,  Map<String, int> mostBorrowedItems,  int totalRipAlbums,  int matchedRipAlbums,  int unmatchedRipAlbums,  int totalRipSizeBytes,  int musicItemsWithRips,  int totalMusicItems,  double? totalValue)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int totalItems,  Map<MediaType, int> byMediaType,  Map<int, int> byYear,  Map<String, int> byGenre,  double? averageRating,  int ratedCount,  Map<String, int> monthlyGrowth,  int activeLoansCount,  int overdueCount,  int totalLoansAllTime,  Map<String, int> topBorrowers,  Map<String, int> mostBorrowedItems,  int totalRipAlbums,  int matchedRipAlbums,  int unmatchedRipAlbums,  int totalRipSizeBytes,  int musicItemsWithRips,  int totalMusicItems,  double? totalValue,  List<TopValueItem> topValueItems,  Map<MediaType, double> valueByMediaType,  Map<String, double> valueByAcquisitionMonth)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _InsightsData() when $default != null:
-return $default(_that.totalItems,_that.byMediaType,_that.byYear,_that.byGenre,_that.averageRating,_that.ratedCount,_that.monthlyGrowth,_that.activeLoansCount,_that.overdueCount,_that.totalLoansAllTime,_that.topBorrowers,_that.mostBorrowedItems,_that.totalRipAlbums,_that.matchedRipAlbums,_that.unmatchedRipAlbums,_that.totalRipSizeBytes,_that.musicItemsWithRips,_that.totalMusicItems,_that.totalValue);case _:
+return $default(_that.totalItems,_that.byMediaType,_that.byYear,_that.byGenre,_that.averageRating,_that.ratedCount,_that.monthlyGrowth,_that.activeLoansCount,_that.overdueCount,_that.totalLoansAllTime,_that.topBorrowers,_that.mostBorrowedItems,_that.totalRipAlbums,_that.matchedRipAlbums,_that.unmatchedRipAlbums,_that.totalRipSizeBytes,_that.musicItemsWithRips,_that.totalMusicItems,_that.totalValue,_that.topValueItems,_that.valueByMediaType,_that.valueByAcquisitionMonth);case _:
   return orElse();
 
 }
@@ -198,10 +208,10 @@ return $default(_that.totalItems,_that.byMediaType,_that.byYear,_that.byGenre,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int totalItems,  Map<MediaType, int> byMediaType,  Map<int, int> byYear,  Map<String, int> byGenre,  double? averageRating,  int ratedCount,  Map<String, int> monthlyGrowth,  int activeLoansCount,  int overdueCount,  int totalLoansAllTime,  Map<String, int> topBorrowers,  Map<String, int> mostBorrowedItems,  int totalRipAlbums,  int matchedRipAlbums,  int unmatchedRipAlbums,  int totalRipSizeBytes,  int musicItemsWithRips,  int totalMusicItems,  double? totalValue)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int totalItems,  Map<MediaType, int> byMediaType,  Map<int, int> byYear,  Map<String, int> byGenre,  double? averageRating,  int ratedCount,  Map<String, int> monthlyGrowth,  int activeLoansCount,  int overdueCount,  int totalLoansAllTime,  Map<String, int> topBorrowers,  Map<String, int> mostBorrowedItems,  int totalRipAlbums,  int matchedRipAlbums,  int unmatchedRipAlbums,  int totalRipSizeBytes,  int musicItemsWithRips,  int totalMusicItems,  double? totalValue,  List<TopValueItem> topValueItems,  Map<MediaType, double> valueByMediaType,  Map<String, double> valueByAcquisitionMonth)  $default,) {final _that = this;
 switch (_that) {
 case _InsightsData():
-return $default(_that.totalItems,_that.byMediaType,_that.byYear,_that.byGenre,_that.averageRating,_that.ratedCount,_that.monthlyGrowth,_that.activeLoansCount,_that.overdueCount,_that.totalLoansAllTime,_that.topBorrowers,_that.mostBorrowedItems,_that.totalRipAlbums,_that.matchedRipAlbums,_that.unmatchedRipAlbums,_that.totalRipSizeBytes,_that.musicItemsWithRips,_that.totalMusicItems,_that.totalValue);}
+return $default(_that.totalItems,_that.byMediaType,_that.byYear,_that.byGenre,_that.averageRating,_that.ratedCount,_that.monthlyGrowth,_that.activeLoansCount,_that.overdueCount,_that.totalLoansAllTime,_that.topBorrowers,_that.mostBorrowedItems,_that.totalRipAlbums,_that.matchedRipAlbums,_that.unmatchedRipAlbums,_that.totalRipSizeBytes,_that.musicItemsWithRips,_that.totalMusicItems,_that.totalValue,_that.topValueItems,_that.valueByMediaType,_that.valueByAcquisitionMonth);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -215,10 +225,10 @@ return $default(_that.totalItems,_that.byMediaType,_that.byYear,_that.byGenre,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int totalItems,  Map<MediaType, int> byMediaType,  Map<int, int> byYear,  Map<String, int> byGenre,  double? averageRating,  int ratedCount,  Map<String, int> monthlyGrowth,  int activeLoansCount,  int overdueCount,  int totalLoansAllTime,  Map<String, int> topBorrowers,  Map<String, int> mostBorrowedItems,  int totalRipAlbums,  int matchedRipAlbums,  int unmatchedRipAlbums,  int totalRipSizeBytes,  int musicItemsWithRips,  int totalMusicItems,  double? totalValue)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int totalItems,  Map<MediaType, int> byMediaType,  Map<int, int> byYear,  Map<String, int> byGenre,  double? averageRating,  int ratedCount,  Map<String, int> monthlyGrowth,  int activeLoansCount,  int overdueCount,  int totalLoansAllTime,  Map<String, int> topBorrowers,  Map<String, int> mostBorrowedItems,  int totalRipAlbums,  int matchedRipAlbums,  int unmatchedRipAlbums,  int totalRipSizeBytes,  int musicItemsWithRips,  int totalMusicItems,  double? totalValue,  List<TopValueItem> topValueItems,  Map<MediaType, double> valueByMediaType,  Map<String, double> valueByAcquisitionMonth)?  $default,) {final _that = this;
 switch (_that) {
 case _InsightsData() when $default != null:
-return $default(_that.totalItems,_that.byMediaType,_that.byYear,_that.byGenre,_that.averageRating,_that.ratedCount,_that.monthlyGrowth,_that.activeLoansCount,_that.overdueCount,_that.totalLoansAllTime,_that.topBorrowers,_that.mostBorrowedItems,_that.totalRipAlbums,_that.matchedRipAlbums,_that.unmatchedRipAlbums,_that.totalRipSizeBytes,_that.musicItemsWithRips,_that.totalMusicItems,_that.totalValue);case _:
+return $default(_that.totalItems,_that.byMediaType,_that.byYear,_that.byGenre,_that.averageRating,_that.ratedCount,_that.monthlyGrowth,_that.activeLoansCount,_that.overdueCount,_that.totalLoansAllTime,_that.topBorrowers,_that.mostBorrowedItems,_that.totalRipAlbums,_that.matchedRipAlbums,_that.unmatchedRipAlbums,_that.totalRipSizeBytes,_that.musicItemsWithRips,_that.totalMusicItems,_that.totalValue,_that.topValueItems,_that.valueByMediaType,_that.valueByAcquisitionMonth);case _:
   return null;
 
 }
@@ -230,7 +240,7 @@ return $default(_that.totalItems,_that.byMediaType,_that.byYear,_that.byGenre,_t
 
 
 class _InsightsData implements InsightsData {
-  const _InsightsData({required this.totalItems, required final  Map<MediaType, int> byMediaType, required final  Map<int, int> byYear, required final  Map<String, int> byGenre, required this.averageRating, required this.ratedCount, required final  Map<String, int> monthlyGrowth, required this.activeLoansCount, required this.overdueCount, required this.totalLoansAllTime, required final  Map<String, int> topBorrowers, required final  Map<String, int> mostBorrowedItems, required this.totalRipAlbums, required this.matchedRipAlbums, required this.unmatchedRipAlbums, required this.totalRipSizeBytes, required this.musicItemsWithRips, required this.totalMusicItems, this.totalValue}): _byMediaType = byMediaType,_byYear = byYear,_byGenre = byGenre,_monthlyGrowth = monthlyGrowth,_topBorrowers = topBorrowers,_mostBorrowedItems = mostBorrowedItems;
+  const _InsightsData({required this.totalItems, required final  Map<MediaType, int> byMediaType, required final  Map<int, int> byYear, required final  Map<String, int> byGenre, required this.averageRating, required this.ratedCount, required final  Map<String, int> monthlyGrowth, required this.activeLoansCount, required this.overdueCount, required this.totalLoansAllTime, required final  Map<String, int> topBorrowers, required final  Map<String, int> mostBorrowedItems, required this.totalRipAlbums, required this.matchedRipAlbums, required this.unmatchedRipAlbums, required this.totalRipSizeBytes, required this.musicItemsWithRips, required this.totalMusicItems, this.totalValue, final  List<TopValueItem> topValueItems = const <TopValueItem>[], final  Map<MediaType, double> valueByMediaType = const <MediaType, double>{}, final  Map<String, double> valueByAcquisitionMonth = const <String, double>{}}): _byMediaType = byMediaType,_byYear = byYear,_byGenre = byGenre,_monthlyGrowth = monthlyGrowth,_topBorrowers = topBorrowers,_mostBorrowedItems = mostBorrowedItems,_topValueItems = topValueItems,_valueByMediaType = valueByMediaType,_valueByAcquisitionMonth = valueByAcquisitionMonth;
   
 
 // ── Collection overview ──────────────────────
@@ -304,6 +314,41 @@ class _InsightsData implements InsightsData {
 /// Sum of `pricePaid` over owned items, ignoring nulls. `null` when
 /// no owned item has a recorded price.
 @override final  double? totalValue;
+/// Top owned items by `pricePaid`, descending. Capped at five entries.
+/// Empty when no owned item has a recorded price.
+ final  List<TopValueItem> _topValueItems;
+/// Top owned items by `pricePaid`, descending. Capped at five entries.
+/// Empty when no owned item has a recorded price.
+@override@JsonKey() List<TopValueItem> get topValueItems {
+  if (_topValueItems is EqualUnmodifiableListView) return _topValueItems;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_topValueItems);
+}
+
+/// Sum of `pricePaid` per media type over owned items. Excludes media
+/// types with no priced items.
+ final  Map<MediaType, double> _valueByMediaType;
+/// Sum of `pricePaid` per media type over owned items. Excludes media
+/// types with no priced items.
+@override@JsonKey() Map<MediaType, double> get valueByMediaType {
+  if (_valueByMediaType is EqualUnmodifiableMapView) return _valueByMediaType;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_valueByMediaType);
+}
+
+/// Sum of `pricePaid` per `yyyy-MM` of `acquiredAt` (falling back to
+/// `dateAdded` when `acquiredAt` is null) over owned items. Empty
+/// when no owned item has a recorded price.
+ final  Map<String, double> _valueByAcquisitionMonth;
+/// Sum of `pricePaid` per `yyyy-MM` of `acquiredAt` (falling back to
+/// `dateAdded` when `acquiredAt` is null) over owned items. Empty
+/// when no owned item has a recorded price.
+@override@JsonKey() Map<String, double> get valueByAcquisitionMonth {
+  if (_valueByAcquisitionMonth is EqualUnmodifiableMapView) return _valueByAcquisitionMonth;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_valueByAcquisitionMonth);
+}
+
 
 /// Create a copy of InsightsData
 /// with the given fields replaced by the non-null parameter values.
@@ -315,16 +360,16 @@ _$InsightsDataCopyWith<_InsightsData> get copyWith => __$InsightsDataCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _InsightsData&&(identical(other.totalItems, totalItems) || other.totalItems == totalItems)&&const DeepCollectionEquality().equals(other._byMediaType, _byMediaType)&&const DeepCollectionEquality().equals(other._byYear, _byYear)&&const DeepCollectionEquality().equals(other._byGenre, _byGenre)&&(identical(other.averageRating, averageRating) || other.averageRating == averageRating)&&(identical(other.ratedCount, ratedCount) || other.ratedCount == ratedCount)&&const DeepCollectionEquality().equals(other._monthlyGrowth, _monthlyGrowth)&&(identical(other.activeLoansCount, activeLoansCount) || other.activeLoansCount == activeLoansCount)&&(identical(other.overdueCount, overdueCount) || other.overdueCount == overdueCount)&&(identical(other.totalLoansAllTime, totalLoansAllTime) || other.totalLoansAllTime == totalLoansAllTime)&&const DeepCollectionEquality().equals(other._topBorrowers, _topBorrowers)&&const DeepCollectionEquality().equals(other._mostBorrowedItems, _mostBorrowedItems)&&(identical(other.totalRipAlbums, totalRipAlbums) || other.totalRipAlbums == totalRipAlbums)&&(identical(other.matchedRipAlbums, matchedRipAlbums) || other.matchedRipAlbums == matchedRipAlbums)&&(identical(other.unmatchedRipAlbums, unmatchedRipAlbums) || other.unmatchedRipAlbums == unmatchedRipAlbums)&&(identical(other.totalRipSizeBytes, totalRipSizeBytes) || other.totalRipSizeBytes == totalRipSizeBytes)&&(identical(other.musicItemsWithRips, musicItemsWithRips) || other.musicItemsWithRips == musicItemsWithRips)&&(identical(other.totalMusicItems, totalMusicItems) || other.totalMusicItems == totalMusicItems)&&(identical(other.totalValue, totalValue) || other.totalValue == totalValue));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _InsightsData&&(identical(other.totalItems, totalItems) || other.totalItems == totalItems)&&const DeepCollectionEquality().equals(other._byMediaType, _byMediaType)&&const DeepCollectionEquality().equals(other._byYear, _byYear)&&const DeepCollectionEquality().equals(other._byGenre, _byGenre)&&(identical(other.averageRating, averageRating) || other.averageRating == averageRating)&&(identical(other.ratedCount, ratedCount) || other.ratedCount == ratedCount)&&const DeepCollectionEquality().equals(other._monthlyGrowth, _monthlyGrowth)&&(identical(other.activeLoansCount, activeLoansCount) || other.activeLoansCount == activeLoansCount)&&(identical(other.overdueCount, overdueCount) || other.overdueCount == overdueCount)&&(identical(other.totalLoansAllTime, totalLoansAllTime) || other.totalLoansAllTime == totalLoansAllTime)&&const DeepCollectionEquality().equals(other._topBorrowers, _topBorrowers)&&const DeepCollectionEquality().equals(other._mostBorrowedItems, _mostBorrowedItems)&&(identical(other.totalRipAlbums, totalRipAlbums) || other.totalRipAlbums == totalRipAlbums)&&(identical(other.matchedRipAlbums, matchedRipAlbums) || other.matchedRipAlbums == matchedRipAlbums)&&(identical(other.unmatchedRipAlbums, unmatchedRipAlbums) || other.unmatchedRipAlbums == unmatchedRipAlbums)&&(identical(other.totalRipSizeBytes, totalRipSizeBytes) || other.totalRipSizeBytes == totalRipSizeBytes)&&(identical(other.musicItemsWithRips, musicItemsWithRips) || other.musicItemsWithRips == musicItemsWithRips)&&(identical(other.totalMusicItems, totalMusicItems) || other.totalMusicItems == totalMusicItems)&&(identical(other.totalValue, totalValue) || other.totalValue == totalValue)&&const DeepCollectionEquality().equals(other._topValueItems, _topValueItems)&&const DeepCollectionEquality().equals(other._valueByMediaType, _valueByMediaType)&&const DeepCollectionEquality().equals(other._valueByAcquisitionMonth, _valueByAcquisitionMonth));
 }
 
 
 @override
-int get hashCode => Object.hashAll([runtimeType,totalItems,const DeepCollectionEquality().hash(_byMediaType),const DeepCollectionEquality().hash(_byYear),const DeepCollectionEquality().hash(_byGenre),averageRating,ratedCount,const DeepCollectionEquality().hash(_monthlyGrowth),activeLoansCount,overdueCount,totalLoansAllTime,const DeepCollectionEquality().hash(_topBorrowers),const DeepCollectionEquality().hash(_mostBorrowedItems),totalRipAlbums,matchedRipAlbums,unmatchedRipAlbums,totalRipSizeBytes,musicItemsWithRips,totalMusicItems,totalValue]);
+int get hashCode => Object.hashAll([runtimeType,totalItems,const DeepCollectionEquality().hash(_byMediaType),const DeepCollectionEquality().hash(_byYear),const DeepCollectionEquality().hash(_byGenre),averageRating,ratedCount,const DeepCollectionEquality().hash(_monthlyGrowth),activeLoansCount,overdueCount,totalLoansAllTime,const DeepCollectionEquality().hash(_topBorrowers),const DeepCollectionEquality().hash(_mostBorrowedItems),totalRipAlbums,matchedRipAlbums,unmatchedRipAlbums,totalRipSizeBytes,musicItemsWithRips,totalMusicItems,totalValue,const DeepCollectionEquality().hash(_topValueItems),const DeepCollectionEquality().hash(_valueByMediaType),const DeepCollectionEquality().hash(_valueByAcquisitionMonth)]);
 
 @override
 String toString() {
-  return 'InsightsData(totalItems: $totalItems, byMediaType: $byMediaType, byYear: $byYear, byGenre: $byGenre, averageRating: $averageRating, ratedCount: $ratedCount, monthlyGrowth: $monthlyGrowth, activeLoansCount: $activeLoansCount, overdueCount: $overdueCount, totalLoansAllTime: $totalLoansAllTime, topBorrowers: $topBorrowers, mostBorrowedItems: $mostBorrowedItems, totalRipAlbums: $totalRipAlbums, matchedRipAlbums: $matchedRipAlbums, unmatchedRipAlbums: $unmatchedRipAlbums, totalRipSizeBytes: $totalRipSizeBytes, musicItemsWithRips: $musicItemsWithRips, totalMusicItems: $totalMusicItems, totalValue: $totalValue)';
+  return 'InsightsData(totalItems: $totalItems, byMediaType: $byMediaType, byYear: $byYear, byGenre: $byGenre, averageRating: $averageRating, ratedCount: $ratedCount, monthlyGrowth: $monthlyGrowth, activeLoansCount: $activeLoansCount, overdueCount: $overdueCount, totalLoansAllTime: $totalLoansAllTime, topBorrowers: $topBorrowers, mostBorrowedItems: $mostBorrowedItems, totalRipAlbums: $totalRipAlbums, matchedRipAlbums: $matchedRipAlbums, unmatchedRipAlbums: $unmatchedRipAlbums, totalRipSizeBytes: $totalRipSizeBytes, musicItemsWithRips: $musicItemsWithRips, totalMusicItems: $totalMusicItems, totalValue: $totalValue, topValueItems: $topValueItems, valueByMediaType: $valueByMediaType, valueByAcquisitionMonth: $valueByAcquisitionMonth)';
 }
 
 
@@ -335,7 +380,7 @@ abstract mixin class _$InsightsDataCopyWith<$Res> implements $InsightsDataCopyWi
   factory _$InsightsDataCopyWith(_InsightsData value, $Res Function(_InsightsData) _then) = __$InsightsDataCopyWithImpl;
 @override @useResult
 $Res call({
- int totalItems, Map<MediaType, int> byMediaType, Map<int, int> byYear, Map<String, int> byGenre, double? averageRating, int ratedCount, Map<String, int> monthlyGrowth, int activeLoansCount, int overdueCount, int totalLoansAllTime, Map<String, int> topBorrowers, Map<String, int> mostBorrowedItems, int totalRipAlbums, int matchedRipAlbums, int unmatchedRipAlbums, int totalRipSizeBytes, int musicItemsWithRips, int totalMusicItems, double? totalValue
+ int totalItems, Map<MediaType, int> byMediaType, Map<int, int> byYear, Map<String, int> byGenre, double? averageRating, int ratedCount, Map<String, int> monthlyGrowth, int activeLoansCount, int overdueCount, int totalLoansAllTime, Map<String, int> topBorrowers, Map<String, int> mostBorrowedItems, int totalRipAlbums, int matchedRipAlbums, int unmatchedRipAlbums, int totalRipSizeBytes, int musicItemsWithRips, int totalMusicItems, double? totalValue, List<TopValueItem> topValueItems, Map<MediaType, double> valueByMediaType, Map<String, double> valueByAcquisitionMonth
 });
 
 
@@ -352,7 +397,7 @@ class __$InsightsDataCopyWithImpl<$Res>
 
 /// Create a copy of InsightsData
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? totalItems = null,Object? byMediaType = null,Object? byYear = null,Object? byGenre = null,Object? averageRating = freezed,Object? ratedCount = null,Object? monthlyGrowth = null,Object? activeLoansCount = null,Object? overdueCount = null,Object? totalLoansAllTime = null,Object? topBorrowers = null,Object? mostBorrowedItems = null,Object? totalRipAlbums = null,Object? matchedRipAlbums = null,Object? unmatchedRipAlbums = null,Object? totalRipSizeBytes = null,Object? musicItemsWithRips = null,Object? totalMusicItems = null,Object? totalValue = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? totalItems = null,Object? byMediaType = null,Object? byYear = null,Object? byGenre = null,Object? averageRating = freezed,Object? ratedCount = null,Object? monthlyGrowth = null,Object? activeLoansCount = null,Object? overdueCount = null,Object? totalLoansAllTime = null,Object? topBorrowers = null,Object? mostBorrowedItems = null,Object? totalRipAlbums = null,Object? matchedRipAlbums = null,Object? unmatchedRipAlbums = null,Object? totalRipSizeBytes = null,Object? musicItemsWithRips = null,Object? totalMusicItems = null,Object? totalValue = freezed,Object? topValueItems = null,Object? valueByMediaType = null,Object? valueByAcquisitionMonth = null,}) {
   return _then(_InsightsData(
 totalItems: null == totalItems ? _self.totalItems : totalItems // ignore: cast_nullable_to_non_nullable
 as int,byMediaType: null == byMediaType ? _self._byMediaType : byMediaType // ignore: cast_nullable_to_non_nullable
@@ -373,7 +418,10 @@ as int,totalRipSizeBytes: null == totalRipSizeBytes ? _self.totalRipSizeBytes : 
 as int,musicItemsWithRips: null == musicItemsWithRips ? _self.musicItemsWithRips : musicItemsWithRips // ignore: cast_nullable_to_non_nullable
 as int,totalMusicItems: null == totalMusicItems ? _self.totalMusicItems : totalMusicItems // ignore: cast_nullable_to_non_nullable
 as int,totalValue: freezed == totalValue ? _self.totalValue : totalValue // ignore: cast_nullable_to_non_nullable
-as double?,
+as double?,topValueItems: null == topValueItems ? _self._topValueItems : topValueItems // ignore: cast_nullable_to_non_nullable
+as List<TopValueItem>,valueByMediaType: null == valueByMediaType ? _self._valueByMediaType : valueByMediaType // ignore: cast_nullable_to_non_nullable
+as Map<MediaType, double>,valueByAcquisitionMonth: null == valueByAcquisitionMonth ? _self._valueByAcquisitionMonth : valueByAcquisitionMonth // ignore: cast_nullable_to_non_nullable
+as Map<String, double>,
   ));
 }
 

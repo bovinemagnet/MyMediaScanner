@@ -9,6 +9,7 @@ import 'package:mymediascanner/domain/repositories/i_tmdb_account_sync_repositor
 import 'package:mymediascanner/domain/usecases/connect_tmdb_account_usecase.dart';
 import 'package:mymediascanner/domain/usecases/convert_bridge_to_local_item_usecase.dart';
 import 'package:mymediascanner/domain/usecases/disconnect_tmdb_account_usecase.dart';
+import 'package:mymediascanner/domain/usecases/lookup_current_value_usecase.dart';
 import 'package:mymediascanner/domain/usecases/enrich_scan_with_tmdb_account_usecase.dart';
 import 'package:mymediascanner/domain/usecases/import_tmdb_account_usecase.dart';
 import 'package:mymediascanner/domain/usecases/mark_tmdb_watchlist_owned_usecase.dart';
@@ -189,6 +190,28 @@ final loanRepositoryProvider = Provider<ILoanRepository>((ref) {
 final ripLibraryRepositoryProvider = Provider<IRipLibraryRepository>((ref) {
   return RipLibraryRepositoryImpl(
     ripLibraryDao: ref.watch(ripLibraryDaoProvider),
+  );
+});
+
+/// Standalone Discogs API client for current-value lookups outside of the
+/// metadata repository. Null when no Discogs token is configured.
+final discogsApiProvider = Provider<DiscogsApi?>((ref) {
+  final apiKeys = ref.watch(apiKeysProvider).value ?? {};
+  final key = apiKeys['discogs']?.trim();
+  if (key == null || key.isEmpty) return null;
+  return DiscogsApi(DioFactory.createWithApiKey(
+    baseUrl: ApiConstants.discogsBaseUrl,
+    apiKeyParam: 'token',
+    apiKey: key,
+    defaultHeaders: {'User-Agent': 'MyMediaScanner/1.0'},
+  ));
+});
+
+final lookupCurrentValueUseCaseProvider =
+    Provider<LookupCurrentValueUseCase>((ref) {
+  return LookupCurrentValueUseCase(
+    discogsApi: ref.watch(discogsApiProvider),
+    repository: ref.watch(mediaItemRepositoryProvider),
   );
 });
 

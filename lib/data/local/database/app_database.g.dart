@@ -312,6 +312,28 @@ class $MediaItemsTableTable extends MediaItemsTable
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _currentValueMeta = const VerificationMeta(
+    'currentValue',
+  );
+  @override
+  late final GeneratedColumn<double> currentValue = GeneratedColumn<double>(
+    'current_value',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _currentValueAsOfMeta = const VerificationMeta(
+    'currentValueAsOf',
+  );
+  @override
+  late final GeneratedColumn<int> currentValueAsOf = GeneratedColumn<int>(
+    'current_value_as_of',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _locationIdMeta = const VerificationMeta(
     'locationId',
   );
@@ -442,6 +464,8 @@ class $MediaItemsTableTable extends MediaItemsTable
     pricePaid,
     acquiredAt,
     retailer,
+    currentValue,
+    currentValueAsOf,
     locationId,
     seriesId,
     seriesPosition,
@@ -666,6 +690,24 @@ class $MediaItemsTableTable extends MediaItemsTable
         retailer.isAcceptableOrUnknown(data['retailer']!, _retailerMeta),
       );
     }
+    if (data.containsKey('current_value')) {
+      context.handle(
+        _currentValueMeta,
+        currentValue.isAcceptableOrUnknown(
+          data['current_value']!,
+          _currentValueMeta,
+        ),
+      );
+    }
+    if (data.containsKey('current_value_as_of')) {
+      context.handle(
+        _currentValueAsOfMeta,
+        currentValueAsOf.isAcceptableOrUnknown(
+          data['current_value_as_of']!,
+          _currentValueAsOfMeta,
+        ),
+      );
+    }
     if (data.containsKey('location_id')) {
       context.handle(
         _locationIdMeta,
@@ -856,6 +898,14 @@ class $MediaItemsTableTable extends MediaItemsTable
         DriftSqlType.string,
         data['${effectivePrefix}retailer'],
       ),
+      currentValue: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}current_value'],
+      ),
+      currentValueAsOf: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}current_value_as_of'],
+      ),
       locationId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}location_id'],
@@ -931,6 +981,8 @@ class MediaItemsTableData extends DataClass
   final double? pricePaid;
   final int? acquiredAt;
   final String? retailer;
+  final double? currentValue;
+  final int? currentValueAsOf;
   final String? locationId;
   final String? seriesId;
   final int? seriesPosition;
@@ -969,6 +1021,8 @@ class MediaItemsTableData extends DataClass
     this.pricePaid,
     this.acquiredAt,
     this.retailer,
+    this.currentValue,
+    this.currentValueAsOf,
     this.locationId,
     this.seriesId,
     this.seriesPosition,
@@ -1039,6 +1093,12 @@ class MediaItemsTableData extends DataClass
     }
     if (!nullToAbsent || retailer != null) {
       map['retailer'] = Variable<String>(retailer);
+    }
+    if (!nullToAbsent || currentValue != null) {
+      map['current_value'] = Variable<double>(currentValue);
+    }
+    if (!nullToAbsent || currentValueAsOf != null) {
+      map['current_value_as_of'] = Variable<int>(currentValueAsOf);
     }
     if (!nullToAbsent || locationId != null) {
       map['location_id'] = Variable<String>(locationId);
@@ -1126,6 +1186,12 @@ class MediaItemsTableData extends DataClass
       retailer: retailer == null && nullToAbsent
           ? const Value.absent()
           : Value(retailer),
+      currentValue: currentValue == null && nullToAbsent
+          ? const Value.absent()
+          : Value(currentValue),
+      currentValueAsOf: currentValueAsOf == null && nullToAbsent
+          ? const Value.absent()
+          : Value(currentValueAsOf),
       locationId: locationId == null && nullToAbsent
           ? const Value.absent()
           : Value(locationId),
@@ -1188,6 +1254,8 @@ class MediaItemsTableData extends DataClass
       pricePaid: serializer.fromJson<double?>(json['pricePaid']),
       acquiredAt: serializer.fromJson<int?>(json['acquiredAt']),
       retailer: serializer.fromJson<String?>(json['retailer']),
+      currentValue: serializer.fromJson<double?>(json['currentValue']),
+      currentValueAsOf: serializer.fromJson<int?>(json['currentValueAsOf']),
       locationId: serializer.fromJson<String?>(json['locationId']),
       seriesId: serializer.fromJson<String?>(json['seriesId']),
       seriesPosition: serializer.fromJson<int?>(json['seriesPosition']),
@@ -1231,6 +1299,8 @@ class MediaItemsTableData extends DataClass
       'pricePaid': serializer.toJson<double?>(pricePaid),
       'acquiredAt': serializer.toJson<int?>(acquiredAt),
       'retailer': serializer.toJson<String?>(retailer),
+      'currentValue': serializer.toJson<double?>(currentValue),
+      'currentValueAsOf': serializer.toJson<int?>(currentValueAsOf),
       'locationId': serializer.toJson<String?>(locationId),
       'seriesId': serializer.toJson<String?>(seriesId),
       'seriesPosition': serializer.toJson<int?>(seriesPosition),
@@ -1272,6 +1342,8 @@ class MediaItemsTableData extends DataClass
     Value<double?> pricePaid = const Value.absent(),
     Value<int?> acquiredAt = const Value.absent(),
     Value<String?> retailer = const Value.absent(),
+    Value<double?> currentValue = const Value.absent(),
+    Value<int?> currentValueAsOf = const Value.absent(),
     Value<String?> locationId = const Value.absent(),
     Value<String?> seriesId = const Value.absent(),
     Value<int?> seriesPosition = const Value.absent(),
@@ -1310,6 +1382,10 @@ class MediaItemsTableData extends DataClass
     pricePaid: pricePaid.present ? pricePaid.value : this.pricePaid,
     acquiredAt: acquiredAt.present ? acquiredAt.value : this.acquiredAt,
     retailer: retailer.present ? retailer.value : this.retailer,
+    currentValue: currentValue.present ? currentValue.value : this.currentValue,
+    currentValueAsOf: currentValueAsOf.present
+        ? currentValueAsOf.value
+        : this.currentValueAsOf,
     locationId: locationId.present ? locationId.value : this.locationId,
     seriesId: seriesId.present ? seriesId.value : this.seriesId,
     seriesPosition: seriesPosition.present
@@ -1378,6 +1454,12 @@ class MediaItemsTableData extends DataClass
           ? data.acquiredAt.value
           : this.acquiredAt,
       retailer: data.retailer.present ? data.retailer.value : this.retailer,
+      currentValue: data.currentValue.present
+          ? data.currentValue.value
+          : this.currentValue,
+      currentValueAsOf: data.currentValueAsOf.present
+          ? data.currentValueAsOf.value
+          : this.currentValueAsOf,
       locationId: data.locationId.present
           ? data.locationId.value
           : this.locationId,
@@ -1433,6 +1515,8 @@ class MediaItemsTableData extends DataClass
           ..write('pricePaid: $pricePaid, ')
           ..write('acquiredAt: $acquiredAt, ')
           ..write('retailer: $retailer, ')
+          ..write('currentValue: $currentValue, ')
+          ..write('currentValueAsOf: $currentValueAsOf, ')
           ..write('locationId: $locationId, ')
           ..write('seriesId: $seriesId, ')
           ..write('seriesPosition: $seriesPosition, ')
@@ -1476,6 +1560,8 @@ class MediaItemsTableData extends DataClass
     pricePaid,
     acquiredAt,
     retailer,
+    currentValue,
+    currentValueAsOf,
     locationId,
     seriesId,
     seriesPosition,
@@ -1518,6 +1604,8 @@ class MediaItemsTableData extends DataClass
           other.pricePaid == this.pricePaid &&
           other.acquiredAt == this.acquiredAt &&
           other.retailer == this.retailer &&
+          other.currentValue == this.currentValue &&
+          other.currentValueAsOf == this.currentValueAsOf &&
           other.locationId == this.locationId &&
           other.seriesId == this.seriesId &&
           other.seriesPosition == this.seriesPosition &&
@@ -1558,6 +1646,8 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
   final Value<double?> pricePaid;
   final Value<int?> acquiredAt;
   final Value<String?> retailer;
+  final Value<double?> currentValue;
+  final Value<int?> currentValueAsOf;
   final Value<String?> locationId;
   final Value<String?> seriesId;
   final Value<int?> seriesPosition;
@@ -1597,6 +1687,8 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
     this.pricePaid = const Value.absent(),
     this.acquiredAt = const Value.absent(),
     this.retailer = const Value.absent(),
+    this.currentValue = const Value.absent(),
+    this.currentValueAsOf = const Value.absent(),
     this.locationId = const Value.absent(),
     this.seriesId = const Value.absent(),
     this.seriesPosition = const Value.absent(),
@@ -1637,6 +1729,8 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
     this.pricePaid = const Value.absent(),
     this.acquiredAt = const Value.absent(),
     this.retailer = const Value.absent(),
+    this.currentValue = const Value.absent(),
+    this.currentValueAsOf = const Value.absent(),
     this.locationId = const Value.absent(),
     this.seriesId = const Value.absent(),
     this.seriesPosition = const Value.absent(),
@@ -1684,6 +1778,8 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
     Expression<double>? pricePaid,
     Expression<int>? acquiredAt,
     Expression<String>? retailer,
+    Expression<double>? currentValue,
+    Expression<int>? currentValueAsOf,
     Expression<String>? locationId,
     Expression<String>? seriesId,
     Expression<int>? seriesPosition,
@@ -1724,6 +1820,8 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
       if (pricePaid != null) 'price_paid': pricePaid,
       if (acquiredAt != null) 'acquired_at': acquiredAt,
       if (retailer != null) 'retailer': retailer,
+      if (currentValue != null) 'current_value': currentValue,
+      if (currentValueAsOf != null) 'current_value_as_of': currentValueAsOf,
       if (locationId != null) 'location_id': locationId,
       if (seriesId != null) 'series_id': seriesId,
       if (seriesPosition != null) 'series_position': seriesPosition,
@@ -1766,6 +1864,8 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
     Value<double?>? pricePaid,
     Value<int?>? acquiredAt,
     Value<String?>? retailer,
+    Value<double?>? currentValue,
+    Value<int?>? currentValueAsOf,
     Value<String?>? locationId,
     Value<String?>? seriesId,
     Value<int?>? seriesPosition,
@@ -1806,6 +1906,8 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
       pricePaid: pricePaid ?? this.pricePaid,
       acquiredAt: acquiredAt ?? this.acquiredAt,
       retailer: retailer ?? this.retailer,
+      currentValue: currentValue ?? this.currentValue,
+      currentValueAsOf: currentValueAsOf ?? this.currentValueAsOf,
       locationId: locationId ?? this.locationId,
       seriesId: seriesId ?? this.seriesId,
       seriesPosition: seriesPosition ?? this.seriesPosition,
@@ -1906,6 +2008,12 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
     if (retailer.present) {
       map['retailer'] = Variable<String>(retailer.value);
     }
+    if (currentValue.present) {
+      map['current_value'] = Variable<double>(currentValue.value);
+    }
+    if (currentValueAsOf.present) {
+      map['current_value_as_of'] = Variable<int>(currentValueAsOf.value);
+    }
     if (locationId.present) {
       map['location_id'] = Variable<String>(locationId.value);
     }
@@ -1970,6 +2078,8 @@ class MediaItemsTableCompanion extends UpdateCompanion<MediaItemsTableData> {
           ..write('pricePaid: $pricePaid, ')
           ..write('acquiredAt: $acquiredAt, ')
           ..write('retailer: $retailer, ')
+          ..write('currentValue: $currentValue, ')
+          ..write('currentValueAsOf: $currentValueAsOf, ')
           ..write('locationId: $locationId, ')
           ..write('seriesId: $seriesId, ')
           ..write('seriesPosition: $seriesPosition, ')
@@ -11592,6 +11702,8 @@ typedef $$MediaItemsTableTableCreateCompanionBuilder =
       Value<double?> pricePaid,
       Value<int?> acquiredAt,
       Value<String?> retailer,
+      Value<double?> currentValue,
+      Value<int?> currentValueAsOf,
       Value<String?> locationId,
       Value<String?> seriesId,
       Value<int?> seriesPosition,
@@ -11633,6 +11745,8 @@ typedef $$MediaItemsTableTableUpdateCompanionBuilder =
       Value<double?> pricePaid,
       Value<int?> acquiredAt,
       Value<String?> retailer,
+      Value<double?> currentValue,
+      Value<int?> currentValueAsOf,
       Value<String?> locationId,
       Value<String?> seriesId,
       Value<int?> seriesPosition,
@@ -11897,6 +12011,16 @@ class $$MediaItemsTableTableFilterComposer
 
   ColumnFilters<String> get retailer => $composableBuilder(
     column: $table.retailer,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get currentValue => $composableBuilder(
+    column: $table.currentValue,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get currentValueAsOf => $composableBuilder(
+    column: $table.currentValueAsOf,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -12195,6 +12319,16 @@ class $$MediaItemsTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get currentValue => $composableBuilder(
+    column: $table.currentValue,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get currentValueAsOf => $composableBuilder(
+    column: $table.currentValueAsOf,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get locationId => $composableBuilder(
     column: $table.locationId,
     builder: (column) => ColumnOrderings(column),
@@ -12355,6 +12489,16 @@ class $$MediaItemsTableTableAnnotationComposer
 
   GeneratedColumn<String> get retailer =>
       $composableBuilder(column: $table.retailer, builder: (column) => column);
+
+  GeneratedColumn<double> get currentValue => $composableBuilder(
+    column: $table.currentValue,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get currentValueAsOf => $composableBuilder(
+    column: $table.currentValueAsOf,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get locationId => $composableBuilder(
     column: $table.locationId,
@@ -12560,6 +12704,8 @@ class $$MediaItemsTableTableTableManager
                 Value<double?> pricePaid = const Value.absent(),
                 Value<int?> acquiredAt = const Value.absent(),
                 Value<String?> retailer = const Value.absent(),
+                Value<double?> currentValue = const Value.absent(),
+                Value<int?> currentValueAsOf = const Value.absent(),
                 Value<String?> locationId = const Value.absent(),
                 Value<String?> seriesId = const Value.absent(),
                 Value<int?> seriesPosition = const Value.absent(),
@@ -12599,6 +12745,8 @@ class $$MediaItemsTableTableTableManager
                 pricePaid: pricePaid,
                 acquiredAt: acquiredAt,
                 retailer: retailer,
+                currentValue: currentValue,
+                currentValueAsOf: currentValueAsOf,
                 locationId: locationId,
                 seriesId: seriesId,
                 seriesPosition: seriesPosition,
@@ -12640,6 +12788,8 @@ class $$MediaItemsTableTableTableManager
                 Value<double?> pricePaid = const Value.absent(),
                 Value<int?> acquiredAt = const Value.absent(),
                 Value<String?> retailer = const Value.absent(),
+                Value<double?> currentValue = const Value.absent(),
+                Value<int?> currentValueAsOf = const Value.absent(),
                 Value<String?> locationId = const Value.absent(),
                 Value<String?> seriesId = const Value.absent(),
                 Value<int?> seriesPosition = const Value.absent(),
@@ -12679,6 +12829,8 @@ class $$MediaItemsTableTableTableManager
                 pricePaid: pricePaid,
                 acquiredAt: acquiredAt,
                 retailer: retailer,
+                currentValue: currentValue,
+                currentValueAsOf: currentValueAsOf,
                 locationId: locationId,
                 seriesId: seriesId,
                 seriesPosition: seriesPosition,
