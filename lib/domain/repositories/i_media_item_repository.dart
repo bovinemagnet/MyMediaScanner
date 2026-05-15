@@ -24,6 +24,19 @@ abstract interface class IMediaItemRepository {
   Future<void> save(MediaItem item);
   Future<void> update(MediaItem item);
   Future<void> softDelete(String id);
+
+  /// Stream of items previously soft-deleted, surfaced via the Trash UI.
+  Stream<List<MediaItem>> watchDeleted();
+
+  /// Restores a soft-deleted item by clearing the `deleted` flag and
+  /// bumping `updatedAt` so the change propagates through sync.
+  Future<void> restore(String id);
+
+  /// Permanently removes an item from local storage. The caller is
+  /// expected to have soft-deleted it first so sync log already carries
+  /// the deletion to other devices.
+  Future<void> hardDelete(String id);
+
   Future<List<MediaItem>> getUnsynced();
   Future<void> markSynced(String id, int syncedAt);
 }

@@ -12,7 +12,10 @@ import 'package:mymediascanner/presentation/screens/manual_add/manual_add_screen
 import 'package:mymediascanner/presentation/screens/metadata_confirm/metadata_confirm_screen.dart';
 import 'package:mymediascanner/presentation/screens/rips/rips_screen.dart';
 import 'package:mymediascanner/presentation/screens/scanner/scanner_screen.dart';
+import 'package:mymediascanner/presentation/screens/settings/backup_screen.dart';
+import 'package:mymediascanner/presentation/screens/settings/dedupe_screen.dart';
 import 'package:mymediascanner/presentation/screens/settings/settings_screen.dart';
+import 'package:mymediascanner/presentation/screens/settings/trash_screen.dart';
 import 'package:mymediascanner/presentation/screens/settings/widgets/postgres_config_form.dart';
 import 'package:mymediascanner/presentation/screens/settings/widgets/sync_log_viewer.dart';
 import 'package:mymediascanner/presentation/screens/shelves/shelf_detail_screen.dart';
@@ -255,6 +258,24 @@ final router = GoRouter(
                   parentNavigatorKey: _rootNavigatorKey,
                   pageBuilder: (context, state) => _fadeSlideTransition(
                       state, const StaticExportScreen()),
+                ),
+                GoRoute(
+                  path: 'trash',
+                  parentNavigatorKey: _rootNavigatorKey,
+                  pageBuilder: (context, state) =>
+                      _fadeSlideTransition(state, const TrashScreen()),
+                ),
+                GoRoute(
+                  path: 'dedupe',
+                  parentNavigatorKey: _rootNavigatorKey,
+                  pageBuilder: (context, state) =>
+                      _fadeSlideTransition(state, const DedupeScreen()),
+                ),
+                GoRoute(
+                  path: 'backup',
+                  parentNavigatorKey: _rootNavigatorKey,
+                  pageBuilder: (context, state) =>
+                      _fadeSlideTransition(state, const BackupScreen()),
                 ),
               ],
             ),

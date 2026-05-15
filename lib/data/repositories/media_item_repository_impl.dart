@@ -171,6 +171,40 @@ class MediaItemRepositoryImpl implements IMediaItemRepository {
   }
 
   @override
+  Stream<List<MediaItem>> watchDeleted() {
+    return _mediaItemsDao
+        .watchDeleted()
+        .map((rows) => rows.map(_fromRow).toList());
+  }
+
+  @override
+  Future<void> restore(String id) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await _mediaItemsDao.transaction(() async {
+      await _mediaItemsDao.restore(id, now);
+      // Log the restore as a regular update so peers re-create the row
+      // if they had soft-deleted it earlier.
+      final restored = await getById(id);
+      if (restored != null) {
+        await _syncLogDao.insertLog(SyncLogTableCompanion(
+          id: Value(_uuid.v7()),
+          entityType: const Value('media_item'),
+          entityId: Value(id),
+          operation: const Value('update'),
+          payloadJson:
+              Value(jsonEncode(_toSyncPayload(restored))),
+          createdAt: Value(now),
+        ));
+      }
+    });
+  }
+
+  @override
+  Future<void> hardDelete(String id) async {
+    await _mediaItemsDao.hardDelete(id);
+  }
+
+  @override
   Future<List<MediaItem>> getUnsynced() async {
     final rows = await _mediaItemsDao.getUnsynced();
     return rows.map(_fromRow).toList();

@@ -27,6 +27,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:mymediascanner/data/remote/api/discogs/discogs_api.dart';
 import 'package:mymediascanner/data/remote/api/fanart/fanart_api.dart';
 import 'package:mymediascanner/data/remote/api/igdb/igdb_api.dart';
+import 'package:mymediascanner/data/remote/api/pricecharting/pricecharting_api.dart';
 import 'package:mymediascanner/data/remote/api/igdb/igdb_token_manager.dart';
 import 'package:mymediascanner/data/remote/api/theaudiodb/theaudiodb_api.dart';
 import 'package:mymediascanner/data/remote/api/musicbrainz/cover_art_archive_api.dart';
@@ -207,10 +208,30 @@ final discogsApiProvider = Provider<DiscogsApi?>((ref) {
   ));
 });
 
+/// PriceCharting API client, null when no token is configured. Token is
+/// stored in secure storage under the `pricecharting` key.
+final priceChartingApiProvider = Provider<PriceChartingApi?>((ref) {
+  final apiKeys = ref.watch(apiKeysProvider).value ?? {};
+  final token = apiKeys['pricecharting']?.trim();
+  if (token == null || token.isEmpty) return null;
+  return PriceChartingApi(
+      DioFactory.create(baseUrl: ApiConstants.priceChartingBaseUrl));
+});
+
+/// Convenience accessor for the PriceCharting token, exposed separately
+/// so the use case can include it as a query parameter on every call.
+final priceChartingTokenProvider = Provider<String?>((ref) {
+  final apiKeys = ref.watch(apiKeysProvider).value ?? {};
+  final token = apiKeys['pricecharting']?.trim();
+  return (token == null || token.isEmpty) ? null : token;
+});
+
 final lookupCurrentValueUseCaseProvider =
     Provider<LookupCurrentValueUseCase>((ref) {
   return LookupCurrentValueUseCase(
     discogsApi: ref.watch(discogsApiProvider),
+    priceChartingApi: ref.watch(priceChartingApiProvider),
+    priceChartingToken: ref.watch(priceChartingTokenProvider),
     repository: ref.watch(mediaItemRepositoryProvider),
   );
 });

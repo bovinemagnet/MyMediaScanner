@@ -16,6 +16,7 @@ MediaItem _music({
   Map<String, dynamic>? meta,
   double? currentValue,
   int? currentValueAsOf,
+  double? pricePaid,
 }) {
   return MediaItem(
     id: 'item-1',
@@ -26,6 +27,7 @@ MediaItem _music({
     extraMetadata: meta ?? const {},
     currentValue: currentValue,
     currentValueAsOf: currentValueAsOf,
+    pricePaid: pricePaid,
     dateAdded: 1700000000,
     dateScanned: 1700000000,
     updatedAt: 1700000000,
@@ -81,6 +83,39 @@ void main() {
 
       expect(find.textContaining('currently available for music items'),
           findsOneWidget);
+    });
+
+    testWidgets('renders value delta badge when both prices are known',
+        (tester) async {
+      await tester.pumpWidget(_wrap(
+        CurrentValueSection(
+          item: _music(
+            meta: const {'discogs_release_id': 1},
+            pricePaid: 20.0,
+            currentValue: 25.0,
+            currentValueAsOf: 1700000000000,
+          ),
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('value-delta-badge')), findsOneWidget);
+      expect(find.textContaining('+25.0%'), findsOneWidget);
+    });
+
+    testWidgets('omits delta badge when pricePaid is null', (tester) async {
+      await tester.pumpWidget(_wrap(
+        CurrentValueSection(
+          item: _music(
+            meta: const {'discogs_release_id': 1},
+            currentValue: 25.0,
+            currentValueAsOf: 1700000000000,
+          ),
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('value-delta-badge')), findsNothing);
     });
 
     testWidgets('shows Settings hint when Discogs is not configured',

@@ -31,13 +31,13 @@ void main() {
     expect(button.tooltip, contains('CUE sheet'));
   });
 
-  testWidgets('button is disabled for multi-disc albums', (tester) async {
+  testWidgets('button is enabled for multi-disc albums (lookup proceeds '
+      'using whatever the CUE describes)', (tester) async {
     await tester.pumpWidget(
       _pumpable(GnudbLookupButton(album: _album(discCount: 2))),
     );
     final button = tester.widget<IconButton>(find.byType(IconButton));
-    expect(button.onPressed, isNull);
-    expect(button.tooltip, contains('multi-disc'));
+    expect(button.onPressed, isNotNull);
   });
 
   testWidgets('button is enabled for valid single-disc rip album',

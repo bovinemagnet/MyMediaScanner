@@ -1,0 +1,21 @@
+{
+  "@@locale": "en",
+  "appTitle": "MyMediaScanner",
+  "@appTitle": {"description": "Application name shown in the title bar."},
+
+  "settingsTitle": "Settings",
+  "settingsTrashEntryTitle": "Trash",
+  "settingsTrashEntrySubtitle": "Restore or permanently delete items you removed from the collection",
+  "settingsDedupeEntryTitle": "Find duplicates",
+  "settingsDedupeEntrySubtitle": "Scan the library for items with the same barcode or a near-identical title and year",
+  "settingsBackupEntryTitle": "Backup & restore",
+  "settingsBackupEntrySubtitle": "Copy the local database to a portable file, or restore from a previously-saved backup",
+  "settingsAccessibilityHeading": "Accessibility",
+  "settingsTextSizeHeading": "Text size",
+  "settingsTextSizeBody": "Stacks on top of the platform text-size setting so the whole app scales together with the rest of your device.",
+  "trashEmpty": "Nothing in trash.\nSoft-deleted items appear here so you can restore them.",
+  "trashRestore": "Restore",
+  "trashDeleteForever": "Delete forever",
+  "trashConfirmTitle": "Delete forever?",
+  "trashConfirmCancel": "Cancel"
+}

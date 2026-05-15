@@ -205,7 +205,9 @@ NOTE: AccurateRip queries require internet access. Results are cached in `rip_tr
 Click and pop detection analyses the audio waveform for impulsive noise artefacts caused by disc surface damage or ripping errors.
 When artefacts above the detection threshold are found, `click_pop_detected` is set to `true` and the track is flagged in the UI.
 
-The detection threshold is not currently user-configurable; a future release will expose this as a settings option.
+Detection sensitivity is configurable from *Settings → Audio Quality → Click detection sensitivity*.
+Three levels are available — *Low* (only obvious defects, fewest false positives), *Medium* (default, balanced), and *High* (aggressive, more false positives).
+The selection is persisted to secure storage and applied to subsequent analysis runs.
 
 === quality_checked_at Timestamp
 

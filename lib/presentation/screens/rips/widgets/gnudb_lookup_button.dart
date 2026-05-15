@@ -71,9 +71,6 @@ class _GnudbLookupButtonState extends ConsumerState<GnudbLookupButton> {
     if (widget.album.cueFilePath == null) {
       return 'GnuDB needs a CUE sheet (none found for this album)';
     }
-    if (widget.album.discCount != 1) {
-      return 'GnuDB lookup is per-disc; multi-disc sets are not supported';
-    }
     return null;
   }
 

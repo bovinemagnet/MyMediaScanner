@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
+import 'package:mymediascanner/domain/usecases/value_delta.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 
 /// Section that fetches a marketplace price for [item] on demand.
@@ -30,9 +31,14 @@ class _CurrentValueSectionState extends ConsumerState<CurrentValueSection> {
   String? _statusMessage;
 
   bool get _supported {
-    final hasReleaseId =
-        widget.item.extraMetadata.containsKey('discogs_release_id');
-    return widget.item.mediaType == MediaType.music && hasReleaseId;
+    if (widget.item.mediaType == MediaType.music) {
+      return widget.item.extraMetadata.containsKey('discogs_release_id');
+    }
+    if (widget.item.mediaType == MediaType.game) {
+      return widget.item.extraMetadata.containsKey('pricecharting_id') ||
+          widget.item.barcode.isNotEmpty;
+    }
+    return false;
   }
 
   @override
@@ -41,7 +47,10 @@ class _CurrentValueSectionState extends ConsumerState<CurrentValueSection> {
     final colors = theme.colorScheme;
     final formatter = NumberFormat.simpleCurrency();
     final api = ref.watch(discogsApiProvider);
-    final discogsConfigured = api != null;
+    final priceChartingApi = ref.watch(priceChartingApiProvider);
+    final apiConfigured = widget.item.mediaType == MediaType.game
+        ? priceChartingApi != null
+        : api != null;
 
     final currentValue = widget.item.currentValue;
     final stamp = widget.item.currentValueAsOf;
@@ -89,9 +98,8 @@ class _CurrentValueSectionState extends ConsumerState<CurrentValueSection> {
                 )
               else
                 OutlinedButton.icon(
-                  onPressed: _supported && discogsConfigured
-                      ? _runLookup
-                      : null,
+                  onPressed:
+                      _supported && apiConfigured ? _runLookup : null,
                   icon: const Icon(Icons.refresh, size: 18),
                   label: const Text('Look up'),
                 ),
@@ -107,23 +115,32 @@ class _CurrentValueSectionState extends ConsumerState<CurrentValueSection> {
                 ),
               ),
             ),
+          if (currentValue != null)
+            _ValueDeltaBadge(
+              pricePaid: widget.item.pricePaid,
+              currentValue: currentValue,
+            ),
           if (!_supported)
             Padding(
               padding: const EdgeInsets.only(top: 8),
               child: Text(
                 'Current-value lookup is currently available for music '
-                'items with a known Discogs release.',
+                'items with a known Discogs release and game items with '
+                'a UPC or PriceCharting product id.',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: colors.onSurfaceVariant,
                 ),
               ),
             )
-          else if (!discogsConfigured)
+          else if (!apiConfigured)
             Padding(
               padding: const EdgeInsets.only(top: 8),
               child: Text(
-                'Add a Discogs token in Settings → API integrations to '
-                'enable current-value lookups.',
+                widget.item.mediaType == MediaType.game
+                    ? 'Add a PriceCharting token in Settings → API '
+                        'integrations to enable game current-value lookups.'
+                    : 'Add a Discogs token in Settings → API integrations '
+                        'to enable current-value lookups.',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: colors.onSurfaceVariant,
                 ),
@@ -166,5 +183,54 @@ class _CurrentValueSectionState extends ConsumerState<CurrentValueSection> {
   String _formatStamp(int millis) {
     final dt = DateTime.fromMillisecondsSinceEpoch(millis);
     return DateFormat.yMMMd().add_jm().format(dt);
+  }
+}
+
+class _ValueDeltaBadge extends StatelessWidget {
+  const _ValueDeltaBadge({
+    required this.pricePaid,
+    required this.currentValue,
+  });
+
+  final double? pricePaid;
+  final double? currentValue;
+
+  @override
+  Widget build(BuildContext context) {
+    final delta =
+        computeValueDelta(pricePaid: pricePaid, currentValue: currentValue);
+    if (delta.delta == null || delta.deltaPercent == null) {
+      return const SizedBox.shrink();
+    }
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final isGain = delta.delta! >= 0;
+    final currencyFmt = NumberFormat.simpleCurrency();
+    final percentLabel =
+        '${delta.deltaPercent! >= 0 ? '+' : ''}${delta.deltaPercent!.toStringAsFixed(1)}%';
+    final absoluteLabel =
+        '${delta.delta! >= 0 ? '+' : '−'}${currencyFmt.format(delta.delta!.abs())}';
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(
+        children: [
+          Icon(
+            isGain ? Icons.trending_up : Icons.trending_down,
+            size: 16,
+            color: isGain ? Colors.green : colors.error,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            '$absoluteLabel ($percentLabel) vs price paid',
+            key: const Key('value-delta-badge'),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: isGain ? Colors.green : colors.error,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

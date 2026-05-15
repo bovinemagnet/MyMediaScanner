@@ -143,6 +143,31 @@ class MediaItemsDao extends DatabaseAccessor<AppDatabase>
     );
   }
 
+  /// Reverses a previous soft delete by clearing the `deleted` flag.
+  Future<void> restore(String id, int updatedAt) {
+    return (update(mediaItemsTable)..where((t) => t.id.equals(id))).write(
+      MediaItemsTableCompanion(
+        deleted: const Value(0),
+        updatedAt: Value(updatedAt),
+      ),
+    );
+  }
+
+  /// Stream of soft-deleted items, ordered by `updatedAt` descending so the
+  /// most-recently trashed appear first.
+  Stream<List<MediaItemsTableData>> watchDeleted() {
+    return (select(mediaItemsTable)
+          ..where((t) => t.deleted.equals(1))
+          ..orderBy([(t) => OrderingTerm.desc(t.updatedAt)]))
+        .watch();
+  }
+
+  /// Permanently removes a single row from `media_items`. Used by the
+  /// Trash screen when the user discards an already soft-deleted item.
+  Future<void> hardDelete(String id) {
+    return (delete(mediaItemsTable)..where((t) => t.id.equals(id))).go();
+  }
+
   /// Hard-delete every row in [mediaItemsTable]. Used by
   /// `SyncRepositoryImpl.resetLocalDatabase` to honour the
   /// "Replace local data with remote" affordance — soft-delete

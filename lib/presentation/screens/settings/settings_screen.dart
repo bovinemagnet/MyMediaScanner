@@ -10,6 +10,7 @@ import 'package:mymediascanner/core/utils/platform_utils.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
 import 'package:mymediascanner/presentation/providers/replay_gain_provider.dart';
+import 'package:mymediascanner/presentation/providers/text_scale_provider.dart';
 import 'package:mymediascanner/presentation/screens/settings/widgets/api_key_form.dart';
 import 'package:mymediascanner/presentation/screens/settings/widgets/gnudb_settings_section.dart';
 import 'package:mymediascanner/presentation/screens/settings/widgets/tmdb_account_sync_section.dart';
@@ -143,7 +144,51 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
 
+          _SectionCard(
+            title: 'Maintenance',
+            colors: colors,
+            theme: theme,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.delete_outline),
+                title: const Text('Trash'),
+                subtitle: const Text(
+                    'Restore or permanently delete items you removed '
+                    'from the collection'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.go('/settings/trash'),
+              ),
+              ListTile(
+                leading: const Icon(Icons.merge_type),
+                title: const Text('Find duplicates'),
+                subtitle: const Text(
+                    'Scan the library for items with the same barcode '
+                    'or a near-identical title and year'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.go('/settings/dedupe'),
+              ),
+              ListTile(
+                leading: const Icon(Icons.backup_outlined),
+                title: const Text('Backup & restore'),
+                subtitle: const Text(
+                    'Copy the local database to a portable file, or '
+                    'restore from a previously-saved backup'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.go('/settings/backup'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
           // FLAC Library section (desktop only)
+          _SectionCard(
+            title: 'Accessibility',
+            colors: colors,
+            theme: theme,
+            children: const [_TextScaleSection()],
+          ),
+          const SizedBox(height: 16),
+
           if (isDesktop) ...[
             _SectionCard(
               title: 'FLAC Library',
@@ -830,6 +875,55 @@ class _FlacLibrarySectionState extends ConsumerState<_FlacLibrarySection> {
               ),
         ),
       ],
+    );
+  }
+}
+
+class _TextScaleSection extends ConsumerWidget {
+  const _TextScaleSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final scaleAsync = ref.watch(textScaleProvider);
+    final notifier = ref.read(textScaleProvider.notifier);
+
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Text size', style: theme.textTheme.titleSmall),
+          const SizedBox(height: 4),
+          Text(
+            'Stacks on top of the platform text-size setting so the whole '
+            'app scales together with the rest of your device.',
+            style: theme.textTheme.bodySmall
+                ?.copyWith(color: colors.onSurfaceVariant),
+          ),
+          const SizedBox(height: 8),
+          scaleAsync.when(
+            loading: () => const LinearProgressIndicator(),
+            error: (e, _) => Text('Failed: $e'),
+            data: (factor) => Wrap(
+              spacing: 8,
+              children: [
+                for (final option in const [1.0, 1.15, 1.3, 1.5])
+                  ChoiceChip(
+                    label: Text(
+                      option == 1.0
+                          ? 'Default'
+                          : '${(option * 100).round()}%',
+                    ),
+                    selected: factor == option,
+                    onSelected: (_) => notifier.setFactor(option),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

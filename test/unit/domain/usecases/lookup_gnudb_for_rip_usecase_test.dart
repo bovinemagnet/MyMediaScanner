@@ -114,12 +114,22 @@ void main() {
       expect(result, isA<GnudbLookupError>());
     });
 
-    test('multi-disc => error', () async {
+    test('multi-disc proceeds past the early gate', () async {
+      // Multi-disc albums are no longer rejected at the early-validation
+      // stage. The use case continues into cue parsing and API lookup;
+      // with no GnuDB match for whatever the CUE describes the caller
+      // sees a normal no-match result instead of the historical
+      // "multi-disc not supported" rejection.
+      when(() => api.query(
+            discId: any(named: 'discId'),
+            frameOffsets: any(named: 'frameOffsets'),
+            totalSeconds: any(named: 'totalSeconds'),
+          )).thenAnswer((_) async => const GnudbQueryNoMatch());
       final result = await buildUseCase().execute(
         album: _album(discCount: 2),
         tracks: _tracks(),
       );
-      expect(result, isA<GnudbLookupError>());
+      expect(result, isA<GnudbLookupNoMatch>());
     });
 
     test('empty tracks => error', () async {

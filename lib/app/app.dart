@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mymediascanner/l10n/app_localizations.dart';
+import 'package:mymediascanner/presentation/providers/text_scale_provider.dart';
 import 'package:mymediascanner/app/router.dart';
 import 'package:mymediascanner/app/theme/app_theme.dart';
 import 'package:mymediascanner/core/constants/app_constants.dart';
@@ -81,6 +83,8 @@ class _AppState extends ConsumerState<App> {
       },
     );
 
+    final textScale = ref.watch(textScaleProvider).value ?? 1.0;
+
     return MaterialApp.router(
       title: AppConstants.appName,
       theme: light,
@@ -89,6 +93,19 @@ class _AppState extends ConsumerState<App> {
       routerConfig: router,
       scaffoldMessengerKey: rootScaffoldMessengerKey,
       debugShowCheckedModeBanner: false,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      builder: (context, child) {
+        if (child == null) return const SizedBox.shrink();
+        final mq = MediaQuery.of(context);
+        final platformScaler = mq.textScaler;
+        final combined =
+            platformScaler.scale(textScale) / platformScaler.scale(1.0);
+        return MediaQuery(
+          data: mq.copyWith(textScaler: TextScaler.linear(combined)),
+          child: child,
+        );
+      },
     );
   }
 }

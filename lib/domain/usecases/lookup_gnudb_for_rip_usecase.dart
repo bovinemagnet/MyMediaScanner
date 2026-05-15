@@ -105,13 +105,13 @@ class LookupGnudbForRipUseCase {
     if (album.cueFilePath == null) {
       return const GnudbLookupError('Album has no CUE sheet');
     }
-    if (album.discCount != 1) {
-      return const GnudbLookupError(
-          'Multi-disc albums are not supported by GnuDB in this version');
-    }
     if (tracks.isEmpty) {
       return const GnudbLookupError('Album has no tracks');
     }
+    // Multi-disc albums are looked up against whatever the resolved CUE
+    // represents (typically disc 1 of the set). When the CUE genuinely
+    // describes the merged set, the computed disc ID won't match any
+    // GnuDB release and the caller will see a normal "no match" result.
 
     // Tracks must be ordered by track number for correct offset assembly.
     final ordered = [...tracks]..sort(

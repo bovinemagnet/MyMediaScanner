@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/presentation/providers/collection_provider.dart';
 import 'package:mymediascanner/presentation/providers/collection_rip_status_provider.dart';
+import 'package:mymediascanner/presentation/screens/collection/widgets/facets_sheet.dart';
 
 class FilterBar extends ConsumerWidget {
   const FilterBar({super.key});
@@ -51,7 +52,39 @@ class FilterBar extends ConsumerWidget {
           ),
           const SizedBox(width: 8),
           _RipStatusFilterChip(current: filter.ripStatusFilter),
+          const SizedBox(width: 8),
+          _FacetCount(filter: filter),
+          IconButton(
+            tooltip: 'More filters and saved searches',
+            icon: const Icon(Icons.tune),
+            onPressed: () => showFacetsSheet(context),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class _FacetCount extends StatelessWidget {
+  const _FacetCount({required this.filter});
+
+  final CollectionFilterState filter;
+
+  @override
+  Widget build(BuildContext context) {
+    final active = [
+      if (filter.minYear != null || filter.maxYear != null) 'year',
+      if (filter.minRating != null) 'rating',
+      if (filter.selectedGenres.isNotEmpty)
+        'genre×${filter.selectedGenres.length}',
+    ];
+    if (active.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(right: 4),
+      child: InputChip(
+        label: Text(active.join(' · ')),
+        avatar: const Icon(Icons.tune, size: 16),
+        onPressed: null,
       ),
     );
   }

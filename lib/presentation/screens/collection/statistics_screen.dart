@@ -665,6 +665,8 @@ class _ValuationReportActions extends ConsumerWidget {
     final colors = theme.colorScheme;
     final state = ref.watch(valuationReportProvider);
     final notifier = ref.read(valuationReportProvider.notifier);
+    final bulkState = ref.watch(bulkValueRefreshProvider);
+    final bulkNotifier = ref.read(bulkValueRefreshProvider.notifier);
     final busy = state.status == ExportStatus.exporting;
 
     return Container(
@@ -713,6 +715,20 @@ class _ValuationReportActions extends ConsumerWidget {
                 icon: const Icon(Icons.description_outlined, size: 18),
                 label: const Text('Export HTML'),
               ),
+              OutlinedButton.icon(
+                key: const Key('refresh-all-values-button'),
+                onPressed: bulkState.busy ? null : bulkNotifier.refreshAll,
+                icon: bulkState.busy
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.refresh, size: 18),
+                label: Text(bulkState.busy
+                    ? 'Refreshing ${bulkState.processed}/${bulkState.total}'
+                    : 'Refresh all current values'),
+              ),
             ],
           ),
           if (state.status == ExportStatus.success && state.filePath != null)
@@ -730,6 +746,16 @@ class _ValuationReportActions extends ConsumerWidget {
               padding: const EdgeInsets.only(top: 8),
               child: Text(
                 state.error!,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colors.error,
+                ),
+              ),
+            ),
+          if (bulkState.error != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                bulkState.error!,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: colors.error,
                 ),

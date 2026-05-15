@@ -102,3 +102,76 @@ class ValuationReportNotifier extends Notifier<ExportState> {
 final valuationReportProvider =
     NotifierProvider<ValuationReportNotifier, ExportState>(
         ValuationReportNotifier.new);
+
+/// Progress state for the bulk current-value refresh action.
+class BulkValueRefreshState {
+  const BulkValueRefreshState({
+    this.busy = false,
+    this.processed = 0,
+    this.total = 0,
+    this.lastUpdated,
+    this.error,
+  });
+
+  final bool busy;
+  final int processed;
+  final int total;
+  final int? lastUpdated;
+  final String? error;
+
+  BulkValueRefreshState copyWith({
+    bool? busy,
+    int? processed,
+    int? total,
+    int? lastUpdated,
+    String? error,
+  }) {
+    return BulkValueRefreshState(
+      busy: busy ?? this.busy,
+      processed: processed ?? this.processed,
+      total: total ?? this.total,
+      lastUpdated: lastUpdated ?? this.lastUpdated,
+      error: error,
+    );
+  }
+}
+
+/// Notifier that walks the priced music collection and triggers the
+/// per-item current-value lookup. Items without a `discogs_release_id`
+/// are skipped silently; the use case handles the no-id case internally.
+class BulkValueRefreshNotifier extends Notifier<BulkValueRefreshState> {
+  @override
+  BulkValueRefreshState build() => const BulkValueRefreshState();
+
+  Future<void> refreshAll() async {
+    if (state.busy) return;
+    final repo = ref.read(mediaItemRepositoryProvider);
+    final useCase = ref.read(lookupCurrentValueUseCaseProvider);
+    final items = await repo.watchAll().first;
+    final eligible = items
+        .where((i) =>
+            !i.deleted &&
+            i.extraMetadata.containsKey('discogs_release_id'))
+        .toList();
+
+    state = BulkValueRefreshState(busy: true, total: eligible.length);
+    try {
+      var processed = 0;
+      for (final item in eligible) {
+        await useCase.execute(item);
+        processed++;
+        state = state.copyWith(processed: processed);
+      }
+      state = state.copyWith(
+        busy: false,
+        lastUpdated: DateTime.now().millisecondsSinceEpoch,
+      );
+    } catch (e) {
+      state = state.copyWith(busy: false, error: e.toString());
+    }
+  }
+}
+
+final bulkValueRefreshProvider =
+    NotifierProvider<BulkValueRefreshNotifier, BulkValueRefreshState>(
+        BulkValueRefreshNotifier.new);

@@ -17,12 +17,13 @@ typedef CollectionFilterState = ({
   bool lentOnly,
   bool rippedOnly,
   RipStatusFilter ripStatusFilter,
+  int? minYear,
+  int? maxYear,
+  double? minRating,
+  Set<String> selectedGenres,
 });
 
-class CollectionFilter extends Notifier<CollectionFilterState> {
-  @override
-  CollectionFilterState build() {
-    return (
+CollectionFilterState _defaultCollectionFilter() => (
       mediaType: null,
       search: null,
       sortBy: 'dateAdded',
@@ -30,81 +31,113 @@ class CollectionFilter extends Notifier<CollectionFilterState> {
       lentOnly: false,
       rippedOnly: false,
       ripStatusFilter: RipStatusFilter.all,
+      minYear: null,
+      maxYear: null,
+      minRating: null,
+      selectedGenres: const <String>{},
     );
+
+class CollectionFilter extends Notifier<CollectionFilterState> {
+  @override
+  CollectionFilterState build() => _defaultCollectionFilter();
+
+  CollectionFilterState _copy({
+    Object? mediaType = _sentinel,
+    Object? search = _sentinel,
+    Object? sortBy = _sentinel,
+    bool? ascending,
+    bool? lentOnly,
+    bool? rippedOnly,
+    RipStatusFilter? ripStatusFilter,
+    Object? minYear = _sentinel,
+    Object? maxYear = _sentinel,
+    Object? minRating = _sentinel,
+    Set<String>? selectedGenres,
+  }) {
+    return (
+      mediaType: identical(mediaType, _sentinel)
+          ? state.mediaType
+          : mediaType as MediaType?,
+      search: identical(search, _sentinel) ? state.search : search as String?,
+      sortBy: identical(sortBy, _sentinel) ? state.sortBy : sortBy as String?,
+      ascending: ascending ?? state.ascending,
+      lentOnly: lentOnly ?? state.lentOnly,
+      rippedOnly: rippedOnly ?? state.rippedOnly,
+      ripStatusFilter: ripStatusFilter ?? state.ripStatusFilter,
+      minYear: identical(minYear, _sentinel) ? state.minYear : minYear as int?,
+      maxYear: identical(maxYear, _sentinel) ? state.maxYear : maxYear as int?,
+      minRating: identical(minRating, _sentinel)
+          ? state.minRating
+          : minRating as double?,
+      selectedGenres: selectedGenres ?? state.selectedGenres,
+    );
+  }
+
+  /// Replaces the entire filter state, e.g. when restoring a saved
+  /// search. Validates by round-tripping through `_copy` so any future
+  /// invariants stay enforced in one place.
+  void apply(CollectionFilterState newState) {
+    state = newState;
+  }
+
+  /// Resets to the default filter state.
+  void reset() {
+    state = _defaultCollectionFilter();
   }
 
   void setMediaType(MediaType? type) {
-    state = (
-      mediaType: type,
-      search: state.search,
-      sortBy: state.sortBy,
-      ascending: state.ascending,
-      lentOnly: state.lentOnly,
-      rippedOnly: state.rippedOnly,
-      ripStatusFilter: state.ripStatusFilter,
-    );
+    state = _copy(mediaType: type);
   }
 
   void setSearch(String? query) {
-    state = (
-      mediaType: state.mediaType,
-      search: query?.isEmpty == true ? null : query,
-      sortBy: state.sortBy,
-      ascending: state.ascending,
-      lentOnly: state.lentOnly,
-      rippedOnly: state.rippedOnly,
-      ripStatusFilter: state.ripStatusFilter,
-    );
+    state = _copy(search: query?.isEmpty == true ? null : query);
   }
 
   void setSort(String sortBy, {bool? ascending}) {
-    state = (
-      mediaType: state.mediaType,
-      search: state.search,
-      sortBy: sortBy,
-      ascending: ascending ?? state.ascending,
-      lentOnly: state.lentOnly,
-      rippedOnly: state.rippedOnly,
-      ripStatusFilter: state.ripStatusFilter,
-    );
+    state = _copy(sortBy: sortBy, ascending: ascending);
   }
 
   void toggleLentOnly() {
-    state = (
-      mediaType: state.mediaType,
-      search: state.search,
-      sortBy: state.sortBy,
-      ascending: state.ascending,
-      lentOnly: !state.lentOnly,
-      rippedOnly: state.rippedOnly,
-      ripStatusFilter: state.ripStatusFilter,
-    );
+    state = _copy(lentOnly: !state.lentOnly);
   }
 
   void toggleRippedOnly() {
-    state = (
-      mediaType: state.mediaType,
-      search: state.search,
-      sortBy: state.sortBy,
-      ascending: state.ascending,
-      lentOnly: state.lentOnly,
-      rippedOnly: !state.rippedOnly,
-      ripStatusFilter: state.ripStatusFilter,
-    );
+    state = _copy(rippedOnly: !state.rippedOnly);
   }
 
   void setRipStatusFilter(RipStatusFilter filter) {
-    state = (
-      mediaType: state.mediaType,
-      search: state.search,
-      sortBy: state.sortBy,
-      ascending: state.ascending,
-      lentOnly: state.lentOnly,
-      rippedOnly: state.rippedOnly,
-      ripStatusFilter: filter,
+    state = _copy(ripStatusFilter: filter);
+  }
+
+  void setYearRange({int? minYear, int? maxYear}) {
+    state = _copy(minYear: minYear, maxYear: maxYear);
+  }
+
+  void setMinRating(double? value) {
+    state = _copy(minRating: value);
+  }
+
+  void toggleGenre(String genre) {
+    final next = {...state.selectedGenres};
+    if (!next.add(genre)) next.remove(genre);
+    state = _copy(selectedGenres: next);
+  }
+
+  void setSelectedGenres(Set<String> genres) {
+    state = _copy(selectedGenres: genres);
+  }
+
+  void clearFacets() {
+    state = _copy(
+      minYear: null,
+      maxYear: null,
+      minRating: null,
+      selectedGenres: const <String>{},
     );
   }
 }
+
+const Object _sentinel = Object();
 
 final collectionFilterProvider =
     NotifierProvider<CollectionFilter, CollectionFilterState>(
@@ -171,13 +204,25 @@ final collectionProvider = StreamProvider<List<MediaItem>>((ref) {
   final needsLentFilter = filter.lentOnly;
   final needsRippedFilter =
       filter.rippedOnly || filter.ripStatusFilter != RipStatusFilter.all;
+  final needsFacetFilter = filter.minYear != null ||
+      filter.maxYear != null ||
+      filter.minRating != null ||
+      filter.selectedGenres.isNotEmpty;
 
-  if (!needsLentFilter && !needsRippedFilter) return stream;
+  if (!needsLentFilter && !needsRippedFilter && !needsFacetFilter) {
+    return stream;
+  }
 
-  final lentIds = ref.watch(lentItemIdsProvider).value ?? <String>{};
-  final rippedIds = ref.watch(rippedItemIdsProvider).value ?? <String>{};
-  final qualityCache =
-      ref.watch(ripQualityStatusCacheProvider).value ?? <String, RipStatus>{};
+  final lentIds = needsLentFilter
+      ? (ref.watch(lentItemIdsProvider).value ?? <String>{})
+      : <String>{};
+  final rippedIds = needsRippedFilter
+      ? (ref.watch(rippedItemIdsProvider).value ?? <String>{})
+      : <String>{};
+  final qualityCache = needsRippedFilter
+      ? (ref.watch(ripQualityStatusCacheProvider).value ??
+          <String, RipStatus>{})
+      : <String, RipStatus>{};
   return stream.map(
     (items) => items.where((item) {
       if (filter.lentOnly && !lentIds.contains(item.id)) return false;
@@ -193,6 +238,24 @@ final collectionProvider = StreamProvider<List<MediaItem>>((ref) {
           if (qualityCache[item.id] != RipStatus.verified) return false;
         case RipStatusFilter.qualityIssues:
           if (qualityCache[item.id] != RipStatus.qualityIssues) return false;
+      }
+      if (filter.minYear != null &&
+          (item.year == null || item.year! < filter.minYear!)) {
+        return false;
+      }
+      if (filter.maxYear != null &&
+          (item.year == null || item.year! > filter.maxYear!)) {
+        return false;
+      }
+      if (filter.minRating != null &&
+          (item.userRating == null ||
+              item.userRating! < filter.minRating!)) {
+        return false;
+      }
+      if (filter.selectedGenres.isNotEmpty) {
+        final hasMatch = item.genres
+            .any((g) => filter.selectedGenres.contains(g));
+        if (!hasMatch) return false;
       }
       return true;
     }).toList(),

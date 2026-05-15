@@ -43,6 +43,10 @@ abstract final class ApiConstants {
   static const igdbBaseUrl = 'https://api.igdb.com/v4';
   static const twitchOAuthBaseUrl = 'https://id.twitch.tv';
 
+  // PriceCharting — video-game marketplace prices. Free public site,
+  // paid API for JSON access (`/api/product?t=<token>&id=<product_id>`).
+  static const priceChartingBaseUrl = 'https://www.pricecharting.com/api';
+
   // GnuDB — CDDB-compatible disc metadata lookup. The service is HTTP only.
   static const gnudbBaseUrl = 'http://gnudb.gnudb.org';
   static const gnudbCgiPath = '/~cddb/cddb.cgi';
