@@ -321,9 +321,9 @@ class _UpNextList extends ConsumerWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: items.length,
-      onReorder: (oldIndex, newIndex) {
-        // ReorderableListView passes newIndex *before* removal adjustment
-        if (newIndex > oldIndex) newIndex -= 1;
+      // onReorderItem (vs. the deprecated onReorder) hands us the
+      // post-removal newIndex, so no manual `newIndex -= 1` shift.
+      onReorderItem: (oldIndex, newIndex) {
         ref.read(queueProvider.notifier).reorder(
               startIndex + oldIndex,
               startIndex + newIndex,

@@ -34,15 +34,12 @@ class ShelfDetailScreen extends ConsumerWidget {
           return ReorderableListView.builder(
             padding: const EdgeInsets.symmetric(vertical: 8),
             itemCount: itemIds.length,
-            onReorder: (oldIndex, newIndex) async {
-              // Flutter contract: if oldIndex < newIndex the destination
-              // index is shifted by 1 because the dragged item hasn't
-              // been removed yet. Compensate before persisting.
-              final adjusted =
-                  oldIndex < newIndex ? newIndex - 1 : newIndex;
+            // onReorderItem (vs. the deprecated onReorder) hands us the
+            // post-removal newIndex, so no manual `newIndex -= 1` shift.
+            onReorderItem: (oldIndex, newIndex) async {
               final reordered = List<String>.of(itemIds);
               final moved = reordered.removeAt(oldIndex);
-              reordered.insert(adjusted, moved);
+              reordered.insert(newIndex, moved);
               await ref
                   .read(shelfRepositoryProvider)
                   .reorderItems(shelfId, reordered);

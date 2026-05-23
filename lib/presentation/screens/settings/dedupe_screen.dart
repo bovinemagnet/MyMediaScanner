@@ -106,19 +106,29 @@ class _DuplicateGroupCardState extends ConsumerState<_DuplicateGroupCard> {
             ),
           ),
           const SizedBox(height: 8),
-          for (final item in widget.group.items)
-            RadioListTile<String>(
-              key: Key('dedupe-radio-${item.id}'),
-              contentPadding: EdgeInsets.zero,
-              value: item.id,
-              groupValue: _keepId,
-              onChanged: (v) => setState(() => _keepId = v),
-              title: Text(item.title),
-              subtitle: Text(
-                '${item.mediaType.name} • barcode ${item.barcode}'
-                '${item.year != null ? ' • ${item.year}' : ''}',
-              ),
+          // RadioGroup owns the selected value + change callback. The
+          // child RadioListTiles only declare `value`; groupValue and
+          // onChanged on individual tiles are deprecated.
+          RadioGroup<String>(
+            groupValue: _keepId,
+            onChanged: (v) => setState(() => _keepId = v),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (final item in widget.group.items)
+                  RadioListTile<String>(
+                    key: Key('dedupe-radio-${item.id}'),
+                    contentPadding: EdgeInsets.zero,
+                    value: item.id,
+                    title: Text(item.title),
+                    subtitle: Text(
+                      '${item.mediaType.name} • barcode ${item.barcode}'
+                      '${item.year != null ? ' • ${item.year}' : ''}',
+                    ),
+                  ),
+              ],
             ),
+          ),
           Align(
             alignment: Alignment.centerRight,
             child: FilledButton.tonalIcon(

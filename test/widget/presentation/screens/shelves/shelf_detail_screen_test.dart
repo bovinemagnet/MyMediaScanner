@@ -155,13 +155,13 @@ void main() {
       expect(find.text('Title item2'), findsOneWidget);
       expect(find.text('Title item3'), findsOneWidget);
 
-      // Invoke onReorder directly — the gesture-driven drag is fragile in
-      // a headless test, but onReorder carries all of the production
-      // logic (index adjustment + persistence) so calling it is sufficient
-      // to cover the behaviour. Move item3 to the front.
+      // Invoke onReorderItem directly — the gesture-driven drag is fragile
+      // in a headless test, but onReorderItem carries all of the production
+      // logic (persistence) so calling it is sufficient to cover the
+      // behaviour. Move item3 to the front.
       final list =
           tester.widget<ReorderableListView>(find.byType(ReorderableListView));
-      list.onReorder(2, 0);
+      list.onReorderItem!(2, 0);
       await tester.pumpAndSettle();
 
       // The screen reorders the in-memory list and persists the new order.
