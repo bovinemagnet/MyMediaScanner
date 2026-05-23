@@ -220,32 +220,36 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
 
-          // Danger zone
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: colors.errorContainer.withValues(alpha: 0.1),
+          // Danger zone — Material wrapper (not Container) so the inner
+          // ListTile's tap ripple has a Material surface to paint on.
+          Material(
+            color: colors.errorContainer.withValues(alpha: 0.1),
+            shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
+              side: BorderSide(
                 color: colors.error.withValues(alpha: 0.2),
               ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Danger Zone',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      color: colors.error,
-                    )),
-                const SizedBox(height: 8),
-                ListTile(
-                  leading: Icon(Icons.warning, color: colors.error),
-                  title: const Text('Reset & Re-sync'),
-                  subtitle:
-                      const Text('Replace local data with remote'),
-                  onTap: () => _confirmReset(context, ref),
-                ),
-              ],
+            clipBehavior: Clip.antiAlias,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Danger Zone',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        color: colors.error,
+                      )),
+                  const SizedBox(height: 8),
+                  ListTile(
+                    leading: Icon(Icons.warning, color: colors.error),
+                    title: const Text('Reset & Re-sync'),
+                    subtitle:
+                        const Text('Replace local data with remote'),
+                    onTap: () => _confirmReset(context, ref),
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -644,25 +648,29 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title.toUpperCase(),
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: colors.onSurfaceVariant,
-              letterSpacing: 0.8,
+    // Material (not Container) so ListTile children get an actual
+    // Material ancestor to paint ink ripples on. A Container with a
+    // background colour swallows the splash.
+    return Material(
+      color: colors.surfaceContainerHigh,
+      borderRadius: BorderRadius.circular(12),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title.toUpperCase(),
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: colors.onSurfaceVariant,
+                letterSpacing: 0.8,
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          ...children,
-        ],
+            const SizedBox(height: 12),
+            ...children,
+          ],
+        ),
       ),
     );
   }
