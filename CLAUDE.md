@@ -17,7 +17,7 @@ Cross-platform Flutter/Dart application for scanning barcodes on physical media 
 - Media type filter on scan screen
 - Batch scanning mode with queue-based review and bulk save
 - IMDb ID lookup (tt1234567) via TMDB find endpoint
-- Cover OCR text recognition (ML Kit on Android/iOS, Vision framework on macOS, Tesseract on Windows/Linux)
+- Cover OCR text recognition (ML Kit on Android/iOS, Vision framework on macOS)
 - Theme selector: palette family (Classic / Popcorn) × brightness (system/light/dark) persisted to SharedPreferences
 - Resizable master-detail split with drag divider (persisted to SharedPreferences)
 - Keyboard navigation in collection and rips tables (arrow keys, Enter, Delete, Escape)
@@ -33,7 +33,7 @@ Cross-platform Flutter/Dart application for scanning barcodes on physical media 
 - **Navigation:** GoRouter with StatefulShellRoute; desktop sidebar + glassmorphism mobile bottom nav
 - **Models:** Freezed for immutable entities and sealed classes
 - **Scanning:** mobile_scanner (ML Kit) on Android/iOS/macOS; camera_desktop + flutter_zxing on Windows/Linux; keyboard-wedge USB scanner on all desktop platforms
-- **OCR:** Google ML Kit text recognition (Android/iOS); macOS Vision framework via method channel (`com.mymediascanner/vision_ocr`); Tesseract via flutter_tesseract_ocr on Windows/Linux
+- **OCR:** Google ML Kit text recognition (Android/iOS); macOS Vision framework via method channel (`com.mymediascanner/vision_ocr`); Windows/Linux desktop OCR not currently wired (`TesseractOcrService` is a no-op stub)
 - **Secrets:** flutter_secure_storage for Postgres credentials and API keys
 - **Fonts:** Manrope and Inter bundled in `assets/fonts/` (no google_fonts runtime dependency)
 
@@ -189,7 +189,8 @@ Users supply their own API keys (stored in secure storage) for TMDB, Discogs, UP
 
 - `file_picker` pinned to `>=10.3.10 <11.0.0` — v11 has a broken Android Gradle config (missing kotlin-android plugin)
 - iOS deployment target is 15.5 (required by google_mlkit_commons)
-- Google ML Kit text recognition not available on desktop — macOS uses Vision framework via method channel; Windows/Linux use Tesseract
+- Google ML Kit ships no arm64-**simulator** binary, so Flutter builds the iOS simulator app as x86_64 — which cannot run on Apple-Silicon iOS 26+ simulators. Physical devices (arm64) build and run normally. To run on a simulator, use `scripts/ios_sim.sh`, which temporarily overrides `google_mlkit_text_recognition` with the pure-Dart stub in `tool/mlkit_text_recognition_stub` (cover OCR returns no text on the simulator; barcode scanning is unaffected)
+- Google ML Kit text recognition not available on desktop — macOS uses Vision framework via method channel; Windows/Linux desktop OCR is not currently wired (`TesseractOcrService` is a no-op; `flutter_tesseract_ocr` was removed because it had no desktop native implementation and its `SwiftyTesseract` pod lacked an arm64-simulator slice, breaking iOS simulator builds)
 - Cover OCR on desktop uses gallery file picker (not camera capture) since `ImagePicker.camera` is unreliable on desktop
 - `flutter_zxing` uses native FFI — its barcode detection cannot be unit-tested; requires integration tests
 - `camera_desktop` image streaming not available on Windows — uses periodic still-frame capture for barcode detection instead
