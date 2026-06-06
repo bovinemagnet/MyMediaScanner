@@ -1,0 +1,15 @@
+name: google_mlkit_text_recognition
+description: >-
+  Pure-Dart no-op stub of google_mlkit_text_recognition. Activated via
+  pubspec_overrides.yaml for iOS simulator builds only, where Google ML Kit
+  ships no arm64-simulator binary. Real devices use the genuine plugin.
+version: 0.0.0
+publish_to: none
+
+environment:
+  sdk: ^3.11.1
+  flutter: ">=3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter

@@ -45,9 +45,14 @@ class MediaItemCard extends ConsumerWidget {
             ),
           );
 
-    return DesktopContextMenu(
-      actions: contextMenuActions,
-      child: Card(
+    return Semantics(
+      button: true,
+      label: _semanticLabel(),
+      onTap: onTap,
+      child: ExcludeSemantics(
+        child: DesktopContextMenu(
+          actions: contextMenuActions,
+          child: Card(
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
@@ -183,8 +188,23 @@ class MediaItemCard extends ConsumerWidget {
               }(),
             ],
           ),
+            ),
+          ),
         ),
       ),
     );
+  }
+
+  /// Single screen-reader label for the whole card so it announces as one
+  /// labelled button instead of fragmented badge/title/year text.
+  String _semanticLabel() {
+    return [
+      item.title,
+      item.mediaType.label,
+      if (item.year != null) '${item.year}',
+      if (item.userRating != null) 'Rated ${item.userRating!.toStringAsFixed(1)}',
+      if (isLent) 'Lent',
+      if (isRipped) 'Ripped',
+    ].join(', ');
   }
 }

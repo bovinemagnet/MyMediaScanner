@@ -1,7 +1,16 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mymediascanner/core/utils/cover_ocr_helper.dart';
+import 'package:mymediascanner/core/utils/tesseract_ocr_service.dart';
 
 void main() {
+  group('TesseractOcrService', () {
+    test('returns an empty result (desktop OCR not wired)', () async {
+      final result =
+          await TesseractOcrService().extractStructuredFromFile('cover.png');
+      expect(result.blocks, isEmpty);
+    });
+  });
+
   group('CoverOcrHelper.cleanTitle (used by TesseractOcrService)', () {
     test('collapses newlines to spaces', () {
       expect(CoverOcrHelper.cleanTitle('Hello\nWorld'), 'Hello World');

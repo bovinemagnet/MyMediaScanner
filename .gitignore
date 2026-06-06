@@ -37,6 +37,8 @@ migrate_working_dir/
 **/ios/Flutter/.last_build_id
 .dart_tool/
 .flutter-plugins-dependencies
+# Local-only ML Kit stub toggle for iOS simulator builds (see scripts/ios_sim.sh)
+pubspec_overrides.yaml
 .pub-cache/
 .pub/
 /build/

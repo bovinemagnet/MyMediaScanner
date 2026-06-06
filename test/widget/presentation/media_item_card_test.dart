@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
@@ -112,6 +113,49 @@ void main() {
       // (it may appear elsewhere, so we check specifically in the Positioned area)
       final rippedIcons = find.byIcon(Icons.album);
       expect(rippedIcons, findsNothing);
+    });
+
+    testWidgets('exposes a single labelled button to screen readers',
+        (tester) async {
+      final handle = tester.ensureSemantics();
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final item = MediaItem(
+        id: '1',
+        barcode: '1234567890123',
+        barcodeType: 'ean13',
+        mediaType: MediaType.book,
+        title: 'The Fellowship of the Ring',
+        year: 1954,
+        userRating: 4.5,
+        dateAdded: now,
+        dateScanned: now,
+        updatedAt: now,
+      );
+
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            height: 300,
+            width: 200,
+            child: MediaItemCard(
+              item: item,
+              onTap: () {},
+              isLent: true,
+              isRipped: true,
+            ),
+          ),
+        ),
+      ));
+
+      final node = tester.getSemantics(find.byType(MediaItemCard));
+      expect(node.label, contains('The Fellowship of the Ring'));
+      expect(node.label, contains('Book'));
+      expect(node.label, contains('1954'));
+      expect(node.label, contains('Lent'));
+      expect(node.label, contains('Ripped'));
+      expect(node.hasFlag(SemanticsFlag.isButton), isTrue);
+
+      handle.dispose();
     });
 
     testWidgets('onTap callback fires', (tester) async {
