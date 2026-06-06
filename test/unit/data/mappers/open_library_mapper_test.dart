@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mymediascanner/data/mappers/open_library_mapper.dart';
+import 'package:mymediascanner/data/remote/api/open_library/models/open_library_search_dto.dart';
 import 'package:mymediascanner/data/remote/api/open_library/models/open_library_work_dto.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
 
@@ -79,6 +80,43 @@ void main() {
       final result = OpenLibraryMapper.fromBook(dto, '1111', 'isbn13');
 
       expect(result.coverUrl, 'https://covers.openlibrary.org/b/id/456-M.jpg');
+    });
+
+    test('joins authors into subtitle so the Author field is populated', () {
+      const dto = OpenLibraryBookDto(
+        title: 'Good Omens',
+        authors: [
+          OpenLibraryAuthorDto(name: 'Terry Pratchett'),
+          OpenLibraryAuthorDto(name: 'Neil Gaiman'),
+        ],
+      );
+
+      final result = OpenLibraryMapper.fromBook(dto, '9780552137034', 'isbn13');
+
+      expect(result.subtitle, 'Terry Pratchett, Neil Gaiman');
+    });
+
+    test('leaves subtitle null when the book has no authors', () {
+      const dto = OpenLibraryBookDto(title: 'Authorless');
+
+      final result = OpenLibraryMapper.fromBook(dto, '3333', 'isbn13');
+
+      expect(result.subtitle, isNull);
+    });
+
+    test('joins search-doc author names into subtitle', () {
+      const doc = OpenLibrarySearchDocDto(
+        title: 'Good Omens',
+        authorName: ['Terry Pratchett', 'Neil Gaiman'],
+      );
+
+      final result = OpenLibraryMapper.fromSearchDoc(
+        doc,
+        '9780552137034',
+        'isbn13',
+      );
+
+      expect(result.subtitle, 'Terry Pratchett, Neil Gaiman');
     });
 
     test('filters out empty subject names', () {

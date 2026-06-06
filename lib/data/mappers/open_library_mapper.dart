@@ -5,6 +5,17 @@ import 'package:mymediascanner/domain/entities/metadata_candidate.dart';
 import 'package:mymediascanner/domain/entities/metadata_result.dart';
 
 abstract final class OpenLibraryMapper {
+  /// Joins author names into the comma-separated string the confirm screen
+  /// shows in its "Author" slot (the `subtitle` field). Returns `null` when
+  /// there are no non-empty names so the field stays empty rather than blank.
+  static String? _joinNames(Iterable<String?>? names) {
+    final joined = (names ?? const <String?>[])
+        .whereType<String>()
+        .where((n) => n.isNotEmpty)
+        .join(', ');
+    return joined.isEmpty ? null : joined;
+  }
+
   static MetadataResult fromBook(
     OpenLibraryBookDto dto,
     String barcode,
@@ -15,6 +26,7 @@ abstract final class OpenLibraryMapper {
       barcodeType: barcodeType,
       mediaType: MediaType.book,
       title: dto.title,
+      subtitle: _joinNames(dto.authors?.map((a) => a.name)),
       coverUrl: dto.cover?.large ?? dto.cover?.medium,
       year: dto.year,
       publisher: dto.publishers?.firstOrNull?.name,
@@ -53,6 +65,7 @@ abstract final class OpenLibraryMapper {
       barcodeType: barcodeType,
       mediaType: MediaType.book,
       title: doc.title,
+      subtitle: _joinNames(doc.authorName),
       coverUrl: doc.coverUrl,
       year: doc.firstPublishYear,
       publisher: doc.publisher?.firstOrNull,

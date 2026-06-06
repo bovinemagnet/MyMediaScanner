@@ -14,6 +14,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:mymediascanner/presentation/providers/scanner_provider.dart';
 import 'package:mymediascanner/presentation/screens/scanner/widgets/batch_scan_counter.dart';
+import 'package:mymediascanner/presentation/screens/scanner/widgets/manual_barcode_entry_dialog.dart';
 import 'package:mymediascanner/presentation/screens/scanner/widgets/media_type_toggles.dart';
 import 'package:mymediascanner/presentation/screens/scanner/widgets/save_target_toggle.dart';
 import 'package:mymediascanner/presentation/screens/scanner/widgets/scan_mode_toggle.dart';
@@ -139,53 +140,16 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
   }
 
   void _showManualEntryDialog() {
-    final controller = TextEditingController();
-
     showDialog<void>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Enter Barcode'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(
-            hintText: 'Barcode / ISBN / IMDb ID',
-            border: OutlineInputBorder(),
-            prefixIcon: Icon(Icons.qr_code),
-          ),
-          keyboardType: TextInputType.text,
-          inputFormatters: [
-            FilteringTextInputFormatter.allow(RegExp(r'[\dXxTt]')),
-          ],
-          onSubmitted: (value) {
-            Navigator.of(dialogContext).pop();
-            if (value.trim().isNotEmpty) {
-              _hasScanned = true;
-              _cameraController.stop();
-              ref.read(scannerProvider.notifier).onBarcodeScanned(value.trim());
-            }
-          },
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              final value = controller.text.trim();
-              Navigator.of(dialogContext).pop();
-              if (value.isNotEmpty) {
-                _hasScanned = true;
-                _cameraController.stop();
-                ref.read(scannerProvider.notifier).onBarcodeScanned(value);
-              }
-            },
-            child: const Text('Look up'),
-          ),
-        ],
+      builder: (_) => ManualBarcodeEntryDialog(
+        onSubmit: (value) {
+          _hasScanned = true;
+          _cameraController.stop();
+          ref.read(scannerProvider.notifier).onBarcodeScanned(value);
+        },
       ),
-    ).whenComplete(controller.dispose);
+    );
   }
 
   void _showDuplicateDialog() {

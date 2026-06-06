@@ -19,10 +19,12 @@ class SortSelector extends ConsumerWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Flexible + isExpanded lets the dropdown shrink when the
-        // selector lives in a narrow OverflowBar slot (master pane,
-        // stacked actions). Text overflow ellipsises.
-        Flexible(
+        // A bounded max width keeps the dropdown safe in an AppBar `actions`
+        // slot (which hands children unbounded width) while isExpanded still
+        // lets it shrink in a narrow OverflowBar slot (master pane, stacked
+        // actions). Text overflow ellipsises.
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 180),
           child: DropdownButton<String>(
             value: filter.sortBy,
             isExpanded: true,
