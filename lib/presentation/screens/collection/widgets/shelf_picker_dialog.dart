@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/domain/usecases/manage_shelves_usecase.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/shelf_provider.dart';
+import 'package:mymediascanner/presentation/widgets/error_state.dart';
+import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
 
 /// Dialog that lets the user pick a shelf to add an item to.
 class ShelfPickerDialog extends ConsumerWidget {
@@ -19,8 +21,11 @@ class ShelfPickerDialog extends ConsumerWidget {
       content: SizedBox(
         width: 300,
         child: shelvesAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Text('Error: $e'),
+          loading: () => const LoadingIndicator(),
+          error: (e, _) => ErrorState(
+            message: 'Error: $e',
+            onRetry: () => ref.invalidate(allShelvesProvider),
+          ),
           data: (shelves) {
             if (shelves.isEmpty) {
               return const Text('No shelves yet. Create one first.');

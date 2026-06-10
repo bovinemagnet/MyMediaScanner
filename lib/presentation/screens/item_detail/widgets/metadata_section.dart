@@ -58,37 +58,10 @@ class MetadataSection extends StatelessWidget {
               if (item.genres.isNotEmpty)
                 _row(theme, colors, 'Genres', item.genres.join(', ')),
 
-              // Type-specific fields
-              if (item.mediaType == MediaType.film ||
-                  item.mediaType == MediaType.tv) ...[
-                _row(theme, colors, 'Director',
-                    extra['director'] as String?),
-                _row(
-                    theme,
-                    colors,
-                    'Runtime',
-                    extra['runtime_minutes'] != null
-                        ? '${extra['runtime_minutes']} min'
-                        : null),
-              ],
-              if (item.mediaType == MediaType.music) ...[
-                _row(theme, colors, 'Artist',
-                    (extra['artists'] as List?)?.join(', ')),
-                _row(
-                    theme, colors, 'Label', extra['label'] as String?),
-              ],
-              if (item.mediaType == MediaType.book) ...[
-                _row(theme, colors, 'Author',
-                    (extra['authors'] as List?)?.join(', ')),
-                _row(theme, colors, 'Pages',
-                    extra['page_count']?.toString()),
-                _row(
-                    theme,
-                    colors,
-                    'ISBN',
-                    extra['isbn13'] as String? ??
-                        extra['isbn10'] as String?),
-              ],
+              // Type-specific fields, driven by the per-media-type
+              // descriptors on MediaType.
+              for (final field in item.mediaType.metadataFields)
+                _row(theme, colors, field.label, field.extract(extra)),
             ],
           ),
         ),

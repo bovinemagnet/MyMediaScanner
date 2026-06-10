@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:mymediascanner/data/remote/api/gnudb/models/gnudb_disc_dto.dart';
+import 'package:mymediascanner/domain/entities/gnudb_disc.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/domain/entities/metadata_result.dart';
@@ -10,7 +10,6 @@ import 'package:mymediascanner/domain/entities/rip_track.dart';
 import 'package:mymediascanner/domain/repositories/i_rip_library_repository.dart';
 import 'package:mymediascanner/domain/usecases/apply_gnudb_result_usecase.dart';
 import 'package:mymediascanner/domain/usecases/edit_rip_metadata_usecase.dart';
-import 'package:mymediascanner/domain/usecases/lookup_gnudb_for_rip_usecase.dart';
 import 'package:mymediascanner/domain/usecases/save_media_item_usecase.dart';
 
 class _MockEdit extends Mock implements EditRipMetadataUseCase {}
@@ -64,7 +63,7 @@ GnudbCandidate _candidate({
     GnudbCandidate(
       discId: discId,
       category: category,
-      dto: GnudbDiscDto(
+      disc: GnudbDisc(
         discId: discId,
         artist: 'Artist',
         albumTitle: 'Album',

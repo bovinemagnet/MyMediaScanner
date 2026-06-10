@@ -14,6 +14,7 @@ import 'package:mymediascanner/core/utils/platform_utils.dart';
 import 'package:mymediascanner/domain/entities/import_row.dart';
 import 'package:mymediascanner/domain/entities/import_source.dart';
 import 'package:mymediascanner/presentation/providers/import_provider.dart';
+import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
 import 'package:mymediascanner/presentation/widgets/screen_header.dart';
 
 class ImportScreen extends ConsumerStatefulWidget {
@@ -58,10 +59,10 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
   Widget _buildBody(ImportState state) {
     return switch (state.phase) {
       ImportPhase.idle => _buildIdle(),
-      ImportPhase.parsing => const _CenteredSpinner(label: 'Parsing file…'),
+      ImportPhase.parsing => const LoadingIndicator(message: 'Parsing file…'),
       ImportPhase.enriching => _buildEnriching(state),
       ImportPhase.ready => _buildPreview(state),
-      ImportPhase.saving => const _CenteredSpinner(label: 'Saving items…'),
+      ImportPhase.saving => const LoadingIndicator(message: 'Saving items…'),
       ImportPhase.done => _buildDone(state),
       ImportPhase.error => _buildError(state),
     };
@@ -370,26 +371,6 @@ class _StatusChip extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(color: color),
-      ),
-    );
-  }
-}
-
-class _CenteredSpinner extends StatelessWidget {
-  const _CenteredSpinner({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const CircularProgressIndicator(),
-          const SizedBox(height: 12),
-          Text(label),
-        ],
       ),
     );
   }

@@ -9,6 +9,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
 import 'package:mymediascanner/domain/entities/location.dart';
 import 'package:mymediascanner/presentation/providers/location_provider.dart';
+import 'package:mymediascanner/presentation/widgets/empty_state.dart';
+import 'package:mymediascanner/presentation/widgets/error_state.dart';
+import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
 import 'package:mymediascanner/presentation/widgets/screen_header.dart';
 
 class LocationBrowserScreen extends ConsumerWidget {
@@ -41,45 +44,26 @@ class LocationBrowserScreen extends ConsumerWidget {
               ),
             Expanded(
               child: asyncLocations.when(
-                loading: () =>
-                    const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Center(child: Text('Error: $e')),
+                loading: () => const LoadingIndicator(),
+                error: (e, _) => ErrorState(
+                  message: 'Error: $e',
+                  onRetry: () => ref.invalidate(allLocationsProvider),
+                ),
                 data: (locations) {
-                  if (locations.isEmpty) return const _EmptyState();
+                  if (locations.isEmpty) {
+                    return const EmptyState(
+                      icon: Icons.place_outlined,
+                      message:
+                          'No locations yet\nTap "New location" to add a '
+                          'Room, Shelf, Box or Slot.',
+                    );
+                  }
                   return _LocationTree(locations: locations);
                 },
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.place_outlined,
-              size: 64, color: theme.colorScheme.outline),
-          const SizedBox(height: 12),
-          Text('No locations yet',
-              style: theme.textTheme.titleMedium),
-          const SizedBox(height: 4),
-          Text(
-            'Tap "New location" to add a Room, Shelf, Box or Slot.',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.outline,
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -13,6 +13,8 @@ import 'package:mymediascanner/data/local/database/app_database.dart';
 import 'package:mymediascanner/presentation/providers/playlist_provider.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/playback_widgets.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/playlist_detail.dart';
+import 'package:mymediascanner/presentation/widgets/error_state.dart';
+import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
 import 'package:mymediascanner/presentation/widgets/master_detail_layout.dart';
 
 /// Top-level playlist grid + detail split for the Rips Playlists segment.
@@ -26,8 +28,11 @@ class PlaylistView extends ConsumerWidget {
     final selectedId = ref.watch(selectedPlaylistProvider);
 
     final masterContent = playlistsAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error loading playlists: $e')),
+      loading: () => const LoadingIndicator(),
+      error: (e, _) => ErrorState(
+        message: 'Error loading playlists: $e',
+        onRetry: () => ref.invalidate(allPlaylistsProvider),
+      ),
       data: (playlists) => _PlaylistGrid(
         playlists: playlists,
         selectedId: selectedId,

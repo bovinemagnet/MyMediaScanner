@@ -76,15 +76,24 @@ class LocationRepositoryImpl implements ILocationRepository {
     final now = DateTime.now().millisecondsSinceEpoch;
     await _dao.transaction(() async {
       await _dao.softDelete(id, now);
+      // Full row snapshot, not just {id, deleted}: push derives the
+      // upsert column list from the payload keys, so a partial delete
+      // payload reaching Postgres before (or without) the insert would
+      // create a remote row with every other column NULL.
+      final row = await _dao.getById(id);
+      if (row == null) return;
       await _syncLogDao.insertLog(SyncLogTableCompanion(
         id: Value(_uuid.v7()),
         entityType: const Value('location'),
         entityId: Value(id),
         operation: const Value('delete'),
         payloadJson: Value(jsonEncode({
-          'id': id,
-          'deleted': 1,
+          'id': row.id,
+          'parent_id': row.parentId,
+          'name': row.name,
+          'sort_order': row.sortOrder,
           'updated_at': now,
+          'deleted': 1,
         })),
         createdAt: Value(now),
       ));

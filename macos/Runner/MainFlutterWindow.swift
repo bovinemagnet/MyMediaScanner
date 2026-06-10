@@ -17,7 +17,8 @@ class MainFlutterWindow: NSWindow {
       binaryMessenger: flutterViewController.engine.binaryMessenger
     )
     channel.setMethodCallHandler { (call, result) in
-      if call.method == "recogniseText" {
+      switch call.method {
+      case "recogniseText":
         guard let args = call.arguments as? [String: Any],
               let imagePath = args["imagePath"] as? String else {
           result(FlutterError(code: "INVALID_ARGS", message: "imagePath required", details: nil))
@@ -26,7 +27,16 @@ class MainFlutterWindow: NSWindow {
         VisionOcrHelper.recogniseText(fromFile: imagePath) { text in
           result(text)
         }
-      } else {
+      case "recogniseTextStructured":
+        guard let args = call.arguments as? [String: Any],
+              let imagePath = args["imagePath"] as? String else {
+          result(FlutterError(code: "INVALID_ARGS", message: "imagePath required", details: nil))
+          return
+        }
+        VisionOcrHelper.recogniseTextStructured(fromFile: imagePath) { blocks in
+          result(blocks)
+        }
+      default:
         result(FlutterMethodNotImplemented)
       }
     }
@@ -38,6 +48,58 @@ class MainFlutterWindow: NSWindow {
 /// Uses macOS Vision framework for on-device text recognition.
 class VisionOcrHelper {
   static func recogniseText(fromFile path: String, completion: @escaping (String?) -> Void) {
+    recogniseObservations(fromFile: path) { observations in
+      guard let observations = observations, !observations.isEmpty else {
+        completion(nil)
+        return
+      }
+
+      // Find the observation with the largest bounding box (most prominent text)
+      let sorted = observations.sorted { a, b in
+        let areaA = a.boundingBox.width * a.boundingBox.height
+        let areaB = b.boundingBox.width * b.boundingBox.height
+        return areaA > areaB
+      }
+
+      let topText = sorted.first?.topCandidates(1).first?.string
+      completion(topText)
+    }
+  }
+
+  /// Returns one entry per recognised text observation, each a map with
+  /// 'text' (String), 'confidence' (Double, 0..1) and 'area' (Double,
+  /// normalised bounding-box area 0..1), ordered by area descending.
+  static func recogniseTextStructured(fromFile path: String, completion: @escaping ([[String: Any]]?) -> Void) {
+    recogniseObservations(fromFile: path) { observations in
+      guard let observations = observations, !observations.isEmpty else {
+        completion(nil)
+        return
+      }
+
+      let blocks: [[String: Any]] = observations.compactMap { observation in
+        guard let candidate = observation.topCandidates(1).first else {
+          return nil
+        }
+        let area = observation.boundingBox.width * observation.boundingBox.height
+        return [
+          "text": candidate.string,
+          "confidence": Double(candidate.confidence),
+          "area": Double(area),
+        ]
+      }.sorted { a, b in
+        (a["area"] as? Double ?? 0) > (b["area"] as? Double ?? 0)
+      }
+
+      completion(blocks)
+    }
+  }
+
+  /// Shared Vision request: loads the image at [path] and performs text
+  /// recognition, returning the raw observations (or nil on failure).
+  private static func recogniseObservations(
+    fromFile path: String,
+    completion: @escaping ([VNRecognizedTextObservation]?) -> Void
+  ) {
     let url = URL(fileURLWithPath: path)
 
     guard let cgImage = NSImage(contentsOf: url)?.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
@@ -52,20 +114,7 @@ class VisionOcrHelper {
         return
       }
 
-      if observations.isEmpty {
-        completion(nil)
-        return
-      }
-
-      // Find the observation with the largest bounding box (most prominent text)
-      let sorted = observations.sorted { a, b in
-        let areaA = a.boundingBox.width * a.boundingBox.height
-        let areaB = b.boundingBox.width * b.boundingBox.height
-        return areaA > areaB
-      }
-
-      let topText = sorted.first?.topCandidates(1).first?.string
-      completion(topText)
+      completion(observations)
     }
 
     request.recognitionLevel = .accurate

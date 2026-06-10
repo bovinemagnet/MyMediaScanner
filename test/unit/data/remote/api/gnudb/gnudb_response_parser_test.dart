@@ -2,7 +2,8 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mymediascanner/data/remote/api/gnudb/gnudb_response_parser.dart';
-import 'package:mymediascanner/data/remote/api/gnudb/models/gnudb_disc_dto.dart';
+import 'package:mymediascanner/domain/entities/gnudb_query_result.dart';
+import 'package:mymediascanner/domain/entities/gnudb_disc.dart';
 
 Future<String> _loadFixture(String name) =>
     File('test/fixtures/gnudb/$name').readAsString();
@@ -74,7 +75,7 @@ pop  22222222 Baz / Qux
       final body = await _loadFixture('read_disc_full.txt');
       final dto = GnudbResponseParser.parseDisc(body);
 
-      expect(dto, isA<GnudbDiscDto>());
+      expect(dto, isA<GnudbDisc>());
       expect(dto!.discId, '08025603');
       expect(dto.artist, 'Example Artist');
       expect(dto.albumTitle, 'Example Album');

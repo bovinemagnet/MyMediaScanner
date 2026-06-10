@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mymediascanner/data/mappers/gnudb_mapper.dart';
-import 'package:mymediascanner/data/remote/api/gnudb/models/gnudb_disc_dto.dart';
+import 'package:mymediascanner/domain/entities/gnudb_disc.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
+import 'package:mymediascanner/domain/services/gnudb_mapper.dart';
 
 void main() {
-  const sampleDto = GnudbDiscDto(
+  const sampleDisc = GnudbDisc(
     discId: '08025603',
     artist: 'Example Artist',
     albumTitle: 'Example Album',
@@ -17,7 +17,7 @@ void main() {
   group('GnudbMapper.toMetadataResult', () {
     test('maps core fields to a music-typed MetadataResult', () {
       final result = GnudbMapper.toMetadataResult(
-        sampleDto,
+        sampleDisc,
         category: 'rock',
       );
       expect(result.barcode, 'gnudb:08025603');
@@ -32,7 +32,7 @@ void main() {
 
     test('stashes gnudb-specific identifiers in extraMetadata', () {
       final result = GnudbMapper.toMetadataResult(
-        sampleDto,
+        sampleDisc,
         category: 'rock',
       );
       expect(result.extraMetadata['gnudb_disc_id'], '08025603');
@@ -46,20 +46,20 @@ void main() {
     });
 
     test('produces empty genres list when genre is null', () {
-      const dto = GnudbDiscDto(
+      const disc = GnudbDisc(
         discId: 'deadbeef',
         artist: 'A',
         albumTitle: 'B',
         trackTitles: ['One'],
       );
-      final result = GnudbMapper.toMetadataResult(dto, category: 'misc');
+      final result = GnudbMapper.toMetadataResult(disc, category: 'misc');
       expect(result.genres, isEmpty);
       expect(result.year, isNull);
     });
 
     test('track listing is included in extraMetadata', () {
       final result = GnudbMapper.toMetadataResult(
-        sampleDto,
+        sampleDisc,
         category: 'rock',
       );
       final listing = result.extraMetadata['track_listing']
@@ -74,7 +74,7 @@ void main() {
   group('GnudbMapper.toCandidate', () {
     test('builds a MetadataCandidate with source=gnudb', () {
       final candidate = GnudbMapper.toCandidate(
-        sampleDto,
+        sampleDisc,
         category: 'rock',
       );
       expect(candidate.sourceApi, 'gnudb');

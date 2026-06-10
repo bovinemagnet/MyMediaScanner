@@ -539,6 +539,106 @@ void main() {
       });
     });
 
+    group('watchTracksByMediaItem', () {
+      /// Seeds three linked albums plus one unlinked and one soft-deleted
+      /// album, mirroring the per-item path the quality cache used to take.
+      Future<void> seedFixture() async {
+        final now = DateTime.now().millisecondsSinceEpoch;
+        await insertMediaItem('item-1');
+        await insertMediaItem('item-2');
+        await insertMediaItem('item-3');
+
+        Future<void> insertAlbum(String id, String? mediaItemId) =>
+            dao.insertAlbum(RipAlbumsTableCompanion(
+              id: Value(id),
+              libraryPath: Value('Artist/$id'),
+              trackCount: const Value(2),
+              totalSizeBytes: const Value(1000),
+              mediaItemId: Value(mediaItemId),
+              lastScannedAt: Value(now),
+              updatedAt: Value(now),
+            ));
+
+        await insertAlbum('rip-1', 'item-1');
+        await insertAlbum('rip-2', 'item-2');
+        await insertAlbum('rip-3', 'item-3');
+        await insertAlbum('rip-unlinked', null);
+
+        RipTracksTableCompanion track(
+          String id,
+          String albumId,
+          int trackNumber,
+        ) =>
+            RipTracksTableCompanion(
+              id: Value(id),
+              ripAlbumId: Value(albumId),
+              trackNumber: Value(trackNumber),
+              filePath: Value('/music/$id.flac'),
+              fileSizeBytes: const Value(100),
+              updatedAt: Value(now),
+            );
+
+        await dao.insertTracks([
+          track('t1a', 'rip-1', 1),
+          track('t1b', 'rip-1', 2),
+          track('t2a', 'rip-2', 1),
+          track('t3a', 'rip-3', 1),
+          track('tu', 'rip-unlinked', 1),
+        ]);
+      }
+
+      test('groups tracks by linked media item id', () async {
+        await seedFixture();
+
+        final grouped = await dao.watchTracksByMediaItem().first;
+
+        expect(grouped.keys, unorderedEquals(['item-1', 'item-2', 'item-3']));
+        expect(grouped['item-1']!.map((t) => t.id), ['t1a', 't1b']);
+        expect(grouped['item-2']!.map((t) => t.id), ['t2a']);
+        expect(grouped['item-3']!.map((t) => t.id), ['t3a']);
+      });
+
+      test('excludes tracks of unlinked albums', () async {
+        await seedFixture();
+
+        final grouped = await dao.watchTracksByMediaItem().first;
+
+        final allIds =
+            grouped.values.expand((tracks) => tracks.map((t) => t.id));
+        expect(allIds, isNot(contains('tu')));
+      });
+
+      test('excludes soft-deleted albums', () async {
+        await seedFixture();
+        final now = DateTime.now().millisecondsSinceEpoch;
+        await dao.softDeleteAlbum('rip-2', now + 1000);
+
+        final grouped = await dao.watchTracksByMediaItem().first;
+
+        expect(grouped.keys, unorderedEquals(['item-1', 'item-3']));
+      });
+
+      test('matches the per-item album + tracks path', () async {
+        await seedFixture();
+        final now = DateTime.now().millisecondsSinceEpoch;
+        // Give the tracks distinguishable quality data.
+        await dao.updateTrackQuality('t1a',
+            arStatus: 'verified', qualityCheckedAt: now);
+        await dao.updateTrackQuality('t2a',
+            arStatus: 'mismatch', clickCount: 3, qualityCheckedAt: now);
+
+        final grouped = await dao.watchTracksByMediaItem().first;
+
+        // Old N+1 path: per item, watchByMediaItemId then getTracksForAlbum.
+        for (final itemId in ['item-1', 'item-2', 'item-3']) {
+          final album = await dao.watchByMediaItemId(itemId).first;
+          final perItemTracks = await dao.getTracksForAlbum(album!.id);
+          expect(grouped[itemId], perItemTracks,
+              reason: 'bulk query should match per-item path for $itemId');
+        }
+      });
+    });
+
     group('updateTrackQuality preserves unspecified columns', () {
       test(
         'partial update of qualityCheckedAt does not clobber existing log-derived metrics',

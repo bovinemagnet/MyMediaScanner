@@ -16,6 +16,7 @@ import 'package:mymediascanner/presentation/screens/collection/widgets/media_ite
 import 'package:mymediascanner/presentation/screens/dashboard/widgets/random_pick_tile.dart';
 import 'package:mymediascanner/presentation/screens/dashboard/widgets/recommendations_section.dart';
 import 'package:mymediascanner/presentation/widgets/gradient_button.dart';
+import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
 import 'package:mymediascanner/presentation/widgets/screen_header.dart';
 
 class DashboardScreen extends ConsumerWidget {
@@ -178,9 +179,7 @@ class DashboardScreen extends ConsumerWidget {
               SizedBox(
                 height: 220,
                 child: collectionAsync.when(
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(),
-                  ),
+                  loading: () => const LoadingIndicator(),
                   error: (e, _) => Center(
                     child: Text('Could not load collection',
                         style: theme.textTheme.bodyMedium),

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/app/theme/app_layout_extension.dart';
 import 'package:mymediascanner/app/theme/app_media_colors.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
+import 'package:mymediascanner/domain/entities/tmdb_media_type.dart';
 import 'package:mymediascanner/presentation/widgets/desktop_context_menu.dart';
 import 'package:mymediascanner/presentation/widgets/procedural_cover_placeholder.dart';
 import 'package:mymediascanner/presentation/widgets/tmdb_bridge_badge.dart';
@@ -174,7 +175,7 @@ class MediaItemCard extends ConsumerWidget {
                 final tmdbId = item.extraMetadata['tmdb_id'];
                 final mediaType = item.extraMetadata['media_type'];
                 if (tmdbId is int &&
-                    (mediaType == 'movie' || mediaType == 'tv')) {
+                    TmdbMediaType.isTmdbMovieOrTv(mediaType)) {
                   return Positioned(
                     top: 4,
                     right: 4,

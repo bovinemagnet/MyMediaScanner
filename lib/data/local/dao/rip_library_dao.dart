@@ -134,6 +134,39 @@ class RipLibraryDao extends DatabaseAccessor<AppDatabase>
         rows.map((row) => row.read(ripAlbumsTable.mediaItemId)!).toSet());
   }
 
+  /// Stream of all tracks belonging to non-deleted rip albums that are
+  /// linked to a media item, grouped by the linked media item ID.
+  ///
+  /// A single joined query replacing the per-item album + tracks lookups
+  /// (N+1) previously used to derive rip quality status for the whole
+  /// collection.
+  Stream<Map<String, List<RipTracksTableData>>> watchTracksByMediaItem() {
+    final query = select(ripTracksTable).join([
+      innerJoin(
+        ripAlbumsTable,
+        ripAlbumsTable.id.equalsExp(ripTracksTable.ripAlbumId),
+        useColumns: false,
+      ),
+    ])
+      ..addColumns([ripAlbumsTable.mediaItemId])
+      ..where(ripAlbumsTable.deleted.equals(0) &
+          ripAlbumsTable.mediaItemId.isNotNull())
+      ..orderBy([
+        OrderingTerm.asc(ripTracksTable.discNumber),
+        OrderingTerm.asc(ripTracksTable.trackNumber),
+      ]);
+    return query.watch().map((rows) {
+      final grouped = <String, List<RipTracksTableData>>{};
+      for (final row in rows) {
+        final mediaItemId = row.read(ripAlbumsTable.mediaItemId)!;
+        grouped
+            .putIfAbsent(mediaItemId, () => <RipTracksTableData>[])
+            .add(row.readTable(ripTracksTable));
+      }
+      return grouped;
+    });
+  }
+
   /// Link a rip album to a media item.
   Future<void> linkToMediaItem(String ripAlbumId, String mediaItemId) {
     final now = DateTime.now().millisecondsSinceEpoch;

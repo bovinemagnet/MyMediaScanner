@@ -71,6 +71,6 @@ void main() {
     await tester.pumpWidget(_wrap(repo));
     await tester.pumpAndSettle();
 
-    expect(find.text('No locations yet'), findsOneWidget);
+    expect(find.textContaining('No locations yet'), findsOneWidget);
   });
 }

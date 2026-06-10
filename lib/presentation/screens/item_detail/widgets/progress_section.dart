@@ -92,9 +92,7 @@ class ProgressSection extends ConsumerWidget {
           if (!isStarted)
             FilledButton.tonalIcon(
               icon: const Icon(Icons.play_arrow, size: 18),
-              label: Text(item.mediaType == MediaType.book
-                  ? 'Start reading'
-                  : 'Start watching'),
+              label: Text(item.mediaType.progressActionLabel),
               onPressed: () => _showStartDialog(context, ref, item),
             )
           else if (!isComplete)
@@ -111,11 +109,7 @@ class ProgressSection extends ConsumerWidget {
 
 Future<void> _showStartDialog(
     BuildContext context, WidgetRef ref, MediaItem item) async {
-  final defaultUnit = switch (item.mediaType) {
-    MediaType.book => ProgressUnit.page,
-    MediaType.tv => ProgressUnit.episode,
-    _ => ProgressUnit.minute,
-  };
+  final defaultUnit = item.mediaType.defaultProgressUnit;
   final initialTotal = item.progressTotal;
 
   final result = await showDialog<_StartResult>(
@@ -224,9 +218,7 @@ class _StartDialogState extends State<_StartDialog> {
     };
 
     return AlertDialog(
-      title: Text(widget.mediaType == MediaType.book
-          ? 'Start reading'
-          : 'Start watching'),
+      title: Text(widget.mediaType.progressActionLabel),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

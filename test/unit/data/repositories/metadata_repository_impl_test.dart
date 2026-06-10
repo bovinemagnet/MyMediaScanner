@@ -21,6 +21,7 @@ import 'package:mymediascanner/data/remote/api/google_books/models/google_books_
 import 'package:mymediascanner/data/remote/api/open_library/models/open_library_search_dto.dart';
 import 'package:mymediascanner/data/remote/api/open_library/models/open_library_work_dto.dart';
 import 'package:mymediascanner/data/remote/api/open_library/open_library_api.dart';
+import 'package:mymediascanner/data/remote/api/tmdb/models/tmdb_find_result_dto.dart';
 import 'package:mymediascanner/data/remote/api/tmdb/models/tmdb_search_result_dto.dart';
 import 'package:mymediascanner/data/remote/api/tmdb/tmdb_api.dart';
 import 'package:mymediascanner/data/remote/api/upc/models/upc_item_dto.dart';
@@ -1113,6 +1114,115 @@ void main() {
       );
 
       expect(result, equals(null));
+    });
+  });
+
+  group('lookupBarcode — barcode canonicalisation', () {
+    late MockBarcodeCacheDao mockCache;
+
+    setUp(() {
+      mockCache = MockBarcodeCacheDao();
+      when(() => mockCache.getByBarcode(any())).thenAnswer((_) async => null);
+      when(() => mockCache.upsert(any())).thenAnswer((_) async {});
+    });
+
+    test(
+      '11-digit UPC routes the same as its 12-digit zero-padded form',
+      () async {
+        final mockMbApi = MockMusicBrainzApi();
+        final mockUpcApi = MockUpcitemdbApi();
+        final repo = MetadataRepositoryImpl(
+          cacheDao: mockCache,
+          musicBrainzApi: mockMbApi,
+          upcitemdbApi: mockUpcApi,
+        );
+
+        when(() => mockMbApi.searchByBarcode(any())).thenAnswer(
+          (_) async =>
+              const MusicBrainzSearchResponseDto(count: 0, releases: []),
+        );
+        when(() => mockUpcApi.lookup(any())).thenAnswer(
+          (_) async => const UpcSearchResponseDto(
+            code: 'OK',
+            total: 1,
+            items: [
+              UpcItemDto(
+                ean: '012345678905',
+                title: 'Some Game',
+                category: 'Games',
+              ),
+            ],
+          ),
+        );
+
+        // Scanner dropped the leading zero — only 11 digits arrive.
+        final result = await repo.lookupBarcode('12345678905');
+
+        // All lookups must use the zero-padded canonical form, exactly as
+        // a 12-digit scan would.
+        verify(() => mockMbApi.searchByBarcode('012345678905')).called(1);
+        verify(() => mockUpcApi.lookup('012345678905')).called(1);
+        expect(result, isA<SingleScanResult>());
+        final single = result as SingleScanResult;
+        expect(single.metadata.barcode, '012345678905');
+        expect(single.metadata.barcodeType, 'upcA');
+      },
+    );
+
+    test('IMDb ID is routed to TMDB with case preserved', () async {
+      final mockTmdbApi = MockTmdbApi();
+      final repo = MetadataRepositoryImpl(
+        cacheDao: mockCache,
+        tmdbApi: mockTmdbApi,
+      );
+
+      when(() => mockTmdbApi.findByExternalId('tt0133093')).thenAnswer(
+        (_) async => const TmdbFindResponseDto(
+          movieResults: [
+            TmdbSearchResultDto(id: 603, title: 'The Matrix'),
+          ],
+        ),
+      );
+
+      final result = await repo.lookupBarcode('tt0133093');
+
+      verify(() => mockTmdbApi.findByExternalId('tt0133093')).called(1);
+      expect(result, isA<SingleScanResult>());
+      final single = result as SingleScanResult;
+      expect(single.metadata.title, 'The Matrix');
+      expect(single.metadata.barcodeType, 'imdbId');
+    });
+
+    test('ISBN-10 ending in X routes to book lookup unchanged', () async {
+      final mockGoogleBooksApi = MockGoogleBooksApi();
+      final repo = MetadataRepositoryImpl(
+        cacheDao: mockCache,
+        googleBooksApi: mockGoogleBooksApi,
+      );
+
+      when(
+        () => mockGoogleBooksApi.searchByIsbn('isbn:080442957X'),
+      ).thenAnswer(
+        (_) async => const GoogleBooksSearchResponseDto(
+          totalItems: 1,
+          items: [
+            GoogleBooksVolumeDto(
+              id: 'v1',
+              volumeInfo: GoogleBooksVolumeInfoDto(title: 'The Hobbit'),
+            ),
+          ],
+        ),
+      );
+
+      final result = await repo.lookupBarcode('080442957X');
+
+      verify(
+        () => mockGoogleBooksApi.searchByIsbn('isbn:080442957X'),
+      ).called(1);
+      expect(result, isA<SingleScanResult>());
+      final single = result as SingleScanResult;
+      expect(single.metadata.barcode, '080442957X');
+      expect(single.metadata.barcodeType, 'isbn10');
     });
   });
 

@@ -6,6 +6,7 @@ import 'package:mymediascanner/app/theme/app_layout_extension.dart';
 import 'package:mymediascanner/app/theme/app_media_colors.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
+import 'package:mymediascanner/domain/entities/tmdb_media_type.dart';
 import 'package:mymediascanner/domain/usecases/delete_media_item_usecase.dart';
 import 'package:mymediascanner/domain/usecases/fetch_missing_cover_usecase.dart';
 import 'package:mymediascanner/domain/usecases/manage_rips_usecase.dart';
@@ -31,6 +32,7 @@ import 'package:mymediascanner/presentation/screens/item_detail/widgets/location
 import 'package:mymediascanner/presentation/screens/item_detail/widgets/progress_section.dart';
 import 'package:mymediascanner/presentation/screens/item_detail/widgets/star_rating_widget.dart';
 import 'package:mymediascanner/presentation/screens/item_detail/widgets/tag_chips.dart';
+import 'package:mymediascanner/presentation/widgets/delete_item_confirmation.dart';
 import 'package:mymediascanner/presentation/widgets/error_state.dart';
 import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
 import 'package:mymediascanner/presentation/screens/item_detail/widgets/tmdb_account_controls_section.dart';
@@ -176,7 +178,7 @@ class ItemDetailScreen extends ConsumerWidget {
                     final tmdbId = item.extraMetadata['tmdb_id'];
                     final mediaType = item.extraMetadata['media_type'];
                     if (tmdbId is int &&
-                        (mediaType == 'movie' || mediaType == 'tv')) {
+                        TmdbMediaType.isTmdbMovieOrTv(mediaType)) {
                       return Padding(
                         padding: const EdgeInsets.symmetric(
                           vertical: 8,
@@ -195,7 +197,7 @@ class ItemDetailScreen extends ConsumerWidget {
                     final tmdbId = item.extraMetadata['tmdb_id'];
                     final mediaType = item.extraMetadata['media_type'];
                     if (tmdbId is int &&
-                        (mediaType == 'movie' || mediaType == 'tv')) {
+                        TmdbMediaType.isTmdbMovieOrTv(mediaType)) {
                       return TmdbAccountControlsSection(
                         tmdbId: tmdbId,
                         mediaType: mediaType as String,
@@ -326,32 +328,13 @@ class ItemDetailScreen extends ConsumerWidget {
     }
   }
 
-  void _confirmDelete(BuildContext context, WidgetRef ref) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete item?'),
-        content: const Text('This item will be removed from your collection.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              await DeleteMediaItemUseCase(
-                repository: ref.read(mediaItemRepositoryProvider),
-              ).execute(itemId);
-              if (context.mounted) {
-                Navigator.pop(ctx);
-                context.go('/collection');
-              }
-            },
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
+  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDeleteItemConfirmation(context);
+    if (!confirmed) return;
+    await DeleteMediaItemUseCase(
+      repository: ref.read(mediaItemRepositoryProvider),
+    ).execute(itemId);
+    if (context.mounted) context.go('/collection');
   }
 }
 

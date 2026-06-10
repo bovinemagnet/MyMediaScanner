@@ -16,7 +16,9 @@ import 'package:mymediascanner/domain/entities/scan_result.dart';
 import 'package:mymediascanner/presentation/providers/batch_editor_provider.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/widgets/duplicate_check_helper.dart';
+import 'package:mymediascanner/presentation/widgets/error_state.dart';
 import 'package:mymediascanner/presentation/widgets/gradient_button.dart';
+import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
 import 'package:mymediascanner/presentation/widgets/screen_header.dart';
 
 // ── Filter tabs ──────────────────────────────────────────────────────
@@ -63,24 +65,13 @@ class _BatchPlaceholderScreenState
     return asyncBatchState.when(
       loading: () => Scaffold(
         appBar: isDesktop ? null : AppBar(title: const Text('Batch Editor')),
-        body: const Center(child: CircularProgressIndicator()),
+        body: const LoadingIndicator(),
       ),
       error: (error, stack) => Scaffold(
         appBar: isDesktop ? null : AppBar(title: const Text('Batch Editor')),
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.error_outline, size: 48, color: colors.error),
-              const SizedBox(height: 16),
-              Text(
-                'Failed to load batch data',
-                style: theme.textTheme.bodyLarge,
-              ),
-              const SizedBox(height: 8),
-              Text(error.toString(), style: theme.textTheme.bodySmall),
-            ],
-          ),
+        body: ErrorState(
+          message: 'Failed to load batch data\n$error',
+          onRetry: () => ref.invalidate(batchEditorProvider),
         ),
       ),
       data: (batchState) =>

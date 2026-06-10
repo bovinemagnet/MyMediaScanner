@@ -4,6 +4,8 @@ import 'package:mymediascanner/core/utils/platform_utils.dart';
 import 'package:mymediascanner/domain/entities/tmdb_bridge_item.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/tmdb_account_sync_provider.dart';
+import 'package:mymediascanner/presentation/widgets/error_state.dart';
+import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
 import 'package:mymediascanner/presentation/widgets/screen_header.dart';
 
 class TmdbResolveConflictsScreen extends ConsumerWidget {
@@ -15,8 +17,11 @@ class TmdbResolveConflictsScreen extends ConsumerWidget {
     final asyncRows = ref.watch(tmdbConflictedRowsProvider);
 
     Widget body = asyncRows.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      loading: () => const LoadingIndicator(),
+      error: (e, _) => ErrorState(
+        message: 'Error: $e',
+        onRetry: () => ref.invalidate(tmdbConflictedRowsProvider),
+      ),
       data: (rows) {
         if (rows.isEmpty) {
           return const Center(

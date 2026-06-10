@@ -109,7 +109,7 @@ void main() {
       await tester.pumpWidget(_wrap(mockRepo));
       await tester.pumpAndSettle();
 
-      expect(find.text('No series yet'), findsOneWidget);
+      expect(find.textContaining('No series yet'), findsOneWidget);
       // The descriptive helper text should also be visible.
       expect(find.textContaining('Series populate automatically'), findsOneWidget);
     });

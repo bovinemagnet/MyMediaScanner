@@ -22,6 +22,20 @@ class ShelvesDao extends DatabaseAccessor<AppDatabase>
         .getSingleOrNull();
   }
 
+  /// Bulk fetch of `updated_at` keyed by id — one query for a whole pull
+  /// batch instead of one [getById] per remote row.
+  Future<Map<String, int>> updatedAtByIds(List<String> ids) async {
+    if (ids.isEmpty) return const {};
+    final rows = await (selectOnly(shelvesTable)
+          ..addColumns([shelvesTable.id, shelvesTable.updatedAt])
+          ..where(shelvesTable.id.isIn(ids)))
+        .get();
+    return {
+      for (final r in rows)
+        r.read(shelvesTable.id)!: r.read(shelvesTable.updatedAt)!,
+    };
+  }
+
   Future<void> insertShelf(ShelvesTableCompanion shelf) {
     return into(shelvesTable).insert(shelf);
   }
@@ -79,15 +93,16 @@ class ShelvesDao extends DatabaseAccessor<AppDatabase>
       await (delete(shelfItemsTable)
             ..where((t) => t.shelfId.equals(shelfId)))
           .go();
-      for (var i = 0; i < orderedMediaItemIds.length; i++) {
-        await into(shelfItemsTable).insert(
-          ShelfItemsTableCompanion(
-            shelfId: Value(shelfId),
-            mediaItemId: Value(orderedMediaItemIds[i]),
-            position: Value(i),
-          ),
-        );
-      }
+      await batch((b) {
+        b.insertAll(shelfItemsTable, [
+          for (var i = 0; i < orderedMediaItemIds.length; i++)
+            ShelfItemsTableCompanion(
+              shelfId: Value(shelfId),
+              mediaItemId: Value(orderedMediaItemIds[i]),
+              position: Value(i),
+            ),
+        ]);
+      });
     });
   }
 }

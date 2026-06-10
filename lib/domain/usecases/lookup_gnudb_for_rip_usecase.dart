@@ -6,7 +6,7 @@
 /// 2. Combines those with track durations to compute the LBA frame offsets
 ///    and leadout, from which the CDDB Disc ID is derived.
 /// 3. Persists the Disc ID on the rip album.
-/// 4. Checks the shared barcode cache (keyed `gnudb:<discid>`) for a recent
+/// 4. Checks the candidate cache (keyed by disc id) for a recent
 ///    response before hitting the network.
 /// 5. Queries GnuDB. On single match, reads full metadata and returns it.
 ///    On multi match, reads each candidate (capped) and returns them.
@@ -16,32 +16,18 @@
 /// Since: 0.0.0
 library;
 
-import 'dart:convert';
-
-import 'package:drift/drift.dart';
-import 'package:mymediascanner/core/constants/api_constants.dart';
 import 'package:mymediascanner/core/gnudb/cddb_disc_id_calculator.dart';
 import 'package:mymediascanner/core/gnudb/cue_frame_offsets_parser.dart';
-import 'package:mymediascanner/data/local/dao/barcode_cache_dao.dart';
-import 'package:mymediascanner/data/local/database/app_database.dart';
-import 'package:mymediascanner/data/remote/api/gnudb/gnudb_api.dart';
-import 'package:mymediascanner/data/remote/api/gnudb/gnudb_response_parser.dart';
-import 'package:mymediascanner/data/remote/api/gnudb/models/gnudb_disc_dto.dart';
+import 'package:mymediascanner/domain/entities/gnudb_disc.dart';
+import 'package:mymediascanner/domain/entities/gnudb_query_result.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
 import 'package:mymediascanner/domain/entities/rip_track.dart';
+import 'package:mymediascanner/domain/repositories/i_gnudb_candidate_cache.dart';
+import 'package:mymediascanner/domain/repositories/i_gnudb_service.dart';
 import 'package:mymediascanner/domain/repositories/i_rip_library_repository.dart';
 
-/// Pairs a `MetadataResult`-ready payload with its GnuDB disc id.
-class GnudbCandidate {
-  const GnudbCandidate({
-    required this.discId,
-    required this.category,
-    required this.dto,
-  });
-  final String discId;
-  final String category;
-  final GnudbDiscDto dto;
-}
+export 'package:mymediascanner/domain/entities/gnudb_disc.dart'
+    show GnudbCandidate;
 
 /// Sealed result of [LookupGnudbForRipUseCase.execute].
 sealed class GnudbLookupResult {
@@ -76,19 +62,19 @@ const int _pregapFrames = 150;
 /// Orchestrator for GnuDB metadata lookups keyed off a rip album's CUE.
 class LookupGnudbForRipUseCase {
   LookupGnudbForRipUseCase({
-    required GnudbApi api,
-    required BarcodeCacheDao cacheDao,
+    required IGnudbService api,
+    required IGnudbCandidateCache cache,
     required IRipLibraryRepository repository,
     required String rootPath,
     CueFrameOffsetsLoader? loader,
   })  : _api = api,
-        _cacheDao = cacheDao,
+        _cache = cache,
         _repository = repository,
         _rootPath = rootPath,
         _loader = loader ?? _defaultLoader;
 
-  final GnudbApi _api;
-  final BarcodeCacheDao _cacheDao;
+  final IGnudbService _api;
+  final IGnudbCandidateCache _cache;
   final IRipLibraryRepository _repository;
   final String _rootPath;
   final CueFrameOffsetsLoader _loader;
@@ -164,36 +150,36 @@ class LookupGnudbForRipUseCase {
         return GnudbLookupError(
             'GnuDB server returned $code: $message');
       case GnudbQuerySingle(:final match):
-        final dto = await _api.read(
+        final disc = await _api.read(
             category: match.category, discId: match.discId);
-        if (dto == null) {
+        if (disc == null) {
           return const GnudbLookupError('GnuDB read returned no data');
         }
         final candidate = GnudbCandidate(
           discId: match.discId,
           category: match.category,
-          dto: dto,
+          disc: disc,
         );
-        await _writeCached(discId, [candidate]);
+        await _cache.write(discId, [candidate]);
         return GnudbLookupSingle(candidate);
       case GnudbQueryMulti(:final matches):
         if (matches.isEmpty) return const GnudbLookupNoMatch();
         final candidates = <GnudbCandidate>[];
         for (final m in matches.take(_maxMultiCandidates)) {
-          final dto = await _api.read(
+          final disc = await _api.read(
               category: m.category, discId: m.discId);
-          if (dto != null) {
+          if (disc != null) {
             candidates.add(GnudbCandidate(
               discId: m.discId,
               category: m.category,
-              dto: dto,
+              disc: disc,
             ));
           }
         }
         if (candidates.isEmpty) {
           return const GnudbLookupNoMatch();
         }
-        await _writeCached(discId, candidates);
+        await _cache.write(discId, candidates);
         return GnudbLookupMulti(candidates);
     }
   }
@@ -248,64 +234,12 @@ class LookupGnudbForRipUseCase {
   }
 
   Future<GnudbLookupResult?> _readCached(String discId) async {
-    final hit = await _cacheDao.getByBarcode(_cacheKey(discId));
-    if (hit == null) return null;
-    final age =
-        DateTime.now().millisecondsSinceEpoch - hit.cachedAt;
-    const maxAgeMs = ApiConstants.cacheDurationDays * 86_400_000;
-    if (age > maxAgeMs) return null;
-    try {
-      final payload = jsonDecode(hit.responseJson) as Map<String, dynamic>;
-      final candidates = (payload['candidates'] as List)
-          .map((c) => GnudbCandidate(
-                discId: c['disc_id'] as String,
-                category: c['category'] as String,
-                dto: GnudbDiscDto(
-                  discId: c['disc_id'] as String,
-                  artist: c['artist'] as String,
-                  albumTitle: c['album_title'] as String,
-                  year: c['year'] as int?,
-                  genre: c['genre'] as String?,
-                  trackTitles: (c['track_titles'] as List).cast<String>(),
-                  extendedAlbum: c['extended_album'] as String?,
-                ),
-              ))
-          .toList();
-      if (candidates.isEmpty) return const GnudbLookupNoMatch();
-      if (candidates.length == 1) return GnudbLookupSingle(candidates.first);
-      return GnudbLookupMulti(candidates);
-    } catch (_) {
-      return null;
-    }
+    final candidates = await _cache.read(discId);
+    if (candidates == null) return null;
+    if (candidates.isEmpty) return const GnudbLookupNoMatch();
+    if (candidates.length == 1) return GnudbLookupSingle(candidates.first);
+    return GnudbLookupMulti(candidates);
   }
-
-  Future<void> _writeCached(
-      String discId, List<GnudbCandidate> candidates) async {
-    final payload = jsonEncode({
-      'candidates': [
-        for (final c in candidates)
-          {
-            'disc_id': c.discId,
-            'category': c.category,
-            'artist': c.dto.artist,
-            'album_title': c.dto.albumTitle,
-            'year': c.dto.year,
-            'genre': c.dto.genre,
-            'track_titles': c.dto.trackTitles,
-            'extended_album': c.dto.extendedAlbum,
-          }
-      ],
-    });
-    await _cacheDao.upsert(BarcodeCacheTableCompanion(
-      barcode: Value(_cacheKey(discId)),
-      mediaTypeHint: const Value('music'),
-      responseJson: Value(payload),
-      sourceApi: const Value('gnudb'),
-      cachedAt: Value(DateTime.now().millisecondsSinceEpoch),
-    ));
-  }
-
-  String _cacheKey(String discId) => 'gnudb:$discId';
 }
 
 /// Allows tests to inject an in-memory CUE offsets source.
@@ -322,4 +256,3 @@ class _DiscLayout {
   final int leadoutFrame;
   final int totalSeconds;
 }
-

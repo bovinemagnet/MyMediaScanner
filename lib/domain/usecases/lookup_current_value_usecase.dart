@@ -1,10 +1,7 @@
-import 'package:mymediascanner/data/mappers/discogs_marketplace_mapper.dart';
-import 'package:mymediascanner/data/mappers/pricecharting_mapper.dart';
-import 'package:mymediascanner/data/remote/api/discogs/discogs_api.dart';
-import 'package:mymediascanner/data/remote/api/pricecharting/pricecharting_api.dart';
 import 'package:mymediascanner/domain/entities/marketplace_price.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
+import 'package:mymediascanner/domain/repositories/i_current_value_source.dart';
 import 'package:mymediascanner/domain/repositories/i_media_item_repository.dart';
 
 /// Looks up the current marketplace value for a media item and stamps the
@@ -20,18 +17,12 @@ import 'package:mymediascanner/domain/repositories/i_media_item_repository.dart'
 /// @since 0.0.0
 class LookupCurrentValueUseCase {
   const LookupCurrentValueUseCase({
-    required DiscogsApi? discogsApi,
+    required ICurrentValueSource source,
     required IMediaItemRepository repository,
-    PriceChartingApi? priceChartingApi,
-    String? priceChartingToken,
-  })  : _discogs = discogsApi,
-        _priceCharting = priceChartingApi,
-        _priceChartingToken = priceChartingToken,
+  })  : _source = source,
         _repo = repository;
 
-  final DiscogsApi? _discogs;
-  final PriceChartingApi? _priceCharting;
-  final String? _priceChartingToken;
+  final ICurrentValueSource _source;
   final IMediaItemRepository _repo;
 
   Future<MarketplacePrice?> execute(MediaItem item) async {
@@ -60,35 +51,31 @@ class LookupCurrentValueUseCase {
 
   bool _supports(MediaItem item) {
     if (item.mediaType == MediaType.game) {
-      return _priceCharting != null &&
-          _priceChartingToken != null &&
+      return _source.supportsPriceCharting &&
           (item.extraMetadata.containsKey('pricecharting_id') ||
               item.barcode.isNotEmpty);
     }
-    return _discogs != null &&
+    return _source.supportsDiscogs &&
         item.extraMetadata.containsKey('discogs_release_id');
   }
 
   Future<MarketplacePrice?> _lookupDiscogs(
       MediaItem item, int fetchedAt) async {
-    final api = _discogs;
-    if (api == null) return null;
+    if (!_source.supportsDiscogs) return null;
     final releaseId = _discogsReleaseIdFor(item);
     if (releaseId == null) return null;
-    final dto = await api.getMarketplaceStats(releaseId);
-    return DiscogsMarketplaceMapper.fromDto(dto, fetchedAt: fetchedAt);
+    return _source.lookupDiscogsPrice(
+        releaseId: releaseId, fetchedAt: fetchedAt);
   }
 
   Future<MarketplacePrice?> _lookupGame(MediaItem item, int fetchedAt) async {
-    final api = _priceCharting;
-    final token = _priceChartingToken;
-    if (api == null || token == null || token.isEmpty) return null;
-
+    if (!_source.supportsPriceCharting) return null;
     final productId = item.extraMetadata['pricecharting_id']?.toString();
-    final dto = productId != null && productId.isNotEmpty
-        ? await api.lookupById(token, productId)
-        : await api.lookupByUpc(token, item.barcode);
-    return PriceChartingMapper.fromDto(dto, fetchedAt: fetchedAt);
+    return _source.lookupGamePrice(
+      productId: productId,
+      barcode: item.barcode,
+      fetchedAt: fetchedAt,
+    );
   }
 
   int? _discogsReleaseIdFor(MediaItem item) {

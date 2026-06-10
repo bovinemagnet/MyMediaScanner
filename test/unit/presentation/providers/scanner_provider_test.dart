@@ -631,6 +631,74 @@ void main() {
       });
     });
 
+    group('stale field clearing', () {
+      test('a successful scan clears a previous error', () async {
+        const goodBarcode = '9780330258647';
+        const result = ScanResult.single(
+          metadata: MetadataResult(
+            barcode: goodBarcode,
+            barcodeType: 'isbn13',
+            title: 'Hitchhiker',
+            mediaType: MediaType.book,
+          ),
+          isDuplicate: false,
+        );
+
+        when(() => mockMediaItemRepo.barcodeExists(any()))
+            .thenAnswer((_) async => false);
+        when(() => mockMetadataRepo.lookupBarcode('000', typeHint: null))
+            .thenThrow(Exception('Network error'));
+        when(() =>
+                mockMetadataRepo.lookupBarcode(goodBarcode, typeHint: null))
+            .thenAnswer((_) async => result);
+
+        final container = createContainer();
+        addTearDown(container.dispose);
+
+        final notifier = container.read(scannerProvider.notifier);
+        await notifier.onBarcodeScanned('000');
+        expect(container.read(scannerProvider).state, ScanState.error);
+        expect(container.read(scannerProvider).error, isNotNull);
+
+        await notifier.onBarcodeScanned(goodBarcode);
+
+        final state = container.read(scannerProvider);
+        expect(state.state, ScanState.found);
+        expect(state.error, isNull,
+            reason: 'stale error must be cleared on a successful scan');
+        expect(state.ocrSearchResult, isNull);
+      });
+
+      test('reset clears result and error but keeps sticky fields', () async {
+        when(() => mockMediaItemRepo.barcodeExists(any()))
+            .thenAnswer((_) async => false);
+        when(() => mockMetadataRepo.lookupBarcode(
+              any(),
+              typeHint: any(named: 'typeHint'),
+              forceIsbn: any(named: 'forceIsbn'),
+            )).thenThrow(Exception('Network error'));
+
+        final container = createContainer();
+        addTearDown(container.dispose);
+
+        final notifier = container.read(scannerProvider.notifier);
+        notifier.toggleBatchMode();
+        notifier.setScanMode(ScanMode.isbn);
+        await notifier.onBarcodeScanned('000');
+        expect(container.read(scannerProvider).error, isNotNull);
+
+        notifier.reset();
+
+        final state = container.read(scannerProvider);
+        expect(state.state, ScanState.idle);
+        expect(state.result, isNull);
+        expect(state.error, isNull);
+        expect(state.ocrSearchResult, isNull);
+        expect(state.batchMode, isTrue);
+        expect(state.scanMode, ScanMode.isbn);
+      });
+    });
+
     group('reset listener recursion guard', () {
       // Mobile/desktop scan screens listen for `state == idle` to resume
       // the camera. Their `_resumeScanning`/`_resumeWebcamScanning`

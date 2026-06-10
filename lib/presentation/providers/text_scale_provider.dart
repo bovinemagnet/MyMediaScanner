@@ -13,16 +13,21 @@ const double _maxFactor = 1.6;
 
 /// User-chosen text scale factor. `1.0` means "use the platform setting".
 class TextScaleNotifier extends AsyncNotifier<double> {
+  SharedPreferences? _prefs;
+
+  Future<SharedPreferences> get _instance async =>
+      _prefs ??= await SharedPreferences.getInstance();
+
   @override
   Future<double> build() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _instance;
     final stored = prefs.getDouble(_prefsKey);
     return stored ?? _defaultFactor;
   }
 
   Future<void> setFactor(double value) async {
     final clamped = value.clamp(_minFactor, _maxFactor);
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _instance;
     await prefs.setDouble(_prefsKey, clamped);
     state = AsyncData(clamped);
   }

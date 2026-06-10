@@ -6,6 +6,11 @@ enum CollectionViewMode { grid, table }
 const _prefKey = 'collection_view_mode';
 
 class CollectionViewModeNotifier extends Notifier<CollectionViewMode> {
+  SharedPreferences? _prefs;
+
+  Future<SharedPreferences> get _instance async =>
+      _prefs ??= await SharedPreferences.getInstance();
+
   @override
   CollectionViewMode build() {
     _loadFromPrefs();
@@ -13,7 +18,7 @@ class CollectionViewModeNotifier extends Notifier<CollectionViewMode> {
   }
 
   Future<void> _loadFromPrefs() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _instance;
     final stored = prefs.getString(_prefKey);
     if (stored == 'table') {
       state = CollectionViewMode.table;
@@ -33,7 +38,7 @@ class CollectionViewModeNotifier extends Notifier<CollectionViewMode> {
   }
 
   Future<void> _persistToPrefs() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _instance;
     await prefs.setString(_prefKey, state.name);
   }
 }

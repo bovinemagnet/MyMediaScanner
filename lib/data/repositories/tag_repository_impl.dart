@@ -52,15 +52,23 @@ class TagRepositoryImpl implements ITagRepository {
     final now = DateTime.now().millisecondsSinceEpoch;
     await _tagsDao.transaction(() async {
       await _tagsDao.softDelete(id, now);
+      // Full row snapshot, not just {id, deleted}: push derives the
+      // upsert column list from the payload keys, so a partial delete
+      // payload reaching Postgres before (or without) the insert would
+      // create a remote row with every other column NULL.
+      final row = await _tagsDao.getById(id);
+      if (row == null) return;
       await _syncLogDao.insertLog(SyncLogTableCompanion(
         id: Value(_uuid.v7()),
         entityType: const Value('tag'),
         entityId: Value(id),
         operation: const Value('delete'),
         payloadJson: Value(jsonEncode({
-          'id': id,
-          'deleted': 1,
+          'id': row.id,
+          'name': row.name,
+          'colour': row.colour,
           'updated_at': now,
+          'deleted': 1,
         })),
         createdAt: Value(now),
       ));

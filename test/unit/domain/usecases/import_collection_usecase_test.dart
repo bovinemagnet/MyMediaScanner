@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:mymediascanner/data/importers/collection_import_parser.dart';
 import 'package:mymediascanner/domain/entities/import_row.dart';
 import 'package:mymediascanner/domain/entities/import_source.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
@@ -26,6 +27,7 @@ void main() {
     mediaRepo = _MockMediaRepo();
     save = SaveMediaItemUseCase(repository: mediaRepo);
     usecase = ImportCollectionUseCase(
+      parser: const CollectionImportParser(),
       metadataRepository: metadata,
       mediaItemRepository: mediaRepo,
       saveMediaItem: save,

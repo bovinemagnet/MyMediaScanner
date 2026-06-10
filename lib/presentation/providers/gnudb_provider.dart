@@ -11,7 +11,9 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/data/remote/api/gnudb/gnudb_api.dart';
+import 'package:mymediascanner/data/repositories/gnudb_candidate_cache_impl.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
+import 'package:mymediascanner/domain/repositories/i_gnudb_service.dart';
 import 'package:mymediascanner/domain/usecases/apply_gnudb_result_usecase.dart';
 import 'package:mymediascanner/domain/usecases/edit_rip_metadata_usecase.dart';
 import 'package:mymediascanner/domain/usecases/lookup_gnudb_for_rip_usecase.dart';
@@ -28,7 +30,7 @@ import 'package:mymediascanner/presentation/providers/settings_provider.dart';
 /// The username used for the CDDB "hello" string is read from
 /// [gnudbUsernameProvider] so the user can identify themselves to GnuDB;
 /// the client falls back to the default when the setting is absent.
-final gnudbApiProvider = Provider<GnudbApi>((ref) {
+final gnudbApiProvider = Provider<IGnudbService>((ref) {
   final user = ref.watch(gnudbUsernameProvider);
   return GnudbApi(user: user);
 });
@@ -38,7 +40,7 @@ final gnudbApiProvider = Provider<GnudbApi>((ref) {
 LookupGnudbForRipUseCase _buildLookupUseCase(Ref ref, String rootPath) {
   return LookupGnudbForRipUseCase(
     api: ref.read(gnudbApiProvider),
-    cacheDao: ref.read(barcodeCacheDaoProvider),
+    cache: GnudbCandidateCacheImpl(ref.read(barcodeCacheDaoProvider)),
     repository: ref.read(ripLibraryRepositoryProvider),
     rootPath: rootPath,
   );

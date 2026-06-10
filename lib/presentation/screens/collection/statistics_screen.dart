@@ -1373,7 +1373,7 @@ class _TopRatedGallery extends StatelessWidget {
         SizedBox(
           height: 240,
           child: collectionAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => const LoadingIndicator(),
             error: (_, _) => Center(
               child: Text(
                 'Could not load items',

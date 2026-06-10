@@ -148,6 +148,25 @@ class PostgresSyncClient {
     return (sql: sql, params: params);
   }
 
+  /// Builds a `SELECT * ... WHERE id IN (...)` statement with one named
+  /// parameter per id. Exposed as static for testability without
+  /// requiring a live connection.
+  static ({String sql, Map<String, dynamic> params}) buildSelectByIdsSql(
+    String table,
+    List<String> ids,
+  ) {
+    _assertSafeTable(table);
+    final params = <String, dynamic>{};
+    final placeholders = <String>[];
+    for (var i = 0; i < ids.length; i++) {
+      params['id$i'] = ids[i];
+      placeholders.add('@id$i');
+    }
+    final sql =
+        'SELECT * FROM $table WHERE id IN (${placeholders.join(', ')})';
+    return (sql: sql, params: params);
+  }
+
   Future<Connection> _getConnection() async {
     final existing = _connection;
     if (existing != null && existing.isOpen) return existing;
@@ -229,6 +248,26 @@ class PostgresSyncClient {
         result = await conn.execute('SELECT * FROM $table');
       }
 
+      return result.map((row) => row.toColumnMap()).toList();
+    });
+  }
+
+  /// Pull only the rows whose ids appear in [ids]. Used by conflict
+  /// resolution to fetch the conflicted rows directly instead of
+  /// downloading the whole table.
+  Future<List<Map<String, dynamic>>> pullRecordsByIds(
+    String table,
+    List<String> ids,
+  ) async {
+    _assertSafeTable(table);
+    if (ids.isEmpty) return const [];
+    return _connectionLock.synchronized(() async {
+      final conn = await _getConnection();
+      final (:sql, :params) = buildSelectByIdsSql(table, ids);
+      final result = await conn.execute(
+        Sql.named(sql),
+        parameters: params,
+      );
       return result.map((row) => row.toColumnMap()).toList();
     });
   }

@@ -4,6 +4,8 @@ import 'package:mymediascanner/core/utils/platform_utils.dart';
 import 'package:mymediascanner/domain/repositories/i_sync_repository.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/sync_provider.dart';
+import 'package:mymediascanner/presentation/widgets/error_state.dart';
+import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
 import 'package:mymediascanner/presentation/widgets/screen_header.dart';
 
 /// Screen showing paginated sync history log entries with direction icon,
@@ -63,10 +65,11 @@ class _SyncLogViewerState extends ConsumerState<SyncLogViewer> {
             ],
             Expanded(
               child: historyAsync.when(
-                loading: () =>
-                    const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Center(
-                  child: Text('Error loading history: $e'),
+                loading: () => const LoadingIndicator(),
+                error: (e, _) => ErrorState(
+                  message: 'Error loading history: $e',
+                  onRetry: () =>
+                      ref.invalidate(syncHistoryProvider(_currentPage)),
                 ),
                 data: (entries) {
                   if (entries.isEmpty && _currentPage == 0) {

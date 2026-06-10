@@ -9,6 +9,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mymediascanner/domain/entities/series.dart';
 import 'package:mymediascanner/presentation/providers/series_provider.dart';
+import 'package:mymediascanner/presentation/widgets/error_state.dart';
+import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
 
 class SeriesDetailScreen extends ConsumerWidget {
   const SeriesDetailScreen({super.key, required this.seriesId});
@@ -33,8 +35,11 @@ class SeriesDetailScreen extends ConsumerWidget {
         ),
       ),
       body: asyncSeries.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        loading: () => const LoadingIndicator(),
+        error: (e, _) => ErrorState(
+          message: 'Error: $e',
+          onRetry: () => ref.invalidate(allSeriesProvider),
+        ),
         data: (list) {
           final entry = _findEntry(list, seriesId);
           if (entry == null) {
@@ -57,9 +62,12 @@ class SeriesDetailScreen extends ConsumerWidget {
                 const SizedBox(height: 8),
                 Expanded(
                   child: asyncItems.when(
-                    loading: () =>
-                        const Center(child: CircularProgressIndicator()),
-                    error: (e, _) => Center(child: Text('Error: $e')),
+                    loading: () => const LoadingIndicator(),
+                    error: (e, _) => ErrorState(
+                      message: 'Error: $e',
+                      onRetry: () =>
+                          ref.invalidate(seriesItemsProvider(seriesId)),
+                    ),
                     data: (items) {
                       if (items.isEmpty) {
                         return const Center(

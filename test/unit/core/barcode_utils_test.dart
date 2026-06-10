@@ -121,5 +121,45 @@ void main() {
         expect(twice, once);
       });
     });
+
+    // ----------------------------------------------------------------------
+    // Lookup canonicalisation: same padding/stripping as the cache key, but
+    // case-preserving so IMDb IDs and ISBN-10 check digits keep their
+    // scanned form when passed to upstream APIs.
+    // ----------------------------------------------------------------------
+    group('canonicalise', () {
+      test('pads 11-digit UPC-A to 12 digits', () {
+        expect(
+          BarcodeUtils.canonicalise('12345678905'),
+          '012345678905',
+        );
+      });
+
+      test('strips hyphens and whitespace', () {
+        expect(
+          BarcodeUtils.canonicalise('978-0-141 03614-4'),
+          '9780141036144',
+        );
+      });
+
+      test('preserves IMDb id case', () {
+        expect(BarcodeUtils.canonicalise('tt0133093'), 'tt0133093');
+        expect(BarcodeUtils.canonicalise('TT0133093'), 'TT0133093');
+      });
+
+      test('preserves ISBN-10 trailing check digit case', () {
+        expect(BarcodeUtils.canonicalise('080442957X'), '080442957X');
+        expect(BarcodeUtils.canonicalise('080442957x'), '080442957x');
+      });
+
+      test('canonical form detects as upcA after padding', () {
+        expect(
+          BarcodeUtils.detectBarcodeType(
+            BarcodeUtils.canonicalise('12345678905'),
+          ),
+          BarcodeType.upcA,
+        );
+      });
+    });
   });
 }

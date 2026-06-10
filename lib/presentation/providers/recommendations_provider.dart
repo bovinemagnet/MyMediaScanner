@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/core/constants/api_constants.dart';
 import 'package:mymediascanner/data/remote/api/dio_factory.dart';
 import 'package:mymediascanner/data/remote/api/tmdb/tmdb_api.dart';
+import 'package:mymediascanner/data/repositories/tmdb_wishlist_suggestions_source.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/entities/ownership_status.dart';
 import 'package:mymediascanner/domain/entities/recommendation.dart';
@@ -42,15 +43,17 @@ final wishlistSuggestionsUseCaseProvider =
     Provider<WishlistSuggestionsUseCase>((ref) {
   final apiKeys = ref.watch(apiKeysProvider).value ?? {};
   final tmdbKey = apiKeys['tmdb'];
-  final tmdb = tmdbKey != null
-      ? TmdbApi(DioFactory.createWithBearerToken(
-          baseUrl: ApiConstants.tmdbBaseUrl,
-          token: tmdbKey,
-        ))
+  final source = tmdbKey != null
+      ? TmdbWishlistSuggestionsSource(
+          TmdbApi(DioFactory.createWithBearerToken(
+            baseUrl: ApiConstants.tmdbBaseUrl,
+            token: tmdbKey,
+          )),
+        )
       : null;
   return WishlistSuggestionsUseCase(
     mediaRepository: ref.watch(mediaItemRepositoryProvider),
-    tmdbApi: tmdb,
+    source: source,
   );
 });
 

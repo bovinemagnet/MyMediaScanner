@@ -13,6 +13,9 @@ import 'package:mymediascanner/domain/entities/ownership_status.dart';
 import 'package:mymediascanner/domain/entities/recommendation.dart';
 import 'package:mymediascanner/presentation/providers/recommendations_provider.dart';
 import 'package:mymediascanner/presentation/providers/series_provider.dart';
+import 'package:mymediascanner/presentation/widgets/empty_state.dart';
+import 'package:mymediascanner/presentation/widgets/error_state.dart';
+import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
 import 'package:mymediascanner/presentation/widgets/screen_header.dart';
 
 class WishlistSuggestionsScreen extends ConsumerWidget {
@@ -41,11 +44,22 @@ class WishlistSuggestionsScreen extends ConsumerWidget {
               ),
             Expanded(
               child: async.when(
-                loading: () =>
-                    const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Center(child: Text('Error: $e')),
+                loading: () => const LoadingIndicator(),
+                error: (e, _) => ErrorState(
+                  message: 'Error: $e',
+                  onRetry: () =>
+                      ref.invalidate(wishlistSuggestionsProvider),
+                ),
                 data: (suggestions) {
-                  if (suggestions.isEmpty) return const _EmptyState();
+                  if (suggestions.isEmpty) {
+                    return const EmptyState(
+                      icon: Icons.tips_and_updates_outlined,
+                      message:
+                          'No suggestions yet\nAdd a TMDB API key in '
+                          'Settings and rate a few items so the scorer has '
+                          'something to learn from.',
+                    );
+                  }
                   return ListView.separated(
                     itemCount: suggestions.length,
                     separatorBuilder: (_, _) => const Divider(height: 1),
@@ -53,39 +67,6 @@ class WishlistSuggestionsScreen extends ConsumerWidget {
                         _SuggestionTile(suggestion: suggestions[i]),
                   );
                 },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.tips_and_updates_outlined,
-                size: 64, color: theme.colorScheme.outline),
-            const SizedBox(height: 12),
-            Text('No suggestions yet',
-                style: theme.textTheme.titleMedium),
-            const SizedBox(height: 4),
-            Text(
-              'Add a TMDB API key in Settings and rate a few items so the '
-              'scorer has something to learn from.',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.outline,
               ),
             ),
           ],

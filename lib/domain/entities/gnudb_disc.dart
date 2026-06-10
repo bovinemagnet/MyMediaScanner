@@ -1,12 +1,12 @@
-/// The metadata body returned by a CDDB `cddb read` request.
+/// Disc-level metadata returned by a GnuDB (CDDB) `cddb read` request.
 ///
 /// Author: Paul Snow
 /// Since: 0.0.0
 library;
 
 /// Parsed disc-level metadata from a GnuDB read response.
-class GnudbDiscDto {
-  const GnudbDiscDto({
+class GnudbDisc {
+  const GnudbDisc({
     required this.discId,
     required this.artist,
     required this.albumTitle,
@@ -44,4 +44,16 @@ class GnudbDiscDto {
   /// Parsed `EXTT0..EXTTn` per-track notes, in index order. Empty strings
   /// are preserved to keep alignment with [trackTitles].
   final List<String> extendedTracks;
+}
+
+/// Pairs a `MetadataResult`-ready payload with its GnuDB disc id.
+class GnudbCandidate {
+  const GnudbCandidate({
+    required this.discId,
+    required this.category,
+    required this.disc,
+  });
+  final String discId;
+  final String category;
+  final GnudbDisc disc;
 }

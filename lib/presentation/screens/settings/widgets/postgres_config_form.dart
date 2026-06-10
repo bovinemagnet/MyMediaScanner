@@ -4,6 +4,7 @@ import 'package:mymediascanner/core/constants/app_constants.dart';
 import 'package:mymediascanner/data/remote/sync/postgres_sync_client.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/settings_provider.dart';
+import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
 
 class PostgresConfigForm extends ConsumerStatefulWidget {
   const PostgresConfigForm({super.key});
@@ -101,7 +102,7 @@ class _PostgresConfigFormState extends ConsumerState<PostgresConfigForm> {
     if (configAsync.isLoading && !_seeded) {
       return Scaffold(
         appBar: AppBar(title: const Text('PostgreSQL Configuration')),
-        body: const Center(child: CircularProgressIndicator()),
+        body: const LoadingIndicator(),
       );
     }
 

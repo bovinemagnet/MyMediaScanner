@@ -189,6 +189,16 @@ class MediaItemsDao extends DatabaseAccessor<AppDatabase>
     );
   }
 
+  /// Bulk variant of [markSynced]: stamps `synced_at` on every row whose
+  /// id is in [ids] with a single `UPDATE ... WHERE id IN (...)` instead
+  /// of one statement per row.
+  Future<void> markSyncedAll(List<String> ids, int syncedAt) async {
+    if (ids.isEmpty) return;
+    await (update(mediaItemsTable)..where((t) => t.id.isIn(ids))).write(
+      MediaItemsTableCompanion(syncedAt: Value(syncedAt)),
+    );
+  }
+
   /// Full-text search using FTS5.
   Future<List<MediaItemsTableData>> search(String query) async {
     final ftsQuery = _buildFtsQuery(query);

@@ -42,12 +42,13 @@ class SyncRepositoryImpl implements ISyncRepository {
       final pending = await _syncLogDao.getPending();
       final total = pending.length;
 
-      // Track which entity IDs were successfully pushed this cycle so we
-      // can stamp `synced_at` on only those local rows afterwards. The
-      // prior implementation stamped every unsynced row regardless of
-      // whether its sync_log entry was actually processed, which caused
-      // silent data loss for rows whose log entry was purged or missed.
-      final pushedIds = <String>{};
+      // Track which media-item IDs were successfully pushed this cycle so
+      // we can stamp `synced_at` on only those local rows afterwards.
+      // Only `media_items` carries a `synced_at` column, so log entries
+      // for other entity types must not feed this set — a tag/shelf/etc.
+      // id that happened to collide with a media item id would otherwise
+      // stamp an unpushed media item as synced.
+      final pushedMediaItemIds = <String>{};
       Object? firstFailure;
 
       for (var i = 0; i < pending.length; i++) {
@@ -85,7 +86,9 @@ class SyncRepositoryImpl implements ISyncRepository {
               resolvedBy: 'auto',
             );
           });
-          pushedIds.add(log.entityId);
+          if (log.entityType == 'media_item') {
+            pushedMediaItemIds.add(log.entityId);
+          }
         } on Exception catch (e) {
           stopwatch.stop();
           await _syncLogDao.updateLogResult(
@@ -101,11 +104,12 @@ class SyncRepositoryImpl implements ISyncRepository {
         }
       }
 
-      // Stamp `synced_at` only on the local rows we actually pushed.
-      final now = DateTime.now().millisecondsSinceEpoch;
-      for (final id in pushedIds) {
-        await _mediaItemsDao.markSynced(id, now);
-      }
+      // Stamp `synced_at` only on the media-item rows we actually pushed,
+      // in a single bulk UPDATE rather than one statement per row.
+      await _mediaItemsDao.markSyncedAll(
+        pushedMediaItemIds.toList(),
+        DateTime.now().millisecondsSinceEpoch,
+      );
 
       _progressController.add(SyncProgress.idle);
       await _emitStatus(isSyncing: false);
@@ -243,10 +247,12 @@ class SyncRepositoryImpl implements ISyncRepository {
           DateTime.now().millisecondsSinceEpoch - _purgeThresholdMs;
       await _syncLogDao.purgeOlderThan(purgeThreshold);
 
-      // Store last synced time only on success (no pending conflicts)
-      if (_pendingConflicts.isEmpty) {
-        await _storeLastSyncedAt(DateTime.now().millisecondsSinceEpoch);
-      }
+      // Advance the watermark even when conflicts are pending: resolution
+      // re-fetches the conflicted rows by id (pullRecordsByIds), so it
+      // does not depend on a later pull re-downloading them. Holding the
+      // watermark back only forced every subsequent pull to re-download
+      // everything since the last clean sync.
+      await _storeLastSyncedAt(DateTime.now().millisecondsSinceEpoch);
 
       _progressController.add(SyncProgress.idle);
       await _emitStatus(
@@ -283,6 +289,13 @@ class SyncRepositoryImpl implements ISyncRepository {
       tableName,
       afterTimestamp: afterTimestamp,
     );
+    // Preload every affected local `updated_at` in ONE query rather than
+    // a `getById` per remote row (the N+1 this replaces).
+    final ids = rows
+        .map((r) => r['id'])
+        .whereType<String>()
+        .toList();
+    final localUpdatedAtById = await _localUpdatedAtByIds(entityType, ids);
     final total = rows.length;
     for (var i = 0; i < rows.length; i++) {
       final remote = rows[i];
@@ -295,7 +308,7 @@ class SyncRepositoryImpl implements ISyncRepository {
         currentEntityType: entityType,
       ));
       final remoteUpdatedAt = (remote['updated_at'] as num?)?.toInt() ?? 0;
-      final localUpdatedAt = await _localUpdatedAt(entityType, id);
+      final localUpdatedAt = localUpdatedAtById[id];
       if (localUpdatedAt != null && remoteUpdatedAt <= localUpdatedAt) {
         continue;
       }
@@ -303,27 +316,22 @@ class SyncRepositoryImpl implements ISyncRepository {
     }
   }
 
-  Future<int?> _localUpdatedAt(String entityType, String id) async {
+  Future<Map<String, int>> _localUpdatedAtByIds(
+      String entityType, List<String> ids) {
     final db = _mediaItemsDao.attachedDatabase;
     switch (entityType) {
       case 'tag':
-        final row = await db.tagsDao.getById(id);
-        return row?.updatedAt;
+        return db.tagsDao.updatedAtByIds(ids);
       case 'shelf':
-        final row = await db.shelvesDao.getById(id);
-        return row?.updatedAt;
+        return db.shelvesDao.updatedAtByIds(ids);
       case 'borrower':
-        final row = await db.borrowersDao.getById(id);
-        return row?.updatedAt;
+        return db.borrowersDao.updatedAtByIds(ids);
       case 'loan':
-        final row = await db.loansDao.getById(id);
-        return row?.updatedAt;
+        return db.loansDao.updatedAtByIds(ids);
       case 'location':
-        final row = await db.locationsDao.getById(id);
-        return row?.updatedAt;
+        return db.locationsDao.updatedAtByIds(ids);
       case 'series':
-        final row = await db.seriesDao.getById(id);
-        return row?.updatedAt;
+        return db.seriesDao.updatedAtByIds(ids);
       default:
         throw StateError('Unsupported entity type for pull: $entityType');
     }
@@ -471,11 +479,13 @@ class SyncRepositoryImpl implements ISyncRepository {
       byEntity.putIfAbsent(resolution.entityId, () => []).add(resolution);
     }
 
-    // Pull the remote table ONCE for the whole resolution batch. Prior
-    // versions called pullRecords() inside the per-entity loop, turning an
-    // O(n) operation into O(n·m) — a full table download per conflicted
-    // row — which hung the UI for any realistic conflict list.
-    final remoteItems = await _syncClient.pullRecords('media_items');
+    // Fetch ONLY the conflicted rows, in one targeted query. Prior
+    // versions downloaded the entire remote table (originally once per
+    // conflicted row), which hung the UI for any realistic collection.
+    final remoteItems = await _syncClient.pullRecordsByIds(
+      'media_items',
+      byEntity.keys.toList(),
+    );
 
     for (final entry in byEntity.entries) {
       final entityId = entry.key;

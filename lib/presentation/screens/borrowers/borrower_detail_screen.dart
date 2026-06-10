@@ -6,6 +6,7 @@ import 'package:mymediascanner/domain/entities/loan.dart';
 import 'package:mymediascanner/domain/usecases/manage_borrowers_usecase.dart';
 import 'package:mymediascanner/presentation/providers/loan_provider.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
+import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
 import 'package:mymediascanner/presentation/widgets/overdue_badge.dart';
 import 'package:mymediascanner/presentation/widgets/screen_header.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
@@ -30,7 +31,7 @@ class BorrowerDetailScreen extends ConsumerWidget {
     if (borrower == null) {
       return Scaffold(
         appBar: isDesktop ? null : AppBar(title: const Text('Borrower')),
-        body: const Center(child: CircularProgressIndicator()),
+        body: const LoadingIndicator(),
       );
     }
 

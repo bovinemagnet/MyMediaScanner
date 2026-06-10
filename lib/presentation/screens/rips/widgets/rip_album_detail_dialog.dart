@@ -15,6 +15,7 @@ import 'package:mymediascanner/presentation/providers/rip_provider.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/gnudb_lookup_button.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/playback_widgets.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/quality_widgets.dart';
+import 'package:mymediascanner/presentation/widgets/error_state.dart';
 import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
 
 /// Dialog showing detailed information about a rip album.
@@ -322,7 +323,11 @@ class _RipAlbumDetailDialogState extends ConsumerState<RipAlbumDetailDialog> {
               Expanded(
                 child: tracksAsync.when(
                   loading: () => const LoadingIndicator(),
-                  error: (e, _) => Center(child: Text('Error: $e')),
+                  error: (e, _) => ErrorState(
+                    message: 'Error: $e',
+                    onRetry: () =>
+                        ref.invalidate(ripTracksProvider(widget.album.id)),
+                  ),
                   data: (tracks) {
                     if (tracks.isEmpty) {
                       return const Center(child: Text('No tracks found.'));
@@ -606,7 +611,7 @@ class _TrackTileState extends ConsumerState<_TrackTile> {
     final track = widget.track;
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final duration = _formatTrackDuration(track.durationMs);
+    final duration = formatPlaybackDurationMs(track.durationMs);
     final discLabel =
         track.discNumber > 1 ? 'Disc ${track.discNumber} · ' : '';
     final subtitle =
@@ -893,7 +898,7 @@ class _EditableTrackTileState extends ConsumerState<_EditableTrackTile> {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final rawTagsAsync = ref.watch(trackRawTagsProvider(widget.track.filePath));
-    final duration = _formatDuration(widget.track.durationMs);
+    final duration = formatPlaybackDurationMs(widget.track.durationMs);
 
     return Card(
       color: colors.surfaceContainerHigh,
@@ -999,19 +1004,4 @@ class _EditableTrackTileState extends ConsumerState<_EditableTrackTile> {
     );
   }
 
-  String _formatDuration(int? ms) {
-    if (ms == null) return '';
-    final seconds = ms ~/ 1000;
-    final m = seconds ~/ 60;
-    final s = seconds % 60;
-    return '$m:${s.toString().padLeft(2, '0')}';
-  }
-}
-
-String _formatTrackDuration(int? ms) {
-  if (ms == null) return '';
-  final seconds = ms ~/ 1000;
-  final m = seconds ~/ 60;
-  final s = seconds % 60;
-  return '$m:${s.toString().padLeft(2, '0')}';
 }

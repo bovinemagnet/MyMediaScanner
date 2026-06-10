@@ -1,19 +1,18 @@
-import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:mymediascanner/core/gnudb/cue_frame_offsets_parser.dart';
-import 'package:mymediascanner/data/local/dao/barcode_cache_dao.dart';
-import 'package:mymediascanner/data/local/database/app_database.dart';
-import 'package:mymediascanner/data/remote/api/gnudb/gnudb_api.dart';
-import 'package:mymediascanner/data/remote/api/gnudb/gnudb_response_parser.dart';
-import 'package:mymediascanner/data/remote/api/gnudb/models/gnudb_disc_dto.dart';
-import 'package:mymediascanner/data/remote/api/gnudb/models/gnudb_query_match.dart';
+import 'package:mymediascanner/domain/entities/gnudb_disc.dart';
+import 'package:mymediascanner/domain/entities/gnudb_query_result.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
 import 'package:mymediascanner/domain/entities/rip_track.dart';
+import 'package:mymediascanner/domain/repositories/i_gnudb_candidate_cache.dart';
+import 'package:mymediascanner/domain/repositories/i_gnudb_service.dart';
 import 'package:mymediascanner/domain/repositories/i_rip_library_repository.dart';
 import 'package:mymediascanner/domain/usecases/lookup_gnudb_for_rip_usecase.dart';
 
-class _MockApi extends Mock implements GnudbApi {}
+class _MockApi extends Mock implements IGnudbService {}
+
+class _MockCache extends Mock implements IGnudbCandidateCache {}
 
 class _MockRepo extends Mock implements IRipLibraryRepository {}
 
@@ -75,31 +74,28 @@ List<CueTrackOffset> _perTrackOffsets() => const [
 void main() {
   setUpAll(() {
     registerFallbackValue(const <int>[]);
+    registerFallbackValue(const <GnudbCandidate>[]);
   });
 
-  late AppDatabase db;
-  late BarcodeCacheDao cacheDao;
   late _MockApi api;
+  late _MockCache cache;
   late _MockRepo repo;
 
   setUp(() {
-    db = AppDatabase.forTesting(NativeDatabase.memory());
-    cacheDao = BarcodeCacheDao(db);
     api = _MockApi();
+    cache = _MockCache();
     repo = _MockRepo();
     when(() => repo.updateGnudbDiscId(any(), any()))
         .thenAnswer((_) async {});
-  });
-
-  tearDown(() async {
-    await db.close();
+    when(() => cache.read(any())).thenAnswer((_) async => null);
+    when(() => cache.write(any(), any())).thenAnswer((_) async {});
   });
 
   LookupGnudbForRipUseCase buildUseCase(
       {CueFrameOffsetsLoader? loader}) =>
       LookupGnudbForRipUseCase(
         api: api,
-        cacheDao: cacheDao,
+        cache: cache,
         repository: repo,
         rootPath: '/lib/album',
         loader: loader ?? (path) async => _singleImageOffsets(),
@@ -178,7 +174,7 @@ void main() {
       when(() => api.read(
             category: any(named: 'category'),
             discId: any(named: 'discId'),
-          )).thenAnswer((_) async => const GnudbDiscDto(
+          )).thenAnswer((_) async => const GnudbDisc(
             discId: '08025603',
             artist: 'Example Artist',
             albumTitle: 'Example Album',
@@ -199,9 +195,11 @@ void main() {
 
       // Cache is keyed by the *computed* disc id. With 3 tracks of 200s
       // each and LBAs [150, 15150, 30150], the disc id is 0c025803.
-      final cached = await cacheDao.getByBarcode('gnudb:0c025803');
-      expect(cached, isNotNull);
-      expect(cached!.sourceApi, 'gnudb');
+      final written =
+          verify(() => cache.write('0c025803', captureAny())).captured.single
+              as List<GnudbCandidate>;
+      expect(written, hasLength(1));
+      expect(written.single.discId, '08025603');
     });
 
     test('multi match returns at most _maxMultiCandidates candidates',
@@ -225,7 +223,7 @@ void main() {
           )).thenAnswer((invocation) async {
         final discId =
             invocation.namedArguments[const Symbol('discId')] as String;
-        return GnudbDiscDto(
+        return GnudbDisc(
           discId: discId,
           artist: 'A',
           albumTitle: 'B',
@@ -275,40 +273,57 @@ void main() {
 
   group('caching', () {
     test('cache hit short-circuits API', () async {
-      // Seed cache first via a single-match round-trip.
-      when(() => api.query(
-            discId: any(named: 'discId'),
-            frameOffsets: any(named: 'frameOffsets'),
-            totalSeconds: any(named: 'totalSeconds'),
-          )).thenAnswer((_) async => const GnudbQuerySingle(
-            GnudbQueryMatch(
-              category: 'rock',
+      when(() => cache.read('0c025803')).thenAnswer((_) async => const [
+            GnudbCandidate(
               discId: '08025603',
-              title: 'A / B',
+              category: 'rock',
+              disc: GnudbDisc(
+                discId: '08025603',
+                artist: 'A',
+                albumTitle: 'B',
+                trackTitles: ['1', '2', '3'],
+              ),
             ),
-          ));
-      when(() => api.read(
-            category: any(named: 'category'),
-            discId: any(named: 'discId'),
-          )).thenAnswer((_) async => const GnudbDiscDto(
-            discId: '08025603',
-            artist: 'A',
-            albumTitle: 'B',
-            trackTitles: ['1', '2', '3'],
-          ));
+          ]);
 
-      await buildUseCase().execute(album: _album(), tracks: _tracks());
-
-      // Now second run — API should not be called.
-      clearInteractions(api);
-      final second =
+      final result =
           await buildUseCase().execute(album: _album(), tracks: _tracks());
-      expect(second, isA<GnudbLookupSingle>());
+      expect(result, isA<GnudbLookupSingle>());
       verifyNever(() => api.query(
             discId: any(named: 'discId'),
             frameOffsets: any(named: 'frameOffsets'),
             totalSeconds: any(named: 'totalSeconds'),
           ));
+    });
+
+    test('multiple cached candidates surface as GnudbLookupMulti', () async {
+      when(() => cache.read('0c025803')).thenAnswer((_) async => const [
+            GnudbCandidate(
+              discId: '00000001',
+              category: 'rock',
+              disc: GnudbDisc(
+                discId: '00000001',
+                artist: 'A',
+                albumTitle: 'B',
+                trackTitles: ['1', '2', '3'],
+              ),
+            ),
+            GnudbCandidate(
+              discId: '00000002',
+              category: 'misc',
+              disc: GnudbDisc(
+                discId: '00000002',
+                artist: 'C',
+                albumTitle: 'D',
+                trackTitles: ['1', '2', '3'],
+              ),
+            ),
+          ]);
+
+      final result =
+          await buildUseCase().execute(album: _album(), tracks: _tracks());
+      expect(result, isA<GnudbLookupMulti>());
+      expect((result as GnudbLookupMulti).candidates, hasLength(2));
     });
   });
 

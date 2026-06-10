@@ -16,6 +16,11 @@ const _defaultSpeed = 1.0;
 
 /// Notifier for playback speed, persisted to SharedPreferences.
 class PlaybackSpeedNotifier extends Notifier<double> {
+  SharedPreferences? _prefs;
+
+  Future<SharedPreferences> get _instance async =>
+      _prefs ??= await SharedPreferences.getInstance();
+
   @override
   double build() {
     _load();
@@ -23,7 +28,7 @@ class PlaybackSpeedNotifier extends Notifier<double> {
   }
 
   Future<void> _load() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _instance;
     final stored = prefs.getDouble(_speedPrefKey);
     if (stored != null) state = stored.clamp(_minSpeed, _maxSpeed);
   }
@@ -41,7 +46,7 @@ class PlaybackSpeedNotifier extends Notifier<double> {
   }
 
   Future<void> _persist() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _instance;
     await prefs.setDouble(_speedPrefKey, state);
   }
 }

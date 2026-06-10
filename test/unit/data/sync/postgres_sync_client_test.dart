@@ -155,6 +155,36 @@ void main() {
       });
     });
 
+    group('buildSelectByIdsSql (targeted pull for conflict resolution)', () {
+      test('generates an IN clause with one named parameter per id', () {
+        final result = PostgresSyncClient.buildSelectByIdsSql(
+          'media_items',
+          ['a', 'b', 'c'],
+        );
+
+        expect(result.sql,
+            'SELECT * FROM media_items WHERE id IN (@id0, @id1, @id2)');
+        expect(result.params, {'id0': 'a', 'id1': 'b', 'id2': 'c'});
+      });
+
+      test('handles a single id', () {
+        final result = PostgresSyncClient.buildSelectByIdsSql(
+          'media_items',
+          ['only'],
+        );
+
+        expect(result.sql, 'SELECT * FROM media_items WHERE id IN (@id0)');
+        expect(result.params, {'id0': 'only'});
+      });
+
+      test('rejects tables outside the allow-list', () {
+        expect(
+          () => PostgresSyncClient.buildSelectByIdsSql('pg_tables', ['x']),
+          throwsA(isA<ArgumentError>()),
+        );
+      });
+    });
+
     test('buildBatchUpsertSql with single column record (only id)', () {
       final records = [
         {'id': '1'},

@@ -42,6 +42,26 @@ abstract final class BarcodeUtils {
   static bool isImdbId(String input) =>
       detectBarcodeType(input) == BarcodeType.imdbId;
 
+  /// Canonicalise a scanned barcode for type detection and API lookup.
+  ///
+  /// Same shape rules as [normaliseForCache] but case-preserving, so IMDb
+  /// IDs (`tt1234567`) and ISBN-10 check digits keep their scanned form
+  /// when passed to upstream APIs.
+  ///
+  /// Rules:
+  /// - Trim and strip all whitespace and dashes (`978-0-141 03615-9` →
+  ///   `9780141036159`).
+  /// - If the result is 11 digits, treat as a UPC-A whose leading zero
+  ///   was dropped by the scanner and re-pad to 12 digits.
+  /// - Otherwise return as-is.
+  static String canonicalise(String raw) {
+    final stripped = raw.trim().replaceAll(RegExp(r'[\s-]'), '');
+    if (stripped.length == 11 && RegExp(r'^\d{11}$').hasMatch(stripped)) {
+      return '0$stripped';
+    }
+    return stripped;
+  }
+
   /// Canonicalise a barcode for use as a cache key.
   ///
   /// Normalises so the same physical product produces the same key
@@ -49,20 +69,8 @@ abstract final class BarcodeUtils {
   /// `0-1234-56789-7` (hyphenated ISBN) and again as `0123456789` (clean)
   /// produces two cache rows and the second scan re-hits the API.
   ///
-  /// Rules:
-  /// - Trim and uppercase (`tt0133093` and `TT0133093` collide).
-  /// - Strip all whitespace and dashes (`978-0-141 03615-9` →
-  ///   `9780141036159`).
-  /// - If the result is 11 digits and starts with a digit, treat as a
-  ///   UPC-A whose leading zero was dropped by the scanner and re-pad
-  ///   to 12 digits.
-  /// - Otherwise return as-is.
-  static String normaliseForCache(String raw) {
-    final stripped =
-        raw.trim().toUpperCase().replaceAll(RegExp(r'[\s-]'), '');
-    if (stripped.length == 11 && RegExp(r'^\d{11}$').hasMatch(stripped)) {
-      return '0$stripped';
-    }
-    return stripped;
-  }
+  /// Applies [canonicalise] plus uppercasing (`tt0133093` and `TT0133093`
+  /// collide).
+  static String normaliseForCache(String raw) =>
+      canonicalise(raw.toUpperCase());
 }
