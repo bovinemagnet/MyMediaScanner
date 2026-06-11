@@ -11,6 +11,7 @@ import 'package:mymediascanner/domain/usecases/fetch_missing_cover_usecase.dart'
 import 'package:mymediascanner/domain/usecases/fill_missing_covers_usecase.dart';
 import 'package:mymediascanner/presentation/providers/collection_provider.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
+import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
 
 /// Shows the fill-covers progress dialog and kicks the sweep off. The
 /// caller should refresh any stale collection views after the future
@@ -87,7 +88,7 @@ class _FillCoversDialogState extends State<_FillCoversDialog> {
         title: Text('Fetching cover art'),
         content: SizedBox(
           height: 64,
-          child: Center(child: CircularProgressIndicator()),
+          child: LoadingIndicator(),
         ),
       );
     }

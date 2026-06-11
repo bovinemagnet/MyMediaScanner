@@ -10,6 +10,9 @@ import 'package:go_router/go_router.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
 import 'package:mymediascanner/domain/entities/series.dart';
 import 'package:mymediascanner/presentation/providers/series_provider.dart';
+import 'package:mymediascanner/presentation/widgets/empty_state.dart';
+import 'package:mymediascanner/presentation/widgets/error_state.dart';
+import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
 import 'package:mymediascanner/presentation/widgets/screen_header.dart';
 
 class SeriesListScreen extends ConsumerWidget {
@@ -36,46 +39,27 @@ class SeriesListScreen extends ConsumerWidget {
               ),
             Expanded(
               child: asyncSeries.when(
-                loading: () =>
-                    const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Center(child: Text('Error: $e')),
+                loading: () => const LoadingIndicator(),
+                error: (e, _) => ErrorState(
+                  message: 'Error: $e',
+                  onRetry: () => ref.invalidate(allSeriesProvider),
+                ),
                 data: (series) {
-                  if (series.isEmpty) return const _EmptyState();
+                  if (series.isEmpty) {
+                    return const EmptyState(
+                      icon: Icons.collections_bookmark_outlined,
+                      message:
+                          'No series yet\nSeries populate automatically as '
+                          'items with collection or release-group metadata '
+                          'are saved.',
+                    );
+                  }
                   return _SeriesGrid(series: series);
                 },
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.collections_bookmark_outlined,
-              size: 64, color: theme.colorScheme.outline),
-          const SizedBox(height: 12),
-          Text('No series yet', style: theme.textTheme.titleMedium),
-          const SizedBox(height: 4),
-          Text(
-            'Series populate automatically as items with collection or '
-            'release-group metadata are saved.',
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.outline,
-            ),
-          ),
-        ],
       ),
     );
   }

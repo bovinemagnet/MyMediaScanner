@@ -1,5 +1,3 @@
-import 'package:drift/drift.dart';
-import 'package:mymediascanner/data/local/database/app_database.dart';
 import 'package:mymediascanner/domain/repositories/i_tmdb_account_sync_repository.dart';
 
 /// Saves a movie or TV title as a TMDB-only bridge row, with no
@@ -26,14 +24,11 @@ class SaveTmdbOnlyUseCase {
           'Remote-first save only supports movie or tv');
     }
     await repo.upsertBridge(
-      TmdbAccountSyncItemsTableCompanion(
-        tmdbId: Value(tmdbId),
-        tmdbMediaType: Value(mediaType),
-        titleSnapshot: Value(title),
-        posterPathSnapshot:
-            posterPath == null ? const Value.absent() : Value(posterPath),
-        barcode: barcode == null ? const Value.absent() : Value(barcode),
-      ),
+      tmdbId: tmdbId,
+      mediaType: mediaType,
+      title: title,
+      posterPath: posterPath,
+      barcode: barcode,
     );
   }
 }

@@ -52,6 +52,27 @@ void main() {
     expect(positions, [0, 1, 2, 3]);
   });
 
+  test('reorderItems preserves contents and only touches the given shelf',
+      () async {
+    // A second shelf with its own items must be untouched by a reorder of s1.
+    await db.shelvesDao.insertShelf(
+      const ShelvesTableCompanion(
+        id: Value('s2'),
+        name: Value('Other'),
+        sortOrder: Value(1),
+        updatedAt: Value(1),
+      ),
+    );
+    await db.shelvesDao.addItem('s2', 'X', 0);
+    await db.shelvesDao.addItem('s2', 'Y', 1);
+
+    await db.shelvesDao.reorderItems('s1', ['D', 'A', 'C', 'B']);
+
+    expect(
+        await db.shelvesDao.getMediaItemIdsForShelf('s1'), ['D', 'A', 'C', 'B']);
+    expect(await db.shelvesDao.getMediaItemIdsForShelf('s2'), ['X', 'Y']);
+  });
+
   test('reorderItems is atomic: throwing during reorder leaves state intact',
       () async {
     // Sanity check that the reorder runs inside a transaction by passing an

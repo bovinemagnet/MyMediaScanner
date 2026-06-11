@@ -21,6 +21,7 @@ import 'package:mymediascanner/data/mappers/tvdb_mapper.dart';
 import 'package:mymediascanner/data/mappers/upc_mapper.dart';
 import 'package:mymediascanner/data/remote/api/discogs/discogs_api.dart';
 import 'package:mymediascanner/data/remote/api/fanart/fanart_api.dart';
+import 'package:mymediascanner/data/remote/api/fanart/fanart_lookup_router.dart';
 import 'package:mymediascanner/data/remote/api/igdb/igdb_api.dart';
 import 'package:mymediascanner/data/remote/api/igdb/models/igdb_game_dto.dart';
 import 'package:mymediascanner/data/remote/api/theaudiodb/theaudiodb_api.dart';
@@ -99,6 +100,11 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     MediaType? typeHint,
     bool forceIsbn = false,
   }) async {
+    // Canonicalise first so type detection, routing, and caching all see
+    // the same string — e.g. an 11-digit UPC-A whose leading zero was
+    // dropped by the scanner is re-padded to 12 digits before detection,
+    // matching the cache key produced by normaliseForCache.
+    barcode = BarcodeUtils.canonicalise(barcode);
     final barcodeType = BarcodeUtils.detectBarcodeType(barcode);
     final barcodeTypeStr = barcodeType.name;
 
@@ -720,43 +726,20 @@ class MetadataRepositoryImpl implements IMetadataRepository {
 
   /// Fetch the best fanart.tv poster/cover URL for [result].
   /// Best-effort: returns `null` on any failure.
+  ///
+  /// The per-type endpoint and external-ID routing lives in
+  /// [FanartLookupRouter].
   Future<String?> _fetchFanartUrl(MetadataResult result) async {
     if (fanartApi == null) return null;
     try {
-      if (result.mediaType == MediaType.film) {
-        final tmdbId = _asInt(result.extraMetadata['tmdb_id']);
-        if (tmdbId != null) {
-          final images = await fanartApi!.getMovieImages(tmdbId);
-          return images.bestPosterUrl;
-        }
-      } else if (result.mediaType == MediaType.tv) {
-        final tvdbId = _asInt(result.extraMetadata['tvdb_id']);
-        if (tvdbId != null) {
-          final images = await fanartApi!.getTvImages(tvdbId);
-          return images.bestPosterUrl;
-        }
-      } else if (result.mediaType == MediaType.music) {
-        final mbRgId = _asString(
-          result.extraMetadata['musicbrainz_release_group_id'],
-        );
-        if (mbRgId != null) {
-          final images = await fanartApi!.getAlbumImages(mbRgId);
-          return images.bestCoverUrl;
-        }
-      }
+      return await FanartLookupRouter.fetchBestImageUrl(
+        fanartApi!,
+        result.mediaType,
+        result.extraMetadata,
+      );
     } on Exception catch (e) {
       debugPrint('fanart.tv enrichment failed: $e');
     }
-    return null;
-  }
-
-  /// Defensively coerce cached JSON numerics back to `int`. `extraMetadata`
-  /// round-trips through JSON where numeric fields may be deserialised as
-  /// `double` on some platforms — a bare `as int?` cast would throw.
-  static int? _asInt(Object? value) {
-    if (value is int) return value;
-    if (value is num) return value.toInt();
-    if (value is String) return int.tryParse(value);
     return null;
   }
 

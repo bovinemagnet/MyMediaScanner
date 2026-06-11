@@ -9,6 +9,8 @@ import 'package:mymediascanner/app/theme/app_media_colors.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
 import 'package:mymediascanner/presentation/providers/batch_editor_provider.dart';
 import 'package:mymediascanner/presentation/providers/batch_history_provider.dart';
+import 'package:mymediascanner/presentation/widgets/error_state.dart';
+import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
 import 'package:mymediascanner/presentation/widgets/screen_header.dart';
 
 class BatchHistoryScreen extends ConsumerWidget {
@@ -36,9 +38,10 @@ class BatchHistoryScreen extends ConsumerWidget {
             ),
           Expanded(
             child: asyncHistory.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, _) => Center(
-                child: Text('Error loading history: $error'),
+              loading: () => const LoadingIndicator(),
+              error: (error, _) => ErrorState(
+                message: 'Error loading history: $error',
+                onRetry: () => ref.invalidate(batchHistoryProvider),
               ),
               data: (sessions) => sessions.isEmpty
                   ? Center(

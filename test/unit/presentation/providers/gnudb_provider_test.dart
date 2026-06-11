@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mymediascanner/data/remote/api/gnudb/models/gnudb_disc_dto.dart';
-import 'package:mymediascanner/domain/usecases/lookup_gnudb_for_rip_usecase.dart';
+import 'package:mymediascanner/domain/entities/gnudb_disc.dart';
 import 'package:mymediascanner/presentation/providers/gnudb_provider.dart';
 
 void main() {
@@ -39,7 +38,7 @@ void main() {
   test(
       'GnudbLookupState.copyWith carries candidates across status changes',
       () {
-    const dto = GnudbDiscDto(
+    const dto = GnudbDisc(
       discId: 'abcdef01',
       artist: 'A',
       albumTitle: 'B',
@@ -48,7 +47,7 @@ void main() {
     const candidate = GnudbCandidate(
       discId: 'abcdef01',
       category: 'rock',
-      dto: dto,
+      disc: dto,
     );
     const s = GnudbLookupState();
     final withCandidates = s.copyWith(

@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:mymediascanner/data/local/dao/batch_session_dao.dart';
 import 'package:mymediascanner/data/local/database/app_database.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
@@ -14,6 +17,8 @@ import 'package:mymediascanner/presentation/providers/database_provider.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 
 class MockMediaItemRepository extends Mock implements IMediaItemRepository {}
+
+class MockBatchSessionDao extends Mock implements BatchSessionDao {}
 
 void main() {
   late MockMediaItemRepository mockRepo;
@@ -32,6 +37,7 @@ void main() {
       dateScanned: 0,
       updatedAt: 0,
     ));
+    registerFallbackValue(const BatchQueueItemsTableCompanion());
   });
 
   tearDown(() async {
@@ -599,6 +605,135 @@ void main() {
       expect(state.saveProgress, isNull);
       expect(state.isSaving, false);
       expect(state.savedCount, 2);
+    });
+  });
+
+  group('Concurrent mutation during saves', () {
+    test('saveItem preserves items added while the save is in flight',
+        () async {
+      final completer = Completer<void>();
+      when(() => mockRepo.save(any())).thenAnswer((_) => completer.future);
+
+      final container = createContainer();
+      addTearDown(container.dispose);
+
+      await readState(container);
+      final notifier = container.read(batchEditorProvider.notifier);
+
+      const firstResult = ScanResult.single(
+        metadata: MetadataResult(
+          barcode: '1111111111',
+          barcodeType: 'EAN-13',
+          title: 'First Item',
+          mediaType: MediaType.music,
+        ),
+        isDuplicate: false,
+      );
+      const secondResult = ScanResult.single(
+        metadata: MetadataResult(
+          barcode: '2222222222',
+          barcodeType: 'EAN-13',
+          title: 'Second Item',
+          mediaType: MediaType.music,
+        ),
+        isDuplicate: false,
+      );
+
+      await notifier.addScanResult(firstResult);
+      final itemId = (await readState(container)).items.first.id;
+
+      // Kick off the save; it suspends at the repository write.
+      final saveFuture = notifier.saveItem(itemId);
+
+      // Queue another scan while the save is still awaiting.
+      await notifier.addScanResult(secondResult);
+
+      completer.complete();
+      await saveFuture;
+
+      final state = await readState(container);
+      expect(state.totalCount, 2,
+          reason: 'concurrently added item must not be dropped');
+      expect(
+        state.items.firstWhere((i) => i.barcode == '1111111111').status,
+        BatchItemStatus.saved,
+      );
+      expect(state.items.any((i) => i.barcode == '2222222222'), isTrue);
+    });
+
+    test('saveAllConfirmed does not complete a session replaced by clearBatch',
+        () async {
+      final completer = Completer<void>();
+      when(() => mockRepo.save(any())).thenAnswer((_) => completer.future);
+
+      final container = createContainer();
+      addTearDown(container.dispose);
+
+      await readState(container);
+      final notifier = container.read(batchEditorProvider.notifier);
+      final originalSession = (await readState(container)).sessionId;
+
+      await notifier.addScanResult(testSingleResult);
+
+      // Kick off the bulk save; it suspends at the repository write.
+      final saveFuture = notifier.saveAllConfirmed();
+
+      // Discard the batch while the save is still awaiting — this
+      // completes the original session and creates a fresh one.
+      await notifier.clearBatch();
+      final sessionAfterClear = (await readState(container)).sessionId;
+      expect(sessionAfterClear, isNot(equals(originalSession)));
+
+      completer.complete();
+      await saveFuture;
+
+      // The session created by clearBatch must survive untouched.
+      final state = await readState(container);
+      expect(state.sessionId, sessionAfterClear);
+
+      final active = await testDb.batchSessionDao.getActiveSession();
+      expect(active?.id, sessionAfterClear);
+
+      // The original session keeps its 'discarded' status — it must not
+      // be re-marked as 'completed' by the stale save loop.
+      final history = await testDb.batchSessionDao.getSessionHistory();
+      final original =
+          history.firstWhere((s) => s.id == originalSession);
+      expect(original.status, 'discarded');
+    });
+  });
+
+  group('addScanResult persistence failure', () {
+    test('rolls back the optimistic item and rethrows', () async {
+      final mockDao = MockBatchSessionDao();
+      when(() => mockDao.getActiveSession()).thenAnswer((_) async => null);
+      when(() => mockDao.createSession(any())).thenAnswer(
+          (inv) async => inv.positionalArguments.first as String);
+      when(() => mockDao.upsertQueueItem(any()))
+          .thenThrow(Exception('disk full'));
+
+      final container = ProviderContainer(
+        overrides: [
+          mediaItemRepositoryProvider.overrideWithValue(mockRepo),
+          batchSessionDaoProvider.overrideWithValue(mockDao),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await readState(container);
+
+      await expectLater(
+        container
+            .read(batchEditorProvider.notifier)
+            .addScanResult(testSingleResult),
+        throwsException,
+      );
+
+      final state = await readState(container);
+      expect(state.items, isEmpty,
+          reason: 'unpersisted item must be rolled back from state');
+      expect(state.canUndo, isFalse,
+          reason: 'rolled-back add must not remain undoable');
     });
   });
 

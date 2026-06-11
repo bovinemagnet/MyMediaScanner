@@ -19,6 +19,11 @@ const _modePrefKey = 'replay_gain_mode';
 
 /// Notifier for [ReplayGainMode], persisted to SharedPreferences.
 class ReplayGainModeNotifier extends Notifier<ReplayGainMode> {
+  SharedPreferences? _prefs;
+
+  Future<SharedPreferences> get _instance async =>
+      _prefs ??= await SharedPreferences.getInstance();
+
   @override
   ReplayGainMode build() {
     _load();
@@ -26,7 +31,7 @@ class ReplayGainModeNotifier extends Notifier<ReplayGainMode> {
   }
 
   Future<void> _load() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _instance;
     final stored = prefs.getString(_modePrefKey);
     final loaded = switch (stored) {
       'track' => ReplayGainMode.track,
@@ -43,7 +48,7 @@ class ReplayGainModeNotifier extends Notifier<ReplayGainMode> {
   }
 
   Future<void> _persist() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _instance;
     await prefs.setString(_modePrefKey, state.name);
   }
 }
@@ -62,6 +67,11 @@ const _preampPrefKey = 'replay_gain_preamp_db';
 /// Notifier for the ReplayGain pre-amp value in dB, persisted to
 /// SharedPreferences.
 class ReplayGainPreampNotifier extends Notifier<double> {
+  SharedPreferences? _prefs;
+
+  Future<SharedPreferences> get _instance async =>
+      _prefs ??= await SharedPreferences.getInstance();
+
   @override
   double build() {
     _load();
@@ -69,7 +79,7 @@ class ReplayGainPreampNotifier extends Notifier<double> {
   }
 
   Future<void> _load() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _instance;
     final stored = prefs.getDouble(_preampPrefKey);
     if (stored != null) state = stored.clamp(-6.0, 6.0);
   }
@@ -81,7 +91,7 @@ class ReplayGainPreampNotifier extends Notifier<double> {
   }
 
   Future<void> _persist() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _instance;
     await prefs.setDouble(_preampPrefKey, state);
   }
 }
@@ -99,6 +109,11 @@ const _clipPrefKey = 'replay_gain_prevent_clipping';
 
 /// Notifier for the prevent-clipping flag, persisted to SharedPreferences.
 class PreventClippingNotifier extends Notifier<bool> {
+  SharedPreferences? _prefs;
+
+  Future<SharedPreferences> get _instance async =>
+      _prefs ??= await SharedPreferences.getInstance();
+
   @override
   bool build() {
     _load();
@@ -106,7 +121,7 @@ class PreventClippingNotifier extends Notifier<bool> {
   }
 
   Future<void> _load() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _instance;
     // Only update state if the key actually exists; absence means default (true).
     if (prefs.containsKey(_clipPrefKey)) {
       state = prefs.getBool(_clipPrefKey) ?? true;
@@ -120,7 +135,7 @@ class PreventClippingNotifier extends Notifier<bool> {
   }
 
   Future<void> _persist() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _instance;
     await prefs.setBool(_clipPrefKey, state);
   }
 }

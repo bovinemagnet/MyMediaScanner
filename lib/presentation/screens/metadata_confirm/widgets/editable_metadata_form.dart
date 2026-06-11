@@ -268,31 +268,16 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
   /// [type] given the currently-configured [apiKeys], or `null` if the
   /// lookup can proceed.
   ///
-  /// Film/TV title search only routes to TMDB; without a TMDB key the
-  /// repository returns `notFound` without trying anything else. Game
-  /// search routes to IGDB, which requires a Twitch Client ID + Secret.
-  /// Music, book, and unknown always have at least one key-free fallback
-  /// (MusicBrainz / Open Library).
+  /// The per-media-type credential mapping lives on
+  /// [MediaTypeSearchCredentials.searchCredentialRequirement]; only the
+  /// message formatting happens here.
   String? _missingApiMessage(MediaType type, Map<String, String?> apiKeys) {
-    switch (type) {
-      case MediaType.film:
-      case MediaType.tv:
-        if ((apiKeys['tmdb'] ?? '').isEmpty) {
-          return 'TMDB API key required in Settings to search for films and TV.';
-        }
-        return null;
-      case MediaType.game:
-        if ((apiKeys['twitch_client_id'] ?? '').isEmpty ||
-            (apiKeys['twitch_client_secret'] ?? '').isEmpty) {
-          return 'Twitch Client ID and Secret required in Settings to '
-              'search for games (IGDB).';
-        }
-        return null;
-      case MediaType.music:
-      case MediaType.book:
-      case MediaType.unknown:
-        return null;
+    final requirement = type.searchCredentialRequirement;
+    if (requirement == null || requirement.isSatisfiedBy(apiKeys)) {
+      return null;
     }
+    return '${requirement.credentialLabel} required in Settings to '
+        'search for ${requirement.searchSubject}.';
   }
 
   /// Runs a type-aware online search using the current title + subtitle as

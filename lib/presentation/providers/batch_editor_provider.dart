@@ -319,9 +319,22 @@ class BatchEditorNotifier extends AsyncNotifier<BatchEditorState> {
       redoStack: const [],
     ));
 
-    // Persist to database.
-    await _persistItem(item, newItems.length - 1);
-    await _updateSessionItemCount(newItems.length);
+    // Persist to database. On failure, roll back the optimistically added
+    // item (and its undo entry) so the UI never shows a queued item that
+    // was never persisted, then rethrow for the caller to surface.
+    try {
+      await _persistItem(item, newItems.length - 1);
+      await _updateSessionItemCount(newItems.length);
+    } catch (_) {
+      final live = state.requireValue;
+      state = AsyncValue.data(live.copyWith(
+        items: live.items.where((i) => i.id != item.id).toList(),
+        undoStack: live.undoStack
+            .where((a) => a is! AddAction || a.item.id != item.id)
+            .toList(),
+      ));
+      rethrow;
+    }
   }
 
   /// Resolve a conflict by selecting metadata for an item.
@@ -423,15 +436,19 @@ class BatchEditorNotifier extends AsyncNotifier<BatchEditorState> {
 
     await useCase.execute(item.metadata!);
 
-    final updated = current.items.map((i) {
-      if (i.id == itemId) return i.copyWith(status: BatchItemStatus.saved);
-      return i;
-    }).toList();
-    state = AsyncValue.data(current.copyWith(items: updated));
+    // Re-read the LIVE state after the await — items queued by a
+    // concurrent addScanResult during the save must not be dropped.
+    final live = state.requireValue;
+    final index = live.items.indexWhere((i) => i.id == itemId);
+    if (index == -1) return; // item removed while the save was in flight
+
+    final savedItem =
+        live.items[index].copyWith(status: BatchItemStatus.saved);
+    final updated = [...live.items];
+    updated[index] = savedItem;
+    state = AsyncValue.data(live.copyWith(items: updated));
 
     // Persist the status change.
-    final savedItem = updated.firstWhere((i) => i.id == itemId);
-    final index = updated.indexOf(savedItem);
     await _persistItem(savedItem, index);
   }
 
@@ -486,7 +503,13 @@ class BatchEditorNotifier extends AsyncNotifier<BatchEditorState> {
     // Persist all status changes (includes any concurrently added items).
     await _persistAllItems(finalItems);
 
-    if (!hasUnsaved && current.sessionId != null) {
+    // Only complete the session if it is still the live one — clearBatch
+    // may have replaced it during the save loop, in which case the new
+    // session is already managed by clearBatch and must be left alone.
+    final liveSessionId = state.requireValue.sessionId;
+    if (!hasUnsaved &&
+        current.sessionId != null &&
+        liveSessionId == current.sessionId) {
       await _dao.completeSession(current.sessionId!, status: 'completed');
       // Create a fresh session for the next batch.
       final newSessionId = _uuid.v7();

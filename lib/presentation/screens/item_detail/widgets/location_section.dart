@@ -10,6 +10,8 @@ import 'package:mymediascanner/domain/entities/location.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/presentation/providers/location_provider.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
+import 'package:mymediascanner/presentation/widgets/error_state.dart';
+import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
 
 class LocationSection extends ConsumerWidget {
   const LocationSection({super.key, required this.item});
@@ -143,8 +145,11 @@ class _LocationPickerDialog extends ConsumerWidget {
         width: 360,
         height: 400,
         child: asyncLocations.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('Error: $e')),
+          loading: () => const LoadingIndicator(),
+          error: (e, _) => ErrorState(
+            message: 'Error: $e',
+            onRetry: () => ref.invalidate(allLocationsProvider),
+          ),
           data: (locations) {
             if (locations.isEmpty) {
               return const Center(

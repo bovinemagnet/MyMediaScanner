@@ -156,14 +156,25 @@ class MediaItemRepositoryImpl implements IMediaItemRepository {
     final now = DateTime.now().millisecondsSinceEpoch;
     await _mediaItemsDao.transaction(() async {
       await _mediaItemsDao.softDelete(id, now);
-      await _syncLogDao.insertLog(SyncLogTableCompanion(
-        id: Value(_uuid.v7()),
-        entityType: const Value('media_item'),
-        entityId: Value(id),
-        operation: const Value('delete'),
-        payloadJson: Value(jsonEncode({'id': id, 'deleted': 1})),
-        createdAt: Value(now),
-      ));
+      // The delete payload must be a FULL row snapshot (same shape as the
+      // insert/update path), not just {id, deleted}: push derives the
+      // upsert column list from the payload keys, so a partial payload
+      // that reaches Postgres before (or without) the original insert
+      // creates a remote row whose other columns are all NULL. When the
+      // row doesn't exist locally there is nothing to replicate, so no
+      // log entry is written.
+      if (previous != null) {
+        await _syncLogDao.insertLog(SyncLogTableCompanion(
+          id: Value(_uuid.v7()),
+          entityType: const Value('media_item'),
+          entityId: Value(id),
+          operation: const Value('delete'),
+          payloadJson: Value(jsonEncode(_toSyncPayload(
+            previous.copyWith(deleted: true, updatedAt: now),
+          ))),
+          createdAt: Value(now),
+        ));
+      }
     });
     if (previous != null) {
       _maybeMirrorOnSoftDelete(previous);

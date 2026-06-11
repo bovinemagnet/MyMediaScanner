@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/domain/entities/tmdb_bridge_bucket.dart';
 import 'package:mymediascanner/domain/entities/tmdb_pending_change.dart';
 import 'package:mymediascanner/presentation/providers/tmdb_account_sync_provider.dart';
+import 'package:mymediascanner/presentation/widgets/error_state.dart';
+import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
 
 class TmdbPendingChangesDialog extends ConsumerWidget {
   const TmdbPendingChangesDialog({super.key});
@@ -20,9 +22,11 @@ class TmdbPendingChangesDialog extends ConsumerWidget {
           width: 480,
           child: pendingAsync.when(
             loading: () => const SizedBox(
-                height: 60,
-                child: Center(child: CircularProgressIndicator())),
-            error: (e, _) => Text('Error loading pending changes: $e'),
+                height: 60, child: LoadingIndicator()),
+            error: (e, _) => ErrorState(
+              message: 'Error loading pending changes: $e',
+              onRetry: () => ref.invalidate(tmdbPendingChangesProvider),
+            ),
             data: (pending) {
               final failed = pending.where((p) => p.hasFailed).toList();
               return Column(

@@ -23,6 +23,7 @@ import 'package:mymediascanner/presentation/screens/collection/collection_detail
 import 'package:mymediascanner/presentation/screens/collection/widgets/collection_table_view.dart';
 import 'package:mymediascanner/presentation/screens/collection/widgets/view_mode_toggle.dart';
 import 'package:mymediascanner/presentation/widgets/context_menu_actions.dart';
+import 'package:mymediascanner/presentation/widgets/delete_item_confirmation.dart';
 import 'package:mymediascanner/presentation/widgets/desktop_context_menu.dart';
 import 'package:mymediascanner/presentation/widgets/gradient_button.dart';
 import 'package:mymediascanner/presentation/widgets/screen_header.dart';
@@ -253,29 +254,16 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     );
   }
 
-  void _confirmDeleteItem(BuildContext context, WidgetRef ref, String itemId) {
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete item?'),
-        content: const Text('This item will be removed from your collection.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              await DeleteMediaItemUseCase(
-                repository: ref.read(mediaItemRepositoryProvider),
-              ).execute(itemId);
-              if (ctx.mounted) Navigator.pop(ctx);
-            },
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
+  Future<void> _confirmDeleteItem(
+    BuildContext context,
+    WidgetRef ref,
+    String itemId,
+  ) async {
+    final confirmed = await showDeleteItemConfirmation(context);
+    if (!confirmed) return;
+    await DeleteMediaItemUseCase(
+      repository: ref.read(mediaItemRepositoryProvider),
+    ).execute(itemId);
   }
 
   Future<void> _refreshItemMetadata(

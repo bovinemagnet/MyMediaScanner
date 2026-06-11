@@ -134,6 +134,15 @@ class CollectionRipStats {
 // Quality status cache provider
 // ---------------------------------------------------------------------------
 
+/// Tracks of all linked, non-deleted rip albums grouped by media item ID.
+///
+/// One joined query (Drift stream) replacing the per-item album + tracks
+/// lookups that previously cost one database read per ripped item.
+final _ripTracksByMediaItemProvider =
+    StreamProvider<Map<String, List<RipTrack>>>((ref) {
+  return ref.watch(ripLibraryRepositoryProvider).watchTracksByMediaItem();
+});
+
 /// Pre-computed rip quality status for all ripped media items.
 ///
 /// Maps media item ID → [RipStatus]. Items with no linked album map to
@@ -142,17 +151,14 @@ class CollectionRipStats {
 final ripQualityStatusCacheProvider =
     FutureProvider<Map<String, RipStatus>>((ref) async {
   final rippedIds = ref.watch(rippedItemIdsProvider).value ?? {};
+  if (rippedIds.isEmpty) return const {};
+
+  final tracksByItem =
+      await ref.watch(_ripTracksByMediaItemProvider.future);
   final cache = <String, RipStatus>{};
 
   for (final itemId in rippedIds) {
-    final ripAlbum =
-        await ref.watch(ripAlbumForItemProvider(itemId).future);
-    if (ripAlbum == null) {
-      cache[itemId] = RipStatus.ripped;
-      continue;
-    }
-    final tracks =
-        await ref.watch(ripTracksProvider(ripAlbum.id).future);
+    final tracks = tracksByItem[itemId] ?? const <RipTrack>[];
     final tracksWithData =
         tracks.where((t) => t.qualityCheckedAt != null).toList();
     if (tracksWithData.isEmpty) {

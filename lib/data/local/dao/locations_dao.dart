@@ -26,6 +26,20 @@ class LocationsDao extends DatabaseAccessor<AppDatabase>
         .getSingleOrNull();
   }
 
+  /// Bulk fetch of `updated_at` keyed by id — one query for a whole pull
+  /// batch instead of one [getById] per remote row.
+  Future<Map<String, int>> updatedAtByIds(List<String> ids) async {
+    if (ids.isEmpty) return const {};
+    final rows = await (selectOnly(locationsTable)
+          ..addColumns([locationsTable.id, locationsTable.updatedAt])
+          ..where(locationsTable.id.isIn(ids)))
+        .get();
+    return {
+      for (final r in rows)
+        r.read(locationsTable.id)!: r.read(locationsTable.updatedAt)!,
+    };
+  }
+
   Future<List<LocationsTableData>> getChildren(String? parentId) {
     final query = select(locationsTable)
       ..where((t) => t.deleted.equals(0))

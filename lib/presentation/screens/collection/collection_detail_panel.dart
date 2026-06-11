@@ -11,6 +11,7 @@ import 'package:mymediascanner/presentation/screens/item_detail/widgets/cover_ar
 import 'package:mymediascanner/presentation/screens/item_detail/widgets/metadata_section.dart';
 import 'package:mymediascanner/presentation/screens/item_detail/widgets/star_rating_widget.dart';
 import 'package:mymediascanner/presentation/screens/item_detail/widgets/tag_chips.dart';
+import 'package:mymediascanner/presentation/widgets/delete_item_confirmation.dart';
 import 'package:mymediascanner/presentation/widgets/error_state.dart';
 import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
 
@@ -176,29 +177,12 @@ class CollectionDetailPanel extends ConsumerWidget {
     );
   }
 
-  void _confirmDelete(BuildContext context, WidgetRef ref) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete item?'),
-        content: const Text('This item will be removed from your collection.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              await DeleteMediaItemUseCase(
-                repository: ref.read(mediaItemRepositoryProvider),
-              ).execute(itemId);
-              ref.read(selectedItemProvider.notifier).clear();
-              if (ctx.mounted) Navigator.pop(ctx);
-            },
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
+  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDeleteItemConfirmation(context);
+    if (!confirmed) return;
+    await DeleteMediaItemUseCase(
+      repository: ref.read(mediaItemRepositoryProvider),
+    ).execute(itemId);
+    ref.read(selectedItemProvider.notifier).clear();
   }
 }

@@ -15,6 +15,10 @@ const _persistDebounce = Duration(milliseconds: 250);
 
 class SplitRatioNotifier extends Notifier<double> {
   Timer? _persistTimer;
+  SharedPreferences? _prefs;
+
+  Future<SharedPreferences> get _instance async =>
+      _prefs ??= await SharedPreferences.getInstance();
 
   @override
   double build() {
@@ -27,7 +31,7 @@ class SplitRatioNotifier extends Notifier<double> {
   }
 
   Future<void> _loadFromPrefs() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _instance;
     final stored = prefs.getDouble(_prefKey);
     if (stored != null && ref.mounted) {
       state = stored;
@@ -48,7 +52,7 @@ class SplitRatioNotifier extends Notifier<double> {
   }
 
   Future<void> _persistToPrefs() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _instance;
     await prefs.setDouble(_prefKey, state);
   }
 }

@@ -14,6 +14,8 @@ import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/services/label_pdf_generator.dart';
 import 'package:mymediascanner/presentation/providers/location_provider.dart';
 import 'package:mymediascanner/presentation/providers/recommendations_provider.dart';
+import 'package:mymediascanner/presentation/widgets/error_state.dart';
+import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
 import 'package:mymediascanner/presentation/widgets/screen_header.dart';
 import 'package:printing/printing.dart';
 
@@ -197,8 +199,11 @@ class _LocationSelector extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(allLocationsProvider);
     return async.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      loading: () => const LoadingIndicator(),
+      error: (e, _) => ErrorState(
+        message: 'Error: $e',
+        onRetry: () => ref.invalidate(allLocationsProvider),
+      ),
       data: (locations) {
         if (locations.isEmpty) {
           return const Center(child: Text('No locations defined yet.'));
@@ -232,8 +237,11 @@ class _ItemSelector extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(ownedItemsProvider);
     return async.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      loading: () => const LoadingIndicator(),
+      error: (e, _) => ErrorState(
+        message: 'Error: $e',
+        onRetry: () => ref.invalidate(ownedItemsProvider),
+      ),
       data: (items) {
         if (items.isEmpty) {
           return const Center(

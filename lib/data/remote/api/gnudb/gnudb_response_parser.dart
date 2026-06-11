@@ -9,37 +9,8 @@
 /// Since: 0.0.0
 library;
 
-import 'package:mymediascanner/data/remote/api/gnudb/models/gnudb_disc_dto.dart';
-import 'package:mymediascanner/data/remote/api/gnudb/models/gnudb_query_match.dart';
-
-/// Sealed result type for `parseQuery`.
-sealed class GnudbQueryResult {
-  const GnudbQueryResult();
-}
-
-/// Response code 200 — a single exact match.
-class GnudbQuerySingle extends GnudbQueryResult {
-  const GnudbQuerySingle(this.match);
-  final GnudbQueryMatch match;
-}
-
-/// Response code 210 or 211 — multiple matches to disambiguate between.
-class GnudbQueryMulti extends GnudbQueryResult {
-  const GnudbQueryMulti(this.matches);
-  final List<GnudbQueryMatch> matches;
-}
-
-/// Response code 202 — no match for the supplied Disc ID.
-class GnudbQueryNoMatch extends GnudbQueryResult {
-  const GnudbQueryNoMatch();
-}
-
-/// Any other response code (401, 403, 5xx…) or malformed body.
-class GnudbQueryError extends GnudbQueryResult {
-  const GnudbQueryError({required this.code, required this.message});
-  final int code;
-  final String message;
-}
+import 'package:mymediascanner/domain/entities/gnudb_disc.dart';
+import 'package:mymediascanner/domain/entities/gnudb_query_result.dart';
 
 /// Parser for CDDB/GnuDB text responses.
 class GnudbResponseParser {
@@ -108,7 +79,7 @@ class GnudbResponseParser {
 
   /// Parses the body of a `cddb read` response. Returns `null` when the
   /// status code is not a success (2xx).
-  static GnudbDiscDto? parseDisc(String body) {
+  static GnudbDisc? parseDisc(String body) {
     final lines = body.split(RegExp(r'\r?\n'));
     if (lines.isEmpty) return null;
 
@@ -179,7 +150,7 @@ class GnudbResponseParser {
       extTracks.add(joined('EXTT$i') ?? '');
     }
 
-    return GnudbDiscDto(
+    return GnudbDisc(
       discId: discId,
       artist: artist,
       albumTitle: albumTitle,

@@ -81,17 +81,26 @@ class BorrowerRepositoryImpl implements IBorrowerRepository {
       await _borrowersDao.softDelete(id, now);
       // Mirror the media-item soft-delete pattern: enqueue a sync_log row
       // so a remote pull (or a future cross-entity pull) can replicate
-      // the deletion. Without this the row stays at deleted=1 locally
-      // forever and the remote copy never learns it was retired.
+      // the deletion. The payload carries a FULL row snapshot, not just
+      // {id, deleted}: push derives the upsert column list from the
+      // payload keys, so a partial delete payload reaching Postgres
+      // before (or without) the insert would create a remote row with
+      // every other column NULL.
+      final row = await _borrowersDao.getById(id);
+      if (row == null) return;
       await _syncLogDao.insertLog(SyncLogTableCompanion(
         id: Value(_uuid.v7()),
         entityType: const Value('borrower'),
         entityId: Value(id),
         operation: const Value('delete'),
         payloadJson: Value(jsonEncode({
-          'id': id,
-          'deleted': 1,
+          'id': row.id,
+          'name': row.name,
+          'email': row.email,
+          'phone': row.phone,
+          'notes': row.notes,
           'updated_at': now,
+          'deleted': 1,
         })),
         createdAt: Value(now),
       ));

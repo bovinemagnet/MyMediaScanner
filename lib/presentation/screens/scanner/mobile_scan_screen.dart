@@ -139,6 +139,25 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
     debugPrint('[MMS-scan] _resumeScanning exit (camera.start dispatched)');
   }
 
+  /// Queue a batch-mode scan result without blocking the synchronous
+  /// `ref.listen` callback. The batch editor rolls the item back from
+  /// state if persistence fails, so surface that failure as a SnackBar
+  /// instead of letting it vanish into a dropped future.
+  void _queueToBatchSafely(ScanResult result) {
+    unawaited(ref
+        .read(scannerProvider.notifier)
+        .queueToBatch(result)
+        .catchError((Object e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not queue scan: $e'),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }));
+  }
+
   void _showManualEntryDialog() {
     showDialog<void>(
       context: context,
@@ -261,7 +280,7 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
       );
       if (next.state == ScanState.found) {
         if (next.batchMode && next.result != null) {
-          ref.read(scannerProvider.notifier).queueToBatch(next.result!);
+          _queueToBatchSafely(next.result!);
           _resumeScanning();
         } else {
           context.go('/scan/confirm');
@@ -269,7 +288,7 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
       }
       if (next.state == ScanState.notFound) {
         if (next.batchMode && next.result != null) {
-          ref.read(scannerProvider.notifier).queueToBatch(next.result!);
+          _queueToBatchSafely(next.result!);
           _resumeScanning();
         } else if (PlatformCapability.hasCoverOcr) {
           _showNotFoundDialog(next.result);
@@ -279,7 +298,7 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
       }
       if (next.state == ScanState.disambiguating) {
         if (next.batchMode && next.result != null) {
-          ref.read(scannerProvider.notifier).queueToBatch(next.result!);
+          _queueToBatchSafely(next.result!);
           _resumeScanning();
         } else {
           context.go('/scan/disambiguate');
@@ -287,7 +306,7 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
       }
       if (next.state == ScanState.duplicate) {
         if (next.batchMode && next.result != null) {
-          ref.read(scannerProvider.notifier).queueToBatch(next.result!);
+          _queueToBatchSafely(next.result!);
           _resumeScanning();
         } else {
           _showDuplicateDialog();

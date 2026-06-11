@@ -304,9 +304,21 @@ class TmdbAccountSyncRepositoryImpl implements ITmdbAccountSyncRepository {
   // ── Slice 3a — remote-first save ──────────────────────────────
 
   @override
-  Future<void> upsertBridge(
-      TmdbAccountSyncItemsTableCompanion companion) async {
-    await dao.upsertByTmdbId(companion);
+  Future<void> upsertBridge({
+    required int tmdbId,
+    required String mediaType,
+    required String title,
+    String? posterPath,
+    String? barcode,
+  }) async {
+    await dao.upsertByTmdbId(TmdbAccountSyncItemsTableCompanion(
+      tmdbId: Value(tmdbId),
+      tmdbMediaType: Value(mediaType),
+      titleSnapshot: Value(title),
+      posterPathSnapshot:
+          posterPath == null ? const Value.absent() : Value(posterPath),
+      barcode: barcode == null ? const Value.absent() : Value(barcode),
+    ));
   }
 
   // ── Slice 2 — push pipeline ────────────────────────────────────

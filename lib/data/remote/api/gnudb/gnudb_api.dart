@@ -20,10 +20,12 @@ import 'package:mymediascanner/core/constants/api_constants.dart';
 import 'package:mymediascanner/core/utils/rate_limiter.dart';
 import 'package:mymediascanner/data/remote/api/dio_factory.dart';
 import 'package:mymediascanner/data/remote/api/gnudb/gnudb_response_parser.dart';
-import 'package:mymediascanner/data/remote/api/gnudb/models/gnudb_disc_dto.dart';
+import 'package:mymediascanner/domain/entities/gnudb_disc.dart';
+import 'package:mymediascanner/domain/entities/gnudb_query_result.dart';
+import 'package:mymediascanner/domain/repositories/i_gnudb_service.dart';
 
 /// Thin wrapper over the GnuDB CDDB CGI endpoint.
-class GnudbApi {
+class GnudbApi implements IGnudbService {
   GnudbApi({
     Dio? dio,
     RateLimiter? rateLimiter,
@@ -52,6 +54,7 @@ class GnudbApi {
   /// [frameOffsets] must be LBA frame offsets (including the 150-frame
   /// pregap) in declared track order. [totalSeconds] is the total disc
   /// length in seconds.
+  @override
   Future<GnudbQueryResult> query({
     required String discId,
     required List<int> frameOffsets,
@@ -79,7 +82,8 @@ class GnudbApi {
   /// Executes `cddb read` for the given category and Disc ID.
   ///
   /// Returns `null` when the server replies with a non-success status.
-  Future<GnudbDiscDto?> read({
+  @override
+  Future<GnudbDisc?> read({
     required String category,
     required String discId,
   }) async {

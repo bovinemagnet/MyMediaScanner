@@ -11,6 +11,8 @@ import 'package:go_router/go_router.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/domain/entities/random_pick_filter.dart';
 import 'package:mymediascanner/presentation/providers/random_pick_provider.dart';
+import 'package:mymediascanner/presentation/widgets/error_state.dart';
+import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
 
 class RandomPickSheet extends ConsumerStatefulWidget {
   const RandomPickSheet({super.key});
@@ -136,14 +138,11 @@ class _RandomPickSheetState extends ConsumerState<RandomPickSheet> {
             ),
             const SizedBox(height: 16),
             pickAsync.when(
-              loading: () => const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(12),
-                  child: CircularProgressIndicator(),
-                ),
+              loading: () => const Padding(
+                padding: EdgeInsets.all(12),
+                child: LoadingIndicator(),
               ),
-              error: (e, _) => Text('Error: $e',
-                  style: TextStyle(color: colors.error)),
+              error: (e, _) => ErrorState(message: 'Error: $e'),
               data: (item) {
                 if (item == null) {
                   return Text(

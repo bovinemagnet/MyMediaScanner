@@ -39,6 +39,7 @@ import 'package:mymediascanner/data/remote/api/open_library/open_library_api.dar
 import 'package:mymediascanner/data/remote/api/tmdb/tmdb_api.dart';
 import 'package:mymediascanner/data/remote/api/upc/upcitemdb_api.dart';
 import 'package:mymediascanner/data/remote/sync/postgres_sync_client.dart';
+import 'package:mymediascanner/data/repositories/marketplace_current_value_source.dart';
 import 'package:mymediascanner/data/repositories/media_item_repository_impl.dart';
 import 'package:mymediascanner/data/repositories/metadata_repository_impl.dart';
 import 'package:mymediascanner/data/repositories/sync_repository_impl.dart';
@@ -229,9 +230,11 @@ final priceChartingTokenProvider = Provider<String?>((ref) {
 final lookupCurrentValueUseCaseProvider =
     Provider<LookupCurrentValueUseCase>((ref) {
   return LookupCurrentValueUseCase(
-    discogsApi: ref.watch(discogsApiProvider),
-    priceChartingApi: ref.watch(priceChartingApiProvider),
-    priceChartingToken: ref.watch(priceChartingTokenProvider),
+    source: MarketplaceCurrentValueSource(
+      discogsApi: ref.watch(discogsApiProvider),
+      priceChartingApi: ref.watch(priceChartingApiProvider),
+      priceChartingToken: ref.watch(priceChartingTokenProvider),
+    ),
     repository: ref.watch(mediaItemRepositoryProvider),
   );
 });

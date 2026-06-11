@@ -1,13 +1,9 @@
-import 'package:mymediascanner/data/importers/discogs_csv_parser.dart';
-import 'package:mymediascanner/data/importers/goodreads_csv_parser.dart';
-import 'package:mymediascanner/data/importers/import_parser.dart';
-import 'package:mymediascanner/data/importers/letterboxd_csv_parser.dart';
-import 'package:mymediascanner/data/importers/trakt_json_parser.dart';
 import 'package:mymediascanner/domain/entities/import_row.dart';
 import 'package:mymediascanner/domain/entities/import_source.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/entities/metadata_result.dart';
 import 'package:mymediascanner/domain/entities/scan_result.dart';
+import 'package:mymediascanner/domain/repositories/i_collection_import_parser.dart';
 import 'package:mymediascanner/domain/repositories/i_media_item_repository.dart';
 import 'package:mymediascanner/domain/repositories/i_metadata_repository.dart';
 import 'package:mymediascanner/domain/usecases/save_media_item_usecase.dart';
@@ -24,31 +20,26 @@ import 'package:mymediascanner/domain/usecases/save_media_item_usecase.dart';
 /// third-party API quotas.
 class ImportCollectionUseCase {
   ImportCollectionUseCase({
+    required ICollectionImportParser parser,
     required IMetadataRepository metadataRepository,
     required IMediaItemRepository mediaItemRepository,
     required SaveMediaItemUseCase saveMediaItem,
     Duration lookupDelay = const Duration(milliseconds: 250),
-  })  : _metadata = metadataRepository,
+  })  : _parser = parser,
+        _metadata = metadataRepository,
         _media = mediaItemRepository,
         _save = saveMediaItem,
         _delay = lookupDelay;
 
+  final ICollectionImportParser _parser;
   final IMetadataRepository _metadata;
   final IMediaItemRepository _media;
   final SaveMediaItemUseCase _save;
   final Duration _delay;
 
-  /// Pick the parser that matches [source]. Exposed for testability.
-  static ImportParser parserFor(ImportSource source) => switch (source) {
-        ImportSource.goodreads => const GoodreadsCsvParser(),
-        ImportSource.discogs => const DiscogsCsvParser(),
-        ImportSource.letterboxd => const LetterboxdCsvParser(),
-        ImportSource.trakt => const TraktJsonParser(),
-      };
-
   /// Parse raw file [content] using the parser for [source].
   List<ImportRow> parse(ImportSource source, String content) {
-    return parserFor(source).parse(content);
+    return _parser.parse(source, content);
   }
 
   /// Enrich each row by calling the metadata pipeline. Emits rows one at a

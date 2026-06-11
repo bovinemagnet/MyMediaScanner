@@ -1,13 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:mymediascanner/data/remote/api/discogs/discogs_api.dart';
-import 'package:mymediascanner/data/remote/api/discogs/models/discogs_marketplace_stats_dto.dart';
+import 'package:mymediascanner/domain/entities/marketplace_price.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
+import 'package:mymediascanner/domain/repositories/i_current_value_source.dart';
 import 'package:mymediascanner/domain/repositories/i_media_item_repository.dart';
 import 'package:mymediascanner/domain/usecases/lookup_current_value_usecase.dart';
 
-class _MockDiscogsApi extends Mock implements DiscogsApi {}
+class _MockSource extends Mock implements ICurrentValueSource {}
 
 class _MockRepo extends Mock implements IMediaItemRepository {}
 
@@ -25,14 +25,16 @@ void main() {
     ));
   });
 
-  late _MockDiscogsApi api;
+  late _MockSource source;
   late _MockRepo repo;
   late LookupCurrentValueUseCase useCase;
 
   setUp(() {
-    api = _MockDiscogsApi();
+    source = _MockSource();
     repo = _MockRepo();
-    useCase = LookupCurrentValueUseCase(discogsApi: api, repository: repo);
+    useCase = LookupCurrentValueUseCase(source: source, repository: repo);
+    when(() => source.supportsDiscogs).thenReturn(true);
+    when(() => source.supportsPriceCharting).thenReturn(false);
     when(() => repo.update(any())).thenAnswer((_) async {});
   });
 
@@ -53,13 +55,10 @@ void main() {
     );
   }
 
-  test('returns null when discogsApi is null', () async {
-    final fallback = LookupCurrentValueUseCase(
-      discogsApi: null,
-      repository: repo,
-    );
+  test('returns null when Discogs is not configured', () async {
+    when(() => source.supportsDiscogs).thenReturn(false);
     final result =
-        await fallback.execute(musicItem(id: '1', extraMetadata: const {
+        await useCase.execute(musicItem(id: '1', extraMetadata: const {
       'discogs_release_id': 12345,
     }));
 
@@ -74,15 +73,19 @@ void main() {
     verifyNever(() => repo.update(any()));
   });
 
-  test('fetches stats and persists currentValue + currentValueAsOf on success',
+  test('fetches price and persists currentValue + currentValueAsOf on success',
       () async {
-    when(() => api.getMarketplaceStats(12345,
-            currencyAbbreviation: any(named: 'currencyAbbreviation')))
-        .thenAnswer((_) async => const DiscogsMarketplaceStatsDto(
-              lowestPrice: DiscogsMoneyDto(value: 19.99, currency: 'USD'),
-              numForSale: 4,
-              blockedFromSale: false,
-            ));
+    when(() => source.lookupDiscogsPrice(
+          releaseId: 12345,
+          fetchedAt: any(named: 'fetchedAt'),
+        )).thenAnswer((invocation) async => MarketplacePrice(
+          value: 19.99,
+          currency: 'USD',
+          numForSale: 4,
+          source: 'discogs_marketplace',
+          fetchedAt:
+              invocation.namedArguments[const Symbol('fetchedAt')] as int,
+        ));
 
     final item = musicItem(id: '1', extraMetadata: const {
       'discogs_release_id': 12345,
@@ -103,15 +106,12 @@ void main() {
   });
 
   test(
-      'records currentValueAsOf with null currentValue when stats return no '
+      'records currentValueAsOf with null currentValue when lookup returns no '
       'usable price', () async {
-    when(() => api.getMarketplaceStats(99,
-            currencyAbbreviation: any(named: 'currencyAbbreviation')))
-        .thenAnswer((_) async => const DiscogsMarketplaceStatsDto(
-              lowestPrice: null,
-              numForSale: 0,
-              blockedFromSale: false,
-            ));
+    when(() => source.lookupDiscogsPrice(
+          releaseId: 99,
+          fetchedAt: any(named: 'fetchedAt'),
+        )).thenAnswer((_) async => null);
 
     final item = musicItem(id: '2', extraMetadata: const {
       'discogs_release_id': 99,
@@ -126,10 +126,11 @@ void main() {
     expect(saved.currentValueAsOf, isNotNull);
   });
 
-  test('returns null and does not persist on API error', () async {
-    when(() => api.getMarketplaceStats(12345,
-            currencyAbbreviation: any(named: 'currencyAbbreviation')))
-        .thenThrow(Exception('network down'));
+  test('returns null and does not persist on lookup error', () async {
+    when(() => source.lookupDiscogsPrice(
+          releaseId: 12345,
+          fetchedAt: any(named: 'fetchedAt'),
+        )).thenThrow(Exception('network down'));
 
     final item = musicItem(id: '1', extraMetadata: const {
       'discogs_release_id': 12345,
@@ -142,12 +143,17 @@ void main() {
   });
 
   test('parses string release id from extraMetadata', () async {
-    when(() => api.getMarketplaceStats(777,
-            currencyAbbreviation: any(named: 'currencyAbbreviation')))
-        .thenAnswer((_) async => const DiscogsMarketplaceStatsDto(
-              lowestPrice: DiscogsMoneyDto(value: 2.0, currency: 'GBP'),
-              numForSale: 1,
-            ));
+    when(() => source.lookupDiscogsPrice(
+          releaseId: 777,
+          fetchedAt: any(named: 'fetchedAt'),
+        )).thenAnswer((invocation) async => MarketplacePrice(
+          value: 2.0,
+          currency: 'GBP',
+          numForSale: 1,
+          source: 'discogs_marketplace',
+          fetchedAt:
+              invocation.namedArguments[const Symbol('fetchedAt')] as int,
+        ));
 
     final item = musicItem(id: '3', extraMetadata: const {
       'discogs_release_id': '777',
@@ -157,5 +163,43 @@ void main() {
 
     expect(price, isNotNull);
     expect(price!.value, 2.0);
+  });
+
+  test('routes game items to PriceCharting', () async {
+    when(() => source.supportsPriceCharting).thenReturn(true);
+    when(() => source.lookupGamePrice(
+          productId: any(named: 'productId'),
+          barcode: any(named: 'barcode'),
+          fetchedAt: any(named: 'fetchedAt'),
+        )).thenAnswer((invocation) async => MarketplacePrice(
+          value: 30.0,
+          currency: 'USD',
+          numForSale: 0,
+          source: 'pricecharting',
+          fetchedAt:
+              invocation.namedArguments[const Symbol('fetchedAt')] as int,
+        ));
+
+    const item = MediaItem(
+      id: 'g1',
+      barcode: '045496830434',
+      barcodeType: 'UPC-A',
+      mediaType: MediaType.game,
+      title: 'Game',
+      extraMetadata: {'pricecharting_id': 'PC-1'},
+      dateAdded: 0,
+      dateScanned: 0,
+      updatedAt: 0,
+    );
+
+    final price = await useCase.execute(item);
+
+    expect(price, isNotNull);
+    expect(price!.value, 30.0);
+    verify(() => source.lookupGamePrice(
+          productId: 'PC-1',
+          barcode: '045496830434',
+          fetchedAt: any(named: 'fetchedAt'),
+        )).called(1);
   });
 }

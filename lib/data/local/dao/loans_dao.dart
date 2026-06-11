@@ -128,6 +128,20 @@ class LoansDao extends DatabaseAccessor<AppDatabase> with _$LoansDaoMixin {
         .getSingleOrNull();
   }
 
+  /// Bulk fetch of `updated_at` keyed by id — one query for a whole pull
+  /// batch instead of one [getById] per remote row.
+  Future<Map<String, int>> updatedAtByIds(List<String> ids) async {
+    if (ids.isEmpty) return const {};
+    final rows = await (selectOnly(loansTable)
+          ..addColumns([loansTable.id, loansTable.updatedAt])
+          ..where(loansTable.id.isIn(ids)))
+        .get();
+    return {
+      for (final r in rows)
+        r.read(loansTable.id)!: r.read(loansTable.updatedAt)!,
+    };
+  }
+
   Future<void> insertLoan(LoansTableCompanion companion) {
     return into(loansTable).insert(companion);
   }

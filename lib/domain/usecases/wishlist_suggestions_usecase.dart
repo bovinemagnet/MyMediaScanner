@@ -1,9 +1,8 @@
-import 'package:mymediascanner/data/mappers/tmdb_mapper.dart';
-import 'package:mymediascanner/data/remote/api/tmdb/tmdb_api.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/domain/entities/recommendation.dart';
 import 'package:mymediascanner/domain/repositories/i_media_item_repository.dart';
+import 'package:mymediascanner/domain/repositories/i_wishlist_suggestions_source.dart';
 import 'package:mymediascanner/domain/services/recommendation_scorer.dart';
 import 'package:mymediascanner/domain/services/taste_profile_builder.dart';
 import 'package:mymediascanner/domain/entities/ownership_status.dart';
@@ -15,24 +14,24 @@ import 'package:mymediascanner/domain/entities/ownership_status.dart';
 class WishlistSuggestionsUseCase {
   WishlistSuggestionsUseCase({
     required IMediaItemRepository mediaRepository,
-    TmdbApi? tmdbApi,
+    IWishlistSuggestionsSource? source,
     RecommendationScorer? scorer,
     TasteProfileBuilder? profileBuilder,
   })  : _mediaRepo = mediaRepository,
-        _tmdb = tmdbApi,
+        _source = source,
         _scorer = scorer ?? const RecommendationScorer(),
         _profileBuilder = profileBuilder ?? const TasteProfileBuilder();
 
   final IMediaItemRepository _mediaRepo;
-  final TmdbApi? _tmdb;
+  final IWishlistSuggestionsSource? _source;
   final RecommendationScorer _scorer;
   final TasteProfileBuilder _profileBuilder;
 
   /// Returns up to [limit] suggestions. Empty when no TMDB key is
   /// configured or the collection is too thin to build a profile.
   Future<List<WishlistSuggestion>> suggest({int limit = 10}) async {
-    final tmdb = _tmdb;
-    if (tmdb == null) return const [];
+    final source = _source;
+    if (source == null) return const [];
 
     final ownedStream = _mediaRepo.watchByStatus(OwnershipStatus.owned);
     final owned = await ownedStream.first;
@@ -45,21 +44,13 @@ class WishlistSuggestionsUseCase {
           item.extraMetadata['tmdb_id'].toString(),
     };
 
-    // Pull both movies and TV — the scorer will sort by relevance.
-    final responses = await Future.wait([
-      tmdb.trending('movie'),
-      tmdb.trending('tv'),
-    ]);
-    final candidates = [
-      for (final r in responses) ...?r.results,
-    ];
+    final candidates = await source.trendingCandidates();
 
     final suggestions = <WishlistSuggestion>[];
-    for (final dto in candidates) {
-      final tmdbId = dto.id?.toString();
-      if (tmdbId == null || ownedTmdbIds.contains(tmdbId)) continue;
-      final metadata =
-          TmdbMapper.fromSearchResult(dto, 'tmdb:$tmdbId', 'TMDB');
+    for (final candidate in candidates) {
+      final tmdbId = candidate.sourceId;
+      if (ownedTmdbIds.contains(tmdbId)) continue;
+      final metadata = candidate.metadata;
 
       // Build a synthetic MediaItem so we can reuse the scorer.
       final synthetic = MediaItem(

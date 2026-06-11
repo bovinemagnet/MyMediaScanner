@@ -50,6 +50,11 @@ class ThemeChoiceNotifier extends Notifier<ThemeChoice> {
   /// deleted so it can't drift.
   static const _legacyModeKey = 'theme_mode';
 
+  SharedPreferences? _prefs;
+
+  Future<SharedPreferences> get _instance async =>
+      _prefs ??= await SharedPreferences.getInstance();
+
   @override
   ThemeChoice build() {
     _load();
@@ -57,7 +62,7 @@ class ThemeChoiceNotifier extends Notifier<ThemeChoice> {
   }
 
   Future<void> _load() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _instance;
 
     final storedFamily = prefs.getString(_familyKey);
     final storedBrightness = prefs.getString(_brightnessKey);
@@ -95,13 +100,13 @@ class ThemeChoiceNotifier extends Notifier<ThemeChoice> {
 
   Future<void> setFamily(ThemeFamily family) async {
     state = state.copyWith(family: family);
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _instance;
     await prefs.setString(_familyKey, family.name);
   }
 
   Future<void> setBrightness(ThemeBrightness brightness) async {
     state = state.copyWith(brightness: brightness);
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _instance;
     await prefs.setString(_brightnessKey, brightness.name);
   }
 }
@@ -123,6 +128,11 @@ class GnudbUsernameNotifier extends Notifier<String> {
   static const _key = 'gnudb_username';
   static const _default = 'mymediascanner';
 
+  SharedPreferences? _prefs;
+
+  Future<SharedPreferences> get _instance async =>
+      _prefs ??= await SharedPreferences.getInstance();
+
   @override
   String build() {
     _load();
@@ -130,7 +140,7 @@ class GnudbUsernameNotifier extends Notifier<String> {
   }
 
   Future<void> _load() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _instance;
     final stored = prefs.getString(_key);
     if (stored != null && stored.isNotEmpty && ref.mounted) {
       state = stored;
@@ -140,7 +150,7 @@ class GnudbUsernameNotifier extends Notifier<String> {
   Future<void> setUsername(String value) async {
     final trimmed = value.trim();
     state = trimmed.isEmpty ? _default : trimmed;
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _instance;
     await prefs.setString(_key, state);
   }
 }
@@ -330,6 +340,11 @@ class TmdbAccountSyncSettingsNotifier
   static const _kLastFailed = 'tmdb.account_sync.last_sync_failed';
   static const _kLastError = 'tmdb.account_sync.last_error';
 
+  SharedPreferences? _prefs;
+
+  Future<SharedPreferences> get _instance async =>
+      _prefs ??= await SharedPreferences.getInstance();
+
   @override
   TmdbAccountSyncSettings build() {
     _load();
@@ -337,7 +352,7 @@ class TmdbAccountSyncSettingsNotifier
   }
 
   Future<void> _load() async {
-    final p = await SharedPreferences.getInstance();
+    final p = await _instance;
     if (!ref.mounted) return;
     final lastSyncMs = p.getInt(_kLastSyncAt);
     state = TmdbAccountSyncSettings(
@@ -358,37 +373,37 @@ class TmdbAccountSyncSettingsNotifier
 
   Future<void> setEnabled(bool v) async {
     state = state.copyWith(enabled: v);
-    final p = await SharedPreferences.getInstance();
+    final p = await _instance;
     await p.setBool(_kEnabled, v);
   }
 
   Future<void> setEnrichScans(bool v) async {
     state = state.copyWith(enrichScans: v);
-    final p = await SharedPreferences.getInstance();
+    final p = await _instance;
     await p.setBool(_kEnrichScans, v);
   }
 
   Future<void> setTwoWaySync(bool v) async {
     state = state.copyWith(twoWaySync: v);
-    final p = await SharedPreferences.getInstance();
+    final p = await _instance;
     await p.setBool(_kTwoWay, v);
   }
 
   Future<void> setMirrorOwnership(bool v) async {
     state = state.copyWith(mirrorOwnership: v);
-    final p = await SharedPreferences.getInstance();
+    final p = await _instance;
     await p.setBool(_kMirror, v);
   }
 
   Future<void> setRemoteFirstSaveEnabled(bool v) async {
     state = state.copyWith(remoteFirstSaveEnabled: v);
-    final p = await SharedPreferences.getInstance();
+    final p = await _instance;
     await p.setBool(_kRemoteFirst, v);
   }
 
   Future<void> setConflictPolicy(TmdbConflictPolicy policy) async {
     state = state.copyWith(conflictPolicy: policy);
-    final p = await SharedPreferences.getInstance();
+    final p = await _instance;
     await p.setString(_kConflictPolicy, policy.name);
   }
 
@@ -405,7 +420,7 @@ class TmdbAccountSyncSettingsNotifier
       lastError: error,
       clearLastError: error == null,
     );
-    final p = await SharedPreferences.getInstance();
+    final p = await _instance;
     await p.setInt(_kLastSyncAt, now.millisecondsSinceEpoch);
     await p.setInt(_kLastPulled, pulled);
     await p.setInt(_kLastFailed, failed);

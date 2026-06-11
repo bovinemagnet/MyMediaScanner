@@ -80,9 +80,14 @@ class SavedSearch {
 }
 
 class SavedSearchesNotifier extends AsyncNotifier<List<SavedSearch>> {
+  SharedPreferences? _prefs;
+
+  Future<SharedPreferences> get _instance async =>
+      _prefs ??= await SharedPreferences.getInstance();
+
   @override
   Future<List<SavedSearch>> build() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _instance;
     final raw = prefs.getStringList(_prefsKey) ?? const [];
     return raw
         .map((line) {
@@ -113,7 +118,7 @@ class SavedSearchesNotifier extends AsyncNotifier<List<SavedSearch>> {
   }
 
   Future<void> _writeAll(List<SavedSearch> searches) async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _instance;
     await prefs.setStringList(
       _prefsKey,
       searches.map((s) => jsonEncode(s.toJson())).toList(growable: false),

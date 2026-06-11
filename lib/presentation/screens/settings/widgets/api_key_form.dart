@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/presentation/providers/settings_provider.dart';
+import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
 
 class ApiKeyForm extends ConsumerStatefulWidget {
   const ApiKeyForm({super.key});
@@ -65,7 +66,7 @@ class _ApiKeyFormState extends ConsumerState<ApiKeyForm> {
     if (keysAsync.isLoading && !_seeded) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 24),
-        child: Center(child: CircularProgressIndicator()),
+        child: LoadingIndicator(),
       );
     }
 

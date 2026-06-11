@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:mymediascanner/data/importers/collection_import_parser.dart';
 import 'package:mymediascanner/domain/entities/import_row.dart';
 import 'package:mymediascanner/domain/entities/import_source.dart';
 import 'package:mymediascanner/domain/usecases/import_collection_usecase.dart';
@@ -24,6 +25,7 @@ sealed class ImportState with _$ImportState {
 
 final importUseCaseProvider = Provider<ImportCollectionUseCase>((ref) {
   return ImportCollectionUseCase(
+    parser: const CollectionImportParser(),
     metadataRepository: ref.watch(metadataRepositoryProvider),
     mediaItemRepository: ref.watch(mediaItemRepositoryProvider),
     saveMediaItem: SaveMediaItemUseCase(

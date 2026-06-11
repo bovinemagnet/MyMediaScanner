@@ -18,6 +18,20 @@ class TagsDao extends DatabaseAccessor<AppDatabase> with _$TagsDaoMixin {
         .getSingleOrNull();
   }
 
+  /// Bulk fetch of `updated_at` keyed by id — one query for a whole pull
+  /// batch instead of one [getById] per remote row.
+  Future<Map<String, int>> updatedAtByIds(List<String> ids) async {
+    if (ids.isEmpty) return const {};
+    final rows = await (selectOnly(tagsTable)
+          ..addColumns([tagsTable.id, tagsTable.updatedAt])
+          ..where(tagsTable.id.isIn(ids)))
+        .get();
+    return {
+      for (final r in rows)
+        r.read(tagsTable.id)!: r.read(tagsTable.updatedAt)!,
+    };
+  }
+
   Future<void> insertTag(TagsTableCompanion tag) {
     return into(tagsTable).insert(tag);
   }

@@ -17,6 +17,8 @@ import 'package:mymediascanner/presentation/providers/audio_player_provider.dart
 import 'package:mymediascanner/presentation/providers/playlist_provider.dart';
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/playback_widgets.dart';
+import 'package:mymediascanner/presentation/widgets/error_state.dart';
+import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
 
 /// Detail panel for a single playlist identified by [playlistId].
 class PlaylistDetail extends ConsumerWidget {
@@ -33,8 +35,11 @@ class PlaylistDetail extends ConsumerWidget {
     final ripTracksAsync = ref.watch(playlistRipTracksProvider(playlistId));
 
     return playlistsAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      loading: () => const LoadingIndicator(),
+      error: (e, _) => ErrorState(
+        message: 'Error: $e',
+        onRetry: () => ref.invalidate(allPlaylistsProvider),
+      ),
       data: (playlists) {
         final playlist =
             playlists.where((p) => p.id == playlistId).firstOrNull;
@@ -43,8 +48,12 @@ class PlaylistDetail extends ConsumerWidget {
         }
 
         return tracksAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('Error loading tracks: $e')),
+          loading: () => const LoadingIndicator(),
+          error: (e, _) => ErrorState(
+            message: 'Error loading tracks: $e',
+            onRetry: () =>
+                ref.invalidate(playlistTracksProvider(playlistId)),
+          ),
           data: (tracks) {
             // Build lookup from the SQL-joined result: ripTrackId -> row.
             // Avoids loading every album's tracks separately in the widget.

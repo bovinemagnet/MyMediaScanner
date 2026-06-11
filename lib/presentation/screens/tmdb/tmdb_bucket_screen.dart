@@ -7,6 +7,8 @@ import 'package:mymediascanner/domain/entities/tmdb_bridge_item.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/settings_provider.dart';
 import 'package:mymediascanner/presentation/providers/tmdb_account_sync_provider.dart';
+import 'package:mymediascanner/presentation/widgets/error_state.dart';
+import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
 import 'package:mymediascanner/presentation/widgets/screen_header.dart';
 
 class TmdbBucketScreen extends ConsumerWidget {
@@ -42,8 +44,11 @@ class TmdbBucketScreen extends ConsumerWidget {
     final isDesktop = PlatformCapability.isDesktop;
 
     Widget body = asyncRows.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      loading: () => const LoadingIndicator(),
+      error: (e, _) => ErrorState(
+        message: 'Error: $e',
+        onRetry: () => ref.invalidate(tmdbBridgeBucketProvider(bucket)),
+      ),
       data: (rows) {
         if (rows.isEmpty) {
           return Center(

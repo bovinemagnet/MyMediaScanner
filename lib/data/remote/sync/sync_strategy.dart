@@ -1,7 +1,13 @@
 import 'package:mymediascanner/domain/entities/sync_conflict.dart';
 
-/// Last-write-wins per-field conflict resolution with optional conflict
-/// detection for close-in-time edits.
+/// Record-level last-write-wins merging with per-field conflict
+/// DETECTION for close-in-time edits.
+///
+/// Note the asymmetry: conflicts are detected and resolved per field
+/// (see [detectConflicts] / [mergeWithResolutions]), but the automatic
+/// merge itself ([mergeFields]) is record-level — whichever side has the
+/// newer `updated_at` contributes ALL of its fields. There are no
+/// per-field timestamps in the schema.
 abstract final class SyncStrategy {
   /// Default threshold in milliseconds within which concurrent edits
   /// are flagged as conflicts (60 seconds).
@@ -19,9 +25,17 @@ abstract final class SyncStrategy {
     'deleted',
   };
 
-  /// Merge local and remote records field-by-field.
-  /// The record with the newer `updated_at` wins per field.
-  /// On tie, local wins.
+  /// Merge local and remote records using record-level last-write-wins:
+  /// the record with the newer `updated_at` wins as a whole and every
+  /// field it carries is taken from it. On tie, local wins. Fields
+  /// present on only one side are preserved regardless of which side
+  /// wins.
+  ///
+  /// This is NOT a per-field merge — when the records were edited far
+  /// enough apart that [detectConflicts] surfaces nothing, the older
+  /// side's edits are discarded wholesale. Concurrent edits within the
+  /// conflict threshold are routed through the user-facing conflict UI
+  /// instead of reaching this silent path.
   static Map<String, dynamic> mergeFields(
     Map<String, dynamic> local,
     Map<String, dynamic> remote,
@@ -44,8 +58,9 @@ abstract final class SyncStrategy {
   ///   2. Both records have been modified within [thresholdMs] of each
   ///      other (i.e. genuinely concurrent edits).
   ///
-  /// Outside the threshold window, standard last-write-wins applies
-  /// silently and no conflicts are returned.
+  /// Outside the threshold window, record-level last-write-wins applies
+  /// silently (the older record's edits are discarded wholesale by
+  /// [mergeFields]) and no conflicts are returned.
   static List<SyncConflict> detectConflicts(
     Map<String, dynamic> local,
     Map<String, dynamic> remote, {

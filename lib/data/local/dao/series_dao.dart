@@ -30,6 +30,20 @@ class SeriesDao extends DatabaseAccessor<AppDatabase> with _$SeriesDaoMixin {
         .getSingleOrNull();
   }
 
+  /// Bulk fetch of `updated_at` keyed by id — one query for a whole pull
+  /// batch instead of one [getById] per remote row.
+  Future<Map<String, int>> updatedAtByIds(List<String> ids) async {
+    if (ids.isEmpty) return const {};
+    final rows = await (selectOnly(seriesTable)
+          ..addColumns([seriesTable.id, seriesTable.updatedAt])
+          ..where(seriesTable.id.isIn(ids)))
+        .get();
+    return {
+      for (final r in rows)
+        r.read(seriesTable.id)!: r.read(seriesTable.updatedAt)!,
+    };
+  }
+
   Future<SeriesTableData?> findByExternalId(String externalId) {
     return (select(seriesTable)
           ..where((t) => t.externalId.equals(externalId) & t.deleted.equals(0)))

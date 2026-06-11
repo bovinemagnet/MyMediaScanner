@@ -68,6 +68,9 @@ class ScannerState {
     return null;
   }
 
+  /// The nullable fields ([result], [error], [ocrSearchResult]) use
+  /// `?? this.field` semantics, so passing `null` preserves the current
+  /// value. Use the explicit `clear*` flags to reset them to `null`.
   ScannerState copyWith({
     ScanState? state,
     ScanResult? result,
@@ -78,16 +81,20 @@ class ScannerState {
     Set<MediaType>? enabledMediaTypes,
     SaveTarget? saveTarget,
     OcrSearchResult? ocrSearchResult,
+    bool clearResult = false,
+    bool clearError = false,
+    bool clearOcrSearchResult = false,
   }) => ScannerState(
     state: state ?? this.state,
-    result: result ?? this.result,
-    error: error ?? this.error,
+    result: clearResult ? null : result ?? this.result,
+    error: clearError ? null : error ?? this.error,
     batchMode: batchMode ?? this.batchMode,
     batchCount: batchCount ?? this.batchCount,
     scanMode: scanMode ?? this.scanMode,
     enabledMediaTypes: enabledMediaTypes ?? this.enabledMediaTypes,
     saveTarget: saveTarget ?? this.saveTarget,
-    ocrSearchResult: ocrSearchResult ?? this.ocrSearchResult,
+    ocrSearchResult:
+        clearOcrSearchResult ? null : ocrSearchResult ?? this.ocrSearchResult,
   );
 }
 
@@ -122,12 +129,11 @@ class ScannerNotifier extends Notifier<ScannerState> {
   /// Cancel an in-flight lookup and return to idle.
   void cancel() {
     _generation++;
-    state = ScannerState(
-      scanMode: state.scanMode,
-      batchMode: state.batchMode,
-      batchCount: state.batchCount,
-      enabledMediaTypes: state.enabledMediaTypes,
-      saveTarget: state.saveTarget,
+    state = state.copyWith(
+      state: ScanState.idle,
+      clearResult: true,
+      clearError: true,
+      clearOcrSearchResult: true,
     );
   }
 
@@ -155,27 +161,12 @@ class ScannerNotifier extends Notifier<ScannerState> {
 
       switch (scanResult) {
         case SingleScanResult(:final isDuplicate):
-          if (isDuplicate) {
-            state = ScannerState(
-              state: ScanState.duplicate,
-              result: scanResult,
-              batchMode: state.batchMode,
-              batchCount: state.batchCount,
-              enabledMediaTypes: state.enabledMediaTypes,
-              saveTarget: state.saveTarget,
-              scanMode: state.scanMode,
-            );
-          } else {
-            state = ScannerState(
-              state: ScanState.found,
-              result: scanResult,
-              batchMode: state.batchMode,
-              batchCount: state.batchCount,
-              enabledMediaTypes: state.enabledMediaTypes,
-              saveTarget: state.saveTarget,
-              scanMode: state.scanMode,
-            );
-          }
+          state = state.copyWith(
+            state: isDuplicate ? ScanState.duplicate : ScanState.found,
+            result: scanResult,
+            clearError: true,
+            clearOcrSearchResult: true,
+          );
         case MultiMatchScanResult():
           if (state.batchMode) {
             // In batch mode, auto-select first candidate
@@ -188,90 +179,70 @@ class ScannerNotifier extends Notifier<ScannerState> {
             );
             if (_generation != gen) return;
             if (detail != null) {
-              state = ScannerState(
+              state = state.copyWith(
                 state: ScanState.found,
                 result: ScanResult.single(metadata: detail, isDuplicate: false),
-                batchMode: state.batchMode,
-                batchCount: state.batchCount,
-                enabledMediaTypes: state.enabledMediaTypes,
-                saveTarget: state.saveTarget,
+                clearError: true,
+                clearOcrSearchResult: true,
               );
             } else {
-              state = ScannerState(
+              state = state.copyWith(
                 state: ScanState.notFound,
                 result: ScanResult.notFound(
                   barcode: multi.barcode,
                   barcodeType: multi.barcodeType,
                 ),
-                batchMode: state.batchMode,
-                batchCount: state.batchCount,
-                enabledMediaTypes: state.enabledMediaTypes,
-                saveTarget: state.saveTarget,
-                scanMode: state.scanMode,
+                clearError: true,
+                clearOcrSearchResult: true,
               );
             }
           } else {
-            state = ScannerState(
+            state = state.copyWith(
               state: ScanState.disambiguating,
               result: scanResult,
-              batchMode: state.batchMode,
-              batchCount: state.batchCount,
-              enabledMediaTypes: state.enabledMediaTypes,
-              saveTarget: state.saveTarget,
-              scanMode: state.scanMode,
+              clearError: true,
+              clearOcrSearchResult: true,
             );
           }
         case NotFoundScanResult():
-          state = ScannerState(
+          state = state.copyWith(
             state: ScanState.notFound,
             result: scanResult,
-            batchMode: state.batchMode,
-            batchCount: state.batchCount,
-            enabledMediaTypes: state.enabledMediaTypes,
-            saveTarget: state.saveTarget,
-            scanMode: state.scanMode,
+            clearError: true,
+            clearOcrSearchResult: true,
           );
       }
     } catch (e) {
       if (_generation != gen) return;
-      state = ScannerState(
+      state = state.copyWith(
         state: ScanState.error,
         error: e.toString(),
-        batchMode: state.batchMode,
-        batchCount: state.batchCount,
-        enabledMediaTypes: state.enabledMediaTypes,
-        saveTarget: state.saveTarget,
-        scanMode: state.scanMode,
+        clearResult: true,
+        clearOcrSearchResult: true,
       );
     }
   }
 
   /// Called after disambiguation screen selects a candidate.
   void onCandidateSelected(MetadataResult metadata) {
-    state = ScannerState(
+    state = state.copyWith(
       state: ScanState.found,
       result: ScanResult.single(metadata: metadata, isDuplicate: false),
-      batchMode: state.batchMode,
-      batchCount: state.batchCount,
-      enabledMediaTypes: state.enabledMediaTypes,
-      saveTarget: state.saveTarget,
-      scanMode: state.scanMode,
+      clearError: true,
+      clearOcrSearchResult: true,
     );
   }
 
   /// Called when user taps "None of these" on disambiguation screen.
   void onNoneSelected(String barcode, String barcodeType) {
-    state = ScannerState(
+    state = state.copyWith(
       state: ScanState.found,
       result: ScanResult.single(
         metadata: MetadataResult(barcode: barcode, barcodeType: barcodeType),
         isDuplicate: false,
       ),
-      batchMode: state.batchMode,
-      batchCount: state.batchCount,
-      enabledMediaTypes: state.enabledMediaTypes,
-      saveTarget: state.saveTarget,
-      scanMode: state.scanMode,
+      clearError: true,
+      clearOcrSearchResult: true,
     );
   }
 
@@ -297,46 +268,34 @@ class ScannerNotifier extends Notifier<ScannerState> {
 
       switch (scanResult) {
         case SingleScanResult():
-          state = ScannerState(
+          state = state.copyWith(
             state: ScanState.found,
             result: scanResult,
-            batchMode: state.batchMode,
-            batchCount: state.batchCount,
-            enabledMediaTypes: state.enabledMediaTypes,
-            saveTarget: state.saveTarget,
-            scanMode: state.scanMode,
+            clearError: true,
+            clearOcrSearchResult: true,
           );
         case MultiMatchScanResult():
-          state = ScannerState(
+          state = state.copyWith(
             state: ScanState.disambiguating,
             result: scanResult,
-            batchMode: state.batchMode,
-            batchCount: state.batchCount,
-            enabledMediaTypes: state.enabledMediaTypes,
-            saveTarget: state.saveTarget,
-            scanMode: state.scanMode,
+            clearError: true,
+            clearOcrSearchResult: true,
           );
         case NotFoundScanResult():
-          state = ScannerState(
+          state = state.copyWith(
             state: ScanState.notFound,
             result: scanResult,
-            batchMode: state.batchMode,
-            batchCount: state.batchCount,
-            enabledMediaTypes: state.enabledMediaTypes,
-            saveTarget: state.saveTarget,
-            scanMode: state.scanMode,
+            clearError: true,
+            clearOcrSearchResult: true,
           );
       }
     } catch (e) {
       if (_generation != gen) return;
-      state = ScannerState(
+      state = state.copyWith(
         state: ScanState.error,
         error: e.toString(),
-        batchMode: state.batchMode,
-        batchCount: state.batchCount,
-        enabledMediaTypes: state.enabledMediaTypes,
-        saveTarget: state.saveTarget,
-        scanMode: state.scanMode,
+        clearResult: true,
+        clearOcrSearchResult: true,
       );
     }
   }
@@ -371,62 +330,34 @@ class ScannerNotifier extends Notifier<ScannerState> {
 
       switch (ocrSearchResult.scanResult) {
         case SingleScanResult(:final isDuplicate):
-          if (isDuplicate) {
-            state = ScannerState(
-              state: ScanState.duplicate,
-              result: ocrSearchResult.scanResult,
-              batchMode: state.batchMode,
-              batchCount: state.batchCount,
-              enabledMediaTypes: state.enabledMediaTypes,
-              saveTarget: state.saveTarget,
-              scanMode: state.scanMode,
-              ocrSearchResult: ocrSearchResult,
-            );
-          } else {
-            state = ScannerState(
-              state: ScanState.found,
-              result: ocrSearchResult.scanResult,
-              batchMode: state.batchMode,
-              batchCount: state.batchCount,
-              enabledMediaTypes: state.enabledMediaTypes,
-              saveTarget: state.saveTarget,
-              scanMode: state.scanMode,
-              ocrSearchResult: ocrSearchResult,
-            );
-          }
+          state = state.copyWith(
+            state: isDuplicate ? ScanState.duplicate : ScanState.found,
+            result: ocrSearchResult.scanResult,
+            ocrSearchResult: ocrSearchResult,
+            clearError: true,
+          );
         case MultiMatchScanResult():
-          state = ScannerState(
+          state = state.copyWith(
             state: ScanState.disambiguating,
             result: ocrSearchResult.scanResult,
-            batchMode: state.batchMode,
-            batchCount: state.batchCount,
-            enabledMediaTypes: state.enabledMediaTypes,
-            saveTarget: state.saveTarget,
-            scanMode: state.scanMode,
             ocrSearchResult: ocrSearchResult,
+            clearError: true,
           );
         case NotFoundScanResult():
-          state = ScannerState(
+          state = state.copyWith(
             state: ScanState.notFound,
             result: ocrSearchResult.scanResult,
-            batchMode: state.batchMode,
-            batchCount: state.batchCount,
-            enabledMediaTypes: state.enabledMediaTypes,
-            saveTarget: state.saveTarget,
-            scanMode: state.scanMode,
             ocrSearchResult: ocrSearchResult,
+            clearError: true,
           );
       }
     } catch (e) {
       if (_generation != gen) return;
-      state = ScannerState(
+      state = state.copyWith(
         state: ScanState.error,
         error: e.toString(),
-        batchMode: state.batchMode,
-        batchCount: state.batchCount,
-        enabledMediaTypes: state.enabledMediaTypes,
-        saveTarget: state.saveTarget,
-        scanMode: state.scanMode,
+        clearResult: true,
+        clearOcrSearchResult: true,
       );
     }
   }
@@ -447,12 +378,11 @@ class ScannerNotifier extends Notifier<ScannerState> {
 
   void reset() {
     _generation++;
-    state = ScannerState(
-      scanMode: state.scanMode,
-      batchMode: state.batchMode,
-      batchCount: state.batchCount,
-      enabledMediaTypes: state.enabledMediaTypes,
-      saveTarget: state.saveTarget,
+    state = state.copyWith(
+      state: ScanState.idle,
+      clearResult: true,
+      clearError: true,
+      clearOcrSearchResult: true,
     );
   }
 

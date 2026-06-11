@@ -9,6 +9,7 @@ import 'package:mymediascanner/presentation/providers/series_provider.dart';
 import 'package:mymediascanner/presentation/providers/settings_provider.dart';
 import 'package:mymediascanner/presentation/providers/tmdb_account_sync_provider.dart';
 import 'package:mymediascanner/domain/entities/metadata_result.dart';
+import 'package:mymediascanner/domain/entities/tmdb_media_type.dart';
 import 'package:mymediascanner/domain/entities/scan_result.dart';
 import 'package:mymediascanner/presentation/screens/metadata_confirm/widgets/editable_metadata_form.dart';
 import 'package:mymediascanner/presentation/screens/metadata_confirm/widgets/remote_first_save_mode_selector.dart';
@@ -42,7 +43,7 @@ class _MetadataConfirmScreenState extends ConsumerState<MetadataConfirmScreen> {
       if (!settings.enabled || !settings.enrichScans) return;
       final tmdbId = _resolveTmdbId();
       final mediaType = _resolveApiMediaType();
-      if (tmdbId != null && (mediaType == 'movie' || mediaType == 'tv')) {
+      if (tmdbId != null && TmdbMediaType.isTmdbMovieOrTv(mediaType)) {
         ref
             .read(enrichScanWithTmdbAccountUseCaseProvider)
             .call(tmdbId: tmdbId, mediaType: mediaType!);
@@ -135,12 +136,12 @@ class _MetadataConfirmScreenState extends ConsumerState<MetadataConfirmScreen> {
     final apiMediaType = _resolveApiMediaType();
     final showPanel = settings.enabled &&
         tmdbId != null &&
-        (apiMediaType == 'movie' || apiMediaType == 'tv');
+        TmdbMediaType.isTmdbMovieOrTv(apiMediaType);
 
     final showSelector = settings.enabled &&
         settings.remoteFirstSaveEnabled &&
         tmdbId != null &&
-        (apiMediaType == 'movie' || apiMediaType == 'tv');
+        TmdbMediaType.isTmdbMovieOrTv(apiMediaType);
 
     final accountPanel = showPanel
         // Both tmdbId and apiMediaType are non-null when showPanel is true.

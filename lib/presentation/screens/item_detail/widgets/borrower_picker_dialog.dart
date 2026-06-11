@@ -6,6 +6,8 @@ import 'package:mymediascanner/domain/usecases/manage_borrowers_usecase.dart';
 import 'package:mymediascanner/presentation/providers/loan_provider.dart';
 import 'package:mymediascanner/presentation/providers/notification_provider.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
+import 'package:mymediascanner/presentation/widgets/error_state.dart';
+import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
 
 class BorrowerPickerDialog extends ConsumerStatefulWidget {
   const BorrowerPickerDialog({super.key, required this.mediaItemId});
@@ -104,9 +106,11 @@ class _BorrowerPickerDialogState extends ConsumerState<BorrowerPickerDialog> {
             ] else
               Flexible(
                 child: borrowersAsync.when(
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Text('Error: $e'),
+                  loading: () => const LoadingIndicator(),
+                  error: (e, _) => ErrorState(
+                    message: 'Error: $e',
+                    onRetry: () => ref.invalidate(allBorrowersProvider),
+                  ),
                   data: (borrowers) {
                     final filtered = _searchQuery.isEmpty
                         ? borrowers

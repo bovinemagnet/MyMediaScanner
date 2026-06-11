@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:mymediascanner/data/remote/api/gnudb/gnudb_api.dart';
-import 'package:mymediascanner/data/remote/api/gnudb/gnudb_response_parser.dart';
+import 'package:mymediascanner/domain/entities/gnudb_query_result.dart';
 
 class _MockDio extends Mock implements Dio {}
 

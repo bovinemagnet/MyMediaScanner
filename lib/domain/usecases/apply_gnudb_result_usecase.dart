@@ -15,10 +15,10 @@
 /// Since: 0.0.0
 library;
 
-import 'package:mymediascanner/data/mappers/gnudb_mapper.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
 import 'package:mymediascanner/domain/entities/rip_track.dart';
 import 'package:mymediascanner/domain/repositories/i_rip_library_repository.dart';
+import 'package:mymediascanner/domain/services/gnudb_mapper.dart';
 import 'package:mymediascanner/domain/usecases/edit_rip_metadata_usecase.dart';
 import 'package:mymediascanner/domain/usecases/lookup_gnudb_for_rip_usecase.dart';
 import 'package:mymediascanner/domain/usecases/save_media_item_usecase.dart';
@@ -60,14 +60,14 @@ class ApplyGnudbResultUseCase {
     required GnudbCandidate candidate,
     bool createMediaItemIfUnlinked = true,
   }) async {
-    final dto = candidate.dto;
+    final disc = candidate.disc;
 
     // 1. Album-level fields + FLAC tags.
     await _editRipMetadata.editAlbumMetadata(
       album: album,
       tracks: tracks,
-      artist: dto.artist,
-      albumTitle: dto.albumTitle,
+      artist: disc.artist,
+      albumTitle: disc.albumTitle,
     );
 
     // 2. Per-track titles. dto.trackTitles is index-aligned (0-based) to the
@@ -77,8 +77,8 @@ class ApplyGnudbResultUseCase {
     int tracksUpdated = 0;
     for (final track in orderedTracks) {
       final idx = track.trackNumber - 1;
-      if (idx < 0 || idx >= dto.trackTitles.length) continue;
-      final newTitle = dto.trackTitles[idx];
+      if (idx < 0 || idx >= disc.trackTitles.length) continue;
+      final newTitle = disc.trackTitles[idx];
       if (newTitle.isEmpty) continue;
       if (track.title == newTitle) continue;
       await _editRipMetadata.editTrackTitle(
@@ -93,7 +93,7 @@ class ApplyGnudbResultUseCase {
     bool mediaItemCreated = false;
     if (createMediaItemIfUnlinked && album.mediaItemId == null) {
       final metadata = GnudbMapper.toMetadataResult(
-        dto,
+        disc,
         category: candidate.category,
       );
       final item = await _saveMediaItem.execute(metadata);

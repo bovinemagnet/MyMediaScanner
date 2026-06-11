@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
+import 'package:mymediascanner/domain/entities/tmdb_media_type.dart';
 import 'package:mymediascanner/domain/entities/metadata_result.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/series_provider.dart';
@@ -121,7 +122,7 @@ class _ManualAddScreenState extends ConsumerState<ManualAddScreen> {
     final showSelector = settings.enabled &&
         settings.remoteFirstSaveEnabled &&
         tmdbId != null &&
-        (apiMediaType == 'movie' || apiMediaType == 'tv');
+        TmdbMediaType.isTmdbMovieOrTv(apiMediaType);
 
     return Scaffold(
       appBar: AppBar(

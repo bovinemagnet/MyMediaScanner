@@ -874,7 +874,11 @@ class _RipAlbumDetailPanelState extends ConsumerState<_RipAlbumDetailPanel> {
         Expanded(
           child: tracksAsync.when(
             loading: () => const LoadingIndicator(),
-            error: (e, _) => Center(child: Text('Error: $e')),
+            error: (e, _) => ErrorState(
+              message: 'Error: $e',
+              onRetry: () =>
+                  ref.invalidate(ripTracksProvider(widget.album.id)),
+            ),
             data: (tracks) {
               if (tracks.isEmpty) {
                 return const Center(child: Text('No tracks found.'));
@@ -890,7 +894,7 @@ class _RipAlbumDetailPanelState extends ConsumerState<_RipAlbumDetailPanel> {
                       tagControllers: _tagControllers,
                     );
                   }
-                  final duration = _formatDuration(track.durationMs);
+                  final duration = formatPlaybackDurationMs(track.durationMs);
                   final discLabel = track.discNumber > 1
                       ? 'Disc ${track.discNumber} · '
                       : '';
@@ -952,14 +956,6 @@ class _RipAlbumDetailPanelState extends ConsumerState<_RipAlbumDetailPanel> {
         ),
       ],
     );
-  }
-
-  String _formatDuration(int? ms) {
-    if (ms == null) return '';
-    final seconds = ms ~/ 1000;
-    final m = seconds ~/ 60;
-    final s = seconds % 60;
-    return '$m:${s.toString().padLeft(2, '0')}';
   }
 }
 

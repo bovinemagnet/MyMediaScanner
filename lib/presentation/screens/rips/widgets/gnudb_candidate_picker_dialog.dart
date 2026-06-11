@@ -5,7 +5,7 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:mymediascanner/data/mappers/gnudb_mapper.dart';
+import 'package:mymediascanner/domain/services/gnudb_mapper.dart';
 import 'package:mymediascanner/domain/usecases/lookup_gnudb_for_rip_usecase.dart';
 import 'package:mymediascanner/presentation/screens/disambiguation/widgets/candidate_card.dart';
 
@@ -42,7 +42,7 @@ class GnudbCandidatePickerDialog extends StatelessWidget {
           itemBuilder: (context, i) {
             final c = candidates[i];
             final candidate = GnudbMapper.toCandidate(
-              c.dto,
+              c.disc,
               category: c.category,
             );
             return CandidateCard(

@@ -27,6 +27,13 @@ String formatPlaybackDuration(Duration d) {
   return '$m:${s.toString().padLeft(2, '0')}';
 }
 
+/// Formats a duration in milliseconds as `m:ss`, or an empty string
+/// when [ms] is null.
+String formatPlaybackDurationMs(int? ms) {
+  if (ms == null) return '';
+  return formatPlaybackDuration(Duration(milliseconds: ms));
+}
+
 /// Play/pause button for a rip album.
 ///
 /// Shows pause when the album is currently playing, play otherwise.
