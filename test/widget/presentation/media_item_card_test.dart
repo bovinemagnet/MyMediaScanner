@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
@@ -153,7 +152,7 @@ void main() {
       expect(node.label, contains('1954'));
       expect(node.label, contains('Lent'));
       expect(node.label, contains('Ripped'));
-      expect(node.hasFlag(SemanticsFlag.isButton), isTrue);
+      expect(node.flagsCollection.isButton, isTrue);
 
       handle.dispose();
     });
