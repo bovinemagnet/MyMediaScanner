@@ -91,7 +91,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 22;
+  int get schemaVersion => 23;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -324,6 +324,33 @@ class AppDatabase extends _$AppDatabase {
                   mediaItemsTable, mediaItemsTable.currentValue);
               await m.addColumn(
                   mediaItemsTable, mediaItemsTable.currentValueAsOf);
+            }
+          }
+          if (from < 23) {
+            // Join-table sync: media_item_tags and shelf_items gain
+            // `updated_at` (LWW basis) and `deleted` (removal tombstone)
+            // so tag assignments and shelf memberships replicate. They
+            // previously had no sync representation at all.
+            //
+            // Guard on table existence — synthetic migration tests seed
+            // only a subset of tables (see the v22 branch above).
+            Future<bool> tableExists(String name) async {
+              final rows = await customSelect(
+                'SELECT name FROM sqlite_master '
+                "WHERE type='table' AND name='$name'",
+              ).get();
+              return rows.isNotEmpty;
+            }
+
+            if (await tableExists('media_item_tags')) {
+              await m.addColumn(
+                  mediaItemTagsTable, mediaItemTagsTable.updatedAt);
+              await m.addColumn(
+                  mediaItemTagsTable, mediaItemTagsTable.deleted);
+            }
+            if (await tableExists('shelf_items')) {
+              await m.addColumn(shelfItemsTable, shelfItemsTable.updatedAt);
+              await m.addColumn(shelfItemsTable, shelfItemsTable.deleted);
             }
           }
         },

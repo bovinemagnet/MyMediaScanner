@@ -35,7 +35,8 @@ class MediaItemsDao extends DatabaseAccessor<AppDatabase>
             ..addColumns([mediaItemTagsTable.tagId])
             ..where(
               mediaItemTagsTable.mediaItemId.equalsExp(t.id) &
-                  mediaItemTagsTable.tagId.isIn(tagIds),
+                  mediaItemTagsTable.tagId.isIn(tagIds) &
+                  mediaItemTagsTable.deleted.equals(0),
             ),
         ),
       );

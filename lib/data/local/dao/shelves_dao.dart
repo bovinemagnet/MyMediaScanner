@@ -54,55 +54,98 @@ class ShelvesDao extends DatabaseAccessor<AppDatabase>
     );
   }
 
-  Future<void> addItem(String shelfId, String mediaItemId, int position) {
-    return into(shelfItemsTable).insert(
+  /// Upsert: re-adding a previously removed item must resurrect the
+  /// soft-deleted row, clearing its tombstone.
+  Future<void> addItem(
+    String shelfId,
+    String mediaItemId,
+    int position, {
+    int? updatedAt,
+  }) {
+    return into(shelfItemsTable).insertOnConflictUpdate(
       ShelfItemsTableCompanion(
         shelfId: Value(shelfId),
         mediaItemId: Value(mediaItemId),
         position: Value(position),
+        updatedAt:
+            Value(updatedAt ?? DateTime.now().millisecondsSinceEpoch),
+        deleted: const Value(0),
       ),
-      mode: InsertMode.insertOrReplace,
     );
   }
 
-  Future<void> removeItem(String shelfId, String mediaItemId) {
-    return (delete(shelfItemsTable)
+  /// Soft delete: the tombstone row (deleted = 1) is what replicates the
+  /// removal to other devices via sync.
+  Future<void> removeItem(
+    String shelfId,
+    String mediaItemId, {
+    int? updatedAt,
+  }) {
+    return (update(shelfItemsTable)
           ..where((t) =>
               t.shelfId.equals(shelfId) &
               t.mediaItemId.equals(mediaItemId)))
-        .go();
+        .write(ShelfItemsTableCompanion(
+      deleted: const Value(1),
+      updatedAt: Value(updatedAt ?? DateTime.now().millisecondsSinceEpoch),
+    ));
   }
 
   Future<List<String>> getMediaItemIdsForShelf(String shelfId) async {
     final rows = await (select(shelfItemsTable)
-          ..where((t) => t.shelfId.equals(shelfId))
+          ..where((t) => t.shelfId.equals(shelfId) & t.deleted.equals(0))
           ..orderBy([(t) => OrderingTerm.asc(t.position)]))
         .get();
     return rows.map((r) => r.mediaItemId).toList();
   }
 
-  /// Atomically rewrite the ordering of items on [shelfId]. Deletes every
-  /// existing shelf_items row for the shelf and re-inserts them at indices
-  /// 0..N-1 so positions are dense and unique. The previous single-row
-  /// `addItem` reorder produced position collisions on any move.
+  /// Atomically rewrite the ordering of items on [shelfId]: every live
+  /// row is first tombstoned, then the surviving ids are upserted back
+  /// at dense indices 0..N-1. Items absent from [orderedMediaItemIds]
+  /// keep the tombstone, which is how their removal syncs; positions
+  /// stay dense and unique (the previous single-row `addItem` reorder
+  /// produced collisions on any move).
   Future<void> reorderItems(
     String shelfId,
-    List<String> orderedMediaItemIds,
-  ) async {
+    List<String> orderedMediaItemIds, {
+    int? updatedAt,
+  }) async {
+    final stamp = updatedAt ?? DateTime.now().millisecondsSinceEpoch;
     await transaction(() async {
-      await (delete(shelfItemsTable)
+      await (update(shelfItemsTable)
             ..where((t) => t.shelfId.equals(shelfId)))
-          .go();
-      await batch((b) {
-        b.insertAll(shelfItemsTable, [
-          for (var i = 0; i < orderedMediaItemIds.length; i++)
-            ShelfItemsTableCompanion(
-              shelfId: Value(shelfId),
-              mediaItemId: Value(orderedMediaItemIds[i]),
-              position: Value(i),
-            ),
-        ]);
-      });
+          .write(ShelfItemsTableCompanion(
+        deleted: const Value(1),
+        updatedAt: Value(stamp),
+      ));
+      for (var i = 0; i < orderedMediaItemIds.length; i++) {
+        await into(shelfItemsTable).insertOnConflictUpdate(
+          ShelfItemsTableCompanion(
+            shelfId: Value(shelfId),
+            mediaItemId: Value(orderedMediaItemIds[i]),
+            position: Value(i),
+            updatedAt: Value(stamp),
+            deleted: const Value(0),
+          ),
+        );
+      }
     });
+  }
+
+  /// Local `updated_at` for a membership, or null when no row exists.
+  /// Used by pull's last-write-wins comparison.
+  Future<int?> itemUpdatedAt(String shelfId, String mediaItemId) async {
+    final row = await (select(shelfItemsTable)
+          ..where((t) =>
+              t.shelfId.equals(shelfId) &
+              t.mediaItemId.equals(mediaItemId)))
+        .getSingleOrNull();
+    return row?.updatedAt;
+  }
+
+  /// Raw upsert used by sync pull — writes whatever the remote row says,
+  /// including tombstones.
+  Future<void> upsertItemRow(ShelfItemsTableCompanion row) {
+    return into(shelfItemsTable).insertOnConflictUpdate(row);
   }
 }

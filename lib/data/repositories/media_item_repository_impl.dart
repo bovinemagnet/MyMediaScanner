@@ -60,7 +60,7 @@ class MediaItemRepositoryImpl implements IMediaItemRepository {
     Future<Set<String>> resolveTaggedIds() async {
       if (!useFts || !hasTagFilter) return const <String>{};
       final assignments = await (_db.select(_db.mediaItemTagsTable)
-            ..where((t) => t.tagId.isIn(tagIds)))
+            ..where((t) => t.tagId.isIn(tagIds) & t.deleted.equals(0)))
           .get();
       return assignments.map((a) => a.mediaItemId).toSet();
     }

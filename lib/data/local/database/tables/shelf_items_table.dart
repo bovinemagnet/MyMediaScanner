@@ -12,6 +12,12 @@ class ShelfItemsTable extends Table {
       text().references(MediaItemsTable, #id)();
   IntColumn get position => integer().withDefault(const Constant(0))();
 
+  /// Last-write-wins basis for sync (epoch millis).
+  IntColumn get updatedAt => integer().withDefault(const Constant(0))();
+
+  /// Soft-delete tombstone so removals replicate; readers filter on 0.
+  IntColumn get deleted => integer().withDefault(const Constant(0))();
+
   @override
   Set<Column> get primaryKey => {shelfId, mediaItemId};
 }

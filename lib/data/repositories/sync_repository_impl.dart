@@ -250,6 +250,17 @@ class SyncRepositoryImpl implements ISyncRepository {
         afterTimestamp: lastSyncedAt,
       );
 
+      // Join tables last, so their parent rows (media items, tags,
+      // shelves) have already been pulled in this same pass.
+      await _pullJoinTable(
+        tableName: 'media_item_tags',
+        afterTimestamp: lastSyncedAt,
+      );
+      await _pullJoinTable(
+        tableName: 'shelf_items',
+        afterTimestamp: lastSyncedAt,
+      );
+
       // Auto-purge old sync log entries (30 days)
       final purgeThreshold =
           DateTime.now().millisecondsSinceEpoch - _purgeThresholdMs;
@@ -321,6 +332,75 @@ class SyncRepositoryImpl implements ISyncRepository {
         continue;
       }
       await _applyRemoteRow(entityType, remote);
+    }
+  }
+
+  /// Pull a composite-key join table (`media_item_tags` / `shelf_items`)
+  /// with last-write-wins on `updated_at`. Tombstones (`deleted = 1`)
+  /// are applied as-is, soft-deleting the local row.
+  ///
+  /// Unlike [_pullLastWriteWins] this reads the local `updated_at` one
+  /// row at a time — the join tables have no single id column to bulk
+  /// key on, and incremental pulls only carry rows changed since the
+  /// watermark, so the per-row read stays small.
+  Future<void> _pullJoinTable({
+    required String tableName,
+    required int? afterTimestamp,
+  }) async {
+    final rows = await _syncClient.pullRecords(
+      tableName,
+      afterTimestamp: afterTimestamp,
+    );
+    final db = _mediaItemsDao.attachedDatabase;
+    final entityType =
+        tableName == 'media_item_tags' ? 'media_item_tag' : 'shelf_item';
+    final total = rows.length;
+    for (var i = 0; i < rows.length; i++) {
+      final remote = rows[i];
+      _progressController.add(SyncProgress(
+        phase: SyncPhase.pull,
+        current: i + 1,
+        total: total,
+        currentEntityType: entityType,
+      ));
+      final remoteUpdatedAt = (remote['updated_at'] as num?)?.toInt() ?? 0;
+      final deleted = (remote['deleted'] as num?)?.toInt() ?? 0;
+
+      switch (tableName) {
+        case 'media_item_tags':
+          final mediaItemId = remote['media_item_id'];
+          final tagId = remote['tag_id'];
+          if (mediaItemId is! String || tagId is! String) continue;
+          final localUpdatedAt =
+              await db.tagsDao.assignmentUpdatedAt(mediaItemId, tagId);
+          if (localUpdatedAt != null && remoteUpdatedAt <= localUpdatedAt) {
+            continue;
+          }
+          await db.tagsDao.upsertAssignmentRow(MediaItemTagsTableCompanion(
+            mediaItemId: Value(mediaItemId),
+            tagId: Value(tagId),
+            updatedAt: Value(remoteUpdatedAt),
+            deleted: Value(deleted),
+          ));
+        case 'shelf_items':
+          final shelfId = remote['shelf_id'];
+          final mediaItemId = remote['media_item_id'];
+          if (shelfId is! String || mediaItemId is! String) continue;
+          final localUpdatedAt =
+              await db.shelvesDao.itemUpdatedAt(shelfId, mediaItemId);
+          if (localUpdatedAt != null && remoteUpdatedAt <= localUpdatedAt) {
+            continue;
+          }
+          await db.shelvesDao.upsertItemRow(ShelfItemsTableCompanion(
+            shelfId: Value(shelfId),
+            mediaItemId: Value(mediaItemId),
+            position: Value((remote['position'] as num?)?.toInt() ?? 0),
+            updatedAt: Value(remoteUpdatedAt),
+            deleted: Value(deleted),
+          ));
+        default:
+          throw StateError('Unsupported join table for pull: $tableName');
+      }
     }
   }
 
