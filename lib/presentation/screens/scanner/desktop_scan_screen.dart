@@ -93,7 +93,9 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
       _cameraError = null;
     });
 
-    final CameraService service = ref.read(cameraServiceProvider);
+    // Fresh instance per session: this screen disposes the service when
+    // the webcam is toggled off, so a cached instance must never be reused.
+    final CameraService service = ref.read(cameraServiceFactoryProvider)();
     _cameraService = service;
     try {
       await service.start();
