@@ -104,10 +104,14 @@ class BatchMetadataEditNotifier extends Notifier<BatchMetadataEditState> {
 
       // Build a pre-computed lookup: trackId → RipTrack.
       // Iterates albums once up front so the per-change loop is O(1).
-      final allAlbums = ref.read(allRipAlbumsProvider).value ?? [];
+      // Query the repository directly — a synchronous `.value` read of
+      // ripTracksProvider returns null for any album whose detail view
+      // was never opened, which made existing tracks look deleted.
+      final repo = ref.read(ripLibraryRepositoryProvider);
+      final allAlbums = await repo.getAllNonDeleted();
       final trackLookup = <String, RipTrack>{};
       for (final album in allAlbums) {
-        final tracks = ref.read(ripTracksProvider(album.id)).value ?? [];
+        final tracks = await repo.getTracksForAlbum(album.id);
         for (final track in tracks) {
           trackLookup[track.id] = track;
         }
@@ -178,11 +182,14 @@ class BatchMetadataEditNotifier extends Notifier<BatchMetadataEditState> {
         writer: ref.read(metaflacWriterProvider),
       );
 
-      // Build a pre-computed lookup: trackId → RipTrack.
-      final allAlbums = ref.read(allRipAlbumsProvider).value ?? [];
+      // Build a pre-computed lookup: trackId → RipTrack. Queried from the
+      // repository for the same reason as in applyChanges — a provider
+      // `.value` read is null for albums never opened in the detail view.
+      final repo = ref.read(ripLibraryRepositoryProvider);
+      final allAlbums = await repo.getAllNonDeleted();
       final trackLookup = <String, RipTrack>{};
       for (final album in allAlbums) {
-        final tracks = ref.read(ripTracksProvider(album.id)).value ?? [];
+        final tracks = await repo.getTracksForAlbum(album.id);
         for (final track in tracks) {
           trackLookup[track.id] = track;
         }
