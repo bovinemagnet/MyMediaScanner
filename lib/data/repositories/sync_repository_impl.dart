@@ -169,10 +169,18 @@ class SyncRepositoryImpl implements ISyncRepository {
         // every merged field.
         final localJson = JsonKeyCase.toSnakeCase(localRow.toJson());
 
+        // Remote rows come from SELECT *, so they carry server-managed
+        // columns the local schema doesn't have — `created_at`
+        // (TIMESTAMPTZ, decoded as a Dart DateTime) and `device_id`.
+        // Restrict the remote map to the local column set so the merge
+        // can't feed un-encodable values into jsonEncode below, or echo
+        // server-managed columns back to the server on the next push.
+        final remoteFiltered = _restrictToColumns(remote, localJson);
+
         // Detect conflicts for close-in-time edits
         final conflicts = SyncStrategy.detectConflicts(
           localJson,
-          remote,
+          remoteFiltered,
           entityType: 'media_item',
           entityId: remoteId,
         );
@@ -184,7 +192,7 @@ class SyncRepositoryImpl implements ISyncRepository {
         }
 
         // No conflicts — apply standard merge and persist
-        final merged = SyncStrategy.mergeFields(localJson, remote);
+        final merged = SyncStrategy.mergeFields(localJson, remoteFiltered);
         // Stamp synced_at on the merged row so the pulled state isn't
         // re-flagged as dirty on the next push.
         merged['synced_at'] = DateTime.now().millisecondsSinceEpoch;
@@ -500,9 +508,12 @@ class SyncRepositoryImpl implements ISyncRepository {
       );
       if (remote.isEmpty) continue;
 
+      // Strip server-managed columns (see pullChanges) before merging so
+      // the pending payload below stays JSON-encodable.
+      final localJson = JsonKeyCase.toSnakeCase(localRow.toJson());
       final merged = SyncStrategy.mergeWithResolutions(
-        JsonKeyCase.toSnakeCase(localRow.toJson()),
-        remote,
+        localJson,
+        _restrictToColumns(remote, localJson),
         entityResolutions,
       );
       merged['synced_at'] = DateTime.now().millisecondsSinceEpoch;
@@ -611,6 +622,23 @@ class SyncRepositoryImpl implements ISyncRepository {
       error: error,
       conflictCount: conflictCount,
     );
+  }
+
+  /// Restrict a remote row to the columns present on the local row.
+  ///
+  /// Remote rows are fetched with SELECT *, so they include columns the
+  /// local schema doesn't carry (`created_at`, `device_id`). Those must
+  /// not survive into merged payloads: `created_at` arrives as a Dart
+  /// [DateTime] (not JSON-encodable) and `device_id` would be pushed
+  /// back, clobbering the server's attribution of the original writer.
+  static Map<String, dynamic> _restrictToColumns(
+    Map<String, dynamic> remote,
+    Map<String, dynamic> localJson,
+  ) {
+    return {
+      for (final entry in remote.entries)
+        if (localJson.containsKey(entry.key)) entry.key: entry.value,
+    };
   }
 
   Future<int?> _getLastSyncedAt() async {
