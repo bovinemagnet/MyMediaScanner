@@ -40,7 +40,11 @@ class DisambiguationData {
 class DisambiguationNotifier extends Notifier<DisambiguationData> {
   @override
   DisambiguationData build() {
-    final scanResult = ref.read(scannerProvider).result;
+    // Watch (not read) the scan result: `build()` only runs again when a
+    // dependency changes, so a `ref.read` snapshot here froze the FIRST
+    // multi-match scan's candidates for the life of the app — every
+    // later disambiguation showed stale data.
+    final scanResult = ref.watch(scannerProvider.select((s) => s.result));
     if (scanResult is MultiMatchScanResult) {
       return DisambiguationData(
         candidates: scanResult.candidates,
