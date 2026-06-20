@@ -476,32 +476,37 @@ class BatchEditorNotifier extends AsyncNotifier<BatchEditorState> {
     // Update the live state by ID on each iteration. This preserves
     // concurrent `addScanResult` additions that land during the save loop.
     var savedCount = 0;
-    for (final item in confirmedItems) {
-      await useCase.execute(item.metadata!);
-      savedCount++;
+    try {
+      for (final item in confirmedItems) {
+        await useCase.execute(item.metadata!);
+        savedCount++;
 
-      final latest = state.requireValue;
-      final nextItems = latest.items.map((i) {
-        if (i.id == item.id) return i.copyWith(status: BatchItemStatus.saved);
-        return i;
-      }).toList();
-      state = AsyncValue.data(latest.copyWith(
-        items: nextItems,
-        saveProgress: () =>
-            BatchSaveProgress(current: savedCount, total: total),
+        final latest = state.requireValue;
+        final nextItems = latest.items.map((i) {
+          if (i.id == item.id) return i.copyWith(status: BatchItemStatus.saved);
+          return i;
+        }).toList();
+        state = AsyncValue.data(latest.copyWith(
+          items: nextItems,
+          saveProgress: () =>
+              BatchSaveProgress(current: savedCount, total: total),
+        ));
+      }
+    } finally {
+      // Runs even when a save throws mid-loop: clear the progress flag so
+      // the UI can't sit in "saving" forever, and persist the statuses of
+      // the items that DID save — otherwise a restored session would
+      // still hold them as `confirmed` and re-save them as duplicates.
+      // (Includes any concurrently added items.)
+      state = AsyncValue.data(state.requireValue.copyWith(
+        saveProgress: () => null,
       ));
+      await _persistAllItems(state.requireValue.items);
     }
 
     final finalItems = state.requireValue.items;
     final hasUnsaved =
         finalItems.any((i) => i.status != BatchItemStatus.saved);
-
-    state = AsyncValue.data(state.requireValue.copyWith(
-      saveProgress: () => null,
-    ));
-
-    // Persist all status changes (includes any concurrently added items).
-    await _persistAllItems(finalItems);
 
     // Only complete the session if it is still the live one — clearBatch
     // may have replaced it during the save loop, in which case the new

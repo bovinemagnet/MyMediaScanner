@@ -2479,8 +2479,37 @@ class $MediaItemTagsTableTable extends MediaItemTagsTable
       'REFERENCES tags (id)',
     ),
   );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
   @override
-  List<GeneratedColumn> get $columns => [mediaItemId, tagId];
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _deletedMeta = const VerificationMeta(
+    'deleted',
+  );
+  @override
+  late final GeneratedColumn<int> deleted = GeneratedColumn<int>(
+    'deleted',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    mediaItemId,
+    tagId,
+    updatedAt,
+    deleted,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -2512,6 +2541,18 @@ class $MediaItemTagsTableTable extends MediaItemTagsTable
     } else if (isInserting) {
       context.missing(_tagIdMeta);
     }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    if (data.containsKey('deleted')) {
+      context.handle(
+        _deletedMeta,
+        deleted.isAcceptableOrUnknown(data['deleted']!, _deletedMeta),
+      );
+    }
     return context;
   }
 
@@ -2529,6 +2570,14 @@ class $MediaItemTagsTableTable extends MediaItemTagsTable
         DriftSqlType.string,
         data['${effectivePrefix}tag_id'],
       )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      deleted: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}deleted'],
+      )!,
     );
   }
 
@@ -2542,15 +2591,25 @@ class MediaItemTagsTableData extends DataClass
     implements Insertable<MediaItemTagsTableData> {
   final String mediaItemId;
   final String tagId;
+
+  /// Last-write-wins basis for sync (epoch millis).
+  final int updatedAt;
+
+  /// Soft-delete tombstone so removals replicate; readers filter on 0.
+  final int deleted;
   const MediaItemTagsTableData({
     required this.mediaItemId,
     required this.tagId,
+    required this.updatedAt,
+    required this.deleted,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['media_item_id'] = Variable<String>(mediaItemId);
     map['tag_id'] = Variable<String>(tagId);
+    map['updated_at'] = Variable<int>(updatedAt);
+    map['deleted'] = Variable<int>(deleted);
     return map;
   }
 
@@ -2558,6 +2617,8 @@ class MediaItemTagsTableData extends DataClass
     return MediaItemTagsTableCompanion(
       mediaItemId: Value(mediaItemId),
       tagId: Value(tagId),
+      updatedAt: Value(updatedAt),
+      deleted: Value(deleted),
     );
   }
 
@@ -2569,6 +2630,8 @@ class MediaItemTagsTableData extends DataClass
     return MediaItemTagsTableData(
       mediaItemId: serializer.fromJson<String>(json['mediaItemId']),
       tagId: serializer.fromJson<String>(json['tagId']),
+      updatedAt: serializer.fromJson<int>(json['updatedAt']),
+      deleted: serializer.fromJson<int>(json['deleted']),
     );
   }
   @override
@@ -2577,20 +2640,30 @@ class MediaItemTagsTableData extends DataClass
     return <String, dynamic>{
       'mediaItemId': serializer.toJson<String>(mediaItemId),
       'tagId': serializer.toJson<String>(tagId),
+      'updatedAt': serializer.toJson<int>(updatedAt),
+      'deleted': serializer.toJson<int>(deleted),
     };
   }
 
-  MediaItemTagsTableData copyWith({String? mediaItemId, String? tagId}) =>
-      MediaItemTagsTableData(
-        mediaItemId: mediaItemId ?? this.mediaItemId,
-        tagId: tagId ?? this.tagId,
-      );
+  MediaItemTagsTableData copyWith({
+    String? mediaItemId,
+    String? tagId,
+    int? updatedAt,
+    int? deleted,
+  }) => MediaItemTagsTableData(
+    mediaItemId: mediaItemId ?? this.mediaItemId,
+    tagId: tagId ?? this.tagId,
+    updatedAt: updatedAt ?? this.updatedAt,
+    deleted: deleted ?? this.deleted,
+  );
   MediaItemTagsTableData copyWithCompanion(MediaItemTagsTableCompanion data) {
     return MediaItemTagsTableData(
       mediaItemId: data.mediaItemId.present
           ? data.mediaItemId.value
           : this.mediaItemId,
       tagId: data.tagId.present ? data.tagId.value : this.tagId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      deleted: data.deleted.present ? data.deleted.value : this.deleted,
     );
   }
 
@@ -2598,45 +2671,59 @@ class MediaItemTagsTableData extends DataClass
   String toString() {
     return (StringBuffer('MediaItemTagsTableData(')
           ..write('mediaItemId: $mediaItemId, ')
-          ..write('tagId: $tagId')
+          ..write('tagId: $tagId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deleted: $deleted')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(mediaItemId, tagId);
+  int get hashCode => Object.hash(mediaItemId, tagId, updatedAt, deleted);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is MediaItemTagsTableData &&
           other.mediaItemId == this.mediaItemId &&
-          other.tagId == this.tagId);
+          other.tagId == this.tagId &&
+          other.updatedAt == this.updatedAt &&
+          other.deleted == this.deleted);
 }
 
 class MediaItemTagsTableCompanion
     extends UpdateCompanion<MediaItemTagsTableData> {
   final Value<String> mediaItemId;
   final Value<String> tagId;
+  final Value<int> updatedAt;
+  final Value<int> deleted;
   final Value<int> rowid;
   const MediaItemTagsTableCompanion({
     this.mediaItemId = const Value.absent(),
     this.tagId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.deleted = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   MediaItemTagsTableCompanion.insert({
     required String mediaItemId,
     required String tagId,
+    this.updatedAt = const Value.absent(),
+    this.deleted = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : mediaItemId = Value(mediaItemId),
        tagId = Value(tagId);
   static Insertable<MediaItemTagsTableData> custom({
     Expression<String>? mediaItemId,
     Expression<String>? tagId,
+    Expression<int>? updatedAt,
+    Expression<int>? deleted,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (mediaItemId != null) 'media_item_id': mediaItemId,
       if (tagId != null) 'tag_id': tagId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (deleted != null) 'deleted': deleted,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -2644,11 +2731,15 @@ class MediaItemTagsTableCompanion
   MediaItemTagsTableCompanion copyWith({
     Value<String>? mediaItemId,
     Value<String>? tagId,
+    Value<int>? updatedAt,
+    Value<int>? deleted,
     Value<int>? rowid,
   }) {
     return MediaItemTagsTableCompanion(
       mediaItemId: mediaItemId ?? this.mediaItemId,
       tagId: tagId ?? this.tagId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      deleted: deleted ?? this.deleted,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -2662,6 +2753,12 @@ class MediaItemTagsTableCompanion
     if (tagId.present) {
       map['tag_id'] = Variable<String>(tagId.value);
     }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<int>(updatedAt.value);
+    }
+    if (deleted.present) {
+      map['deleted'] = Variable<int>(deleted.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -2673,6 +2770,8 @@ class MediaItemTagsTableCompanion
     return (StringBuffer('MediaItemTagsTableCompanion(')
           ..write('mediaItemId: $mediaItemId, ')
           ..write('tagId: $tagId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deleted: $deleted, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -3136,8 +3235,38 @@ class $ShelfItemsTableTable extends ShelfItemsTable
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
   @override
-  List<GeneratedColumn> get $columns => [shelfId, mediaItemId, position];
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _deletedMeta = const VerificationMeta(
+    'deleted',
+  );
+  @override
+  late final GeneratedColumn<int> deleted = GeneratedColumn<int>(
+    'deleted',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    shelfId,
+    mediaItemId,
+    position,
+    updatedAt,
+    deleted,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -3175,6 +3304,18 @@ class $ShelfItemsTableTable extends ShelfItemsTable
         position.isAcceptableOrUnknown(data['position']!, _positionMeta),
       );
     }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    if (data.containsKey('deleted')) {
+      context.handle(
+        _deletedMeta,
+        deleted.isAcceptableOrUnknown(data['deleted']!, _deletedMeta),
+      );
+    }
     return context;
   }
 
@@ -3196,6 +3337,14 @@ class $ShelfItemsTableTable extends ShelfItemsTable
         DriftSqlType.int,
         data['${effectivePrefix}position'],
       )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      deleted: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}deleted'],
+      )!,
     );
   }
 
@@ -3210,10 +3359,18 @@ class ShelfItemsTableData extends DataClass
   final String shelfId;
   final String mediaItemId;
   final int position;
+
+  /// Last-write-wins basis for sync (epoch millis).
+  final int updatedAt;
+
+  /// Soft-delete tombstone so removals replicate; readers filter on 0.
+  final int deleted;
   const ShelfItemsTableData({
     required this.shelfId,
     required this.mediaItemId,
     required this.position,
+    required this.updatedAt,
+    required this.deleted,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -3221,6 +3378,8 @@ class ShelfItemsTableData extends DataClass
     map['shelf_id'] = Variable<String>(shelfId);
     map['media_item_id'] = Variable<String>(mediaItemId);
     map['position'] = Variable<int>(position);
+    map['updated_at'] = Variable<int>(updatedAt);
+    map['deleted'] = Variable<int>(deleted);
     return map;
   }
 
@@ -3229,6 +3388,8 @@ class ShelfItemsTableData extends DataClass
       shelfId: Value(shelfId),
       mediaItemId: Value(mediaItemId),
       position: Value(position),
+      updatedAt: Value(updatedAt),
+      deleted: Value(deleted),
     );
   }
 
@@ -3241,6 +3402,8 @@ class ShelfItemsTableData extends DataClass
       shelfId: serializer.fromJson<String>(json['shelfId']),
       mediaItemId: serializer.fromJson<String>(json['mediaItemId']),
       position: serializer.fromJson<int>(json['position']),
+      updatedAt: serializer.fromJson<int>(json['updatedAt']),
+      deleted: serializer.fromJson<int>(json['deleted']),
     );
   }
   @override
@@ -3250,6 +3413,8 @@ class ShelfItemsTableData extends DataClass
       'shelfId': serializer.toJson<String>(shelfId),
       'mediaItemId': serializer.toJson<String>(mediaItemId),
       'position': serializer.toJson<int>(position),
+      'updatedAt': serializer.toJson<int>(updatedAt),
+      'deleted': serializer.toJson<int>(deleted),
     };
   }
 
@@ -3257,10 +3422,14 @@ class ShelfItemsTableData extends DataClass
     String? shelfId,
     String? mediaItemId,
     int? position,
+    int? updatedAt,
+    int? deleted,
   }) => ShelfItemsTableData(
     shelfId: shelfId ?? this.shelfId,
     mediaItemId: mediaItemId ?? this.mediaItemId,
     position: position ?? this.position,
+    updatedAt: updatedAt ?? this.updatedAt,
+    deleted: deleted ?? this.deleted,
   );
   ShelfItemsTableData copyWithCompanion(ShelfItemsTableCompanion data) {
     return ShelfItemsTableData(
@@ -3269,6 +3438,8 @@ class ShelfItemsTableData extends DataClass
           ? data.mediaItemId.value
           : this.mediaItemId,
       position: data.position.present ? data.position.value : this.position,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      deleted: data.deleted.present ? data.deleted.value : this.deleted,
     );
   }
 
@@ -3277,37 +3448,48 @@ class ShelfItemsTableData extends DataClass
     return (StringBuffer('ShelfItemsTableData(')
           ..write('shelfId: $shelfId, ')
           ..write('mediaItemId: $mediaItemId, ')
-          ..write('position: $position')
+          ..write('position: $position, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deleted: $deleted')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(shelfId, mediaItemId, position);
+  int get hashCode =>
+      Object.hash(shelfId, mediaItemId, position, updatedAt, deleted);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is ShelfItemsTableData &&
           other.shelfId == this.shelfId &&
           other.mediaItemId == this.mediaItemId &&
-          other.position == this.position);
+          other.position == this.position &&
+          other.updatedAt == this.updatedAt &&
+          other.deleted == this.deleted);
 }
 
 class ShelfItemsTableCompanion extends UpdateCompanion<ShelfItemsTableData> {
   final Value<String> shelfId;
   final Value<String> mediaItemId;
   final Value<int> position;
+  final Value<int> updatedAt;
+  final Value<int> deleted;
   final Value<int> rowid;
   const ShelfItemsTableCompanion({
     this.shelfId = const Value.absent(),
     this.mediaItemId = const Value.absent(),
     this.position = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.deleted = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ShelfItemsTableCompanion.insert({
     required String shelfId,
     required String mediaItemId,
     this.position = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.deleted = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : shelfId = Value(shelfId),
        mediaItemId = Value(mediaItemId);
@@ -3315,12 +3497,16 @@ class ShelfItemsTableCompanion extends UpdateCompanion<ShelfItemsTableData> {
     Expression<String>? shelfId,
     Expression<String>? mediaItemId,
     Expression<int>? position,
+    Expression<int>? updatedAt,
+    Expression<int>? deleted,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (shelfId != null) 'shelf_id': shelfId,
       if (mediaItemId != null) 'media_item_id': mediaItemId,
       if (position != null) 'position': position,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (deleted != null) 'deleted': deleted,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -3329,12 +3515,16 @@ class ShelfItemsTableCompanion extends UpdateCompanion<ShelfItemsTableData> {
     Value<String>? shelfId,
     Value<String>? mediaItemId,
     Value<int>? position,
+    Value<int>? updatedAt,
+    Value<int>? deleted,
     Value<int>? rowid,
   }) {
     return ShelfItemsTableCompanion(
       shelfId: shelfId ?? this.shelfId,
       mediaItemId: mediaItemId ?? this.mediaItemId,
       position: position ?? this.position,
+      updatedAt: updatedAt ?? this.updatedAt,
+      deleted: deleted ?? this.deleted,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -3351,6 +3541,12 @@ class ShelfItemsTableCompanion extends UpdateCompanion<ShelfItemsTableData> {
     if (position.present) {
       map['position'] = Variable<int>(position.value);
     }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<int>(updatedAt.value);
+    }
+    if (deleted.present) {
+      map['deleted'] = Variable<int>(deleted.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -3363,6 +3559,8 @@ class ShelfItemsTableCompanion extends UpdateCompanion<ShelfItemsTableData> {
           ..write('shelfId: $shelfId, ')
           ..write('mediaItemId: $mediaItemId, ')
           ..write('position: $position, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deleted: $deleted, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -13296,12 +13494,16 @@ typedef $$MediaItemTagsTableTableCreateCompanionBuilder =
     MediaItemTagsTableCompanion Function({
       required String mediaItemId,
       required String tagId,
+      Value<int> updatedAt,
+      Value<int> deleted,
       Value<int> rowid,
     });
 typedef $$MediaItemTagsTableTableUpdateCompanionBuilder =
     MediaItemTagsTableCompanion Function({
       Value<String> mediaItemId,
       Value<String> tagId,
+      Value<int> updatedAt,
+      Value<int> deleted,
       Value<int> rowid,
     });
 
@@ -13369,6 +13571,16 @@ class $$MediaItemTagsTableTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  ColumnFilters<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get deleted => $composableBuilder(
+    column: $table.deleted,
+    builder: (column) => ColumnFilters(column),
+  );
+
   $$MediaItemsTableTableFilterComposer get mediaItemId {
     final $$MediaItemsTableTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -13425,6 +13637,16 @@ class $$MediaItemTagsTableTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  ColumnOrderings<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get deleted => $composableBuilder(
+    column: $table.deleted,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$MediaItemsTableTableOrderingComposer get mediaItemId {
     final $$MediaItemsTableTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -13481,6 +13703,12 @@ class $$MediaItemTagsTableTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  GeneratedColumn<int> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get deleted =>
+      $composableBuilder(column: $table.deleted, builder: (column) => column);
+
   $$MediaItemsTableTableAnnotationComposer get mediaItemId {
     final $$MediaItemsTableTableAnnotationComposer composer = $composerBuilder(
       composer: this,
@@ -13563,20 +13791,28 @@ class $$MediaItemTagsTableTableTableManager
               ({
                 Value<String> mediaItemId = const Value.absent(),
                 Value<String> tagId = const Value.absent(),
+                Value<int> updatedAt = const Value.absent(),
+                Value<int> deleted = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => MediaItemTagsTableCompanion(
                 mediaItemId: mediaItemId,
                 tagId: tagId,
+                updatedAt: updatedAt,
+                deleted: deleted,
                 rowid: rowid,
               ),
           createCompanionCallback:
               ({
                 required String mediaItemId,
                 required String tagId,
+                Value<int> updatedAt = const Value.absent(),
+                Value<int> deleted = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => MediaItemTagsTableCompanion.insert(
                 mediaItemId: mediaItemId,
                 tagId: tagId,
+                updatedAt: updatedAt,
+                deleted: deleted,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -13998,6 +14234,8 @@ typedef $$ShelfItemsTableTableCreateCompanionBuilder =
       required String shelfId,
       required String mediaItemId,
       Value<int> position,
+      Value<int> updatedAt,
+      Value<int> deleted,
       Value<int> rowid,
     });
 typedef $$ShelfItemsTableTableUpdateCompanionBuilder =
@@ -14005,6 +14243,8 @@ typedef $$ShelfItemsTableTableUpdateCompanionBuilder =
       Value<String> shelfId,
       Value<String> mediaItemId,
       Value<int> position,
+      Value<int> updatedAt,
+      Value<int> deleted,
       Value<int> rowid,
     });
 
@@ -14077,6 +14317,16 @@ class $$ShelfItemsTableTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get deleted => $composableBuilder(
+    column: $table.deleted,
+    builder: (column) => ColumnFilters(column),
+  );
+
   $$ShelvesTableTableFilterComposer get shelfId {
     final $$ShelvesTableTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -14138,6 +14388,16 @@ class $$ShelfItemsTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get deleted => $composableBuilder(
+    column: $table.deleted,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$ShelvesTableTableOrderingComposer get shelfId {
     final $$ShelvesTableTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -14196,6 +14456,12 @@ class $$ShelfItemsTableTableAnnotationComposer
   });
   GeneratedColumn<int> get position =>
       $composableBuilder(column: $table.position, builder: (column) => column);
+
+  GeneratedColumn<int> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get deleted =>
+      $composableBuilder(column: $table.deleted, builder: (column) => column);
 
   $$ShelvesTableTableAnnotationComposer get shelfId {
     final $$ShelvesTableTableAnnotationComposer composer = $composerBuilder(
@@ -14277,11 +14543,15 @@ class $$ShelfItemsTableTableTableManager
                 Value<String> shelfId = const Value.absent(),
                 Value<String> mediaItemId = const Value.absent(),
                 Value<int> position = const Value.absent(),
+                Value<int> updatedAt = const Value.absent(),
+                Value<int> deleted = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ShelfItemsTableCompanion(
                 shelfId: shelfId,
                 mediaItemId: mediaItemId,
                 position: position,
+                updatedAt: updatedAt,
+                deleted: deleted,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -14289,11 +14559,15 @@ class $$ShelfItemsTableTableTableManager
                 required String shelfId,
                 required String mediaItemId,
                 Value<int> position = const Value.absent(),
+                Value<int> updatedAt = const Value.absent(),
+                Value<int> deleted = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ShelfItemsTableCompanion.insert(
                 shelfId: shelfId,
                 mediaItemId: mediaItemId,
                 position: position,
+                updatedAt: updatedAt,
+                deleted: deleted,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

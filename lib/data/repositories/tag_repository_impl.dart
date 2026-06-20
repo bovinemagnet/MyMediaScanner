@@ -76,12 +76,35 @@ class TagRepositoryImpl implements ITagRepository {
   }
 
   @override
-  Future<void> assignToMediaItem(String tagId, String mediaItemId) =>
-      _tagsDao.assignToMediaItem(tagId, mediaItemId);
+  Future<void> assignToMediaItem(String tagId, String mediaItemId) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    // Atomic write + sync_log: see MediaItemRepositoryImpl.save.
+    await _tagsDao.transaction(() async {
+      await _tagsDao.assignToMediaItem(tagId, mediaItemId, updatedAt: now);
+      await _logAssignmentSync(
+        tagId: tagId,
+        mediaItemId: mediaItemId,
+        operation: 'insert',
+        updatedAt: now,
+        deleted: 0,
+      );
+    });
+  }
 
   @override
-  Future<void> removeFromMediaItem(String tagId, String mediaItemId) =>
-      _tagsDao.removeFromMediaItem(tagId, mediaItemId);
+  Future<void> removeFromMediaItem(String tagId, String mediaItemId) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await _tagsDao.transaction(() async {
+      await _tagsDao.removeFromMediaItem(tagId, mediaItemId, updatedAt: now);
+      await _logAssignmentSync(
+        tagId: tagId,
+        mediaItemId: mediaItemId,
+        operation: 'delete',
+        updatedAt: now,
+        deleted: 1,
+      );
+    });
+  }
 
   @override
   Future<List<String>> getTagIdsForMediaItem(String mediaItemId) =>
@@ -103,6 +126,31 @@ class TagRepositoryImpl implements ITagRepository {
         'deleted': 0,
       })),
       createdAt: Value(DateTime.now().millisecondsSinceEpoch),
+    ));
+  }
+
+  /// Enqueue a `sync_log` row for a tag assignment. The composite
+  /// entity id ('mediaItemId|tagId') mirrors the remote composite PK;
+  /// push never parses it — the payload carries the real key columns.
+  Future<void> _logAssignmentSync({
+    required String tagId,
+    required String mediaItemId,
+    required String operation,
+    required int updatedAt,
+    required int deleted,
+  }) {
+    return _syncLogDao.insertLog(SyncLogTableCompanion(
+      id: Value(_uuid.v7()),
+      entityType: const Value('media_item_tag'),
+      entityId: Value('$mediaItemId|$tagId'),
+      operation: Value(operation),
+      payloadJson: Value(jsonEncode({
+        'media_item_id': mediaItemId,
+        'tag_id': tagId,
+        'updated_at': updatedAt,
+        'deleted': deleted,
+      })),
+      createdAt: Value(updatedAt),
     ));
   }
 

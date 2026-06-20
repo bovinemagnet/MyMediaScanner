@@ -391,7 +391,19 @@ class _BatchPlaceholderScreenState
         return;
       }
     }
-    await ref.read(batchEditorProvider.notifier).saveAllConfirmed();
+    try {
+      await ref.read(batchEditorProvider.notifier).saveAllConfirmed();
+    } catch (e) {
+      // The provider has already cleared its saving state and persisted
+      // the items that did save; surface the failure so the user can
+      // retry the remainder.
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Bulk save failed: $e')),
+        );
+      }
+      return;
+    }
     if (context.mounted) {
       final savedCount = ref.read(batchEditorProvider).requireValue.savedCount;
       ScaffoldMessenger.of(context).showSnackBar(

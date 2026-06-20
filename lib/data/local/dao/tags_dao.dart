@@ -50,27 +50,61 @@ class TagsDao extends DatabaseAccessor<AppDatabase> with _$TagsDaoMixin {
     );
   }
 
-  Future<void> assignToMediaItem(String tagId, String mediaItemId) {
-    return into(mediaItemTagsTable).insert(
+  /// Upsert (not insert-or-ignore): re-assigning a previously removed
+  /// tag must resurrect the soft-deleted row, clearing its tombstone.
+  Future<void> assignToMediaItem(
+    String tagId,
+    String mediaItemId, {
+    int? updatedAt,
+  }) {
+    return into(mediaItemTagsTable).insertOnConflictUpdate(
       MediaItemTagsTableCompanion(
         tagId: Value(tagId),
         mediaItemId: Value(mediaItemId),
+        updatedAt:
+            Value(updatedAt ?? DateTime.now().millisecondsSinceEpoch),
+        deleted: const Value(0),
       ),
-      mode: InsertMode.insertOrIgnore,
     );
   }
 
-  Future<void> removeFromMediaItem(String tagId, String mediaItemId) {
-    return (delete(mediaItemTagsTable)
+  /// Soft delete: the tombstone row (deleted = 1) is what replicates the
+  /// removal to other devices via sync.
+  Future<void> removeFromMediaItem(
+    String tagId,
+    String mediaItemId, {
+    int? updatedAt,
+  }) {
+    return (update(mediaItemTagsTable)
           ..where(
               (t) => t.tagId.equals(tagId) & t.mediaItemId.equals(mediaItemId)))
-        .go();
+        .write(MediaItemTagsTableCompanion(
+      deleted: const Value(1),
+      updatedAt: Value(updatedAt ?? DateTime.now().millisecondsSinceEpoch),
+    ));
   }
 
   Future<List<String>> getTagIdsForMediaItem(String mediaItemId) async {
     final rows = await (select(mediaItemTagsTable)
-          ..where((t) => t.mediaItemId.equals(mediaItemId)))
+          ..where((t) =>
+              t.mediaItemId.equals(mediaItemId) & t.deleted.equals(0)))
         .get();
     return rows.map((r) => r.tagId).toList();
+  }
+
+  /// Local `updated_at` for an assignment, or null when no row exists.
+  /// Used by pull's last-write-wins comparison.
+  Future<int?> assignmentUpdatedAt(String mediaItemId, String tagId) async {
+    final row = await (select(mediaItemTagsTable)
+          ..where((t) =>
+              t.mediaItemId.equals(mediaItemId) & t.tagId.equals(tagId)))
+        .getSingleOrNull();
+    return row?.updatedAt;
+  }
+
+  /// Raw upsert used by sync pull — writes whatever the remote row says,
+  /// including tombstones.
+  Future<void> upsertAssignmentRow(MediaItemTagsTableCompanion row) {
+    return into(mediaItemTagsTable).insertOnConflictUpdate(row);
   }
 }

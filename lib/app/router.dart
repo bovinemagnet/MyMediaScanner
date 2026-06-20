@@ -7,6 +7,7 @@ import 'package:mymediascanner/presentation/screens/collection/statistics_screen
 import 'package:mymediascanner/presentation/screens/dashboard/dashboard_screen.dart';
 import 'package:mymediascanner/presentation/screens/disambiguation/disambiguation_screen.dart';
 import 'package:mymediascanner/presentation/screens/import/import_screen.dart';
+import 'package:mymediascanner/presentation/screens/item_detail/edit_item_screen.dart';
 import 'package:mymediascanner/presentation/screens/item_detail/item_detail_screen.dart';
 import 'package:mymediascanner/presentation/screens/manual_add/manual_add_screen.dart';
 import 'package:mymediascanner/presentation/screens/metadata_confirm/metadata_confirm_screen.dart';
@@ -127,9 +128,12 @@ final router = GoRouter(
                   routes: [
                     GoRoute(
                       path: 'edit',
-                      builder: (context, state) => Center(
-                        child: Text(
-                            'Edit item ${state.pathParameters['id']}'),
+                      parentNavigatorKey: _rootNavigatorKey,
+                      pageBuilder: (context, state) => _fadeSlideTransition(
+                        state,
+                        EditItemScreen(
+                          itemId: state.pathParameters['id']!,
+                        ),
                       ),
                     ),
                   ],

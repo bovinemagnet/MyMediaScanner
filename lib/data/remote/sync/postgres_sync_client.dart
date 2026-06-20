@@ -79,6 +79,16 @@ class PostgresSyncClient {
     return table;
   }
 
+  /// Conflict target (primary-key column list) per table for upserts.
+  /// The join tables have composite keys and no `id` column; everything
+  /// else conflicts on `id`.
+  static const _conflictTargetByTable = <String, List<String>>{
+    'shelf_items': ['shelf_id', 'media_item_id'],
+    'media_item_tags': ['media_item_id', 'tag_id'],
+  };
+
+  static const _defaultConflictTarget = ['id'];
+
   /// Matches a valid SQL identifier (column or table name).
   static final _identifierRegex = RegExp(r'^[A-Za-z_][A-Za-z0-9_]*$');
 
@@ -136,14 +146,16 @@ class PostgresSyncClient {
       valueClauses.add('(${placeholders.join(', ')})');
     }
 
+    final conflictTarget =
+        _conflictTargetByTable[table] ?? _defaultConflictTarget;
     final updates = columns
-        .where((c) => c != 'id')
+        .where((c) => !conflictTarget.contains(c))
         .map((c) => '$c = EXCLUDED.$c')
         .join(', ');
 
     final sql = 'INSERT INTO $table (${columns.join(', ')}) '
         'VALUES ${valueClauses.join(', ')} '
-        'ON CONFLICT (id) DO UPDATE SET $updates';
+        'ON CONFLICT (${conflictTarget.join(', ')}) DO UPDATE SET $updates';
 
     return (sql: sql, params: params);
   }

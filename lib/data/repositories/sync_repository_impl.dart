@@ -169,10 +169,18 @@ class SyncRepositoryImpl implements ISyncRepository {
         // every merged field.
         final localJson = JsonKeyCase.toSnakeCase(localRow.toJson());
 
+        // Remote rows come from SELECT *, so they carry server-managed
+        // columns the local schema doesn't have — `created_at`
+        // (TIMESTAMPTZ, decoded as a Dart DateTime) and `device_id`.
+        // Restrict the remote map to the local column set so the merge
+        // can't feed un-encodable values into jsonEncode below, or echo
+        // server-managed columns back to the server on the next push.
+        final remoteFiltered = _restrictToColumns(remote, localJson);
+
         // Detect conflicts for close-in-time edits
         final conflicts = SyncStrategy.detectConflicts(
           localJson,
-          remote,
+          remoteFiltered,
           entityType: 'media_item',
           entityId: remoteId,
         );
@@ -184,7 +192,7 @@ class SyncRepositoryImpl implements ISyncRepository {
         }
 
         // No conflicts — apply standard merge and persist
-        final merged = SyncStrategy.mergeFields(localJson, remote);
+        final merged = SyncStrategy.mergeFields(localJson, remoteFiltered);
         // Stamp synced_at on the merged row so the pulled state isn't
         // re-flagged as dirty on the next push.
         merged['synced_at'] = DateTime.now().millisecondsSinceEpoch;
@@ -239,6 +247,17 @@ class SyncRepositoryImpl implements ISyncRepository {
       await _pullLastWriteWins(
         tableName: 'series',
         entityType: 'series',
+        afterTimestamp: lastSyncedAt,
+      );
+
+      // Join tables last, so their parent rows (media items, tags,
+      // shelves) have already been pulled in this same pass.
+      await _pullJoinTable(
+        tableName: 'media_item_tags',
+        afterTimestamp: lastSyncedAt,
+      );
+      await _pullJoinTable(
+        tableName: 'shelf_items',
         afterTimestamp: lastSyncedAt,
       );
 
@@ -313,6 +332,75 @@ class SyncRepositoryImpl implements ISyncRepository {
         continue;
       }
       await _applyRemoteRow(entityType, remote);
+    }
+  }
+
+  /// Pull a composite-key join table (`media_item_tags` / `shelf_items`)
+  /// with last-write-wins on `updated_at`. Tombstones (`deleted = 1`)
+  /// are applied as-is, soft-deleting the local row.
+  ///
+  /// Unlike [_pullLastWriteWins] this reads the local `updated_at` one
+  /// row at a time — the join tables have no single id column to bulk
+  /// key on, and incremental pulls only carry rows changed since the
+  /// watermark, so the per-row read stays small.
+  Future<void> _pullJoinTable({
+    required String tableName,
+    required int? afterTimestamp,
+  }) async {
+    final rows = await _syncClient.pullRecords(
+      tableName,
+      afterTimestamp: afterTimestamp,
+    );
+    final db = _mediaItemsDao.attachedDatabase;
+    final entityType =
+        tableName == 'media_item_tags' ? 'media_item_tag' : 'shelf_item';
+    final total = rows.length;
+    for (var i = 0; i < rows.length; i++) {
+      final remote = rows[i];
+      _progressController.add(SyncProgress(
+        phase: SyncPhase.pull,
+        current: i + 1,
+        total: total,
+        currentEntityType: entityType,
+      ));
+      final remoteUpdatedAt = (remote['updated_at'] as num?)?.toInt() ?? 0;
+      final deleted = (remote['deleted'] as num?)?.toInt() ?? 0;
+
+      switch (tableName) {
+        case 'media_item_tags':
+          final mediaItemId = remote['media_item_id'];
+          final tagId = remote['tag_id'];
+          if (mediaItemId is! String || tagId is! String) continue;
+          final localUpdatedAt =
+              await db.tagsDao.assignmentUpdatedAt(mediaItemId, tagId);
+          if (localUpdatedAt != null && remoteUpdatedAt <= localUpdatedAt) {
+            continue;
+          }
+          await db.tagsDao.upsertAssignmentRow(MediaItemTagsTableCompanion(
+            mediaItemId: Value(mediaItemId),
+            tagId: Value(tagId),
+            updatedAt: Value(remoteUpdatedAt),
+            deleted: Value(deleted),
+          ));
+        case 'shelf_items':
+          final shelfId = remote['shelf_id'];
+          final mediaItemId = remote['media_item_id'];
+          if (shelfId is! String || mediaItemId is! String) continue;
+          final localUpdatedAt =
+              await db.shelvesDao.itemUpdatedAt(shelfId, mediaItemId);
+          if (localUpdatedAt != null && remoteUpdatedAt <= localUpdatedAt) {
+            continue;
+          }
+          await db.shelvesDao.upsertItemRow(ShelfItemsTableCompanion(
+            shelfId: Value(shelfId),
+            mediaItemId: Value(mediaItemId),
+            position: Value((remote['position'] as num?)?.toInt() ?? 0),
+            updatedAt: Value(remoteUpdatedAt),
+            deleted: Value(deleted),
+          ));
+        default:
+          throw StateError('Unsupported join table for pull: $tableName');
+      }
     }
   }
 
@@ -500,9 +588,12 @@ class SyncRepositoryImpl implements ISyncRepository {
       );
       if (remote.isEmpty) continue;
 
+      // Strip server-managed columns (see pullChanges) before merging so
+      // the pending payload below stays JSON-encodable.
+      final localJson = JsonKeyCase.toSnakeCase(localRow.toJson());
       final merged = SyncStrategy.mergeWithResolutions(
-        JsonKeyCase.toSnakeCase(localRow.toJson()),
-        remote,
+        localJson,
+        _restrictToColumns(remote, localJson),
         entityResolutions,
       );
       merged['synced_at'] = DateTime.now().millisecondsSinceEpoch;
@@ -611,6 +702,23 @@ class SyncRepositoryImpl implements ISyncRepository {
       error: error,
       conflictCount: conflictCount,
     );
+  }
+
+  /// Restrict a remote row to the columns present on the local row.
+  ///
+  /// Remote rows are fetched with SELECT *, so they include columns the
+  /// local schema doesn't carry (`created_at`, `device_id`). Those must
+  /// not survive into merged payloads: `created_at` arrives as a Dart
+  /// [DateTime] (not JSON-encodable) and `device_id` would be pushed
+  /// back, clobbering the server's attribution of the original writer.
+  static Map<String, dynamic> _restrictToColumns(
+    Map<String, dynamic> remote,
+    Map<String, dynamic> localJson,
+  ) {
+    return {
+      for (final entry in remote.entries)
+        if (localJson.containsKey(entry.key)) entry.key: entry.value,
+    };
   }
 
   Future<int?> _getLastSyncedAt() async {

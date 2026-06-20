@@ -34,8 +34,8 @@ void main() {
     );
   }
 
-  test('schemaVersion is 22', () {
-    expect(db.schemaVersion, 22);
+  test('schemaVersion is 23', () {
+    expect(db.schemaVersion, 23);
   });
 
   test('upsertByTmdbId inserts a new row when none exists', () async {

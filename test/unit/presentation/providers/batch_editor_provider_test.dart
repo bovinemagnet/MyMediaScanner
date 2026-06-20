@@ -606,6 +606,66 @@ void main() {
       expect(state.isSaving, false);
       expect(state.savedCount, 2);
     });
+
+    test('saveAllConfirmed recovers when a save fails mid-loop', () async {
+      // Regression: a mid-loop failure left saveProgress set (isSaving
+      // stuck true forever) and never persisted the statuses of items
+      // already saved — so a restored session re-saved them as
+      // duplicates after a restart.
+      var saveCalls = 0;
+      when(() => mockRepo.save(any())).thenAnswer((_) async {
+        saveCalls++;
+        if (saveCalls == 2) throw Exception('db full');
+      });
+
+      final container = createContainer();
+      addTearDown(container.dispose);
+
+      await readState(container);
+      final notifier = container.read(batchEditorProvider.notifier);
+
+      const meta1 = MetadataResult(
+        barcode: '1111111111',
+        barcodeType: 'EAN-13',
+        title: 'Item 1',
+      );
+      const meta2 = MetadataResult(
+        barcode: '2222222222',
+        barcodeType: 'EAN-13',
+        title: 'Item 2',
+      );
+      await notifier.addScanResult(
+          const ScanResult.single(metadata: meta1, isDuplicate: false));
+      await notifier.addScanResult(
+          const ScanResult.single(metadata: meta2, isDuplicate: false));
+
+      // The failure must surface to the caller, not vanish.
+      await expectLater(notifier.saveAllConfirmed(), throwsException);
+
+      final state = await readState(container);
+      expect(state.isSaving, false,
+          reason: 'a failed bulk save must not leave the UI stuck saving');
+      expect(
+        state.items.firstWhere((i) => i.barcode == '1111111111').status,
+        BatchItemStatus.saved,
+        reason: 'the item saved before the failure keeps its saved status',
+      );
+      expect(
+        state.items.firstWhere((i) => i.barcode == '2222222222').status,
+        BatchItemStatus.confirmed,
+        reason: 'the failed item stays confirmed for a retry',
+      );
+
+      // The persisted queue must reflect the partial result so a restored
+      // session does not re-save the first item as a duplicate.
+      final persisted =
+          await testDb.batchSessionDao.getQueueItems(state.sessionId!);
+      final statuses = {
+        for (final row in persisted) row.barcode: row.status,
+      };
+      expect(statuses['1111111111'], BatchItemStatus.saved.name);
+      expect(statuses['2222222222'], BatchItemStatus.confirmed.name);
+    });
   });
 
   group('Concurrent mutation during saves', () {

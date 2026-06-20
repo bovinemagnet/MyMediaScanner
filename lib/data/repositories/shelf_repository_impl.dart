@@ -84,20 +84,78 @@ class ShelfRepositoryImpl implements IShelfRepository {
   }
 
   @override
-  Future<void> addItem(String shelfId, String mediaItemId, int position) =>
-      _shelvesDao.addItem(shelfId, mediaItemId, position);
+  Future<void> addItem(String shelfId, String mediaItemId, int position) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    // Atomic write + sync_log: see MediaItemRepositoryImpl.save.
+    await _shelvesDao.transaction(() async {
+      await _shelvesDao.addItem(shelfId, mediaItemId, position,
+          updatedAt: now);
+      await _logItemSync(
+        shelfId: shelfId,
+        mediaItemId: mediaItemId,
+        operation: 'insert',
+        position: position,
+        updatedAt: now,
+        deleted: 0,
+      );
+    });
+  }
 
   @override
-  Future<void> removeItem(String shelfId, String mediaItemId) =>
-      _shelvesDao.removeItem(shelfId, mediaItemId);
+  Future<void> removeItem(String shelfId, String mediaItemId) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await _shelvesDao.transaction(() async {
+      await _shelvesDao.removeItem(shelfId, mediaItemId, updatedAt: now);
+      await _logItemSync(
+        shelfId: shelfId,
+        mediaItemId: mediaItemId,
+        operation: 'delete',
+        position: 0,
+        updatedAt: now,
+        deleted: 1,
+      );
+    });
+  }
 
   @override
   Future<List<String>> getMediaItemIdsForShelf(String shelfId) =>
       _shelvesDao.getMediaItemIdsForShelf(shelfId);
 
   @override
-  Future<void> reorderItems(String shelfId, List<String> orderedMediaItemIds) =>
-      _shelvesDao.reorderItems(shelfId, orderedMediaItemIds);
+  Future<void> reorderItems(
+      String shelfId, List<String> orderedMediaItemIds) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await _shelvesDao.transaction(() async {
+      // Snapshot the live membership BEFORE the rewrite so items the
+      // reorder dropped can be tombstone-logged.
+      final before = await _shelvesDao.getMediaItemIdsForShelf(shelfId);
+      await _shelvesDao.reorderItems(shelfId, orderedMediaItemIds,
+          updatedAt: now);
+
+      for (var i = 0; i < orderedMediaItemIds.length; i++) {
+        await _logItemSync(
+          shelfId: shelfId,
+          mediaItemId: orderedMediaItemIds[i],
+          operation: 'update',
+          position: i,
+          updatedAt: now,
+          deleted: 0,
+        );
+      }
+      final removed =
+          before.toSet().difference(orderedMediaItemIds.toSet());
+      for (final mediaItemId in removed) {
+        await _logItemSync(
+          shelfId: shelfId,
+          mediaItemId: mediaItemId,
+          operation: 'delete',
+          position: 0,
+          updatedAt: now,
+          deleted: 1,
+        );
+      }
+    });
+  }
 
   /// Enqueue a `sync_log` row carrying a full snake_case snapshot of
   /// [shelf]. Push uses the payload keys to derive the upsert column
@@ -117,6 +175,33 @@ class ShelfRepositoryImpl implements IShelfRepository {
         'deleted': 0,
       })),
       createdAt: Value(DateTime.now().millisecondsSinceEpoch),
+    ));
+  }
+
+  /// Enqueue a `sync_log` row for a shelf membership. The composite
+  /// entity id ('shelfId|mediaItemId') mirrors the remote composite PK;
+  /// push never parses it — the payload carries the real key columns.
+  Future<void> _logItemSync({
+    required String shelfId,
+    required String mediaItemId,
+    required String operation,
+    required int position,
+    required int updatedAt,
+    required int deleted,
+  }) {
+    return _syncLogDao.insertLog(SyncLogTableCompanion(
+      id: Value(_uuid.v7()),
+      entityType: const Value('shelf_item'),
+      entityId: Value('$shelfId|$mediaItemId'),
+      operation: Value(operation),
+      payloadJson: Value(jsonEncode({
+        'shelf_id': shelfId,
+        'media_item_id': mediaItemId,
+        'position': position,
+        'updated_at': updatedAt,
+        'deleted': deleted,
+      })),
+      createdAt: Value(updatedAt),
     ));
   }
 

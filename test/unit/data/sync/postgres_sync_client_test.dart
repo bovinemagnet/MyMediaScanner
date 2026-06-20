@@ -128,6 +128,58 @@ void main() {
       expect(result.params.length, 153);
     });
 
+    group('buildBatchUpsertSql composite conflict targets', () {
+      // The join tables have no `id` column — their PKs are composite.
+      // A hard-coded `ON CONFLICT (id)` would fail at the SQL layer for
+      // every push, so the conflict target must be derived per table.
+      test('shelf_items conflicts on (shelf_id, media_item_id)', () {
+        final records = [
+          {
+            'shelf_id': 's1',
+            'media_item_id': 'm1',
+            'position': 0,
+            'updated_at': 100,
+            'deleted': 0,
+          },
+        ];
+
+        final result =
+            PostgresSyncClient.buildBatchUpsertSql('shelf_items', records);
+
+        expect(result.sql,
+            contains('ON CONFLICT (shelf_id, media_item_id) DO UPDATE'));
+        expect(result.sql, contains('position = EXCLUDED.position'));
+        expect(result.sql, contains('updated_at = EXCLUDED.updated_at'));
+        expect(result.sql, contains('deleted = EXCLUDED.deleted'));
+        // Key columns must not appear in the SET clause.
+        expect(result.sql, isNot(contains('shelf_id = EXCLUDED.shelf_id')));
+        expect(result.sql,
+            isNot(contains('media_item_id = EXCLUDED.media_item_id')));
+      });
+
+      test('media_item_tags conflicts on (media_item_id, tag_id)', () {
+        final records = [
+          {
+            'media_item_id': 'm1',
+            'tag_id': 't1',
+            'updated_at': 100,
+            'deleted': 0,
+          },
+        ];
+
+        final result = PostgresSyncClient.buildBatchUpsertSql(
+            'media_item_tags', records);
+
+        expect(result.sql,
+            contains('ON CONFLICT (media_item_id, tag_id) DO UPDATE'));
+        expect(result.sql, contains('updated_at = EXCLUDED.updated_at'));
+        expect(result.sql, contains('deleted = EXCLUDED.deleted'));
+        expect(result.sql, isNot(contains('tag_id = EXCLUDED.tag_id')));
+        expect(result.sql,
+            isNot(contains('media_item_id = EXCLUDED.media_item_id')));
+      });
+    });
+
     group('tableForEntityType (cluster-7 HIGH-1 regression)', () {
       test('regular plurals resolve correctly', () {
         expect(PostgresSyncClient.tableForEntityType('media_item'),
