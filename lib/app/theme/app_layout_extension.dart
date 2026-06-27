@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 /// Layout feature flags carried by each theme.
 ///
 /// Widgets check these instead of branching on `ThemeFamily` directly, so
-/// enabling a Popcorn-style treatment on a future Citrus palette is one
+/// enabling a Popcorn-style treatment on any new palette family is one
 /// factory change rather than a cross-cutting edit.
 @immutable
 class AppLayoutExtension extends ThemeExtension<AppLayoutExtension> {

@@ -96,6 +96,144 @@ class AppDesignExtension extends ThemeExtension<AppDesignExtension> {
             AppColors.popcornDarkPrimary.withValues(alpha: 0.14),
       );
 
+  /// Kinetic dark: electric green on near-black.
+  factory AppDesignExtension.kineticDark() => AppDesignExtension(
+        ghostBorderColor:
+            AppColors.kineticDarkOutlineVariant.withValues(alpha: 0.20),
+        gradientPrimary: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.kineticDarkPrimary,
+            AppColors.kineticDarkPrimaryContainer,
+          ],
+        ),
+        glassOpacity: 0.6,
+        glassBlur: 12.0,
+        ambientShadow: BoxShadow(
+          color: Colors.black.withValues(alpha: 0.45),
+          blurRadius: 40,
+          offset: const Offset(0, 20),
+        ),
+        sidebarActiveBackground:
+            AppColors.kineticDarkPrimary.withValues(alpha: 0.12),
+      );
+
+  /// Kinetic light: mint-green on sage.
+  factory AppDesignExtension.kineticLight() => AppDesignExtension(
+        ghostBorderColor:
+            AppColors.kineticLightOutlineVariant.withValues(alpha: 0.20),
+        gradientPrimary: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.kineticLightPrimary,
+            AppColors.kineticLightPrimaryContainer,
+          ],
+        ),
+        glassOpacity: 0.82,
+        glassBlur: 24.0,
+        ambientShadow: BoxShadow(
+          color: AppColors.kineticLightOnSurface.withValues(alpha: 0.05),
+          blurRadius: 32,
+          offset: const Offset(0, 8),
+        ),
+        sidebarActiveBackground:
+            AppColors.kineticLightPrimary.withValues(alpha: 0.10),
+      );
+
+  /// Vault dark: warm brass on espresso.
+  factory AppDesignExtension.vaultDark() => AppDesignExtension(
+        ghostBorderColor:
+            AppColors.vaultDarkOutlineVariant.withValues(alpha: 0.25),
+        gradientPrimary: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.vaultDarkPrimary,
+            AppColors.vaultDarkPrimaryContainer,
+          ],
+        ),
+        glassOpacity: 0.6,
+        glassBlur: 12.0,
+        ambientShadow: BoxShadow(
+          color: Colors.black.withValues(alpha: 0.5),
+          blurRadius: 40,
+          offset: const Offset(0, 20),
+        ),
+        sidebarActiveBackground:
+            AppColors.vaultDarkPrimary.withValues(alpha: 0.14),
+      );
+
+  /// Vault light: amber-brown on parchment.
+  factory AppDesignExtension.vaultLight() => AppDesignExtension(
+        ghostBorderColor:
+            AppColors.vaultLightOutlineVariant.withValues(alpha: 0.35),
+        gradientPrimary: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.vaultLightPrimary,
+            AppColors.vaultLightPrimaryContainer,
+          ],
+        ),
+        glassOpacity: 0.82,
+        glassBlur: 24.0,
+        ambientShadow: BoxShadow(
+          color: AppColors.vaultLightOnSurface.withValues(alpha: 0.07),
+          blurRadius: 32,
+          offset: const Offset(0, 8),
+        ),
+        sidebarActiveBackground:
+            AppColors.vaultLightPrimary.withValues(alpha: 0.10),
+      );
+
+  /// Index dark: cobalt on deep navy.
+  factory AppDesignExtension.indexDark() => AppDesignExtension(
+        ghostBorderColor:
+            AppColors.indexDarkOutlineVariant.withValues(alpha: 0.25),
+        gradientPrimary: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.indexDarkPrimary,
+            AppColors.indexDarkPrimaryContainer,
+          ],
+        ),
+        glassOpacity: 0.6,
+        glassBlur: 12.0,
+        ambientShadow: BoxShadow(
+          color: Colors.black.withValues(alpha: 0.45),
+          blurRadius: 40,
+          offset: const Offset(0, 20),
+        ),
+        sidebarActiveBackground:
+            AppColors.indexDarkPrimary.withValues(alpha: 0.12),
+      );
+
+  /// Index light: deep cobalt on cool blue-grey.
+  factory AppDesignExtension.indexLight() => AppDesignExtension(
+        ghostBorderColor:
+            AppColors.indexLightOutlineVariant.withValues(alpha: 0.20),
+        gradientPrimary: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.indexLightPrimary,
+            AppColors.indexLightPrimaryContainer,
+          ],
+        ),
+        glassOpacity: 0.82,
+        glassBlur: 24.0,
+        ambientShadow: BoxShadow(
+          color: AppColors.indexLightOnSurface.withValues(alpha: 0.05),
+          blurRadius: 32,
+          offset: const Offset(0, 8),
+        ),
+        sidebarActiveBackground:
+            AppColors.indexLightPrimary.withValues(alpha: 0.10),
+      );
+
   /// Ghost border — outline-variant at 15 % opacity.
   final Color ghostBorderColor;
 

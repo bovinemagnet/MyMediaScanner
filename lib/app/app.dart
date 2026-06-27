@@ -48,8 +48,10 @@ class _AppState extends ConsumerState<App> {
     final choice = ref.watch(themeChoiceProvider);
     final (light, dark) = switch (choice.family) {
       ThemeFamily.classic => (AppTheme.light(), AppTheme.dark()),
-      ThemeFamily.popcorn =>
-        (AppTheme.popcornLight(), AppTheme.popcornDark()),
+      ThemeFamily.popcorn => (AppTheme.popcornLight(), AppTheme.popcornDark()),
+      ThemeFamily.kinetic => (AppTheme.kineticLight(), AppTheme.kineticDark()),
+      ThemeFamily.vault => (AppTheme.vaultLight(), AppTheme.vaultDark()),
+      ThemeFamily.cobalt => (AppTheme.indexLight(), AppTheme.indexDark()),
     };
 
     // Surface a SnackBar when the deep link arrives and the dialog

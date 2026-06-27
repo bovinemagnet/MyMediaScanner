@@ -25,6 +25,40 @@ void main() {
       expect(light.book, isNot(dark.book));
     });
 
+    for (final factory in <(String, AppMediaColors Function())>[
+      ('kinetic()', AppMediaColors.kinetic),
+      ('kineticLight()', AppMediaColors.kineticLight),
+      ('vault()', AppMediaColors.vault),
+      ('vaultLight()', AppMediaColors.vaultLight),
+      ('index()', AppMediaColors.index),
+      ('indexLight()', AppMediaColors.indexLight),
+    ]) {
+      final (label, build) = factory;
+      test('$label yields a value for every MediaType', () {
+        final mc = build();
+        for (final type in MediaType.values) {
+          expect(mc.solidFor(type), isA<Color>(),
+              reason: 'solid missing for $type in $label');
+          expect(mc.softFor(type), isA<Color>(),
+              reason: 'soft missing for $type in $label');
+          expect(mc.inkFor(type), isA<Color>(),
+              reason: 'ink missing for $type in $label');
+        }
+      });
+    }
+
+    test('kinetic() and kineticLight() yield distinct palettes', () {
+      expect(AppMediaColors.kinetic().film, isNot(AppMediaColors.kineticLight().film));
+    });
+
+    test('vault() and vaultLight() yield distinct palettes', () {
+      expect(AppMediaColors.vault().film, isNot(AppMediaColors.vaultLight().film));
+    });
+
+    test('index() and indexLight() yield distinct palettes', () {
+      expect(AppMediaColors.index().film, isNot(AppMediaColors.indexLight().film));
+    });
+
     test('classic() preserves the original AppColors film hue', () {
       // Guards against accidentally changing the Classic palette while
       // retuning Popcorn.
@@ -63,25 +97,23 @@ void main() {
     });
   });
 
-  group('All four themes expose AppMediaColors + AppLayoutExtension', () {
-    test('AppTheme.light() registers both extensions', () {
-      final theme = AppTheme.light();
-      expect(theme.extension<AppMediaColors>(), isNotNull);
-    });
-
-    test('AppTheme.dark() registers both extensions', () {
-      final theme = AppTheme.dark();
-      expect(theme.extension<AppMediaColors>(), isNotNull);
-    });
-
-    test('AppTheme.popcornLight() registers both extensions', () {
-      final theme = AppTheme.popcornLight();
-      expect(theme.extension<AppMediaColors>(), isNotNull);
-    });
-
-    test('AppTheme.popcornDark() registers both extensions', () {
-      final theme = AppTheme.popcornDark();
-      expect(theme.extension<AppMediaColors>(), isNotNull);
-    });
+  group('All themes expose AppMediaColors extension', () {
+    for (final entry in <(String, ThemeData Function())>[
+      ('light()', AppTheme.light),
+      ('dark()', AppTheme.dark),
+      ('popcornLight()', AppTheme.popcornLight),
+      ('popcornDark()', AppTheme.popcornDark),
+      ('kineticLight()', AppTheme.kineticLight),
+      ('kineticDark()', AppTheme.kineticDark),
+      ('vaultLight()', AppTheme.vaultLight),
+      ('vaultDark()', AppTheme.vaultDark),
+      ('indexLight()', AppTheme.indexLight),
+      ('indexDark()', AppTheme.indexDark),
+    ]) {
+      final (label, build) = entry;
+      test('AppTheme.$label registers AppMediaColors', () {
+        expect(build().extension<AppMediaColors>(), isNotNull);
+      });
+    }
   });
 }

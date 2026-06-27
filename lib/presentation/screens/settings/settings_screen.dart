@@ -330,16 +330,39 @@ class SettingsScreen extends ConsumerWidget {
   }
 }
 
-/// Tappable palette cards (Classic / Popcorn) shown at the top of the
-/// Preferences section. Each card renders a miniature of the palette —
-/// surface, a primary pill, and three media-type dots — so users can
-/// compare side-by-side before committing.
+/// Tappable palette cards shown at the top of the Preferences section.
+/// Each card renders a miniature of the palette — surface, a primary pill,
+/// and three media-type dots — so users can compare before committing.
 class _PaletteTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentFamily =
         ref.watch(themeChoiceProvider.select((c) => c.family));
     final theme = Theme.of(context);
+
+    Widget card({
+      required String label,
+      required ThemeFamily family,
+      required Color surface,
+      required Color primary,
+      required Color container,
+      required List<Color> mediaDots,
+      required Color labelColor,
+    }) {
+      return Expanded(
+        child: _PaletteCard(
+          label: label,
+          selected: currentFamily == family,
+          surface: surface,
+          primary: primary,
+          container: container,
+          mediaDots: mediaDots,
+          labelColor: labelColor,
+          onTap: () =>
+              ref.read(themeChoiceProvider.notifier).setFamily(family),
+        ),
+      );
+    }
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
@@ -355,41 +378,84 @@ class _PaletteTile extends ConsumerWidget {
           const SizedBox(height: 8),
           Row(
             children: [
-              Expanded(
-                child: _PaletteCard(
-                  label: 'Classic',
-                  selected: currentFamily == ThemeFamily.classic,
-                  surface: AppColors.lightSurface,
-                  primary: AppColors.lightPrimary,
-                  container: AppColors.lightSurfaceContainerHigh,
-                  mediaDots: const [
-                    AppColors.filmColor,
-                    AppColors.musicColor,
-                    AppColors.bookColor,
-                  ],
-                  onTap: () => ref
-                      .read(themeChoiceProvider.notifier)
-                      .setFamily(ThemeFamily.classic),
-                ),
+              card(
+                label: 'Classic',
+                family: ThemeFamily.classic,
+                surface: AppColors.lightSurface,
+                primary: AppColors.lightPrimary,
+                container: AppColors.lightSurfaceContainerHigh,
+                mediaDots: const [
+                  AppColors.filmColor,
+                  AppColors.musicColor,
+                  AppColors.bookColor,
+                ],
+                labelColor: AppColors.lightOnSurface,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _PaletteCard(
-                  label: 'Popcorn',
-                  selected: currentFamily == ThemeFamily.popcorn,
-                  surface: AppColors.popcornSurface,
-                  primary: AppColors.popcornPrimary,
-                  container: AppColors.popcornSurfaceContainer,
-                  mediaDots: const [
-                    Color(0xFFFF5E3A),
-                    Color(0xFFA06DFF),
-                    Color(0xFF00C478),
-                  ],
-                  onTap: () => ref
-                      .read(themeChoiceProvider.notifier)
-                      .setFamily(ThemeFamily.popcorn),
-                ),
+              const SizedBox(width: 10),
+              card(
+                label: 'Popcorn',
+                family: ThemeFamily.popcorn,
+                surface: AppColors.popcornSurface,
+                primary: AppColors.popcornPrimary,
+                container: AppColors.popcornSurfaceContainer,
+                mediaDots: const [
+                  Color(0xFFFF5E3A),
+                  Color(0xFFA06DFF),
+                  Color(0xFF00C478),
+                ],
+                labelColor: AppColors.popcornOnSurface,
               ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              card(
+                label: 'Kinetic',
+                family: ThemeFamily.kinetic,
+                surface: AppColors.kineticDarkSurface,
+                primary: AppColors.kineticDarkPrimary,
+                container: AppColors.kineticDarkSurfaceContainerHigh,
+                mediaDots: const [
+                  Color(0xFFFF6E6E),
+                  Color(0xFFC08CFF),
+                  Color(0xFF5BD6A0),
+                ],
+                labelColor: AppColors.kineticDarkOnSurface,
+              ),
+              const SizedBox(width: 10),
+              card(
+                label: 'Vault',
+                family: ThemeFamily.vault,
+                surface: AppColors.vaultDarkSurface,
+                primary: AppColors.vaultDarkPrimary,
+                container: AppColors.vaultDarkSurfaceContainerHigh,
+                mediaDots: const [
+                  Color(0xFFE0654C),
+                  Color(0xFFB98BE0),
+                  Color(0xFF6FC58C),
+                ],
+                labelColor: AppColors.vaultDarkOnSurface,
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              card(
+                label: 'Index',
+                family: ThemeFamily.cobalt,
+                surface: AppColors.indexDarkSurface,
+                primary: AppColors.indexDarkPrimary,
+                container: AppColors.indexDarkSurfaceContainerHigh,
+                mediaDots: const [
+                  Color(0xFFFF6B6B),
+                  Color(0xFFA98BFF),
+                  Color(0xFF3FD18A),
+                ],
+                labelColor: AppColors.indexDarkOnSurface,
+              ),
+              const Expanded(child: SizedBox()),
             ],
           ),
         ],
@@ -406,6 +472,7 @@ class _PaletteCard extends StatelessWidget {
     required this.primary,
     required this.container,
     required this.mediaDots,
+    required this.labelColor,
     required this.onTap,
   });
 
@@ -415,6 +482,7 @@ class _PaletteCard extends StatelessWidget {
   final Color primary;
   final Color container;
   final List<Color> mediaDots;
+  final Color labelColor;
   final VoidCallback onTap;
 
   @override
@@ -488,10 +556,7 @@ class _PaletteCard extends StatelessWidget {
                       label,
                       style: theme.textTheme.labelMedium?.copyWith(
                         fontWeight: FontWeight.w700,
-                        // Both palette cards render a light surface, so a
-                        // fixed dark ink colour reads correctly regardless
-                        // of the outer theme's brightness.
-                        color: AppColors.popcornOnSurface,
+                        color: labelColor,
                       ),
                     ),
                   ],

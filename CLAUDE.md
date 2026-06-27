@@ -18,14 +18,14 @@ Cross-platform Flutter/Dart application for scanning barcodes on physical media 
 - Batch scanning mode with queue-based review and bulk save
 - IMDb ID lookup (tt1234567) via TMDB find endpoint
 - Cover OCR text recognition (ML Kit on Android/iOS, Vision framework on macOS)
-- Theme selector: palette family (Classic / Popcorn) × brightness (system/light/dark) persisted to SharedPreferences
+- Theme selector: palette family (Classic / Popcorn / Kinetic / Vault / Index) × brightness (system/light/dark) persisted to SharedPreferences
 - Resizable master-detail split with drag divider (persisted to SharedPreferences)
 - Keyboard navigation in collection and rips tables (arrow keys, Enter, Delete, Escape)
 - Auto-collapse sidebar to drawer on narrow desktop windows
 
 ## Technology Stack
 
-- **UI:** Flutter (all platforms), custom design system with two palette families: Classic (Obsidian Lens dark + Precision Editorial light) and Popcorn (vibrant coral/mint/periwinkle, light + dark). Built on Material 3 with hand-crafted colour schemes, Manrope + Inter typography, glassmorphism, and tonal container architecture. Media-type colours flow through the `AppMediaColors` theme extension so adding new palettes is hex-only.
+- **UI:** Flutter (all platforms), custom design system with five palette families: Classic (Obsidian Lens dark + Precision Editorial light), Popcorn (vibrant coral/mint/periwinkle, light + dark), Kinetic (electric green, technical mono), Vault (warm brass, spotlit shelf), and Index/Cobalt (cool cobalt, data-forward). Built on Material 3 with hand-crafted colour schemes, Manrope + Inter typography, glassmorphism, and tonal container architecture. Media-type colours flow through the `AppMediaColors` theme extension so adding new palettes is hex-only.
 - **State:** Riverpod 3.x with hand-written providers (Notifier and AsyncNotifier); `riverpod_generator` is not used due to incompatibility with `drift_dev`
 - **Local DB:** Drift (SQLite) with type-safe DAOs
 - **Remote DB:** PostgreSQL via `postgres` Dart package (direct connection, no intermediary API)
@@ -137,9 +137,9 @@ Item detail routes are nested under collection: `/collection/item/:id`
 
 ## Design System
 
-The app exposes two palette families, each with a light and dark variant.
-The user picks a `ThemeFamily` (Classic / Popcorn) and a `ThemeBrightness`
-(system / light / dark) independently from Settings.
+The app exposes five palette families, each with a light and dark variant.
+The user picks a `ThemeFamily` and a `ThemeBrightness` (system / light / dark)
+independently from Settings.
 
 **Classic — editorial, restrained**
 - **Dark ("Obsidian Lens"):** Deep obsidian surfaces (#0e0e0e), electric cyan primary (#6dddff), Inter body text
@@ -149,10 +149,22 @@ The user picks a `ThemeFamily` (Classic / Popcorn) and a `ThemeBrightness`
 - **Light:** Warm ivory surface (#FFF6EC), coral primary (#FF5E3A), mint secondary (#00C4B8), periwinkle tertiary. Chunkier radii, full-pill chips, floating mobile nav with raised scan FAB.
 - **Dark:** Warm charcoal surface (#161416), lifted coral (#FF7A5C), ivory ink.
 
+**Kinetic — technical, monochrome** (`ThemeFamily.kinetic`)
+- **Dark:** Near-black surfaces (#0a0b0d), electric green primary (#00e5a0), cool-slate neutrals.
+- **Light:** Muted sage surfaces (#eaeeec), mint green primary (#00c389).
+
+**Vault — warm, atmospheric** (`ThemeFamily.vault`)
+- **Dark:** Deep espresso surfaces (#100e0f), warm brass primary (#e3a85a), sepia neutrals.
+- **Light:** Warm parchment surfaces (#f0e9db), amber-brown primary (#9a6a37).
+
+**Index / Cobalt — precise, data-forward** (`ThemeFamily.cobalt`)
+- **Dark:** Cool navy surfaces (#0e1116), cobalt blue primary (#5b7bff).
+- **Light:** Cool blue-grey surfaces (#eef0f3), deep cobalt primary (#2742c8).
+
 Design principles: "no-line" rule (tonal shifts instead of borders), glassmorphism for navigation, gradient CTAs, ghost borders, ambient shadows. Three `ThemeExtension`s carry the non-Material tokens:
 - `AppDesignExtension` — glassmorphism, gradient, ghost-border, shadow.
 - `AppMediaColors` — per-media-type hues (film/tv/music/book/game) plus soft and ink variants. Widgets read via `context.mediaColors.film` or `context.mediaColors.solidFor(type)`.
-- `AppLayoutExtension` — feature flags that gate Popcorn-only polish (floating nav, hero glow, procedural cover placeholders, pill chips, gradient detail hero). Classic themes set all flags to `false`.
+- `AppLayoutExtension` — feature flags that gate Popcorn-only polish (floating nav, hero glow, procedural cover placeholders, pill chips, gradient detail hero). All other themes set all flags to `false`.
 
 Shape tokens live in `AppShapes` (chunkier Popcorn radii) and the hero-numeric `AppTypography.displayNumeric()` helper supplies the oversized stat-card number style.
 

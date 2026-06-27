@@ -270,19 +270,52 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Both palette cards are present.
+    // All five palette cards are present.
     expect(find.text('Classic'), findsOneWidget);
     expect(find.text('Popcorn'), findsOneWidget);
+    expect(find.text('Kinetic'), findsOneWidget);
+    expect(find.text('Vault'), findsOneWidget);
+    expect(find.text('Index'), findsOneWidget);
 
     // Tap Popcorn.
     await tester.tap(find.text('Popcorn'));
     await tester.pumpAndSettle();
     expect(capturedFamilies, contains(ThemeFamily.popcorn));
 
-    // Tap Classic again.
+    // Tap Classic.
     await tester.tap(find.text('Classic'));
     await tester.pumpAndSettle();
     expect(capturedFamilies, contains(ThemeFamily.classic));
+
+    // Tap Kinetic.
+    await tester.scrollUntilVisible(
+      find.text('Kinetic'),
+      100,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Kinetic'));
+    await tester.pumpAndSettle();
+    expect(capturedFamilies, contains(ThemeFamily.kinetic));
+
+    // Tap Vault.
+    await tester.scrollUntilVisible(
+      find.text('Vault'),
+      100,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Vault'));
+    await tester.pumpAndSettle();
+    expect(capturedFamilies, contains(ThemeFamily.vault));
+
+    // Tap Index.
+    await tester.scrollUntilVisible(
+      find.text('Index'),
+      100,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Index'));
+    await tester.pumpAndSettle();
+    expect(capturedFamilies, contains(ThemeFamily.cobalt));
   });
 
   // -------------------------------------------------------------------------

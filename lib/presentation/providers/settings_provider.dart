@@ -8,7 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 // ── Theme choice (palette family × brightness) ───────────────────────
 
 /// Palette family — which colour/component set powers the UI.
-enum ThemeFamily { classic, popcorn }
+enum ThemeFamily { classic, popcorn, kinetic, vault, cobalt }
 
 /// Brightness preference for the selected family.
 enum ThemeBrightness { system, light, dark }

@@ -6,8 +6,8 @@ import 'package:mymediascanner/domain/entities/media_type.dart';
 ///
 /// Widgets read media colours through [BuildContext.mediaColors] rather than
 /// referencing [AppColors.filmColor] etc. directly, so each theme (Classic,
-/// Popcorn, future Citrus/Berry) can supply its own tuning without touching
-/// call sites.
+/// Popcorn, Kinetic, Vault, Cobalt/Index) can supply its own tuning without
+/// touching call sites.
 @immutable
 class AppMediaColors extends ThemeExtension<AppMediaColors> {
   const AppMediaColors({
@@ -77,6 +77,138 @@ class AppMediaColors extends ThemeExtension<AppMediaColors> {
         bookInk: Color(0xFF0A4A2C),
         gameInk: Color(0xFF122269),
         unknownInk: Color(0xFF3A332B),
+      );
+
+  /// Kinetic palette — electric green accent on near-black.
+  factory AppMediaColors.kinetic() => const AppMediaColors(
+        film: Color(0xFFFF6E6E),
+        tv: Color(0xFFFF9A6E),
+        music: Color(0xFFC08CFF),
+        book: Color(0xFF5BD6A0),
+        game: Color(0xFF5FA8FF),
+        unknown: Color(0xFF8B938F),
+        filmSoft: Color(0x33FF6E6E),
+        tvSoft: Color(0x33FF9A6E),
+        musicSoft: Color(0x33C08CFF),
+        bookSoft: Color(0x335BD6A0),
+        gameSoft: Color(0x335FA8FF),
+        unknownSoft: Color(0x338B938F),
+        filmInk: Color(0xFFFF6E6E),
+        tvInk: Color(0xFFFF9A6E),
+        musicInk: Color(0xFFC08CFF),
+        bookInk: Color(0xFF5BD6A0),
+        gameInk: Color(0xFF5FA8FF),
+        unknownInk: Color(0xFFCED4D0),
+      );
+
+  /// Kinetic palette retuned for light backgrounds.
+  factory AppMediaColors.kineticLight() => const AppMediaColors(
+        film: Color(0xFFE0455C),
+        tv: Color(0xFFD4622A),
+        music: Color(0xFF8A4DD6),
+        book: Color(0xFF0E9E73),
+        game: Color(0xFF2F6BE0),
+        unknown: Color(0xFF5D655F),
+        filmSoft: Color(0x1FE0455C),
+        tvSoft: Color(0x1FD4622A),
+        musicSoft: Color(0x1F8A4DD6),
+        bookSoft: Color(0x1F0E9E73),
+        gameSoft: Color(0x1F2F6BE0),
+        unknownSoft: Color(0x1F5D655F),
+        filmInk: Color(0xFF7A1826),
+        tvInk: Color(0xFF6B300E),
+        musicInk: Color(0xFF3A1666),
+        bookInk: Color(0xFF064530),
+        gameInk: Color(0xFF102E6B),
+        unknownInk: Color(0xFF2E3630),
+      );
+
+  /// Vault dark palette — warm brass on deep espresso.
+  factory AppMediaColors.vault() => const AppMediaColors(
+        film: Color(0xFFE0654C),
+        tv: Color(0xFFE89060),
+        music: Color(0xFFB98BE0),
+        book: Color(0xFF6FC58C),
+        game: Color(0xFF6E9BE8),
+        unknown: Color(0xFF9A9088),
+        filmSoft: Color(0x33E0654C),
+        tvSoft: Color(0x33E89060),
+        musicSoft: Color(0x33B98BE0),
+        bookSoft: Color(0x336FC58C),
+        gameSoft: Color(0x336E9BE8),
+        unknownSoft: Color(0x339A9088),
+        filmInk: Color(0xFFE0654C),
+        tvInk: Color(0xFFE89060),
+        musicInk: Color(0xFFB98BE0),
+        bookInk: Color(0xFF6FC58C),
+        gameInk: Color(0xFF6E9BE8),
+        unknownInk: Color(0xFFEDE5D8),
+      );
+
+  /// Vault palette retuned for light parchment backgrounds.
+  factory AppMediaColors.vaultLight() => const AppMediaColors(
+        film: Color(0xFFA83A2C),
+        tv: Color(0xFF8C4A18),
+        music: Color(0xFF6B4E96),
+        book: Color(0xFF3C7350),
+        game: Color(0xFF2E5680),
+        unknown: Color(0xFF6E6456),
+        filmSoft: Color(0x20A83A2C),
+        tvSoft: Color(0x208C4A18),
+        musicSoft: Color(0x206B4E96),
+        bookSoft: Color(0x203C7350),
+        gameSoft: Color(0x202E5680),
+        unknownSoft: Color(0x206E6456),
+        filmInk: Color(0xFF5C1C16),
+        tvInk: Color(0xFF4A2508),
+        musicInk: Color(0xFF38245A),
+        bookInk: Color(0xFF1A3D28),
+        gameInk: Color(0xFF162B45),
+        unknownInk: Color(0xFF3A3028),
+      );
+
+  /// Index dark palette — cool cobalt on navy.
+  factory AppMediaColors.index() => const AppMediaColors(
+        film: Color(0xFFFF6B6B),
+        tv: Color(0xFFFF9060),
+        music: Color(0xFFA98BFF),
+        book: Color(0xFF3FD18A),
+        game: Color(0xFF6E8BFF),
+        unknown: Color(0xFF8A93A0),
+        filmSoft: Color(0x33FF6B6B),
+        tvSoft: Color(0x33FF9060),
+        musicSoft: Color(0x33A98BFF),
+        bookSoft: Color(0x333FD18A),
+        gameSoft: Color(0x336E8BFF),
+        unknownSoft: Color(0x338A93A0),
+        filmInk: Color(0xFFFF6B6B),
+        tvInk: Color(0xFFFF9060),
+        musicInk: Color(0xFFA98BFF),
+        bookInk: Color(0xFF3FD18A),
+        gameInk: Color(0xFF6E8BFF),
+        unknownInk: Color(0xFFCDD4E0),
+      );
+
+  /// Index palette retuned for light blue-grey backgrounds.
+  factory AppMediaColors.indexLight() => const AppMediaColors(
+        film: Color(0xFFD33B3B),
+        tv: Color(0xFFB84A20),
+        music: Color(0xFF7A3FD0),
+        book: Color(0xFF1F9B63),
+        game: Color(0xFF2742C8),
+        unknown: Color(0xFF5B6470),
+        filmSoft: Color(0x1FD33B3B),
+        tvSoft: Color(0x1FB84A20),
+        musicSoft: Color(0x1F7A3FD0),
+        bookSoft: Color(0x1F1F9B63),
+        gameSoft: Color(0x1F2742C8),
+        unknownSoft: Color(0x1F5B6470),
+        filmInk: Color(0xFF6A1818),
+        tvInk: Color(0xFF5C250E),
+        musicInk: Color(0xFF3E1870),
+        bookInk: Color(0xFF0C4D32),
+        gameInk: Color(0xFF0F1F66),
+        unknownInk: Color(0xFF2C323C),
       );
 
   /// Popcorn palette retuned for dark surfaces.
