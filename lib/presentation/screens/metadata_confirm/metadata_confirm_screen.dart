@@ -44,9 +44,17 @@ class _MetadataConfirmScreenState extends ConsumerState<MetadataConfirmScreen> {
       final tmdbId = _resolveTmdbId();
       final mediaType = _resolveApiMediaType();
       if (tmdbId != null && TmdbMediaType.isTmdbMovieOrTv(mediaType)) {
-        ref
-            .read(enrichScanWithTmdbAccountUseCaseProvider)
-            .call(tmdbId: tmdbId, mediaType: mediaType!);
+        // Fire-and-forget enrichment. Guard the read because
+        // enrichScanWithTmdbAccountUseCaseProvider throws if the TMDB API
+        // key was removed while account sync stayed enabled — a missing
+        // key should silently skip enrichment, not crash the scan confirm.
+        try {
+          ref
+              .read(enrichScanWithTmdbAccountUseCaseProvider)
+              .call(tmdbId: tmdbId, mediaType: mediaType!);
+        } catch (_) {
+          // No-op — enrichment is best-effort.
+        }
       }
     });
   }
