@@ -41,13 +41,21 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (isDesktop)
+              if (isDesktop) ...[
+                // Pushed on the root navigator, so there is no sidebar or
+                // AppBar on desktop — provide an explicit back affordance
+                // (mobile gets one from the AppBar).
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: BackButton(),
+                ),
                 const ScreenHeader(
                   title: 'Import collection',
                   subtitle:
                       'Bulk-import items from a Goodreads, Discogs, '
                       'Letterboxd or Trakt export.',
                 ),
+              ],
               Expanded(child: _buildBody(state)),
             ],
           ),

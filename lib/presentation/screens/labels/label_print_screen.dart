@@ -44,13 +44,21 @@ class _LabelPrintScreenState extends ConsumerState<LabelPrintScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (isDesktop)
+            if (isDesktop) ...[
+              // Pushed on the root navigator, so there is no sidebar or
+              // AppBar on desktop — provide an explicit back affordance
+              // (mobile gets one from the AppBar).
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: BackButton(),
+              ),
               const ScreenHeader(
                 title: 'Print labels',
                 subtitle:
                     'Generate a printable sheet of QR labels for your '
                     'locations or items.',
               ),
+            ],
             _Toolbar(
               source: _source,
               preset: _preset,
