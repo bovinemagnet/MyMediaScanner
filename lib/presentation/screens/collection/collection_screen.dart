@@ -300,6 +300,10 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
         content: const Text('Choose a format to export your collection.'),
         actions: [
           TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
             onPressed: () {
               Navigator.of(dialogContext).pop();
               _exportCollection(context, ref, ExportFormat.csv);

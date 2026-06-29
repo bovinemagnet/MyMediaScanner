@@ -280,26 +280,37 @@ class _DesktopSidebar extends ConsumerWidget {
     final colors = theme.colorScheme;
     final design = theme.extension<AppDesignExtension>();
 
-    final connectionAsync = ref.watch(tmdbAccountConnectionProvider);
-    final isTmdbConnected =
+    // Short-circuit when no TMDB token is configured — watching the
+    // account-sync providers in that state surfaces the
+    // `StateError: TMDB API key not configured` from
+    // `tmdbAccountSyncRepositoryProvider`. Mirrors the guard used by the
+    // settings sections.
+    final tmdbKey = (ref.watch(apiKeysProvider).value ?? {})['tmdb'] ?? '';
+    final hasTmdbKey = tmdbKey.trim().isNotEmpty;
+
+    final isTmdbConnected = hasTmdbKey &&
         PlatformCapability.isDesktop &&
-        connectionAsync.value is TmdbConnected;
+        ref.watch(tmdbAccountConnectionProvider).value is TmdbConnected;
 
     final settings = ref.watch(tmdbAccountSyncSettingsProvider);
-    final conflictsCount = ref.watch(tmdbConflictedRowsProvider).maybeWhen(
-          data: (rows) => rows.length,
-          orElse: () => 0,
-        );
+    final conflictsCount = hasTmdbKey
+        ? ref.watch(tmdbConflictedRowsProvider).maybeWhen(
+              data: (rows) => rows.length,
+              orElse: () => 0,
+            )
+        : 0;
     final showConflicts = isTmdbConnected &&
         settings.conflictPolicy == TmdbConflictPolicy.askUser &&
         conflictsCount > 0;
 
-    final savedCount = ref
-        .watch(tmdbBridgeBucketProvider(TmdbBridgeBucket.saved))
-        .maybeWhen(
-          data: (rows) => rows.length,
-          orElse: () => 0,
-        );
+    final savedCount = hasTmdbKey
+        ? ref
+            .watch(tmdbBridgeBucketProvider(TmdbBridgeBucket.saved))
+            .maybeWhen(
+              data: (rows) => rows.length,
+              orElse: () => 0,
+            )
+        : 0;
 
     // Build label with count so the user can see how many need resolving.
     final conflictsItem = _SidebarDestination(

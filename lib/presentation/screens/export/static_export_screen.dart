@@ -54,7 +54,14 @@ class _StaticExportScreenState extends ConsumerState<StaticExportScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (isDesktop)
+            if (isDesktop) ...[
+              // This screen is pushed on the root navigator, so there is no
+              // sidebar and no AppBar on desktop — provide an explicit back
+              // affordance (mobile gets one from the AppBar).
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: BackButton(),
+              ),
               const ScreenHeader(
                 title: 'Export collection',
                 subtitle:
@@ -62,6 +69,7 @@ class _StaticExportScreenState extends ConsumerState<StaticExportScreen> {
                     'searchable grid and per-item pages. Private items '
                     '(tagged) are excluded.',
               ),
+            ],
             const SizedBox(height: 8),
             ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 560),

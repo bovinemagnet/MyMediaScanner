@@ -210,7 +210,18 @@ class ApiKeysNotifier extends AsyncNotifier<Map<String, String?>> {
     ref.invalidateSelf();
   }
 
-  Future<void> setTmdbKey(String key) => _writeOrDelete(_tmdbKey, key);
+  Future<void> setTmdbKey(String key) async {
+    await _writeOrDelete(_tmdbKey, key);
+    // Clearing the TMDB key makes account sync impossible (the repository
+    // throws without a token). Disable it at the source so dependent
+    // scan/save paths and the desktop sidebar can't be left pointing at an
+    // unavailable repository while the `enabled` flag stays true.
+    if (key.trim().isEmpty) {
+      await ref
+          .read(tmdbAccountSyncSettingsProvider.notifier)
+          .disableForMissingKey();
+    }
+  }
 
   Future<void> setDiscogsKey(String key) => _writeOrDelete(_discogsKey, key);
 
@@ -376,6 +387,13 @@ class TmdbAccountSyncSettingsNotifier
     final p = await _instance;
     await p.setBool(_kEnabled, v);
   }
+
+  /// Disables account sync because the TMDB API key was removed. Without
+  /// a key every account-sync repository call throws, so `enabled` — the
+  /// master gate every scan/save/detail consumer checks — must be cleared
+  /// to keep those paths from reaching the unavailable repository. Called
+  /// from [ApiKeysNotifier.setTmdbKey] when the key is cleared.
+  Future<void> disableForMissingKey() => setEnabled(false);
 
   Future<void> setEnrichScans(bool v) async {
     state = state.copyWith(enrichScans: v);
