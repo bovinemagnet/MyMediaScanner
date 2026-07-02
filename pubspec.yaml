@@ -151,24 +151,6 @@ flutter:
         - asset: assets/fonts/Inter-Bold.ttf
           weight: 700
 
-flutter_launcher_icons:
-  android: true
-  ios: true
-  remove_alpha_ios: true
-  image_path: "assets/icon/app_icon.png"
-  adaptive_icon_background: "#0E0E0E"
-  adaptive_icon_foreground: "assets/icon/app_icon_foreground.png"
-  macos:
-    generate: true
-    image_path: "assets/icon/app_icon.png"
-  windows:
-    generate: true
-    image_path: "assets/icon/app_icon.png"
-    icon_size: 48
-  web:
-    generate: true
-    image_path: "assets/icon/app_icon.png"
-
 flutter_native_splash:
   color: "#0e0e0e"
   color_dark: "#0e0e0e"
@@ -179,7 +161,7 @@ flutter_native_splash:
   android_12:
     color: "#0e0e0e"
     icon_background_color: "#0e0e0e"
-    image: assets/icon/app_icon_foreground.png
+    image: assets/icon/archive/app_icon_foreground.png
 
 msix_config:
   display_name: MyMediaScanner

@@ -254,6 +254,7 @@ class PostgresConfigNotifier extends AsyncNotifier<PostgresConfig?> {
   static const _userKey = 'pg_username';
   static const _passKey = 'pg_password';
   static const _tlsKey = 'pg_require_tls';
+  static const _tlsVerifyKey = 'pg_verify_certificate';
 
   @override
   Future<PostgresConfig?> build() async {
@@ -268,6 +269,7 @@ class PostgresConfigNotifier extends AsyncNotifier<PostgresConfig?> {
       username: await storage.read(key: _userKey) ?? '',
       password: await storage.read(key: _passKey) ?? '',
       requireTls: (await storage.read(key: _tlsKey)) != 'false',
+      verifyCertificate: (await storage.read(key: _tlsVerifyKey)) != 'false',
     );
   }
 
@@ -279,6 +281,10 @@ class PostgresConfigNotifier extends AsyncNotifier<PostgresConfig?> {
     await storage.write(key: _userKey, value: config.username);
     await storage.write(key: _passKey, value: config.password);
     await storage.write(key: _tlsKey, value: config.requireTls.toString());
+    await storage.write(
+      key: _tlsVerifyKey,
+      value: config.verifyCertificate.toString(),
+    );
     ref.invalidateSelf();
   }
 }

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- GnuDB's CDDB endpoint is HTTP-only; permit cleartext for that single host. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">gnudb.gnudb.org</domain>
+    </domain-config>
+</network-security-config>

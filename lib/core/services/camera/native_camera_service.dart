@@ -6,6 +6,7 @@ import 'package:flutter/widgets.dart';
 
 import 'package:mymediascanner/core/services/camera/barcode_detector.dart';
 import 'package:mymediascanner/core/services/camera/camera_service.dart';
+import 'package:mymediascanner/core/utils/debug_log.dart';
 
 /// Camera service implementation using the camera package + flutter_zxing.
 ///
@@ -45,7 +46,7 @@ class NativeCameraService implements CameraService {
   @override
   Future<void> start() async {
     final cameras = await availableCameras();
-    debugPrint('[scan] availableCameras() returned ${cameras.length}: '
+    debugLog('[scan] availableCameras() returned ${cameras.length}: '
         '${cameras.map((c) => '${c.name}(${c.lensDirection.name})').join(', ')}');
     if (cameras.isEmpty) {
       // Throw a CameraException rather than StateError so callers that only
@@ -61,7 +62,7 @@ class NativeCameraService implements CameraService {
     // typically index 0; the previous front-facing preference picked the
     // wrong device on Linux where USB webcams report as `external`.
     final camera = cameras.first;
-    debugPrint('[scan] using camera "${camera.name}" '
+    debugLog('[scan] using camera "${camera.name}" '
         '(${camera.lensDirection.name})');
 
     // Some webcams (and camera_desktop on Linux) reject specific
@@ -78,11 +79,11 @@ class NativeCameraService implements CameraService {
       try {
         await ctrl.initialize();
         _controller = ctrl;
-        debugPrint('[scan] camera initialised at $preset, '
+        debugLog('[scan] camera initialised at $preset, '
             'preview size=${ctrl.value.previewSize}');
         break;
       } on CameraException catch (e) {
-        debugPrint('[scan] init failed at $preset: ${e.code} ${e.description}');
+        debugLog('[scan] init failed at $preset: ${e.code} ${e.description}');
         lastError = e;
         // Dispose the failed controller asynchronously so the native V4L2 /
         // WMF device handle is released — otherwise the next preset's
@@ -133,7 +134,7 @@ class NativeCameraService implements CameraService {
         // Don't log the raw barcode value in release builds — it's user
         // media data and there's no need for it to land in device logs.
         if (kDebugMode) {
-          debugPrint(
+          debugLog(
               '[scan] DECODED ${result.format} (${result.rawValue.length} chars)');
         }
         if (!_barcodeController.isClosed) {
@@ -141,9 +142,9 @@ class NativeCameraService implements CameraService {
         }
       }
     } on CameraException catch (e) {
-      debugPrint('[scan] camera capture failed: ${e.code} ${e.description}');
+      debugLog('[scan] camera capture failed: ${e.code} ${e.description}');
     } on Exception catch (e) {
-      debugPrint('[scan] capture/decode failed: $e');
+      debugLog('[scan] capture/decode failed: $e');
     } finally {
       _captureInFlight = false;
     }
@@ -178,7 +179,7 @@ class NativeCameraService implements CameraService {
       }
       return xFile.path;
     } on CameraException catch (e) {
-      debugPrint('Still capture failed: ${e.description}');
+      debugLog('Still capture failed: ${e.description}');
       if (_isActive && _controller != null) {
         _startPeriodicCapture();
       }

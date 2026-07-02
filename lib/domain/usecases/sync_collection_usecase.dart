@@ -7,8 +7,11 @@ class SyncCollectionUseCase {
   final ISyncRepository _repo;
 
   Future<void> execute() async {
-    await _repo.pushChanges();
+    // Pull first so concurrent remote edits surface as conflicts before
+    // any pending local edit can overwrite them on the server; the push
+    // then holds back entities whose conflicts are still unresolved.
     await _repo.pullChanges();
+    await _repo.pushChanges();
   }
 
   Future<bool> testConnection() => _repo.testConnection();

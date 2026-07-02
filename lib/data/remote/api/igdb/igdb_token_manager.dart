@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:mymediascanner/core/constants/api_constants.dart';
+import 'package:mymediascanner/core/utils/debug_log.dart';
 import 'package:mymediascanner/data/remote/api/dio_factory.dart';
 import 'package:mymediascanner/data/remote/api/igdb/models/twitch_token_dto.dart';
 
@@ -88,7 +88,7 @@ class IgdbTokenManager {
       );
       return token;
     } on Exception catch (e) {
-      debugPrint('Twitch OAuth token exchange failed: $e');
+      debugLog('Twitch OAuth token exchange failed: $e');
       rethrow;
     }
   }

@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:mymediascanner/core/constants/api_constants.dart';
+import 'package:mymediascanner/core/utils/debug_log.dart';
 import 'package:mymediascanner/data/remote/api/dio_factory.dart';
 import 'package:mymediascanner/data/remote/api/igdb/igdb_token_manager.dart';
 import 'package:mymediascanner/data/remote/api/igdb/models/igdb_game_dto.dart';
@@ -59,7 +59,7 @@ class IgdbApi {
         tokenManager.invalidate();
         return _send(apicalypse);
       }
-      debugPrint('IGDB games lookup failed: $e');
+      debugLog('IGDB games lookup failed: $e');
       rethrow;
     }
   }

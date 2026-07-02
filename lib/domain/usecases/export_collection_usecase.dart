@@ -114,9 +114,22 @@ class ExportCollectionUseCase {
   }
 
   String _escapeCsv(String value) {
-    if (value.contains(',') || value.contains('"') || value.contains('\n')) {
-      return '"${value.replaceAll('"', '""')}"';
+    var escaped = value;
+    // Prefix formula-leading cells with a single quote so spreadsheet
+    // applications treat them as text rather than executing them.
+    if (escaped.startsWith('=') ||
+        escaped.startsWith('+') ||
+        escaped.startsWith('-') ||
+        escaped.startsWith('@') ||
+        escaped.startsWith('\t') ||
+        escaped.startsWith('\r')) {
+      escaped = "'$escaped";
     }
-    return value;
+    if (escaped.contains(',') ||
+        escaped.contains('"') ||
+        escaped.contains('\n')) {
+      return '"${escaped.replaceAll('"', '""')}"';
+    }
+    return escaped;
   }
 }

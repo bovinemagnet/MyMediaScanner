@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mymediascanner/core/services/camera/camera_service.dart';
 import 'package:mymediascanner/core/services/camera/camera_service_provider.dart';
 import 'package:mymediascanner/core/utils/cover_ocr_helper.dart';
+import 'package:mymediascanner/core/utils/debug_log.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
 import 'package:mymediascanner/domain/entities/scan_result.dart';
 import 'package:mymediascanner/presentation/providers/scanner_provider.dart';
@@ -63,7 +64,7 @@ class _DesktopScanScreenState extends ConsumerState<DesktopScanScreen> {
     final pendingCamera = _cameraService?.dispose();
     if (pendingCamera != null) {
       unawaited(pendingCamera.catchError((Object error, StackTrace stack) {
-        debugPrint('Camera dispose failed: $error');
+        debugLog('Camera dispose failed: $error');
       }));
     }
     super.dispose();

@@ -2,11 +2,11 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:drift/drift.dart';
-import 'package:flutter/foundation.dart';
 import 'package:mymediascanner/core/constants/api_constants.dart';
 import 'package:mymediascanner/core/constants/app_constants.dart';
 import 'package:mymediascanner/core/utils/api_circuit_breaker.dart';
 import 'package:mymediascanner/core/utils/barcode_utils.dart';
+import 'package:mymediascanner/core/utils/debug_log.dart';
 import 'package:mymediascanner/core/utils/rate_limit_aware_client.dart';
 import 'package:mymediascanner/data/local/dao/barcode_cache_dao.dart';
 import 'package:mymediascanner/data/local/database/app_database.dart';
@@ -108,8 +108,16 @@ class MetadataRepositoryImpl implements IMetadataRepository {
     final barcodeType = BarcodeUtils.detectBarcodeType(barcode);
     final barcodeTypeStr = barcodeType.name;
 
-    // 1. Check cache
+    // 1. Check cache. Cached rows hold the pre-enrichment API response,
+    // so re-apply enrichment for parity with fresh lookups.
     final cached = await _checkCache(barcode);
+    if (cached is SingleScanResult) {
+      final enriched = await _enrichMetadata(cached.metadata);
+      return ScanResult.single(
+        metadata: enriched,
+        isDuplicate: cached.isDuplicate,
+      );
+    }
     if (cached != null) return cached;
 
     // 2. Route by barcode type + hint
@@ -220,7 +228,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
         barcodeType: barcodeType,
       );
     } on Exception catch (e) {
-      debugPrint('TMDB title search failed: $e');
+      debugLog('TMDB title search failed: $e');
     }
     return null;
   }
@@ -241,7 +249,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
         isDuplicate: false,
       );
     } on Exception catch (e) {
-      debugPrint('TMDB IMDb ID lookup failed: $e');
+      debugLog('TMDB IMDb ID lookup failed: $e');
     }
     return null;
   }
@@ -284,7 +292,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
           );
         }
       } on Exception catch (e) {
-        debugPrint('MusicBrainz title search failed: $e');
+        debugLog('MusicBrainz title search failed: $e');
       }
     }
 
@@ -327,7 +335,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
           );
         }
       } on Exception catch (e) {
-        debugPrint('Discogs title search failed: $e');
+        debugLog('Discogs title search failed: $e');
       }
     }
     return null;
@@ -374,7 +382,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
         if (_isRateLimited(e)) {
           googleBooksBreaker.trip();
         }
-        debugPrint(
+        debugLog(
           'Google Books title search failed: $e — '
           'falling back to Open Library',
         );
@@ -409,7 +417,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
           );
         }
       } on Exception catch (e) {
-        debugPrint('Open Library title search failed: $e');
+        debugLog('Open Library title search failed: $e');
       }
     }
     return null;
@@ -443,7 +451,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
         barcodeType: barcodeType,
       );
     } on Exception catch (e) {
-      debugPrint('IGDB title search failed: $e');
+      debugLog('IGDB title search failed: $e');
     }
     return null;
   }
@@ -483,7 +491,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
         barcodeType: barcodeType,
       );
     } on Exception catch (e) {
-      debugPrint('IGDB enrichment for game barcode failed: $e');
+      debugLog('IGDB enrichment for game barcode failed: $e');
       return ScanResult.single(metadata: upcResult!, isDuplicate: false);
     }
   }
@@ -528,7 +536,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
       await _cacheResponse(barcode, 'game', 'igdb', game.toJson());
       return IgdbMapper.fromGame(game, barcode, barcodeType);
     } on Exception catch (e) {
-      debugPrint('IGDB detail fetch failed: $e');
+      debugLog('IGDB detail fetch failed: $e');
     }
     return null;
   }
@@ -569,7 +577,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
       await _cacheResponse(barcode, 'film', 'tmdb', match.toJson());
       return TmdbMapper.fromSearchResult(match, barcode, barcodeType);
     } on Exception catch (e) {
-      debugPrint('TMDB detail fetch failed: $e');
+      debugLog('TMDB detail fetch failed: $e');
     }
     return null;
   }
@@ -623,7 +631,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
           return OpenLibraryMapper.fromSearchDoc(match, barcode, barcodeType);
         }
       } on Exception catch (e) {
-        debugPrint('Open Library work-key detail fetch failed: $e');
+        debugLog('Open Library work-key detail fetch failed: $e');
       }
       return null;
     }
@@ -635,7 +643,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
         return OpenLibraryMapper.fromBook(book, barcode, barcodeType);
       }
     } on Exception catch (e) {
-      debugPrint('Open Library detail fetch failed: $e');
+      debugLog('Open Library detail fetch failed: $e');
     }
     return null;
   }
@@ -658,7 +666,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
         return UpcMapper.fromItem(match, barcode, barcodeType);
       }
     } on Exception catch (e) {
-      debugPrint('UPCitemdb detail fetch failed: $e');
+      debugLog('UPCitemdb detail fetch failed: $e');
     }
     return null;
   }
@@ -678,7 +686,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
         return TvdbMapper.fromSeries(series, barcode, barcodeType);
       }
     } on Exception catch (e) {
-      debugPrint('TVDB detail fetch failed: $e');
+      debugLog('TVDB detail fetch failed: $e');
     }
     return null;
   }
@@ -696,9 +704,9 @@ class MetadataRepositoryImpl implements IMetadataRepository {
         return _buildMusicBrainzResult(release, barcode, barcodeType);
       }
     } on RateLimitExceededException catch (e) {
-      debugPrint('MusicBrainz rate-limited during detail fetch: $e');
+      debugLog('MusicBrainz rate-limited during detail fetch: $e');
     } on Exception catch (e) {
-      debugPrint('MusicBrainz detail fetch failed: $e');
+      debugLog('MusicBrainz detail fetch failed: $e');
     }
     return null;
   }
@@ -719,7 +727,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
       final album = await theAudioDbApi!.getByMusicBrainzId(mbRgId);
       if (album != null) return EnrichmentMerger.mergeAudioDb(result, album);
     } on Exception catch (e) {
-      debugPrint('TheAudioDB enrichment failed: $e');
+      debugLog('TheAudioDB enrichment failed: $e');
     }
     return result;
   }
@@ -738,7 +746,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
         result.extraMetadata,
       );
     } on Exception catch (e) {
-      debugPrint('fanart.tv enrichment failed: $e');
+      debugLog('fanart.tv enrichment failed: $e');
     }
     return null;
   }
@@ -827,7 +835,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
       if (metadata == null) return null;
       return ScanResult.single(metadata: metadata, isDuplicate: false);
     } catch (e) {
-      debugPrint('Cache deserialization failed for $barcode: $e');
+      debugLog('Cache deserialization failed for $barcode: $e');
       // Evict the poisoned row so it doesn't keep throwing on every lookup.
       try {
         await _cacheDao.deleteByBarcode(barcode);
@@ -875,7 +883,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
       } on Exception catch (e) {
         if (_isRateLimited(e)) {
           googleBooksBreaker.trip();
-          debugPrint(
+          debugLog(
             'Google Books API rate-limited (429) — '
             'circuit breaker tripped, falling back to Open Library',
           );
@@ -959,7 +967,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
         barcodeType: barcodeType,
       );
     } on Exception catch (e) {
-      debugPrint('Film lookup failed: $e');
+      debugLog('Film lookup failed: $e');
     }
     return null;
   }
@@ -1001,7 +1009,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
         barcodeType: barcodeType,
       );
     } on Exception catch (e) {
-      debugPrint('Music lookup (Discogs) failed: $e');
+      debugLog('Music lookup (Discogs) failed: $e');
     }
     return null;
   }
@@ -1034,7 +1042,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
             rethrow;
           } catch (e) {
             // Detail fetch is best-effort; fall through to summary data.
-            debugPrint('MusicBrainz release detail fetch failed: $e');
+            debugLog('MusicBrainz release detail fetch failed: $e');
           }
         }
         final result = await _buildMusicBrainzResult(
@@ -1056,9 +1064,9 @@ class MetadataRepositoryImpl implements IMetadataRepository {
         barcodeType: barcodeType,
       );
     } on RateLimitExceededException catch (e) {
-      debugPrint('MusicBrainz rate-limited: $e — falling back to Discogs');
+      debugLog('MusicBrainz rate-limited: $e — falling back to Discogs');
     } on Exception catch (e) {
-      debugPrint('Music lookup (MusicBrainz) failed: $e');
+      debugLog('Music lookup (MusicBrainz) failed: $e');
     }
     return null;
   }
@@ -1197,7 +1205,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
             );
           }
         } on Exception catch (e) {
-          debugPrint('Discogs lookup in general flow failed: $e');
+          debugLog('Discogs lookup in general flow failed: $e');
         }
       }
       return ScanResult.single(metadata: upcResult, isDuplicate: false);
@@ -1234,7 +1242,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
       await _cacheResponse(barcode, null, 'upcitemdb', exact.toJson());
       return UpcMapper.fromItem(exact, barcode, barcodeType);
     } on Exception catch (e) {
-      debugPrint('UPC metadata lookup failed: $e');
+      debugLog('UPC metadata lookup failed: $e');
     }
     return null;
   }

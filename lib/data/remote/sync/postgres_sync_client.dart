@@ -11,6 +11,7 @@ class PostgresConfig {
     required this.username,
     required this.password,
     this.requireTls = true,
+    this.verifyCertificate = true,
   });
 
   final String host;
@@ -19,6 +20,10 @@ class PostgresConfig {
   final String username;
   final String password;
   final bool requireTls;
+
+  /// Whether the server's TLS certificate is validated. Only relevant
+  /// when [requireTls] is on; switch off for self-signed certificates.
+  final bool verifyCertificate;
 }
 
 /// Direct PostgreSQL connection client for sync operations.
@@ -179,6 +184,14 @@ class PostgresSyncClient {
     return (sql: sql, params: params);
   }
 
+  /// Maps [config] to an [SslMode]. `SslMode.require` encrypts but skips
+  /// certificate validation, so it is only used when the user has
+  /// explicitly opted out of verification (e.g. self-signed certs).
+  static SslMode resolveSslMode(PostgresConfig config) {
+    if (!config.requireTls) return SslMode.disable;
+    return config.verifyCertificate ? SslMode.verifyFull : SslMode.require;
+  }
+
   Future<Connection> _getConnection() async {
     final existing = _connection;
     if (existing != null && existing.isOpen) return existing;
@@ -197,9 +210,7 @@ class PostgresSyncClient {
 
     final conn = await Connection.open(
       endpoint,
-      settings: ConnectionSettings(
-        sslMode: config.requireTls ? SslMode.require : SslMode.disable,
-      ),
+      settings: ConnectionSettings(sslMode: resolveSslMode(config)),
     );
     _connection = conn;
     return conn;

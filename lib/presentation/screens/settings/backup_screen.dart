@@ -98,9 +98,9 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
       final path = await ref
           .read(_backupServiceProvider)
           .createBackup(destination);
-      setState(() => _statusMessage = 'Backup saved at $path');
+      if (mounted) setState(() => _statusMessage = 'Backup saved at $path');
     } catch (e) {
-      setState(() => _errorMessage = e.toString());
+      if (mounted) setState(() => _errorMessage = e.toString());
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -141,10 +141,12 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
       final path = result?.files.single.path;
       if (path == null) return;
       await ref.read(_backupServiceProvider).restoreFromBackup(path);
-      setState(() => _statusMessage =
-          'Restore complete. Restart the app for the changes to take effect.');
+      if (mounted) {
+        setState(() => _statusMessage =
+            'Restore complete. Restart the app for the changes to take effect.');
+      }
     } catch (e) {
-      setState(() => _errorMessage = e.toString());
+      if (mounted) setState(() => _errorMessage = e.toString());
     } finally {
       if (mounted) setState(() => _busy = false);
     }

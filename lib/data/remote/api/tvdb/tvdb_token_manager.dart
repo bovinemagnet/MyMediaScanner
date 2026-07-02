@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:mymediascanner/core/constants/api_constants.dart';
+import 'package:mymediascanner/core/utils/debug_log.dart';
 import 'package:mymediascanner/data/remote/api/dio_factory.dart';
 import 'package:mymediascanner/data/remote/api/tvdb/models/tvdb_series_dto.dart';
 
@@ -65,7 +65,7 @@ class TvdbTokenManager {
       _tokenExpiry = DateTime.now().add(const Duration(days: 25));
       return token;
     } on Exception catch (e) {
-      debugPrint('TVDB token refresh failed: $e');
+      debugLog('TVDB token refresh failed: $e');
       rethrow;
     }
   }

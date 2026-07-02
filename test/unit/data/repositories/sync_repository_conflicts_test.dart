@@ -92,6 +92,77 @@ void main() {
         reason: 'a pending conflict must not hold the watermark back');
   });
 
+  test('unresolved conflicts survive a subsequent pull', () async {
+    await mediaRepo.save(baseItem('m1'));
+    when(() => client.pullRecords('media_items',
+            afterTimestamp: any(named: 'afterTimestamp')))
+        .thenAnswer((_) async => [remoteRow('m1')]);
+
+    await repo.pullChanges();
+    expect(await repo.getConflicts(), isNotEmpty,
+        reason: 'precondition: the edit must surface as a conflict');
+
+    // Next pull returns an empty delta (the watermark advanced past the
+    // conflicted row). The still-unresolved conflict must not vanish.
+    when(() => client.pullRecords('media_items',
+            afterTimestamp: any(named: 'afterTimestamp')))
+        .thenAnswer((_) async => <Map<String, dynamic>>[]);
+    await repo.pullChanges();
+
+    expect(await repo.getConflicts(), isNotEmpty,
+        reason: 'an unresolved conflict must survive later pulls');
+  });
+
+  test('pushChanges holds back entities with pending conflicts', () async {
+    await mediaRepo.save(baseItem('m1'));
+    await mediaRepo.save(baseItem('m2'));
+    when(() => client.pullRecords('media_items',
+            afterTimestamp: any(named: 'afterTimestamp')))
+        .thenAnswer((_) async => [remoteRow('m1')]);
+    when(() => client.upsertRecords(any(), any())).thenAnswer((_) async {});
+
+    await repo.pullChanges();
+    expect(await repo.getConflicts(), isNotEmpty,
+        reason: 'precondition: m1 must surface as a conflict');
+
+    await repo.pushChanges();
+
+    final pushed = verify(() => client.upsertRecords('media_items', captureAny()))
+        .captured
+        .cast<List<Map<String, dynamic>>>()
+        .expand((batch) => batch)
+        .map((r) => r['id'])
+        .toList();
+    expect(pushed, contains('m2'),
+        reason: 'non-conflicted entities must still push');
+    expect(pushed, isNot(contains('m1')),
+        reason: 'a conflicted entity must not be pushed until resolved');
+  });
+
+  test('pushChanges reports pending conflicts in its status emission',
+      () async {
+    await mediaRepo.save(baseItem('m1'));
+    when(() => client.pullRecords('media_items',
+            afterTimestamp: any(named: 'afterTimestamp')))
+        .thenAnswer((_) async => [remoteRow('m1')]);
+    when(() => client.upsertRecords(any(), any())).thenAnswer((_) async {});
+
+    await repo.pullChanges();
+    expect(await repo.getConflicts(), isNotEmpty);
+
+    final statuses = <int>[];
+    final sub = repo
+        .watchSyncStatus()
+        .listen((status) => statuses.add(status.conflictCount));
+    await repo.pushChanges();
+    await Future<void>.delayed(Duration.zero);
+    await sub.cancel();
+
+    expect(statuses.last, greaterThan(0),
+        reason: 'push runs after pull in a sync cycle; its final status '
+            'emission must not hide still-pending conflicts');
+  });
+
   test('resolveConflicts pulls only the conflicted ids, not the full table',
       () async {
     await mediaRepo.save(baseItem('m1'));

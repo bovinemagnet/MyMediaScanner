@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mymediascanner/core/utils/debug_log.dart';
 import 'package:mymediascanner/domain/entities/ownership_status.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/scanner_provider.dart';
@@ -292,7 +293,7 @@ class _MetadataConfirmScreenState extends ConsumerState<MetadataConfirmScreen> {
                     // into release logs — both are personal collection
                     // data with no operational value in production.
                     if (kDebugMode) {
-                      debugPrint(
+                      debugLog(
                         '[MMS-save] onSave start barcode=${edited.barcode}'
                         ' title=${edited.title}'
                         ' target=${scannerState.saveTarget.name}',
@@ -306,7 +307,7 @@ class _MetadataConfirmScreenState extends ConsumerState<MetadataConfirmScreen> {
                       title: edited.title,
                       year: edited.year,
                     );
-                    debugPrint('[MMS-save] duplicate check proceed=$proceed');
+                    debugLog('[MMS-save] duplicate check proceed=$proceed');
                     if (!proceed) return;
                     switch (_saveMode) {
                       case SaveMode.saveLocally:
@@ -319,7 +320,7 @@ class _MetadataConfirmScreenState extends ConsumerState<MetadataConfirmScreen> {
                               ? OwnershipStatus.wishlist
                               : OwnershipStatus.owned,
                         );
-                        debugPrint('[MMS-save] DB write complete');
+                        debugLog('[MMS-save] DB write complete');
 
                         // Apply TMDB-sourced rating if the user tapped
                         // "Apply to local rating" from the account panel.
@@ -338,7 +339,7 @@ class _MetadataConfirmScreenState extends ConsumerState<MetadataConfirmScreen> {
                                   DateTime.now().millisecondsSinceEpoch,
                             ),
                           );
-                          debugPrint(
+                          debugLog(
                               '[MMS-save] TMDB rating applied: $appliedRating');
                         }
 
@@ -352,19 +353,19 @@ class _MetadataConfirmScreenState extends ConsumerState<MetadataConfirmScreen> {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(content: Text(snackText)));
-                            debugPrint('[MMS-save] batch: navigate /scan');
+                            debugLog('[MMS-save] batch: navigate /scan');
                             context.go('/scan');
                           }
                         } else {
-                          debugPrint('[MMS-save] calling scanner.reset()');
+                          debugLog('[MMS-save] calling scanner.reset()');
                           scanner.reset();
-                          debugPrint('[MMS-save] scanner.reset() returned');
+                          debugLog('[MMS-save] scanner.reset() returned');
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(content: Text(snackText)));
                             final destination =
                                 targetsWishlist ? '/wishlist' : '/';
-                            debugPrint('[MMS-save] navigate $destination');
+                            debugLog('[MMS-save] navigate $destination');
                             context.go(destination);
                           }
                         }
@@ -388,7 +389,7 @@ class _MetadataConfirmScreenState extends ConsumerState<MetadataConfirmScreen> {
                           ref.read(scannerProvider.notifier).reset();
                         }
                     }
-                    debugPrint('[MMS-save] onSave done');
+                    debugLog('[MMS-save] onSave done');
                   },
                 ),
                 // Remote-first save-mode selector — shown when account sync

@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:mymediascanner/core/constants/api_constants.dart';
+import 'package:mymediascanner/core/utils/debug_log.dart';
 import 'package:mymediascanner/core/utils/rate_limit_aware_client.dart';
 import 'package:mymediascanner/data/remote/api/dio_factory.dart';
 import 'package:mymediascanner/data/remote/api/musicbrainz/models/cover_art_archive_dto.dart';
@@ -56,10 +56,10 @@ class CoverArtArchiveApi {
     } on DioException catch (e) {
       // 404 is the normal "no artwork" response — not an error.
       if (e.response?.statusCode == 404) return null;
-      debugPrint('Cover Art Archive fetch failed for $path: $e');
+      debugLog('Cover Art Archive fetch failed for $path: $e');
       return null;
     } on Exception catch (e) {
-      debugPrint('Cover Art Archive fetch failed for $path: $e');
+      debugLog('Cover Art Archive fetch failed for $path: $e');
       return null;
     }
   }

@@ -34,6 +34,13 @@ class NotificationService {
     try {
       await _plugin.initialize(settings);
       _initialised = true;
+      // Android 13+ requires a runtime permission before notifications
+      // are displayed; Darwin permissions are requested via the
+      // initialization settings above.
+      await _plugin
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
+          ?.requestNotificationsPermission();
     } catch (_) {
       // Gracefully degrade on unsupported platforms.
     }

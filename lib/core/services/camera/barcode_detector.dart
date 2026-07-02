@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_zxing/flutter_zxing.dart';
 
 import 'package:mymediascanner/core/services/camera/camera_service.dart';
+import 'package:mymediascanner/core/utils/debug_log.dart';
 
 /// Barcode detector using flutter_zxing (ZXing C++ via FFI).
 ///
@@ -36,7 +37,7 @@ class BarcodeDetector {
   static Future<BarcodeResult?> detectFromFile(String path) async {
     final file = File(path);
     final size = await file.exists() ? await file.length() : -1;
-    debugPrint('[scan] decoding $path (${size}B)');
+    debugLog('[scan] decoding $path (${size}B)');
     if (size <= 0) return null;
 
     try {
@@ -48,17 +49,17 @@ class BarcodeDetector {
           format: pathResult.format?.toString(),
         );
       }
-      debugPrint('[scan] path-API miss (error="${pathResult.error}"), '
+      debugLog('[scan] path-API miss (error="${pathResult.error}"), '
           'trying bytes-API');
     } on Exception catch (e) {
-      debugPrint('[scan] path-API threw: $e, trying bytes-API');
+      debugLog('[scan] path-API threw: $e, trying bytes-API');
     }
 
     try {
       final bytes = await file.readAsBytes();
       final byteResult = _zx.readBarcode(bytes, DecodeParams());
       if (!byteResult.isValid) {
-        debugPrint('[scan] bytes-API miss (error="${byteResult.error}")');
+        debugLog('[scan] bytes-API miss (error="${byteResult.error}")');
         return null;
       }
       final text = byteResult.text;
@@ -68,7 +69,7 @@ class BarcodeDetector {
         format: byteResult.format?.toString(),
       );
     } on Exception catch (e) {
-      debugPrint('[scan] bytes-API threw: $e');
+      debugLog('[scan] bytes-API threw: $e');
       return null;
     }
   }

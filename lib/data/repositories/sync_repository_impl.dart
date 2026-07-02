@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
-import 'package:flutter/foundation.dart';
+import 'package:mymediascanner/core/utils/debug_log.dart';
 import 'package:mymediascanner/data/local/dao/media_items_dao.dart';
 import 'package:mymediascanner/data/local/dao/sync_log_dao.dart';
 import 'package:mymediascanner/data/local/database/app_database.dart';
@@ -51,8 +51,21 @@ class SyncRepositoryImpl implements ISyncRepository {
       final pushedMediaItemIds = <String>{};
       Object? firstFailure;
 
+      // Entities with unresolved conflicts must not be pushed — the
+      // unconditional upsert would overwrite the other device's edit
+      // before the user has chosen a resolution. They stay pending and
+      // push after resolveConflicts refreshes their payload.
+      final conflictedIds = {
+        for (final c in _pendingConflicts)
+          if (c.entityType == 'media_item') c.entityId,
+      };
+
       for (var i = 0; i < pending.length; i++) {
         final log = pending[i];
+        if (log.entityType == 'media_item' &&
+            conflictedIds.contains(log.entityId)) {
+          continue;
+        }
         _progressController.add(SyncProgress(
           phase: SyncPhase.push,
           current: i + 1,
@@ -112,7 +125,13 @@ class SyncRepositoryImpl implements ISyncRepository {
       );
 
       _progressController.add(SyncProgress.idle);
-      await _emitStatus(isSyncing: false);
+      // Push runs after pull in a sync cycle, so this is the cycle's
+      // final status emission — it must carry the still-pending
+      // conflict count rather than resetting it to zero.
+      await _emitStatus(
+        isSyncing: false,
+        conflictCount: _pendingConflicts.length,
+      );
       if (firstFailure != null) {
         // Surface the failure to the caller while the status stream
         // already reflects per-entry errorMessages.
@@ -120,7 +139,11 @@ class SyncRepositoryImpl implements ISyncRepository {
       }
     } on Exception catch (e) {
       _progressController.add(SyncProgress.idle);
-      await _emitStatus(isSyncing: false, error: e.toString());
+      await _emitStatus(
+        isSyncing: false,
+        error: e.toString(),
+        conflictCount: _pendingConflicts.length,
+      );
       rethrow;
     }
   }
@@ -138,12 +161,17 @@ class SyncRepositoryImpl implements ISyncRepository {
         afterTimestamp: lastSyncedAt,
       );
       final total = remoteItems.length;
-      _pendingConflicts.clear();
 
       for (var i = 0; i < remoteItems.length; i++) {
         final remote = remoteItems[i];
         final remoteId = remote['id'];
         if (remoteId is! String) continue;
+
+        // Refresh this row's conflict entries from the fresh remote
+        // state; conflicts for rows outside this delta are retained —
+        // clearing them here silently discarded unresolved conflicts
+        // once the watermark advanced past their `updated_at`.
+        _pendingConflicts.removeWhere((c) => c.entityId == remoteId);
 
         _progressController.add(SyncProgress(
           phase: SyncPhase.pull,
@@ -739,7 +767,7 @@ class SyncRepositoryImpl implements ISyncRepository {
     final parsed = OwnershipStatus.fromString(value);
     if (parsed != null) return parsed.name;
     if (value != null) {
-      debugPrint(
+      debugLog(
           'Unknown ownership_status "$value" from sync - defaulting to owned');
     }
     return OwnershipStatus.owned.name;

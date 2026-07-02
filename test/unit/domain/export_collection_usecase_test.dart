@@ -148,6 +148,45 @@ void main() {
       expect(lines[1], contains('"Greatest Hits, Vol. 1"'));
     });
 
+    test('CSV neutralises cells starting with formula characters', () async {
+      final maliciousItems = [
+        const MediaItem(
+          id: 'id-formula',
+          barcode: '2222222222222',
+          barcodeType: 'EAN-13',
+          mediaType: MediaType.music,
+          title: '=HYPERLINK("http://evil.example")',
+          subtitle: '-Sides and Rarities',
+          userReview: '@mention',
+          retailer: '+SUM(A1:A9)',
+          genres: [],
+          dateAdded: 1700400000,
+          dateScanned: 1700400000,
+          updatedAt: 1700400000,
+        ),
+      ];
+
+      when(() => mockRepo.watchAll(
+            mediaType: any(named: 'mediaType'),
+            searchQuery: any(named: 'searchQuery'),
+            tagIds: any(named: 'tagIds'),
+            sortBy: any(named: 'sortBy'),
+            ascending: any(named: 'ascending'),
+          )).thenAnswer((_) => Stream.value(maliciousItems));
+
+      final content = await useCase.generateContent(ExportFormat.csv);
+      final lines = content.split('\n');
+
+      // Formula-leading cells are prefixed with a single quote so
+      // spreadsheet applications treat them as text.
+      expect(lines[1], contains('"\'=HYPERLINK(""http://evil.example"")"'));
+      expect(lines[1], contains("'-Sides and Rarities"));
+      expect(lines[1], contains("'@mention"));
+      expect(lines[1], contains("'+SUM(A1:A9)"));
+      expect(lines[1], isNot(contains(',=')));
+      expect(lines[1], isNot(contains(',-Sides')));
+    });
+
     test('CSV export includes purchase info fields in header and rows',
         () async {
       final itemWithPurchase = [

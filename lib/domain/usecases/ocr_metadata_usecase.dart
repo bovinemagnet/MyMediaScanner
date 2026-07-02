@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:mymediascanner/core/utils/debug_log.dart';
 import 'package:mymediascanner/core/utils/ocr_text_analysis.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/domain/entities/ocr_result.dart';
@@ -93,7 +94,7 @@ class OcrMetadataUseCase {
         confidence: analysis.confidence,
       );
     } catch (e) {
-      debugPrint('OCR metadata search failed: $e');
+      debugLog('OCR metadata search failed: $e');
       return OcrSearchResult(
         scanResult: ScanResult.notFound(
           barcode: barcode,

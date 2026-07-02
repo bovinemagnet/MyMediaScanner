@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:mymediascanner/core/utils/debug_log.dart';
 
 /// Method channel wrapper for macOS Vision framework text recognition.
 ///
@@ -61,9 +62,9 @@ abstract final class VisionOcrChannel {
     } on MissingPluginException catch (_) {
       // Method not implemented on native side; fall through
     } on TypeError catch (e) {
-      debugPrint('Vision OCR structured: malformed native response: $e');
+      debugLog('Vision OCR structured: malformed native response: $e');
     } on TimeoutException {
-      debugPrint(
+      debugLog(
           'Vision OCR structured: timed out after ${timeout.inSeconds}s');
       return null;
     }
@@ -94,10 +95,10 @@ abstract final class VisionOcrChannel {
           .timeout(timeout);
       return result;
     } on PlatformException catch (e) {
-      debugPrint('Vision OCR channel error: ${e.message}');
+      debugLog('Vision OCR channel error: ${e.message}');
       return null;
     } on TimeoutException {
-      debugPrint(
+      debugLog(
           'Vision OCR: timed out after ${timeout.inSeconds}s on $imagePath');
       return null;
     }

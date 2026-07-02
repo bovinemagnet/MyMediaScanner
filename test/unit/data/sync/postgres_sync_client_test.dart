@@ -1,8 +1,50 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mymediascanner/data/remote/sync/postgres_sync_client.dart';
+import 'package:postgres/postgres.dart';
 
 void main() {
   group('PostgresSyncClient', () {
+    group('resolveSslMode', () {
+      const base = PostgresConfig(
+        host: 'db.example.com',
+        port: 5432,
+        database: 'media',
+        username: 'user',
+        password: 'secret',
+      );
+
+      test('verifies the server certificate by default when TLS is on', () {
+        expect(
+          PostgresSyncClient.resolveSslMode(base),
+          SslMode.verifyFull,
+        );
+      });
+
+      test('falls back to unverified TLS when verification is opted out', () {
+        const config = PostgresConfig(
+          host: 'db.example.com',
+          port: 5432,
+          database: 'media',
+          username: 'user',
+          password: 'secret',
+          verifyCertificate: false,
+        );
+        expect(PostgresSyncClient.resolveSslMode(config), SslMode.require);
+      });
+
+      test('disables TLS when requireTls is off', () {
+        const config = PostgresConfig(
+          host: 'db.example.com',
+          port: 5432,
+          database: 'media',
+          username: 'user',
+          password: 'secret',
+          requireTls: false,
+        );
+        expect(PostgresSyncClient.resolveSslMode(config), SslMode.disable);
+      });
+    });
+
     test('buildBatchUpsertSql generates correct SQL for multiple records', () {
       final records = [
         {'id': '1', 'title': 'A', 'updated_at': 100},

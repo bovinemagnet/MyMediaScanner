@@ -12,6 +12,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:mymediascanner/core/utils/debug_log.dart';
 import 'package:mymediascanner/presentation/providers/scanner_provider.dart';
 import 'package:mymediascanner/presentation/screens/scanner/widgets/batch_scan_counter.dart';
 import 'package:mymediascanner/presentation/screens/scanner/widgets/manual_barcode_entry_dialog.dart';
@@ -125,7 +126,7 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
   }
 
   void _resumeScanning() {
-    debugPrint(
+    debugLog(
       '[MMS-scan] _resumeScanning enter (was hasScanned=$_hasScanned)',
     );
     // Clear `_hasScanned` BEFORE reset(). Riverpod fires `ref.listen`
@@ -136,7 +137,7 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
     _hasScanned = false;
     ref.read(scannerProvider.notifier).reset();
     _cameraController.start();
-    debugPrint('[MMS-scan] _resumeScanning exit (camera.start dispatched)');
+    debugLog('[MMS-scan] _resumeScanning exit (camera.start dispatched)');
   }
 
   /// Queue a batch-mode scan result without blocking the synchronous
@@ -262,7 +263,7 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
         context.go('/scan/confirm');
       }
     } catch (e) {
-      debugPrint('[MMS-scan] cover OCR failed: $e');
+      debugLog('[MMS-scan] cover OCR failed: $e');
       if (mounted) _resumeScanning();
     } finally {
       await ocr.dispose();
@@ -274,7 +275,7 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
     final scannerState = ref.watch(scannerProvider);
 
     ref.listen(scannerProvider, (prev, next) {
-      debugPrint(
+      debugLog(
         '[MMS-scan] state ${prev?.state} -> ${next.state} '
         '(hasScanned=$_hasScanned, batch=${next.batchMode})',
       );

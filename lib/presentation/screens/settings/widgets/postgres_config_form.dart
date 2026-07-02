@@ -20,6 +20,7 @@ class _PostgresConfigFormState extends ConsumerState<PostgresConfigForm> {
   final _userController = TextEditingController();
   final _passController = TextEditingController();
   bool _requireTls = true;
+  bool _verifyCertificate = true;
   bool _testing = false;
   String? _testResult;
 
@@ -37,6 +38,7 @@ class _PostgresConfigFormState extends ConsumerState<PostgresConfigForm> {
       _userController.text = config.username;
       _passController.text = config.password;
       _requireTls = config.requireTls;
+      _verifyCertificate = config.verifyCertificate;
     }
     _seeded = true;
   }
@@ -50,6 +52,7 @@ class _PostgresConfigFormState extends ConsumerState<PostgresConfigForm> {
       username: _userController.text.trim(),
       password: _passController.text,
       requireTls: _requireTls,
+      verifyCertificate: _verifyCertificate,
     );
     await ref.read(postgresConfigProvider.notifier).save(config);
     if (mounted) {
@@ -75,6 +78,7 @@ class _PostgresConfigFormState extends ConsumerState<PostgresConfigForm> {
     }
 
     final success = await syncRepo.testConnection();
+    if (!mounted) return;
     setState(() {
       _testing = false;
       _testResult = success ? 'Connection successful!' : 'Connection failed';
@@ -142,9 +146,22 @@ class _PostgresConfigFormState extends ConsumerState<PostgresConfigForm> {
             const SizedBox(height: 12),
             SwitchListTile(
               title: const Text('Require TLS'),
-              subtitle: const Text('Recommended for security'),
+              subtitle: const Text(
+                'Recommended — without TLS the password and your data '
+                'cross the network unencrypted',
+              ),
               value: _requireTls,
               onChanged: (v) => setState(() => _requireTls = v),
+            ),
+            SwitchListTile(
+              title: const Text('Verify server certificate'),
+              subtitle: const Text(
+                'Switch off only for self-signed certificates',
+              ),
+              value: _verifyCertificate,
+              onChanged: _requireTls
+                  ? (v) => setState(() => _verifyCertificate = v)
+                  : null,
             ),
             const SizedBox(height: 16),
             Row(

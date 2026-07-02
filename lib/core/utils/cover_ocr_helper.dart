@@ -1,6 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mymediascanner/core/utils/debug_log.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
 import 'package:mymediascanner/core/utils/tesseract_ocr_service.dart';
 import 'package:mymediascanner/core/utils/vision_ocr_channel.dart';
@@ -103,7 +103,7 @@ class CoverOcrHelper {
         OcrTextBlock(text: cleaned, confidence: 1.0, area: 1.0),
       ]);
     } on Exception catch (e) {
-      debugPrint('Vision OCR structured failed: $e');
+      debugLog('Vision OCR structured failed: $e');
       return const OcrResult();
     }
   }
@@ -128,7 +128,7 @@ class CoverOcrHelper {
 
       return OcrResult(blocks: blocks);
     } on Exception catch (e) {
-      debugPrint('Cover OCR structured failed: $e');
+      debugLog('Cover OCR structured failed: $e');
       return const OcrResult();
     }
   }
@@ -182,7 +182,7 @@ class CoverOcrHelper {
       if (text == null || text.isEmpty) return null;
       return cleanTitle(text);
     } on Exception catch (e) {
-      debugPrint('Vision OCR failed: $e');
+      debugLog('Vision OCR failed: $e');
       return null;
     }
   }
@@ -209,7 +209,7 @@ class CoverOcrHelper {
       final title = cleanTitle(blocks.first.text);
       return title.isEmpty ? null : title;
     } on Exception catch (e) {
-      debugPrint('Cover OCR failed: $e');
+      debugLog('Cover OCR failed: $e');
       return null;
     }
   }
@@ -240,7 +240,7 @@ class CoverOcrHelper {
     try {
       await r.close();
     } on Exception catch (e) {
-      debugPrint('Cover OCR dispose ignored error: $e');
+      debugLog('Cover OCR dispose ignored error: $e');
     }
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:drift/drift.dart' hide isNotNull;
 import 'package:flutter_test/flutter_test.dart';
@@ -734,6 +736,50 @@ void main() {
         single.metadata.coverUrl,
         'https://fanart.tv/movies/550/poster.jpg',
       );
+    });
+
+    test('cache hit is enriched with TheAudioDB critic score', () async {
+      final repo = MetadataRepositoryImpl(
+        cacheDao: mockCache,
+        theAudioDbApi: mockAudioDbApi,
+      );
+
+      final cachedJson = jsonEncode(
+        const MusicBrainzReleaseDto(
+          id: 'mb-1',
+          title: 'Test Album',
+          date: '2005-01-01',
+          releaseGroup: MusicBrainzReleaseGroupDto(
+            id: 'rg-1',
+            title: 'Test Album',
+          ),
+        ).toJson(),
+      );
+      when(() => mockCache.getByBarcode(any())).thenAnswer(
+        (_) async => BarcodeCacheTableData(
+          barcode: barcode,
+          responseJson: cachedJson,
+          sourceApi: 'musicbrainz',
+          cachedAt: DateTime.now().millisecondsSinceEpoch,
+        ),
+      );
+      when(() => mockAudioDbApi.getByMusicBrainzId('rg-1')).thenAnswer(
+        (_) async => const TheAudioDbAlbumDto(
+          idAlbum: '123',
+          intScore: '8.5',
+          strDescriptionEN: 'A great album',
+        ),
+      );
+
+      final result = await repo.lookupBarcode(
+        barcode,
+        typeHint: MediaType.music,
+      );
+
+      expect(result, isA<SingleScanResult>());
+      final single = result as SingleScanResult;
+      expect(single.metadata.criticScore, 8.5);
+      expect(single.metadata.criticSource, 'TheAudioDB');
     });
 
     test('enrichment failure does not break the result', () async {
