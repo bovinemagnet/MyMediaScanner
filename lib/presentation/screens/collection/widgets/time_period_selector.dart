@@ -67,7 +67,18 @@ class TimePeriodSelector extends ConsumerWidget {
             segments: TimePeriod.values.map((period) {
               return ButtonSegment<TimePeriod>(
                 value: period,
-                label: Text(period.label),
+                // Scale the label down to fit a narrow segment so the full
+                // text stays readable — "12 months" shrinks rather than
+                // breaking mid-word across three lines or truncating to
+                // "1…" (#98).
+                label: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    period.label,
+                    maxLines: 1,
+                    softWrap: false,
+                  ),
+                ),
               );
             }).toList(),
             selected: {selected},

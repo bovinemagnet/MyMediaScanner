@@ -589,9 +589,17 @@ class _ThemeModeTile extends ConsumerWidget {
         };
 
     return ListTile(
+      // Drop the default 16dp side padding (matching the ReplayGain tiles
+      // below) so the three-segment brightness control doesn't starve the
+      // title column and force "Theme" to wrap character-by-character (#98).
+      contentPadding: EdgeInsets.zero,
       leading: Icon(icon(currentBrightness)),
-      title: const Text('Theme'),
-      subtitle: Text(label(currentBrightness)),
+      title: const Text('Theme', maxLines: 1, overflow: TextOverflow.ellipsis),
+      subtitle: Text(
+        label(currentBrightness),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
       trailing: SegmentedButton<ThemeBrightness>(
         segments: const [
           ButtonSegment(

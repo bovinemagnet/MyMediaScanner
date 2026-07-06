@@ -318,6 +318,21 @@ void main() {
     expect(capturedFamilies, contains(ThemeFamily.cobalt));
   });
 
+  testWidgets('Theme tile title stays on a single line (#98)', (tester) async {
+    await tester.pumpWidget(_buildSettings());
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.byType(SegmentedButton<ThemeBrightness>),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    final title = tester.widget<Text>(find.text('Theme'));
+    expect(title.maxLines, 1);
+  });
+
   // -------------------------------------------------------------------------
   // Test 4 — sync section shows not-configured state when no postgres config
   // -------------------------------------------------------------------------
