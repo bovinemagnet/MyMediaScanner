@@ -1346,4 +1346,106 @@ void main() {
       },
     );
   });
+
+  group('lookupBarcode — cache poisoning guard (#96)', () {
+    const isbn = '9780747532699';
+    late MockBarcodeCacheDao mockCache;
+    late MockGoogleBooksApi mockGoogleBooksApi;
+
+    setUp(() {
+      mockCache = MockBarcodeCacheDao();
+      mockGoogleBooksApi = MockGoogleBooksApi();
+      when(() => mockCache.upsert(any())).thenAnswer((_) async {});
+      when(() => mockCache.deleteByBarcode(any())).thenAnswer((_) async {});
+    });
+
+    BarcodeCacheTableData musicCachedFor(String barcode) => BarcodeCacheTableData(
+      barcode: barcode,
+      responseJson: jsonEncode(
+        const MusicBrainzReleaseDto(id: 'mb-x', title: 'Hard at Play').toJson(),
+      ),
+      sourceApi: 'musicbrainz',
+      cachedAt: DateTime.now().millisecondsSinceEpoch,
+    );
+
+    test(
+      'ignores a music-cached entry for an ISBN barcode and routes to book '
+      'lookup',
+      () async {
+        when(
+          () => mockCache.getByBarcode(any()),
+        ).thenAnswer((_) async => musicCachedFor(isbn));
+        when(() => mockGoogleBooksApi.searchByIsbn('isbn:$isbn')).thenAnswer(
+          (_) async => const GoogleBooksSearchResponseDto(
+            totalItems: 1,
+            items: [
+              GoogleBooksVolumeDto(
+                id: 'gb-1',
+                volumeInfo: GoogleBooksVolumeInfoDto(
+                  title: 'Harry Potter and the Philosopher\'s Stone',
+                  authors: ['J. K. Rowling'],
+                ),
+              ),
+            ],
+          ),
+        );
+
+        final repo = MetadataRepositoryImpl(
+          cacheDao: mockCache,
+          googleBooksApi: mockGoogleBooksApi,
+        );
+
+        final result = await repo.lookupBarcode(isbn);
+
+        expect(result, isA<SingleScanResult>());
+        final single = result as SingleScanResult;
+        expect(single.metadata.mediaType, MediaType.book);
+        expect(
+          single.metadata.title,
+          'Harry Potter and the Philosopher\'s Stone',
+        );
+        expect(single.metadata.sourceApis, contains('google_books'));
+      },
+    );
+
+    test(
+      'evicts the mismatched cache row so it stops poisoning future lookups',
+      () async {
+        when(
+          () => mockCache.getByBarcode(any()),
+        ).thenAnswer((_) async => musicCachedFor(isbn));
+        when(() => mockGoogleBooksApi.searchByIsbn('isbn:$isbn')).thenAnswer(
+          (_) async =>
+              const GoogleBooksSearchResponseDto(totalItems: 0, items: []),
+        );
+
+        final repo = MetadataRepositoryImpl(
+          cacheDao: mockCache,
+          googleBooksApi: mockGoogleBooksApi,
+        );
+
+        await repo.lookupBarcode(isbn);
+
+        verify(() => mockCache.deleteByBarcode(any())).called(1);
+      },
+    );
+
+    test(
+      'still serves a compatible music cache entry for an EAN barcode',
+      () async {
+        const ean = '602498746400';
+        final repo = MetadataRepositoryImpl(cacheDao: mockCache);
+        when(
+          () => mockCache.getByBarcode(any()),
+        ).thenAnswer((_) async => musicCachedFor(ean));
+
+        final result = await repo.lookupBarcode(ean, typeHint: MediaType.music);
+
+        expect(result, isA<SingleScanResult>());
+        final single = result as SingleScanResult;
+        expect(single.metadata.title, 'Hard at Play');
+        verifyNever(() => mockCache.deleteByBarcode(any()));
+      },
+    );
+  });
 }

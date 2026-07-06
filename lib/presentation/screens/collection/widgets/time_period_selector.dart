@@ -67,7 +67,14 @@ class TimePeriodSelector extends ConsumerWidget {
             segments: TimePeriod.values.map((period) {
               return ButtonSegment<TimePeriod>(
                 value: period,
-                label: Text(period.label),
+                // Cap to one line so a narrow segment truncates cleanly
+                // instead of breaking "12 months" mid-word across three
+                // lines (#98).
+                label: Text(
+                  period.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               );
             }).toList(),
             selected: {selected},

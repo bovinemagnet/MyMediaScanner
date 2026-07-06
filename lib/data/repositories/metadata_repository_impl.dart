@@ -110,7 +110,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
 
     // 1. Check cache. Cached rows hold the pre-enrichment API response,
     // so re-apply enrichment for parity with fresh lookups.
-    final cached = await _checkCache(barcode);
+    final cached = await _checkCache(barcode, forceIsbn: forceIsbn);
     if (cached is SingleScanResult) {
       final enriched = await _enrichMetadata(cached.metadata);
       return ScanResult.single(
@@ -777,13 +777,58 @@ class MetadataRepositoryImpl implements IMetadataRepository {
 
   // -- Cache --
 
-  Future<ScanResult?> _checkCache(String barcode) async {
+  /// Source APIs whose results describe a book. An ISBN barcode must only
+  /// be served from one of these (or the universal UPCitemdb fallback).
+  static const _bookSources = {'google_books', 'open_library'};
+
+  /// Source APIs whose results describe a film or TV title. An IMDb ID must
+  /// only be served from one of these (or the universal UPCitemdb fallback).
+  static const _screenSources = {'tmdb', 'tvdb'};
+
+  /// Whether a cached [sourceApi] is consistent with what the barcode's own
+  /// structure demands. Prevents a poisoned row (e.g. an ISBN once cached as
+  /// `musicbrainz` while the Music chip was active) from being replayed for
+  /// every later lookup, ahead of the correct type routing.
+  ///
+  /// UPCitemdb is the universal classifier fallback and is always accepted;
+  /// only structurally-constrained barcodes (ISBN, IMDb ID) reject
+  /// mismatched specialists. EAN/UPC codes carry no such constraint.
+  bool _isCacheSourceCompatible(
+    String barcode,
+    String sourceApi, {
+    required bool forceIsbn,
+  }) {
+    if (sourceApi == 'upcitemdb') return true;
+    if (forceIsbn || BarcodeUtils.isIsbn(barcode)) {
+      return _bookSources.contains(sourceApi);
+    }
+    if (BarcodeUtils.isImdbId(barcode)) {
+      return _screenSources.contains(sourceApi);
+    }
+    return true;
+  }
+
+  Future<ScanResult?> _checkCache(
+    String barcode, {
+    bool forceIsbn = false,
+  }) async {
     final cached = await _cacheDao.getByBarcode(barcode);
     if (cached == null) return null;
 
     final age = DateTime.now().millisecondsSinceEpoch - cached.cachedAt;
     const maxAge = ApiConstants.cacheDurationDays * 24 * 60 * 60 * 1000;
     if (age > maxAge) return null;
+
+    // Reject a cached entry whose source contradicts the barcode's own
+    // structure (poisoned row) and evict it so it stops short-circuiting
+    // the correct type routing on every subsequent lookup.
+    if (!_isCacheSourceCompatible(barcode, cached.sourceApi,
+        forceIsbn: forceIsbn)) {
+      try {
+        await _cacheDao.deleteByBarcode(barcode);
+      } catch (_) {}
+      return null;
+    }
 
     // Re-map through the original mapper for full fidelity
     try {

@@ -25,6 +25,21 @@ import 'package:mymediascanner/core/utils/cover_ocr_helper.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
 import 'package:mymediascanner/domain/entities/scan_result.dart';
 
+/// Whether a camera barcode detection should be acted on.
+///
+/// Guards two failure modes: a scan already in flight ([hasScanned]), and
+/// the live preview continuing to stream **underneath** a dialog or pushed
+/// route ([routeIsCurrent] is false) — e.g. the manual-entry dialog, the
+/// confirm, disambiguation, or not-found screen. Without the route check the
+/// camera silently processes real-world barcodes in the background and can
+/// persist unconfirmed items (issue #97).
+@visibleForTesting
+bool shouldProcessCameraDetection({
+  required bool hasScanned,
+  required bool routeIsCurrent,
+}) =>
+    !hasScanned && routeIsCurrent;
+
 /// Full-screen mobile camera barcode scanner.
 class MobileScanScreen extends ConsumerStatefulWidget {
   const MobileScanScreen({super.key});
@@ -103,7 +118,18 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
   }
 
   Future<void> _onBarcodeDetected(BarcodeCapture capture) async {
-    if (_hasScanned) return;
+    if (!mounted) return;
+    // Ignore detections while a scan is in flight or a dialog/pushed route
+    // covers the scanner. The live preview keeps streaming underneath the
+    // manual-entry dialog and the confirm/disambiguate/not-found screens, so
+    // without this guard the camera silently processes real-world barcodes
+    // and can persist unconfirmed items (issue #97).
+    if (!shouldProcessCameraDetection(
+      hasScanned: _hasScanned,
+      routeIsCurrent: ModalRoute.of(context)?.isCurrent ?? true,
+    )) {
+      return;
+    }
 
     final barcodes = capture.barcodes;
     if (barcodes.isEmpty) return;
@@ -160,16 +186,31 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
   }
 
   void _showManualEntryDialog() {
+    // Pause the live camera while the dialog is up so it can't scan a
+    // real-world barcode in the background behind the text field (#97).
+    var submitted = false;
+    unawaited(_cameraController.stop());
     showDialog<void>(
       context: context,
       builder: (_) => ManualBarcodeEntryDialog(
         onSubmit: (value) {
+          submitted = true;
           _hasScanned = true;
           _cameraController.stop();
           ref.read(scannerProvider.notifier).onBarcodeScanned(value);
         },
       ),
-    );
+    ).then((_) {
+      // Dismissed without submitting — resume the live camera only if the
+      // scanner is still the active surface and no scan is in flight.
+      if (!submitted &&
+          mounted &&
+          !_externalScannerMode &&
+          !_hasScanned &&
+          (ModalRoute.of(context)?.isCurrent ?? true)) {
+        unawaited(_cameraController.start());
+      }
+    });
   }
 
   void _showDuplicateDialog() {
