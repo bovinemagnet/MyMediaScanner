@@ -12,17 +12,14 @@ import 'package:mymediascanner/domain/entities/media_type.dart';
 class GoodreadsCsvParser implements ImportParser {
   const GoodreadsCsvParser();
 
-  static const _converter = CsvToListConverter(
-    shouldParseNumbers: false,
-    eol: '\n',
-  );
+  static final _converter = Csv(autoDetect: false);
 
   @override
   List<ImportRow> parse(String content) {
     final trimmed = content.trim();
     if (trimmed.isEmpty) return const [];
 
-    final table = _converter.convert(trimmed);
+    final table = _converter.decode(trimmed);
     if (table.length < 2) return const [];
 
     final header = table.first.map((c) => c.toString()).toList();
@@ -58,16 +55,18 @@ class GoodreadsCsvParser implements ImportParser {
       final fields = <String, String>{};
       if (publisher != null) fields['publisher'] = publisher;
 
-      rows.add(ImportRow(
-        sourceRowId: cell(bookIdCol) ?? 'goodreads-$i',
-        source: ImportSource.goodreads,
-        mediaType: MediaType.book,
-        rawTitle: title,
-        rawAuthor: cell(authorCol),
-        rawYear: _parseYear(cell(origYearCol) ?? cell(yearCol)),
-        isbn: isbn,
-        rawFields: fields,
-      ));
+      rows.add(
+        ImportRow(
+          sourceRowId: cell(bookIdCol) ?? 'goodreads-$i',
+          source: ImportSource.goodreads,
+          mediaType: MediaType.book,
+          rawTitle: title,
+          rawAuthor: cell(authorCol),
+          rawYear: _parseYear(cell(origYearCol) ?? cell(yearCol)),
+          isbn: isbn,
+          rawFields: fields,
+        ),
+      );
     }
     return rows;
   }

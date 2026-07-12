@@ -79,27 +79,26 @@ class FakePrintingPlatform extends PrintingPlatform {
     bool usePrinterSettings,
     OutputType outputType,
     bool forceCustomPrintPaper,
+    bool windowsModernDialog,
   ) async {
     final bytes = await onLayout(format);
-    layoutPdfCalls.add(LayoutPdfCall(
-      name: name,
-      bytes: bytes,
-      format: format,
-    ));
+    layoutPdfCalls.add(LayoutPdfCall(name: name, bytes: bytes, format: format));
     return layoutResult;
   }
 
   @override
-  Future<PrintingInfo> info() async => throw UnimplementedError(
-      'FakePrintingPlatform.info is not stubbed.');
+  Future<PrintingInfo> info() async =>
+      throw UnimplementedError('FakePrintingPlatform.info is not stubbed.');
 
   @override
   Future<List<Printer>> listPrinters() async => throw UnimplementedError(
-      'FakePrintingPlatform.listPrinters is not stubbed.');
+    'FakePrintingPlatform.listPrinters is not stubbed.',
+  );
 
   @override
   Future<Printer?> pickPrinter(Rect bounds) async => throw UnimplementedError(
-      'FakePrintingPlatform.pickPrinter is not stubbed.');
+    'FakePrintingPlatform.pickPrinter is not stubbed.',
+  );
 
   @override
   Future<bool> sharePdf(
@@ -110,26 +109,22 @@ class FakePrintingPlatform extends PrintingPlatform {
     String? body,
     List<String>? emails,
   ) async =>
-      throw UnimplementedError(
-          'FakePrintingPlatform.sharePdf is not stubbed.');
+      throw UnimplementedError('FakePrintingPlatform.sharePdf is not stubbed.');
 
   @override
   Future<Uint8List> convertHtml(
     String html,
     String? baseUrl,
     PdfPageFormat format,
-  ) async =>
-      throw UnimplementedError(
-          'FakePrintingPlatform.convertHtml is not stubbed.');
+  ) async => throw UnimplementedError(
+    'FakePrintingPlatform.convertHtml is not stubbed.',
+  );
 
   @override
-  Stream<PdfRaster> raster(
-    Uint8List document,
-    List<int>? pages,
-    double dpi,
-  ) =>
-      Stream.error(UnimplementedError(
-          'FakePrintingPlatform.raster is not stubbed.'));
+  Stream<PdfRaster> raster(Uint8List document, List<int>? pages, double dpi) =>
+      Stream.error(
+        UnimplementedError('FakePrintingPlatform.raster is not stubbed.'),
+      );
 }
 
 /// Installs a [FakePrintingPlatform] as `PrintingPlatform.instance` for

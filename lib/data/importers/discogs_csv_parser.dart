@@ -11,17 +11,14 @@ import 'package:mymediascanner/domain/entities/media_type.dart';
 class DiscogsCsvParser implements ImportParser {
   const DiscogsCsvParser();
 
-  static const _converter = CsvToListConverter(
-    shouldParseNumbers: false,
-    eol: '\n',
-  );
+  static final _converter = Csv(autoDetect: false);
 
   @override
   List<ImportRow> parse(String content) {
     final trimmed = content.trim();
     if (trimmed.isEmpty) return const [];
 
-    final table = _converter.convert(trimmed);
+    final table = _converter.decode(trimmed);
     if (table.length < 2) return const [];
 
     final header = table.first.map((c) => c.toString()).toList();
@@ -58,16 +55,18 @@ class DiscogsCsvParser implements ImportParser {
       if (releaseId != null) fields['discogs_release_id'] = releaseId;
       if (label != null) fields['label'] = label;
       if (format != null) fields['format'] = format;
-      rows.add(ImportRow(
-        sourceRowId: releaseId ?? 'discogs-$i',
-        source: ImportSource.discogs,
-        mediaType: MediaType.music,
-        rawTitle: title,
-        rawAuthor: cell(artistCol),
-        rawYear: int.tryParse(cell(yearCol) ?? ''),
-        discogsCatalog: catalog,
-        rawFields: fields,
-      ));
+      rows.add(
+        ImportRow(
+          sourceRowId: releaseId ?? 'discogs-$i',
+          source: ImportSource.discogs,
+          mediaType: MediaType.music,
+          rawTitle: title,
+          rawAuthor: cell(artistCol),
+          rawYear: int.tryParse(cell(yearCol) ?? ''),
+          discogsCatalog: catalog,
+          rawFields: fields,
+        ),
+      );
     }
     return rows;
   }

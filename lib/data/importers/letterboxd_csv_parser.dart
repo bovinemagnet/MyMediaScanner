@@ -11,17 +11,14 @@ import 'package:mymediascanner/domain/entities/media_type.dart';
 class LetterboxdCsvParser implements ImportParser {
   const LetterboxdCsvParser();
 
-  static const _converter = CsvToListConverter(
-    shouldParseNumbers: false,
-    eol: '\n',
-  );
+  static final _converter = Csv(autoDetect: false);
 
   @override
   List<ImportRow> parse(String content) {
     final trimmed = content.trim();
     if (trimmed.isEmpty) return const [];
 
-    final table = _converter.convert(trimmed);
+    final table = _converter.decode(trimmed);
     if (table.length < 2) return const [];
 
     final header = table.first.map((c) => c.toString()).toList();
@@ -51,14 +48,16 @@ class LetterboxdCsvParser implements ImportParser {
       final fields = <String, String>{};
       if (uri != null) fields['letterboxd_uri'] = uri;
       if (date != null) fields['watched_date'] = date;
-      rows.add(ImportRow(
-        sourceRowId: uri ?? 'letterboxd-$i',
-        source: ImportSource.letterboxd,
-        mediaType: MediaType.film,
-        rawTitle: name,
-        rawYear: int.tryParse(cell(yearCol) ?? ''),
-        rawFields: fields,
-      ));
+      rows.add(
+        ImportRow(
+          sourceRowId: uri ?? 'letterboxd-$i',
+          source: ImportSource.letterboxd,
+          mediaType: MediaType.film,
+          rawTitle: name,
+          rawYear: int.tryParse(cell(yearCol) ?? ''),
+          rawFields: fields,
+        ),
+      );
     }
     return rows;
   }

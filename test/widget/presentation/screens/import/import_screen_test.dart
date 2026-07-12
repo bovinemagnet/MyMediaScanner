@@ -7,7 +7,7 @@
 //      phase.
 //   3. A result summary ("Imported N items") is shown after import completes.
 //   4. An error message is surfaced when the phase is error.
-//   5. The Choose-file… button drives FilePicker.platform.pickFiles with the
+//   5. The Choose-file… button drives FilePicker.pickFiles with the
 //      source's expected extension and forwards the picked bytes to the
 //      ImportNotifier (uses the fake_file_picker scaffolding under
 //      test/_fakes/).
@@ -71,33 +71,27 @@ class _StubImportNotifier extends ImportNotifier {
 /// Builds a [GoRouter] that knows about the collection route so that
 /// "View collection" navigation doesn't throw.
 GoRouter _router({String initialLocation = '/import'}) => GoRouter(
-      initialLocation: initialLocation,
-      routes: [
-        GoRoute(
-          path: '/import',
-          builder: (_, _) => const ImportScreen(),
-        ),
-        GoRoute(
-          path: '/collection',
-          builder: (_, _) => const Scaffold(body: Text('collection')),
-        ),
-      ],
-    );
+  initialLocation: initialLocation,
+  routes: [
+    GoRoute(path: '/import', builder: (_, _) => const ImportScreen()),
+    GoRoute(
+      path: '/collection',
+      builder: (_, _) => const Scaffold(body: Text('collection')),
+    ),
+  ],
+);
 
 /// Wraps [ImportScreen] with a ProviderScope that overrides
 /// [importNotifierProvider] using [notifier].
 Widget _wrap(_StubImportNotifier notifier, {GoRouter? router}) {
   return ProviderScope(
-    overrides: [
-      importNotifierProvider.overrideWith(() => notifier),
-    ],
+    overrides: [importNotifierProvider.overrideWith(() => notifier)],
     child: MaterialApp.router(routerConfig: router ?? _router()),
   );
 }
 
 /// Creates a stub notifier pre-set to [state].
-_StubImportNotifier _notifier(ImportState state) =>
-    _StubImportNotifier(state);
+_StubImportNotifier _notifier(ImportState state) => _StubImportNotifier(state);
 
 // ---------------------------------------------------------------------------
 // Tests
@@ -105,9 +99,9 @@ _StubImportNotifier _notifier(ImportState state) =>
 
 void main() {
   group('ImportScreen — idle state', () {
-    testWidgets(
-        'renders the format selector showing all four import sources',
-        (tester) async {
+    testWidgets('renders the format selector showing all four import sources', (
+      tester,
+    ) async {
       final stub = _notifier(const ImportState());
 
       await tester.pumpWidget(_wrap(stub));
@@ -129,9 +123,9 @@ void main() {
       expect(find.text('Trakt (.json)'), findsOneWidget);
     });
 
-    testWidgets(
-        'shows the "Choose file…" button in idle phase',
-        (tester) async {
+    testWidgets('shows the "Choose file…" button in idle phase', (
+      tester,
+    ) async {
       final stub = _notifier(const ImportState());
 
       await tester.pumpWidget(_wrap(stub));
@@ -142,9 +136,9 @@ void main() {
   });
 
   group('ImportScreen — enriching phase', () {
-    testWidgets(
-        'displays a progress indicator while the use case is running',
-        (tester) async {
+    testWidgets('displays a progress indicator while the use case is running', (
+      tester,
+    ) async {
       // Build rows that simulate an in-progress enrichment (3 of 5 done).
       final rows = List.generate(
         5,
@@ -174,13 +168,10 @@ void main() {
   });
 
   group('ImportScreen — done phase', () {
-    testWidgets(
-        'shows a result summary after import completes',
-        (tester) async {
-      const doneState = ImportState(
-        phase: ImportPhase.done,
-        savedCount: 8,
-      );
+    testWidgets('shows a result summary after import completes', (
+      tester,
+    ) async {
+      const doneState = ImportState(phase: ImportPhase.done, savedCount: 8);
 
       final stub = _notifier(doneState);
 
@@ -192,13 +183,10 @@ void main() {
       expect(find.text('View collection'), findsOneWidget);
     });
 
-    testWidgets(
-        'singular grammar when exactly one item is imported',
-        (tester) async {
-      const doneState = ImportState(
-        phase: ImportPhase.done,
-        savedCount: 1,
-      );
+    testWidgets('singular grammar when exactly one item is imported', (
+      tester,
+    ) async {
+      const doneState = ImportState(phase: ImportPhase.done, savedCount: 1);
 
       final stub = _notifier(doneState);
 
@@ -210,9 +198,9 @@ void main() {
   });
 
   group('ImportScreen — error phase', () {
-    testWidgets(
-        'shows an error message when the import throws',
-        (tester) async {
+    testWidgets('shows an error message when the import throws', (
+      tester,
+    ) async {
       const errorState = ImportState(
         phase: ImportPhase.error,
         errorMessage: 'Could not parse file: unexpected column header',
@@ -231,26 +219,27 @@ void main() {
     });
 
     testWidgets(
-        'shows "Unknown error" when errorMessage is null in error phase',
-        (tester) async {
-      const errorState = ImportState(
-        phase: ImportPhase.error,
-        // errorMessage intentionally null.
-      );
+      'shows "Unknown error" when errorMessage is null in error phase',
+      (tester) async {
+        const errorState = ImportState(
+          phase: ImportPhase.error,
+          // errorMessage intentionally null.
+        );
 
-      final stub = _notifier(errorState);
+        final stub = _notifier(errorState);
 
-      await tester.pumpWidget(_wrap(stub));
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(_wrap(stub));
+        await tester.pumpAndSettle();
 
-      expect(find.text('Unknown error'), findsOneWidget);
-    });
+        expect(find.text('Unknown error'), findsOneWidget);
+      },
+    );
   });
 
   group('ImportScreen — parsing phase', () {
-    testWidgets(
-        'shows a spinner and "Parsing file…" label during parsing',
-        (tester) async {
+    testWidgets('shows a spinner and "Parsing file…" label during parsing', (
+      tester,
+    ) async {
       const parsingState = ImportState(
         phase: ImportPhase.parsing,
         source: ImportSource.discogs,
@@ -270,9 +259,9 @@ void main() {
   });
 
   group('ImportScreen — saving phase', () {
-    testWidgets(
-        'shows a spinner and "Saving items…" label during save',
-        (tester) async {
+    testWidgets('shows a spinner and "Saving items…" label during save', (
+      tester,
+    ) async {
       const savingState = ImportState(
         phase: ImportPhase.saving,
         source: ImportSource.letterboxd,
@@ -291,10 +280,8 @@ void main() {
   });
 
   group('ImportScreen — Choose-file flow', () {
-    testWidgets(
-        'pickFiles is called with the source extension and the picked '
-        'bytes are forwarded to startImport',
-        (tester) async {
+    testWidgets('pickFiles is called with the source extension and the picked '
+        'bytes are forwarded to startImport', (tester) async {
       const csv = 'Title,Author\nNeuromancer,William Gibson\n';
       final fake = installFakeFilePicker(
         tester,
@@ -312,10 +299,10 @@ void main() {
       await tester.tap(find.text('Choose file…'));
       await tester.pumpAndSettle();
 
-      // The screen requested CSV files with bytes inlined.
+      // The screen requested one CSV file and read its bytes on demand.
       expect(fake.lastCall, isNotNull);
       expect(fake.lastCall!.allowedExtensions, ['csv']);
-      expect(fake.lastCall!.withData, isTrue);
+      expect(fake.lastCall!.withData, isFalse);
       expect(fake.lastCall!.allowMultiple, isFalse);
 
       // The notifier received the file's bytes and the active source.
@@ -323,9 +310,9 @@ void main() {
       expect(stub.lastImportContent, csv);
     });
 
-    testWidgets(
-        'no startImport call when the user cancels the picker',
-        (tester) async {
+    testWidgets('no startImport call when the user cancels the picker', (
+      tester,
+    ) async {
       installFakeFilePicker(tester); // result: null → user cancelled
 
       final stub = _notifier(const ImportState());

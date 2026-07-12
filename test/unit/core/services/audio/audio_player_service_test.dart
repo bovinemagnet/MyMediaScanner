@@ -61,6 +61,7 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(FakeAudioSource());
+    registerFallbackValue(<AudioSource>[FakeAudioSource()]);
     registerFallbackValue(LoopMode.off);
     registerFallbackValue(Duration.zero);
   });
@@ -69,16 +70,21 @@ void main() {
     mockPlayer = MockAudioPlayer();
 
     // Default stubs for stream getters
-    when(() => mockPlayer.positionStream)
-        .thenAnswer((_) => const Stream<Duration>.empty());
-    when(() => mockPlayer.durationStream)
-        .thenAnswer((_) => const Stream<Duration?>.empty());
-    when(() => mockPlayer.playerStateStream)
-        .thenAnswer((_) => const Stream<PlayerState>.empty());
-    when(() => mockPlayer.currentIndexStream)
-        .thenAnswer((_) => const Stream<int?>.empty());
-    when(() => mockPlayer.sequenceStateStream)
-        .thenAnswer((_) => const Stream<SequenceState?>.empty());
+    when(
+      () => mockPlayer.positionStream,
+    ).thenAnswer((_) => const Stream<Duration>.empty());
+    when(
+      () => mockPlayer.durationStream,
+    ).thenAnswer((_) => const Stream<Duration?>.empty());
+    when(
+      () => mockPlayer.playerStateStream,
+    ).thenAnswer((_) => const Stream<PlayerState>.empty());
+    when(
+      () => mockPlayer.currentIndexStream,
+    ).thenAnswer((_) => const Stream<int?>.empty());
+    when(
+      () => mockPlayer.sequenceStateStream,
+    ).thenAnswer((_) => const Stream<SequenceState>.empty());
     when(() => mockPlayer.playing).thenReturn(false);
 
     service = AudioPlayerService(player: mockPlayer);
@@ -106,8 +112,9 @@ void main() {
     group('stream delegation', () {
       test('positionStream delegates to player', () {
         final controller = StreamController<Duration>.broadcast();
-        when(() => mockPlayer.positionStream)
-            .thenAnswer((_) => controller.stream);
+        when(
+          () => mockPlayer.positionStream,
+        ).thenAnswer((_) => controller.stream);
 
         final stream = service.positionStream;
         expect(stream, isA<Stream<Duration>>());
@@ -117,8 +124,9 @@ void main() {
 
       test('durationStream delegates to player', () {
         final controller = StreamController<Duration?>.broadcast();
-        when(() => mockPlayer.durationStream)
-            .thenAnswer((_) => controller.stream);
+        when(
+          () => mockPlayer.durationStream,
+        ).thenAnswer((_) => controller.stream);
 
         final stream = service.durationStream;
         expect(stream, isA<Stream<Duration?>>());
@@ -128,8 +136,9 @@ void main() {
 
       test('playerStateStream delegates to player', () {
         final controller = StreamController<PlayerState>.broadcast();
-        when(() => mockPlayer.playerStateStream)
-            .thenAnswer((_) => controller.stream);
+        when(
+          () => mockPlayer.playerStateStream,
+        ).thenAnswer((_) => controller.stream);
 
         final stream = service.playerStateStream;
         expect(stream, isA<Stream<PlayerState>>());
@@ -139,8 +148,9 @@ void main() {
 
       test('currentIndexStream delegates to player', () {
         final controller = StreamController<int?>.broadcast();
-        when(() => mockPlayer.currentIndexStream)
-            .thenAnswer((_) => controller.stream);
+        when(
+          () => mockPlayer.currentIndexStream,
+        ).thenAnswer((_) => controller.stream);
 
         final stream = service.currentIndexStream;
         expect(stream, isA<Stream<int?>>());
@@ -149,9 +159,10 @@ void main() {
       });
 
       test('sequenceStateStream delegates to player', () {
-        final controller = StreamController<SequenceState?>.broadcast();
-        when(() => mockPlayer.sequenceStateStream)
-            .thenAnswer((_) => controller.stream);
+        final controller = StreamController<SequenceState>.broadcast();
+        when(
+          () => mockPlayer.sequenceStateStream,
+        ).thenAnswer((_) => controller.stream);
 
         final stream = service.sequenceStateStream;
         expect(stream, isA<Stream<SequenceState?>>());
@@ -162,43 +173,53 @@ void main() {
 
     group('playAlbum', () {
       test('sets currentAlbum and currentTracks', () async {
-        when(() => mockPlayer.setAudioSource(any(), initialIndex: any(named: 'initialIndex')))
-            .thenAnswer((_) async => const Duration(seconds: 600));
+        when(
+          () => mockPlayer.setAudioSources(
+            any(),
+            initialIndex: any(named: 'initialIndex'),
+          ),
+        ).thenAnswer((_) async => const Duration(seconds: 600));
         when(() => mockPlayer.play()).thenAnswer((_) async {});
 
-        await service.playAlbum(
-          album: testAlbum,
-          tracks: testTracks,
-        );
+        await service.playAlbum(album: testAlbum, tracks: testTracks);
 
         expect(service.currentAlbum, testAlbum);
         expect(service.currentTracks, testTracks);
         expect(service.currentTracks, isA<List<RipTrack>>());
       });
 
-      test('calls setAudioSource with ConcatenatingAudioSource', () async {
-        when(() => mockPlayer.setAudioSource(any(), initialIndex: any(named: 'initialIndex')))
-            .thenAnswer((_) async => const Duration(seconds: 600));
+      test('calls setAudioSources with every track source', () async {
+        when(
+          () => mockPlayer.setAudioSources(
+            any(),
+            initialIndex: any(named: 'initialIndex'),
+          ),
+        ).thenAnswer((_) async => const Duration(seconds: 600));
         when(() => mockPlayer.play()).thenAnswer((_) async {});
 
-        await service.playAlbum(
-          album: testAlbum,
-          tracks: testTracks,
-        );
+        await service.playAlbum(album: testAlbum, tracks: testTracks);
 
         final captured = verify(
-          () => mockPlayer.setAudioSource(
+          () => mockPlayer.setAudioSources(
             captureAny(),
             initialIndex: any(named: 'initialIndex'),
           ),
         ).captured;
 
-        expect(captured.first, isA<ConcatenatingAudioSource>());
+        expect(captured.single, isA<List<AudioSource>>());
+        expect(
+          captured.single as List<AudioSource>,
+          hasLength(testTracks.length),
+        );
       });
 
-      test('passes startIndex to setAudioSource', () async {
-        when(() => mockPlayer.setAudioSource(any(), initialIndex: any(named: 'initialIndex')))
-            .thenAnswer((_) async => const Duration(seconds: 600));
+      test('passes startIndex to setAudioSources', () async {
+        when(
+          () => mockPlayer.setAudioSources(
+            any(),
+            initialIndex: any(named: 'initialIndex'),
+          ),
+        ).thenAnswer((_) async => const Duration(seconds: 600));
         when(() => mockPlayer.play()).thenAnswer((_) async {});
 
         await service.playAlbum(
@@ -208,35 +229,34 @@ void main() {
         );
 
         verify(
-          () => mockPlayer.setAudioSource(
-            any(),
-            initialIndex: 2,
-          ),
+          () => mockPlayer.setAudioSources(any(), initialIndex: 2),
         ).called(1);
       });
 
       test('calls play after setting audio source', () async {
-        when(() => mockPlayer.setAudioSource(any(), initialIndex: any(named: 'initialIndex')))
-            .thenAnswer((_) async => const Duration(seconds: 600));
+        when(
+          () => mockPlayer.setAudioSources(
+            any(),
+            initialIndex: any(named: 'initialIndex'),
+          ),
+        ).thenAnswer((_) async => const Duration(seconds: 600));
         when(() => mockPlayer.play()).thenAnswer((_) async {});
 
-        await service.playAlbum(
-          album: testAlbum,
-          tracks: testTracks,
-        );
+        await service.playAlbum(album: testAlbum, tracks: testTracks);
 
         verify(() => mockPlayer.play()).called(1);
       });
 
       test('currentTracks is unmodifiable', () async {
-        when(() => mockPlayer.setAudioSource(any(), initialIndex: any(named: 'initialIndex')))
-            .thenAnswer((_) async => const Duration(seconds: 600));
+        when(
+          () => mockPlayer.setAudioSources(
+            any(),
+            initialIndex: any(named: 'initialIndex'),
+          ),
+        ).thenAnswer((_) async => const Duration(seconds: 600));
         when(() => mockPlayer.play()).thenAnswer((_) async {});
 
-        await service.playAlbum(
-          album: testAlbum,
-          tracks: testTracks,
-        );
+        await service.playAlbum(album: testAlbum, tracks: testTracks);
 
         expect(
           () => (service.currentTracks as List).add(testTracks.first),
@@ -276,15 +296,16 @@ void main() {
 
       test('clears currentAlbum and currentTracks', () async {
         // First play an album
-        when(() => mockPlayer.setAudioSource(any(), initialIndex: any(named: 'initialIndex')))
-            .thenAnswer((_) async => const Duration(seconds: 600));
+        when(
+          () => mockPlayer.setAudioSources(
+            any(),
+            initialIndex: any(named: 'initialIndex'),
+          ),
+        ).thenAnswer((_) async => const Duration(seconds: 600));
         when(() => mockPlayer.play()).thenAnswer((_) async {});
         when(() => mockPlayer.stop()).thenAnswer((_) async {});
 
-        await service.playAlbum(
-          album: testAlbum,
-          tracks: testTracks,
-        );
+        await service.playAlbum(album: testAlbum, tracks: testTracks);
 
         expect(service.currentAlbum, isNotNull);
         expect(service.currentTracks, isNotEmpty);
@@ -349,8 +370,9 @@ void main() {
 
     group('setShuffleEnabled', () {
       test('calls setShuffleModeEnabled on the underlying player', () async {
-        when(() => mockPlayer.setShuffleModeEnabled(any()))
-            .thenAnswer((_) async {});
+        when(
+          () => mockPlayer.setShuffleModeEnabled(any()),
+        ).thenAnswer((_) async {});
 
         await service.setShuffleEnabled(true);
 

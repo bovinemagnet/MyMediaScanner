@@ -91,7 +91,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
       _errorMessage = null;
     });
     try {
-      final destination = await FilePicker.platform.getDirectoryPath(
+      final destination = await FilePicker.getDirectoryPath(
         dialogTitle: 'Choose backup destination folder',
       );
       if (destination == null) return;
@@ -135,15 +135,17 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
       _errorMessage = null;
     });
     try {
-      final result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.pickFiles(
         dialogTitle: 'Choose backup `.db` file',
       );
       final path = result?.files.single.path;
       if (path == null) return;
       await ref.read(_backupServiceProvider).restoreFromBackup(path);
       if (mounted) {
-        setState(() => _statusMessage =
-            'Restore complete. Restart the app for the changes to take effect.');
+        setState(
+          () => _statusMessage =
+              'Restore complete. Restart the app for the changes to take effect.',
+        );
       }
     } catch (e) {
       if (mounted) setState(() => _errorMessage = e.toString());

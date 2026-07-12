@@ -4,8 +4,6 @@
 // Author: Paul Snow
 // Since: 0.0.0
 
-import 'dart:io';
-
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -131,22 +129,13 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
   };
 
   Future<void> _pickFile() async {
-    final result = await FilePicker.platform.pickFiles(
+    final file = await FilePicker.pickFile(
       allowedExtensions: [_source.fileExtension],
       type: FileType.custom,
-      withData: true,
     );
-    if (result == null) return;
+    if (file == null) return;
 
-    final file = result.files.single;
-    String content;
-    if (file.bytes != null) {
-      content = String.fromCharCodes(file.bytes!);
-    } else if (file.path != null) {
-      content = await File(file.path!).readAsString();
-    } else {
-      return;
-    }
+    final content = String.fromCharCodes(await file.readAsBytes());
 
     if (!mounted) return;
     await ref

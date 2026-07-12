@@ -19,8 +19,7 @@ class AudioPlayerService {
   /// Creates an [AudioPlayerService].
   ///
   /// If [player] is null, a real [AudioPlayer] is created.
-  AudioPlayerService({AudioPlayer? player})
-      : _player = player ?? AudioPlayer();
+  AudioPlayerService({AudioPlayer? player}) : _player = player ?? AudioPlayer();
 
   final AudioPlayer _player;
 
@@ -50,20 +49,17 @@ class AudioPlayerService {
   Stream<int?> get currentIndexStream => _player.currentIndexStream;
 
   /// Stream of the current sequence state (track, index, list, etc.).
-  Stream<SequenceState?> get sequenceStateStream =>
-      _player.sequenceStateStream;
+  Stream<SequenceState?> get sequenceStateStream => _player.sequenceStateStream;
 
   /// Stream of playback events, useful for monitoring errors.
-  /// Individual track load failures in a [ConcatenatingAudioSource] will
+  /// Individual track load failures in a playlist will
   /// emit errors here; the player auto-advances to the next track.
-  Stream<PlaybackEvent> get playbackEventStream =>
-      _player.playbackEventStream;
+  Stream<PlaybackEvent> get playbackEventStream => _player.playbackEventStream;
 
   /// Loads and plays an album from the given [tracks], starting at
   /// [startIndex].
   ///
-  /// Builds a [ConcatenatingAudioSource] from the track file paths for
-  /// gapless playback.
+  /// Builds audio sources from the track file paths for gapless playback.
   Future<void> playAlbum({
     required RipAlbum album,
     required List<RipTrack> tracks,
@@ -72,14 +68,11 @@ class AudioPlayerService {
     _currentAlbum = album;
     _currentTracks = List<RipTrack>.from(tracks);
 
-    final source = ConcatenatingAudioSource(
-      useLazyPreparation: true,
-      children: tracks
-          .map((track) => AudioSource.file(track.filePath, tag: track.title))
-          .toList(),
-    );
+    final sources = tracks
+        .map((track) => AudioSource.file(track.filePath, tag: track.title))
+        .toList();
 
-    await _player.setAudioSource(source, initialIndex: startIndex);
+    await _player.setAudioSources(sources, initialIndex: startIndex);
     await _player.play();
   }
 
@@ -96,14 +89,11 @@ class AudioPlayerService {
     _currentAlbum = album;
     _currentTracks = List<RipTrack>.from(tracks);
 
-    final source = ConcatenatingAudioSource(
-      useLazyPreparation: true,
-      children: tracks
-          .map((track) => AudioSource.file(track.filePath, tag: track.title))
-          .toList(),
-    );
+    final sources = tracks
+        .map((track) => AudioSource.file(track.filePath, tag: track.title))
+        .toList();
 
-    await _player.setAudioSource(source, initialIndex: startIndex);
+    await _player.setAudioSources(sources, initialIndex: startIndex);
     await _player.play();
   }
 

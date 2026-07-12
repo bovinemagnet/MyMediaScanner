@@ -11977,10 +11977,7 @@ final class $$MediaItemsTableTableReferences
   _mediaItemTagsTableRefsTable(_$AppDatabase db) =>
       MultiTypedResultKey.fromTable(
         db.mediaItemTagsTable,
-        aliasName: $_aliasNameGenerator(
-          db.mediaItemsTable.id,
-          db.mediaItemTagsTable.mediaItemId,
-        ),
+        aliasName: 'media_items__id__media_item_tags__media_item_id',
       );
 
   $$MediaItemTagsTableTableProcessedTableManager get mediaItemTagsTableRefs {
@@ -12000,10 +11997,7 @@ final class $$MediaItemsTableTableReferences
   static MultiTypedResultKey<$ShelfItemsTableTable, List<ShelfItemsTableData>>
   _shelfItemsTableRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.shelfItemsTable,
-    aliasName: $_aliasNameGenerator(
-      db.mediaItemsTable.id,
-      db.shelfItemsTable.mediaItemId,
-    ),
+    aliasName: 'media_items__id__shelf_items__media_item_id',
   );
 
   $$ShelfItemsTableTableProcessedTableManager get shelfItemsTableRefs {
@@ -12023,10 +12017,7 @@ final class $$MediaItemsTableTableReferences
   static MultiTypedResultKey<$LoansTableTable, List<LoansTableData>>
   _loansTableRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.loansTable,
-    aliasName: $_aliasNameGenerator(
-      db.mediaItemsTable.id,
-      db.loansTable.mediaItemId,
-    ),
+    aliasName: 'media_items__id__loans__media_item_id',
   );
 
   $$LoansTableTableProcessedTableManager get loansTableRefs {
@@ -12044,10 +12035,7 @@ final class $$MediaItemsTableTableReferences
   static MultiTypedResultKey<$RipAlbumsTableTable, List<RipAlbumsTableData>>
   _ripAlbumsTableRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.ripAlbumsTable,
-    aliasName: $_aliasNameGenerator(
-      db.mediaItemsTable.id,
-      db.ripAlbumsTable.mediaItemId,
-    ),
+    aliasName: 'media_items__id__rip_albums__media_item_id',
   );
 
   $$RipAlbumsTableTableProcessedTableManager get ripAlbumsTableRefs {
@@ -13207,10 +13195,7 @@ final class $$TagsTableTableReferences
   _mediaItemTagsTableRefsTable(_$AppDatabase db) =>
       MultiTypedResultKey.fromTable(
         db.mediaItemTagsTable,
-        aliasName: $_aliasNameGenerator(
-          db.tagsTable.id,
-          db.mediaItemTagsTable.tagId,
-        ),
+        aliasName: 'tags__id__media_item_tags__tag_id',
       );
 
   $$MediaItemTagsTableTableProcessedTableManager get mediaItemTagsTableRefs {
@@ -13520,13 +13505,9 @@ final class $$MediaItemTagsTableTableReferences
     super.$_typedResult,
   );
 
-  static $MediaItemsTableTable _mediaItemIdTable(_$AppDatabase db) =>
-      db.mediaItemsTable.createAlias(
-        $_aliasNameGenerator(
-          db.mediaItemTagsTable.mediaItemId,
-          db.mediaItemsTable.id,
-        ),
-      );
+  static $MediaItemsTableTable _mediaItemIdTable(_$AppDatabase db) => db
+      .mediaItemsTable
+      .createAlias('media_item_tags__media_item_id__media_items__id');
 
   $$MediaItemsTableTableProcessedTableManager get mediaItemId {
     final $_column = $_itemColumn<String>('media_item_id')!;
@@ -13543,9 +13524,7 @@ final class $$MediaItemTagsTableTableReferences
   }
 
   static $TagsTableTable _tagIdTable(_$AppDatabase db) =>
-      db.tagsTable.createAlias(
-        $_aliasNameGenerator(db.mediaItemTagsTable.tagId, db.tagsTable.id),
-      );
+      db.tagsTable.createAlias('media_item_tags__tag_id__tags__id');
 
   $$TagsTableTableProcessedTableManager get tagId {
     final $_column = $_itemColumn<String>('tag_id')!;
@@ -13928,10 +13907,7 @@ final class $$ShelvesTableTableReferences
   static MultiTypedResultKey<$ShelfItemsTableTable, List<ShelfItemsTableData>>
   _shelfItemsTableRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.shelfItemsTable,
-    aliasName: $_aliasNameGenerator(
-      db.shelvesTable.id,
-      db.shelfItemsTable.shelfId,
-    ),
+    aliasName: 'shelves__id__shelf_items__shelf_id',
   );
 
   $$ShelfItemsTableTableProcessedTableManager get shelfItemsTableRefs {
@@ -14262,9 +14238,7 @@ final class $$ShelfItemsTableTableReferences
   );
 
   static $ShelvesTableTable _shelfIdTable(_$AppDatabase db) =>
-      db.shelvesTable.createAlias(
-        $_aliasNameGenerator(db.shelfItemsTable.shelfId, db.shelvesTable.id),
-      );
+      db.shelvesTable.createAlias('shelf_items__shelf_id__shelves__id');
 
   $$ShelvesTableTableProcessedTableManager get shelfId {
     final $_column = $_itemColumn<String>('shelf_id')!;
@@ -14280,13 +14254,9 @@ final class $$ShelfItemsTableTableReferences
     );
   }
 
-  static $MediaItemsTableTable _mediaItemIdTable(_$AppDatabase db) =>
-      db.mediaItemsTable.createAlias(
-        $_aliasNameGenerator(
-          db.shelfItemsTable.mediaItemId,
-          db.mediaItemsTable.id,
-        ),
-      );
+  static $MediaItemsTableTable _mediaItemIdTable(_$AppDatabase db) => db
+      .mediaItemsTable
+      .createAlias('shelf_items__media_item_id__media_items__id');
 
   $$MediaItemsTableTableProcessedTableManager get mediaItemId {
     final $_column = $_itemColumn<String>('media_item_id')!;
@@ -15255,10 +15225,7 @@ final class $$BorrowersTableTableReferences
   static MultiTypedResultKey<$LoansTableTable, List<LoansTableData>>
   _loansTableRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.loansTable,
-    aliasName: $_aliasNameGenerator(
-      db.borrowersTable.id,
-      db.loansTable.borrowerId,
-    ),
+    aliasName: 'borrowers__id__loans__borrower_id',
   );
 
   $$LoansTableTableProcessedTableManager get loansTableRefs {
@@ -15601,9 +15568,7 @@ final class $$LoansTableTableReferences
   $$LoansTableTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
   static $MediaItemsTableTable _mediaItemIdTable(_$AppDatabase db) =>
-      db.mediaItemsTable.createAlias(
-        $_aliasNameGenerator(db.loansTable.mediaItemId, db.mediaItemsTable.id),
-      );
+      db.mediaItemsTable.createAlias('loans__media_item_id__media_items__id');
 
   $$MediaItemsTableTableProcessedTableManager get mediaItemId {
     final $_column = $_itemColumn<String>('media_item_id')!;
@@ -15620,9 +15585,7 @@ final class $$LoansTableTableReferences
   }
 
   static $BorrowersTableTable _borrowerIdTable(_$AppDatabase db) =>
-      db.borrowersTable.createAlias(
-        $_aliasNameGenerator(db.loansTable.borrowerId, db.borrowersTable.id),
-      );
+      db.borrowersTable.createAlias('loans__borrower_id__borrowers__id');
 
   $$BorrowersTableTableProcessedTableManager get borrowerId {
     final $_column = $_itemColumn<String>('borrower_id')!;
@@ -16104,13 +16067,9 @@ final class $$RipAlbumsTableTableReferences
     super.$_typedResult,
   );
 
-  static $MediaItemsTableTable _mediaItemIdTable(_$AppDatabase db) =>
-      db.mediaItemsTable.createAlias(
-        $_aliasNameGenerator(
-          db.ripAlbumsTable.mediaItemId,
-          db.mediaItemsTable.id,
-        ),
-      );
+  static $MediaItemsTableTable _mediaItemIdTable(_$AppDatabase db) => db
+      .mediaItemsTable
+      .createAlias('rip_albums__media_item_id__media_items__id');
 
   $$MediaItemsTableTableProcessedTableManager? get mediaItemId {
     final $_column = $_itemColumn<String>('media_item_id');
@@ -16129,10 +16088,7 @@ final class $$RipAlbumsTableTableReferences
   static MultiTypedResultKey<$RipTracksTableTable, List<RipTracksTableData>>
   _ripTracksTableRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.ripTracksTable,
-    aliasName: $_aliasNameGenerator(
-      db.ripAlbumsTable.id,
-      db.ripTracksTable.ripAlbumId,
-    ),
+    aliasName: 'rip_albums__id__rip_tracks__rip_album_id',
   );
 
   $$RipTracksTableTableProcessedTableManager get ripTracksTableRefs {
@@ -16739,12 +16695,7 @@ final class $$RipTracksTableTableReferences
   );
 
   static $RipAlbumsTableTable _ripAlbumIdTable(_$AppDatabase db) =>
-      db.ripAlbumsTable.createAlias(
-        $_aliasNameGenerator(
-          db.ripTracksTable.ripAlbumId,
-          db.ripAlbumsTable.id,
-        ),
-      );
+      db.ripAlbumsTable.createAlias('rip_tracks__rip_album_id__rip_albums__id');
 
   $$RipAlbumsTableTableProcessedTableManager get ripAlbumId {
     final $_column = $_itemColumn<String>('rip_album_id')!;
@@ -16767,10 +16718,7 @@ final class $$RipTracksTableTableReferences
   _playlistTracksTableRefsTable(_$AppDatabase db) =>
       MultiTypedResultKey.fromTable(
         db.playlistTracksTable,
-        aliasName: $_aliasNameGenerator(
-          db.ripTracksTable.id,
-          db.playlistTracksTable.ripTrackId,
-        ),
+        aliasName: 'rip_tracks__id__playlist_tracks__rip_track_id',
       );
 
   $$PlaylistTracksTableTableProcessedTableManager get playlistTracksTableRefs {
@@ -18039,10 +17987,7 @@ final class $$PlaylistsTableTableReferences
   _playlistTracksTableRefsTable(_$AppDatabase db) =>
       MultiTypedResultKey.fromTable(
         db.playlistTracksTable,
-        aliasName: $_aliasNameGenerator(
-          db.playlistsTable.id,
-          db.playlistTracksTable.playlistId,
-        ),
+        aliasName: 'playlists__id__playlist_tracks__playlist_id',
       );
 
   $$PlaylistTracksTableTableProcessedTableManager get playlistTracksTableRefs {
@@ -18394,13 +18339,9 @@ final class $$PlaylistTracksTableTableReferences
     super.$_typedResult,
   );
 
-  static $PlaylistsTableTable _playlistIdTable(_$AppDatabase db) =>
-      db.playlistsTable.createAlias(
-        $_aliasNameGenerator(
-          db.playlistTracksTable.playlistId,
-          db.playlistsTable.id,
-        ),
-      );
+  static $PlaylistsTableTable _playlistIdTable(_$AppDatabase db) => db
+      .playlistsTable
+      .createAlias('playlist_tracks__playlist_id__playlists__id');
 
   $$PlaylistsTableTableProcessedTableManager get playlistId {
     final $_column = $_itemColumn<String>('playlist_id')!;
@@ -18416,13 +18357,9 @@ final class $$PlaylistTracksTableTableReferences
     );
   }
 
-  static $RipTracksTableTable _ripTrackIdTable(_$AppDatabase db) =>
-      db.ripTracksTable.createAlias(
-        $_aliasNameGenerator(
-          db.playlistTracksTable.ripTrackId,
-          db.ripTracksTable.id,
-        ),
-      );
+  static $RipTracksTableTable _ripTrackIdTable(_$AppDatabase db) => db
+      .ripTracksTable
+      .createAlias('playlist_tracks__rip_track_id__rip_tracks__id');
 
   $$RipTracksTableTableProcessedTableManager get ripTrackId {
     final $_column = $_itemColumn<String>('rip_track_id')!;

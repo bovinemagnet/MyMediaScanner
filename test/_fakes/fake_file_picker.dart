@@ -1,9 +1,9 @@
-/// Test fake for the [FilePicker] platform interface.
+/// Test fake for the [FilePickerPlatform] interface.
 ///
-/// `FilePicker.platform` is a static field on a platform-interface class,
+/// `FilePickerPlatform.instance` is a static platform singleton,
 /// which means tests cannot stub it via the usual mocktail / method-channel
 /// patterns — but the package does allow swapping the singleton. This
-/// helper extends [FilePicker], captures the arguments passed to
+/// helper extends [FilePickerPlatform], captures the arguments passed to
 /// [pickFiles], and returns whatever [FilePickerResult] the test seeds.
 ///
 /// Typical usage in a `testWidgets` body:
@@ -51,7 +51,7 @@ class FilePickerCall {
 /// [UnimplementedError] — fail-fast is intentional, so a screen reaching
 /// for a method other than [pickFiles] surfaces immediately rather than
 /// silently no-oping.
-class FakeFilePicker extends FilePicker {
+class FakeFilePicker extends FilePickerPlatform {
   FakeFilePicker({this.result});
 
   /// The canned result returned from [pickFiles]. `null` simulates the
@@ -69,13 +69,14 @@ class FakeFilePicker extends FilePicker {
     FileType type = FileType.any,
     List<String>? allowedExtensions,
     Function(FilePickerStatus)? onFileLoading,
-    bool allowCompression = false,
     int compressionQuality = 0,
     bool allowMultiple = false,
     bool withData = false,
     bool withReadStream = false,
     bool lockParentWindow = false,
     bool readSequential = false,
+    bool cancelUploadOnWindowBlur = true,
+    AndroidSAFOptions? androidSafOptions,
   }) async {
     lastCall = FilePickerCall(
       type: type,
@@ -89,45 +90,36 @@ class FakeFilePicker extends FilePicker {
 
 /// Builds a single-file [FilePickerResult] with the given in-memory bytes.
 ///
-/// Mirrors the shape `FilePicker.platform.pickFiles(withData: true)`
-/// returns on the platforms the app uses (web/desktop), where
-/// [PlatformFile.bytes] is populated.
+/// Builds the shape returned by a platform picker with in-memory data.
 FilePickerResult buildBytesResult({
   required String name,
   required List<int> bytes,
 }) {
   return FilePickerResult([
-    PlatformFile(
-      name: name,
-      size: bytes.length,
-      bytes: Uint8List.fromList(bytes),
-    ),
+    PlatformFile.fromMap({
+      'name': name,
+      'size': bytes.length,
+      'bytes': Uint8List.fromList(bytes),
+      'path': null,
+      'identifier': null,
+    }),
   ]);
 }
 
-/// Installs [FakeFilePicker] as `FilePicker.platform` for the duration of
+/// Installs [FakeFilePicker] as `FilePickerPlatform.instance` for the duration of
 /// the current widget test, then restores the previous instance during
 /// tearDown. Always reach for this helper rather than swapping
-/// `FilePicker.platform` by hand so tests do not leak overrides between
+/// `FilePickerPlatform.instance` by hand so tests do not leak overrides between
 /// each other.
 FakeFilePicker installFakeFilePicker(
   WidgetTester tester, {
   FilePickerResult? result,
 }) {
-  // FilePicker.platform is a `late` field so the very first read may
-  // throw; defer the restore through a captured reference.
-  FilePicker? previous;
-  try {
-    previous = FilePicker.platform;
-  } catch (_) {
-    previous = null;
-  }
+  final previous = FilePickerPlatform.instance;
   final fake = FakeFilePicker(result: result);
-  FilePicker.platform = fake;
+  FilePickerPlatform.instance = fake;
   addTearDown(() {
-    if (previous != null) {
-      FilePicker.platform = previous;
-    }
+    FilePickerPlatform.instance = previous;
   });
   return fake;
 }

@@ -39,21 +39,23 @@ class LabelPdfGenerator {
       final end = (start + perPage).clamp(0, targets.length);
       final pageTargets = targets.sublist(start, end);
 
-      doc.addPage(pw.Page(
-        pageFormat: pageSize,
-        build: (context) => pw.Stack(
-          children: [
-            for (var i = 0; i < pageTargets.length; i++)
-              _positionCell(
-                preset: preset,
-                index: i,
-                cellW: cellW,
-                cellH: cellH,
-                child: _LabelCell(target: pageTargets[i]),
-              ),
-          ],
+      doc.addPage(
+        pw.Page(
+          pageFormat: pageSize,
+          build: (context) => pw.Stack(
+            children: [
+              for (var i = 0; i < pageTargets.length; i++)
+                _positionCell(
+                  preset: preset,
+                  index: i,
+                  cellW: cellW,
+                  cellH: cellH,
+                  child: _LabelCell(target: pageTargets[i]),
+                ),
+            ],
+          ),
         ),
-      ));
+      );
     }
 
     return doc.save();
@@ -74,11 +76,7 @@ class LabelPdfGenerator {
     return pw.Positioned(
       left: x,
       top: y,
-      child: pw.SizedBox(
-        width: cellW,
-        height: cellH,
-        child: child,
-      ),
+      child: pw.SizedBox(width: cellW, height: cellH, child: child),
     );
   }
 }
@@ -115,7 +113,7 @@ class _LabelCell extends pw.StatelessWidget {
               children: [
                 pw.Text(
                   target.title,
-                  style: pw.TextStyle(
+                  style: const pw.TextStyle(
                     fontSize: 10,
                     fontWeight: pw.FontWeight.bold,
                   ),

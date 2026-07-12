@@ -20,8 +20,7 @@ class StaticExportScreen extends ConsumerStatefulWidget {
   const StaticExportScreen({super.key});
 
   @override
-  ConsumerState<StaticExportScreen> createState() =>
-      _StaticExportScreenState();
+  ConsumerState<StaticExportScreen> createState() => _StaticExportScreenState();
 }
 
 class _StaticExportScreenState extends ConsumerState<StaticExportScreen> {
@@ -47,8 +46,7 @@ class _StaticExportScreenState extends ConsumerState<StaticExportScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar:
-          isDesktop ? null : AppBar(title: const Text('Export collection')),
+      appBar: isDesktop ? null : AppBar(title: const Text('Export collection')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -58,10 +56,7 @@ class _StaticExportScreenState extends ConsumerState<StaticExportScreen> {
               // This screen is pushed on the root navigator, so there is no
               // sidebar and no AppBar on desktop — provide an explicit back
               // affordance (mobile gets one from the AppBar).
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: BackButton(),
-              ),
+              const Align(alignment: Alignment.centerLeft, child: BackButton()),
               const ScreenHeader(
                 title: 'Export collection',
                 subtitle:
@@ -78,9 +73,7 @@ class _StaticExportScreenState extends ConsumerState<StaticExportScreen> {
                 children: [
                   TextField(
                     controller: _titleController,
-                    decoration: const InputDecoration(
-                      labelText: 'Site title',
-                    ),
+                    decoration: const InputDecoration(labelText: 'Site title'),
                   ),
                   const SizedBox(height: 12),
                   TextField(
@@ -94,8 +87,9 @@ class _StaticExportScreenState extends ConsumerState<StaticExportScreen> {
                     contentPadding: EdgeInsets.zero,
                     title: const Text('Download and bundle cover art'),
                     subtitle: const Text(
-                        'Fetches every cover URL. Without this the export '
-                        'references the original hosts, which may 404 later.'),
+                      'Fetches every cover URL. Without this the export '
+                      'references the original hosts, which may 404 later.',
+                    ),
                     value: _bundleCovers,
                     onChanged: _running
                         ? null
@@ -104,9 +98,9 @@ class _StaticExportScreenState extends ConsumerState<StaticExportScreen> {
                   const SizedBox(height: 16),
                   FilledButton.icon(
                     icon: const Icon(Icons.download),
-                    label: Text(_running
-                        ? 'Exporting…'
-                        : 'Choose folder and export'),
+                    label: Text(
+                      _running ? 'Exporting…' : 'Choose folder and export',
+                    ),
                     onPressed: _running ? null : _export,
                   ),
                   if (_running || _progressTotal > 0) ...[
@@ -117,14 +111,17 @@ class _StaticExportScreenState extends ConsumerState<StaticExportScreen> {
                           : _progressDone / _progressTotal,
                     ),
                     const SizedBox(height: 4),
-                    Text('$_progressDone / $_progressTotal',
-                        style: theme.textTheme.bodySmall),
+                    Text(
+                      '$_progressDone / $_progressTotal',
+                      style: theme.textTheme.bodySmall,
+                    ),
                   ],
                   if (_errorMessage != null) ...[
                     const SizedBox(height: 16),
-                    Text(_errorMessage!,
-                        style: TextStyle(
-                            color: theme.colorScheme.error)),
+                    Text(
+                      _errorMessage!,
+                      style: TextStyle(color: theme.colorScheme.error),
+                    ),
                   ],
                   if (_resultPath != null) ...[
                     const SizedBox(height: 16),
@@ -135,18 +132,22 @@ class _StaticExportScreenState extends ConsumerState<StaticExportScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Export complete',
-                                style: theme.textTheme.titleMedium),
+                            Text(
+                              'Export complete',
+                              style: theme.textTheme.titleMedium,
+                            ),
                             const SizedBox(height: 4),
                             SelectableText(_resultPath!),
                             const SizedBox(height: 12),
-                            Row(children: [
-                              FilledButton.tonalIcon(
-                                icon: const Icon(Icons.open_in_browser),
-                                label: const Text('Open index.html'),
-                                onPressed: () => _launch(_resultPath!),
-                              ),
-                            ]),
+                            Row(
+                              children: [
+                                FilledButton.tonalIcon(
+                                  icon: const Icon(Icons.open_in_browser),
+                                  label: const Text('Open index.html'),
+                                  onPressed: () => _launch(_resultPath!),
+                                ),
+                              ],
+                            ),
                           ],
                         ),
                       ),
@@ -162,7 +163,7 @@ class _StaticExportScreenState extends ConsumerState<StaticExportScreen> {
   }
 
   Future<void> _export() async {
-    final dirPath = await FilePicker.platform.getDirectoryPath(
+    final dirPath = await FilePicker.getDirectoryPath(
       dialogTitle: 'Choose export folder',
     );
     if (dirPath == null) return;

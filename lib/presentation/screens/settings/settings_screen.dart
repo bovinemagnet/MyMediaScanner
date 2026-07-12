@@ -29,9 +29,7 @@ class SettingsScreen extends ConsumerWidget {
     final isDesktop = PlatformCapability.isDesktop;
 
     return Scaffold(
-      appBar: isDesktop
-          ? null
-          : AppBar(title: const Text('Settings')),
+      appBar: isDesktop ? null : AppBar(title: const Text('Settings')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -98,8 +96,7 @@ class SettingsScreen extends ConsumerWidget {
               ListTile(
                 leading: const Icon(Icons.upload_file),
                 title: const Text('Import from external collection'),
-                subtitle:
-                    const Text('Goodreads, Discogs, Letterboxd or Trakt'),
+                subtitle: const Text('Goodreads, Discogs, Letterboxd or Trakt'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.go('/settings/import'),
               ),
@@ -117,7 +114,8 @@ class SettingsScreen extends ConsumerWidget {
                 leading: const Icon(Icons.print_outlined),
                 title: const Text('Print labels'),
                 subtitle: const Text(
-                    'QR labels for locations or items, preview and export as PDF'),
+                  'QR labels for locations or items, preview and export as PDF',
+                ),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.go('/settings/labels'),
               ),
@@ -135,8 +133,9 @@ class SettingsScreen extends ConsumerWidget {
                 leading: const Icon(Icons.public_outlined),
                 title: const Text('Static HTML export'),
                 subtitle: const Text(
-                    'Portable website bundle with filter controls; drop '
-                    'into any static host or open locally'),
+                  'Portable website bundle with filter controls; drop '
+                  'into any static host or open locally',
+                ),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.go('/settings/export'),
               ),
@@ -153,8 +152,9 @@ class SettingsScreen extends ConsumerWidget {
                 leading: const Icon(Icons.delete_outline),
                 title: const Text('Trash'),
                 subtitle: const Text(
-                    'Restore or permanently delete items you removed '
-                    'from the collection'),
+                  'Restore or permanently delete items you removed '
+                  'from the collection',
+                ),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.go('/settings/trash'),
               ),
@@ -162,8 +162,9 @@ class SettingsScreen extends ConsumerWidget {
                 leading: const Icon(Icons.merge_type),
                 title: const Text('Find duplicates'),
                 subtitle: const Text(
-                    'Scan the library for items with the same barcode '
-                    'or a near-identical title and year'),
+                  'Scan the library for items with the same barcode '
+                  'or a near-identical title and year',
+                ),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.go('/settings/dedupe'),
               ),
@@ -171,8 +172,9 @@ class SettingsScreen extends ConsumerWidget {
                 leading: const Icon(Icons.backup_outlined),
                 title: const Text('Backup & restore'),
                 subtitle: const Text(
-                    'Copy the local database to a portable file, or '
-                    'restore from a previously-saved backup'),
+                  'Copy the local database to a portable file, or '
+                  'restore from a previously-saved backup',
+                ),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.go('/settings/backup'),
               ),
@@ -213,10 +215,7 @@ class SettingsScreen extends ConsumerWidget {
             title: 'Preferences',
             colors: colors,
             theme: theme,
-            children: [
-              _PaletteTile(),
-              _ThemeModeTile(),
-            ],
+            children: [_PaletteTile(), _ThemeModeTile()],
           ),
           const SizedBox(height: 16),
 
@@ -226,9 +225,7 @@ class SettingsScreen extends ConsumerWidget {
             color: colors.errorContainer.withValues(alpha: 0.1),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
-              side: BorderSide(
-                color: colors.error.withValues(alpha: 0.2),
-              ),
+              side: BorderSide(color: colors.error.withValues(alpha: 0.2)),
             ),
             clipBehavior: Clip.antiAlias,
             child: Padding(
@@ -236,16 +233,17 @@ class SettingsScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Danger Zone',
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        color: colors.error,
-                      )),
+                  Text(
+                    'Danger Zone',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: colors.error,
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   ListTile(
                     leading: Icon(Icons.warning, color: colors.error),
                     title: const Text('Reset & Re-sync'),
-                    subtitle:
-                        const Text('Replace local data with remote'),
+                    subtitle: const Text('Replace local data with remote'),
                     onTap: () => _confirmReset(context, ref),
                   ),
                 ],
@@ -283,7 +281,8 @@ class SettingsScreen extends ConsumerWidget {
       builder: (ctx) => AlertDialog(
         title: const Text('Reset local database?'),
         content: const Text(
-            'This will replace all local data with data from your PostgreSQL server. This cannot be undone.'),
+          'This will replace all local data with data from your PostgreSQL server. This cannot be undone.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -298,10 +297,11 @@ class SettingsScreen extends ConsumerWidget {
               final messenger = ScaffoldMessenger.of(context);
               final repo = ref.read(syncRepositoryProvider);
               if (repo == null) {
-                messenger.showSnackBar(const SnackBar(
-                  content:
-                      Text('Configure PostgreSQL first to reset.'),
-                ));
+                messenger.showSnackBar(
+                  const SnackBar(
+                    content: Text('Configure PostgreSQL first to reset.'),
+                  ),
+                );
                 return;
               }
               try {
@@ -312,14 +312,16 @@ class SettingsScreen extends ConsumerWidget {
                 // context — `messenger` is captured pre-await but we
                 // still check `context.mounted` as the canonical guard.
                 if (!context.mounted) return;
-                messenger.showSnackBar(const SnackBar(
-                  content: Text('Local data replaced with remote.'),
-                ));
+                messenger.showSnackBar(
+                  const SnackBar(
+                    content: Text('Local data replaced with remote.'),
+                  ),
+                );
               } on Exception catch (e) {
                 if (!context.mounted) return;
-                messenger.showSnackBar(SnackBar(
-                  content: Text('Reset failed: $e'),
-                ));
+                messenger.showSnackBar(
+                  SnackBar(content: Text('Reset failed: $e')),
+                );
               }
             },
             child: const Text('Reset'),
@@ -336,8 +338,9 @@ class SettingsScreen extends ConsumerWidget {
 class _PaletteTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentFamily =
-        ref.watch(themeChoiceProvider.select((c) => c.family));
+    final currentFamily = ref.watch(
+      themeChoiceProvider.select((c) => c.family),
+    );
     final theme = Theme.of(context);
 
     Widget card({
@@ -358,8 +361,7 @@ class _PaletteTile extends ConsumerWidget {
           container: container,
           mediaDots: mediaDots,
           labelColor: labelColor,
-          onTap: () =>
-              ref.read(themeChoiceProvider.notifier).setFamily(family),
+          onTap: () => ref.read(themeChoiceProvider.notifier).setFamily(family),
         ),
       );
     }
@@ -488,8 +490,9 @@ class _PaletteCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final ringColor =
-        selected ? theme.colorScheme.primary : theme.colorScheme.outlineVariant;
+    final ringColor = selected
+        ? theme.colorScheme.primary
+        : theme.colorScheme.outlineVariant;
 
     return Semantics(
       button: true,
@@ -504,10 +507,7 @@ class _PaletteCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: surface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: ringColor,
-              width: selected ? 2 : 1,
-            ),
+            border: Border.all(color: ringColor, width: selected ? 2 : 1),
           ),
           child: Row(
             children: [
@@ -573,20 +573,21 @@ class _PaletteCard extends StatelessWidget {
 class _ThemeModeTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentBrightness =
-        ref.watch(themeChoiceProvider.select((c) => c.brightness));
+    final currentBrightness = ref.watch(
+      themeChoiceProvider.select((c) => c.brightness),
+    );
 
     String label(ThemeBrightness b) => switch (b) {
-          ThemeBrightness.system => 'System default',
-          ThemeBrightness.light => 'Light',
-          ThemeBrightness.dark => 'Dark',
-        };
+      ThemeBrightness.system => 'System default',
+      ThemeBrightness.light => 'Light',
+      ThemeBrightness.dark => 'Dark',
+    };
 
     IconData icon(ThemeBrightness b) => switch (b) {
-          ThemeBrightness.system => Icons.brightness_auto,
-          ThemeBrightness.light => Icons.light_mode,
-          ThemeBrightness.dark => Icons.dark_mode,
-        };
+      ThemeBrightness.system => Icons.brightness_auto,
+      ThemeBrightness.light => Icons.light_mode,
+      ThemeBrightness.dark => Icons.dark_mode,
+    };
 
     return ListTile(
       // Drop the default 16dp side padding (matching the ReplayGain tiles
@@ -617,9 +618,7 @@ class _ThemeModeTile extends ConsumerWidget {
         ],
         selected: {currentBrightness},
         onSelectionChanged: (selection) {
-          ref
-              .read(themeChoiceProvider.notifier)
-              .setBrightness(selection.first);
+          ref.read(themeChoiceProvider.notifier).setBrightness(selection.first);
         },
         showSelectedIcon: false,
       ),
@@ -650,18 +649,9 @@ class _ReplayGainSection extends ConsumerWidget {
           subtitle: const Text('Normalise track loudness'),
           trailing: SegmentedButton<ReplayGainMode>(
             segments: const [
-              ButtonSegment(
-                value: ReplayGainMode.off,
-                label: Text('Off'),
-              ),
-              ButtonSegment(
-                value: ReplayGainMode.track,
-                label: Text('Track'),
-              ),
-              ButtonSegment(
-                value: ReplayGainMode.album,
-                label: Text('Album'),
-              ),
+              ButtonSegment(value: ReplayGainMode.off, label: Text('Off')),
+              ButtonSegment(value: ReplayGainMode.track, label: Text('Track')),
+              ButtonSegment(value: ReplayGainMode.album, label: Text('Album')),
             ],
             selected: {mode},
             onSelectionChanged: (selection) {
@@ -676,7 +666,9 @@ class _ReplayGainSection extends ConsumerWidget {
         // Pre-amp
         ListTile(
           contentPadding: EdgeInsets.zero,
-          title: Text('Pre-amp: ${preamp >= 0 ? '+' : ''}${preamp.toStringAsFixed(1)} dB'),
+          title: Text(
+            'Pre-amp: ${preamp >= 0 ? '+' : ''}${preamp.toStringAsFixed(1)} dB',
+          ),
           subtitle: Slider(
             value: preamp,
             min: -6.0,
@@ -827,8 +819,7 @@ class _FlacLibrarySectionState extends ConsumerState<_FlacLibrarySection> {
               icon: const Icon(Icons.folder_open),
               tooltip: 'Browse\u2026',
               onPressed: () async {
-                final path =
-                    await FilePicker.platform.getDirectoryPath();
+                final path = await FilePicker.getDirectoryPath();
                 if (path != null) {
                   _pathController.text = path;
                   await ref.read(ripLibraryPathProvider.notifier).setPath(path);
@@ -846,9 +837,7 @@ class _FlacLibrarySectionState extends ConsumerState<_FlacLibrarySection> {
                   : () {
                       final path = _pathController.text.trim();
                       if (path.isNotEmpty) {
-                        ref
-                            .read(ripLibraryPathProvider.notifier)
-                            .setPath(path);
+                        ref.read(ripLibraryPathProvider.notifier).setPath(path);
                         ref
                             .read(ripScanNotifierProvider.notifier)
                             .startScan(path);
@@ -881,8 +870,8 @@ class _FlacLibrarySectionState extends ConsumerState<_FlacLibrarySection> {
               Text(
                 'Error: ${scanState.error}',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
+                  color: Theme.of(context).colorScheme.error,
+                ),
               ),
           ],
         ),
@@ -911,7 +900,7 @@ class _FlacLibrarySectionState extends ConsumerState<_FlacLibrarySection> {
               icon: const Icon(Icons.folder_open),
               tooltip: 'Browse\u2026',
               onPressed: () async {
-                final result = await FilePicker.platform.pickFiles(
+                final result = await FilePicker.pickFiles(
                   dialogTitle: 'Select flac binary',
                 );
                 if (result != null && result.files.single.path != null) {
@@ -927,8 +916,10 @@ class _FlacLibrarySectionState extends ConsumerState<_FlacLibrarySection> {
         ),
         const SizedBox(height: 16),
         // Click detection sensitivity
-        Text('Click detection sensitivity',
-            style: Theme.of(context).textTheme.bodyMedium),
+        Text(
+          'Click detection sensitivity',
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
         const SizedBox(height: 4),
         clickSensitivityAsync.when(
           loading: () => const SizedBox.shrink(),
@@ -936,8 +927,7 @@ class _FlacLibrarySectionState extends ConsumerState<_FlacLibrarySection> {
           data: (sensitivity) => SegmentedButton<Sensitivity>(
             segments: const [
               ButtonSegment(value: Sensitivity.low, label: Text('Low')),
-              ButtonSegment(
-                  value: Sensitivity.medium, label: Text('Medium')),
+              ButtonSegment(value: Sensitivity.medium, label: Text('Medium')),
               ButtonSegment(value: Sensitivity.high, label: Text('High')),
             ],
             selected: {sensitivity},
@@ -952,8 +942,8 @@ class _FlacLibrarySectionState extends ConsumerState<_FlacLibrarySection> {
         Text(
           'Higher sensitivity catches more defects but may flag legitimate transients.',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.outline,
-              ),
+            color: Theme.of(context).colorScheme.outline,
+          ),
         ),
       ],
     );
@@ -980,8 +970,9 @@ class _TextScaleSection extends ConsumerWidget {
           Text(
             'Stacks on top of the platform text-size setting so the whole '
             'app scales together with the rest of your device.',
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: colors.onSurfaceVariant),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: colors.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 8),
           scaleAsync.when(
@@ -993,9 +984,7 @@ class _TextScaleSection extends ConsumerWidget {
                 for (final option in const [1.0, 1.15, 1.3, 1.5])
                   ChoiceChip(
                     label: Text(
-                      option == 1.0
-                          ? 'Default'
-                          : '${(option * 100).round()}%',
+                      option == 1.0 ? 'Default' : '${(option * 100).round()}%',
                     ),
                     selected: factor == option,
                     onSelected: (_) => notifier.setFactor(option),

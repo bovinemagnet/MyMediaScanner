@@ -9,7 +9,7 @@ class NotificationService {
   NotificationService() : _plugin = FlutterLocalNotificationsPlugin();
 
   NotificationService.withPlugin(FlutterLocalNotificationsPlugin plugin)
-      : _plugin = plugin;
+    : _plugin = plugin;
 
   final FlutterLocalNotificationsPlugin _plugin;
   bool _initialised = false;
@@ -18,8 +18,9 @@ class NotificationService {
   Future<void> initialise() async {
     if (_initialised) return;
 
-    const androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings = AndroidInitializationSettings(
+      '@mipmap/ic_launcher',
+    );
     const darwinSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
@@ -32,14 +33,15 @@ class NotificationService {
     );
 
     try {
-      await _plugin.initialize(settings);
+      await _plugin.initialize(settings: settings);
       _initialised = true;
       // Android 13+ requires a runtime permission before notifications
       // are displayed; Darwin permissions are requested via the
       // initialization settings above.
       await _plugin
           .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>()
+            AndroidFlutterLocalNotificationsPlugin
+          >()
           ?.requestNotificationsPermission();
     } catch (_) {
       // Gracefully degrade on unsupported platforms.
@@ -70,7 +72,12 @@ class NotificationService {
     );
 
     try {
-      await _plugin.show(id, title, body, details);
+      await _plugin.show(
+        id: id,
+        title: title,
+        body: body,
+        notificationDetails: details,
+      );
     } catch (_) {
       // Gracefully degrade.
     }
@@ -80,7 +87,7 @@ class NotificationService {
   Future<void> cancelNotification(int id) async {
     if (!_initialised) return;
     try {
-      await _plugin.cancel(id);
+      await _plugin.cancel(id: id);
     } catch (_) {
       // Gracefully degrade.
     }
