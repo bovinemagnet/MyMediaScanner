@@ -101,260 +101,273 @@ class AppDatabase extends _$AppDatabase {
           await _createIndexes();
         },
         onUpgrade: (m, from, to) async {
-          if (from < 2) {
-            await m.createTable(borrowersTable);
-            await m.createTable(loansTable);
-          }
-          if (from < 3) {
-            await m.addColumn(mediaItemsTable, mediaItemsTable.criticScore);
-            await m.addColumn(mediaItemsTable, mediaItemsTable.criticSource);
-          }
-          if (from < 4) {
-            await m.createTable(ripAlbumsTable);
-            await m.createTable(ripTracksTable);
-          }
-          if (from < 6) {
-            await _createFts5Table(m);
-          }
-          if (from < 7) {
-            await m.addColumn(loansTable, loansTable.dueAt);
-            await m.createTable(batchSessionsTable);
-            await m.createTable(batchQueueItemsTable);
-            await m.addColumn(syncLogTable, syncLogTable.errorMessage);
-            await m.addColumn(syncLogTable, syncLogTable.durationMs);
-            await m.addColumn(syncLogTable, syncLogTable.direction);
-            await m.addColumn(syncLogTable, syncLogTable.resolvedBy);
-          }
-          if (from < 8) {
-            await _createIndexes();
-          }
-          if (from < 9) {
-            await m.addColumn(
-                ripAlbumsTable, ripAlbumsTable.cueFilePath);
-          }
-          if (from < 10) {
-            await m.createTable(playlistsTable);
-            await m.createTable(playlistTracksTable);
-          }
-          if (from < 12) {
-            await m.addColumn(
-                mediaItemsTable, mediaItemsTable.ownershipStatus);
-            await m.addColumn(mediaItemsTable, mediaItemsTable.condition);
-            await m.addColumn(mediaItemsTable, mediaItemsTable.pricePaid);
-            await m.addColumn(mediaItemsTable, mediaItemsTable.acquiredAt);
-            await m.addColumn(mediaItemsTable, mediaItemsTable.retailer);
-            // Backfill acquiredAt from dateAdded where null (column defaults
-            // apply to new rows; existing rows keep NULL without this).
-            await customStatement(
-                'UPDATE media_items '
-                'SET acquired_at = date_added WHERE acquired_at IS NULL');
-          }
-          if (from < 13) {
-            await m.createTable(locationsTable);
-            await m.addColumn(
-                mediaItemsTable, mediaItemsTable.locationId);
-          }
-          if (from < 14) {
-            await m.createTable(seriesTable);
-            await m.addColumn(
-                mediaItemsTable, mediaItemsTable.seriesId);
-            await m.addColumn(
-                mediaItemsTable, mediaItemsTable.seriesPosition);
-          }
-          if (from < 15) {
-            await m.addColumn(
-                mediaItemsTable, mediaItemsTable.progressCurrent);
-            await m.addColumn(
-                mediaItemsTable, mediaItemsTable.progressTotal);
-            await m.addColumn(
-                mediaItemsTable, mediaItemsTable.progressUnit);
-            await m.addColumn(
-                mediaItemsTable, mediaItemsTable.startedAt);
-            await m.addColumn(
-                mediaItemsTable, mediaItemsTable.completedAt);
-            await m.addColumn(
-                mediaItemsTable, mediaItemsTable.consumed);
-          }
-          if (from < 17) {
-            // Schema v16 added rip_albums.gnudb_disc_id to the table
-            // definition (commit 9060213) but shipped without an
-            // onUpgrade branch, so any user who upgraded from v15
-            // sat at user_version=16 with the column missing. The app
-            // is unpublished, so the agreed recovery is drop-and-
-            // recreate the rip tables instead of carrying a one-off
-            // addColumn migration. v17 retriggers this fix for the
-            // window of installs that took the broken v16 build —
-            // existing rip data is rebuilt by re-scanning the library.
-            // rip_tracks must go first because of the FK to rip_albums.
-            await customStatement('DROP TABLE IF EXISTS rip_tracks');
-            await customStatement('DROP TABLE IF EXISTS rip_albums');
-            await m.createTable(ripAlbumsTable);
-            await m.createTable(ripTracksTable);
-          }
-          if (from < 18) {
-            // Cluster-3 MED-3: the prior FTS5 triggers re-inserted into
-            // media_items_fts on every UPDATE, including the soft-delete
-            // UPDATE that sets deleted=1. Soft-deleted items therefore
-            // kept matching full-text search even though every other
-            // surface filters them out. Re-create the triggers with a
-            // deleted=0 guard and rebuild the index from the
-            // non-deleted rows so any already-soft-deleted items drop
-            // out immediately.
-            //
-            // Production paths from v6+ already have the FTS table.
-            // Some artificially-seeded migration tests start without it
-            // (or even without the media_items table); skip cleanly in
-            // those cases — a fresh schema setup will build it via
-            // `onCreate` when it eventually opens at v18+.
-            final ftsExists = await customSelect(
-              'SELECT name FROM sqlite_master '
-              "WHERE type='table' AND name='media_items_fts'",
-            ).get();
-            if (ftsExists.isNotEmpty) {
-              await customStatement(
-                  'DROP TRIGGER IF EXISTS media_items_fts_insert');
-              await customStatement(
-                  'DROP TRIGGER IF EXISTS media_items_fts_update');
-              await customStatement(
-                  'DROP TRIGGER IF EXISTS media_items_fts_update_insert');
-              await customStatement(
-                  'DROP TRIGGER IF EXISTS media_items_fts_delete');
-              await _createFtsTriggers();
-              await customStatement('DELETE FROM media_items_fts');
-              await customStatement(
-                'INSERT INTO media_items_fts(rowid, title, subtitle, '
-                'description, publisher, genres) '
-                'SELECT rowid, title, subtitle, description, publisher, '
-                'genres FROM media_items WHERE deleted = 0',
-              );
-            }
-          }
-          if (from < 19) {
-            // Cluster-7 MED-1: the v18 fix added a `deleted = 0` guard to
-            // the insert and update triggers but missed the hard-delete
-            // trigger. Hard-deleting a row that was never indexed (the
-            // soft-deleted-then-wiped path that `resetLocalDatabase`
-            // walks) issued an FTS5 `delete` against a rowid the index
-            // had never seen, corrupting the contentless shadow tables.
-            // Drop and recreate the delete trigger with the matching
-            // guard. The other three already have it, so leave them
-            // alone.
-            final ftsExists = await customSelect(
-              'SELECT name FROM sqlite_master '
-              "WHERE type='table' AND name='media_items_fts'",
-            ).get();
-            if (ftsExists.isNotEmpty) {
-              await customStatement(
-                  'DROP TRIGGER IF EXISTS media_items_fts_delete');
-              await customStatement('''
-                CREATE TRIGGER media_items_fts_delete
-                AFTER DELETE ON media_items WHEN old.deleted = 0 BEGIN
-                  INSERT INTO media_items_fts(media_items_fts, rowid, title, subtitle, description, publisher, genres)
-                  VALUES ('delete', old.rowid, old.title, old.subtitle, old.description, old.publisher, old.genres);
-                END
-              ''');
-            }
-          }
-          if (from < 20) {
-            await m.createTable(tmdbAccountSyncItemsTable);
-            await customStatement(
-              'CREATE INDEX IF NOT EXISTS idx_tmdb_bridge_media_item_id '
-              'ON tmdb_account_sync_items(media_item_id)',
-            );
-            await customStatement(
-              'CREATE INDEX IF NOT EXISTS idx_tmdb_bridge_barcode '
-              'ON tmdb_account_sync_items(barcode)',
-            );
-            await customStatement(
-              'CREATE INDEX IF NOT EXISTS idx_tmdb_bridge_dirty '
-              'ON tmdb_account_sync_items(local_dirty, remote_dirty)',
-            );
-          }
-          if (from < 21) {
-            // audio_defect_detector 0.2.0 partitions defects into four
-            // DefectType buckets (click/pop/clipping/dropout) and reports
-            // an aggregate confidence per analysis. Existing rows keep
-            // their clickCount; the new columns are nullable so a re-run
-            // of "Analyse Quality" is what backfills them.
-            //
-            // The v17 branch above drops and recreates rip_tracks using
-            // the *current* Dart definition, which now includes these
-            // four columns. Upgrades from < 17 therefore arrive here
-            // with the columns already present and addColumn would fail
-            // with `duplicate column name`. Guard on the live schema so
-            // the branch is a no-op when v17 already rebuilt the table
-            // at the v21 shape.
-            final tableInfo = await customSelect(
-              'PRAGMA table_info(rip_tracks)',
-            ).get();
-            final existing = tableInfo
-                .map((r) => r.read<String>('name'))
-                .toSet();
-            if (!existing.contains('pop_count')) {
-              await m.addColumn(ripTracksTable, ripTracksTable.popCount);
-            }
-            if (!existing.contains('clipping_count')) {
-              await m.addColumn(ripTracksTable, ripTracksTable.clippingCount);
-            }
-            if (!existing.contains('dropout_count')) {
-              await m.addColumn(ripTracksTable, ripTracksTable.dropoutCount);
-            }
-            if (!existing.contains('defect_confidence')) {
-              await m.addColumn(
-                  ripTracksTable, ripTracksTable.defectConfidence);
-            }
-          }
-          if (from < 22) {
-            // Phase 4: external marketplace lookup populates current_value
-            // (REAL, null until first lookup) and stamps current_value_as_of
-            // (epoch millis). Both nullable so existing rows continue to
-            // work; the UI distinguishes "never looked up" from "looked up
-            // and unavailable" via current_value_as_of presence.
-            //
-            // Synthetic migration tests can seed only a subset of tables
-            // (e.g. just the rip tables for v17 regression coverage), so
-            // guard on media_items being present — a fresh setup builds
-            // the columns via the table definition in `onCreate`.
-            final mediaItemsExists = await customSelect(
-              'SELECT name FROM sqlite_master '
-              "WHERE type='table' AND name='media_items'",
-            ).get();
-            if (mediaItemsExists.isNotEmpty) {
-              await m.addColumn(
-                  mediaItemsTable, mediaItemsTable.currentValue);
-              await m.addColumn(
-                  mediaItemsTable, mediaItemsTable.currentValueAsOf);
-            }
-          }
-          if (from < 23) {
-            // Join-table sync: media_item_tags and shelf_items gain
-            // `updated_at` (LWW basis) and `deleted` (removal tombstone)
-            // so tag assignments and shelf memberships replicate. They
-            // previously had no sync representation at all.
-            //
-            // Guard on table existence — synthetic migration tests seed
-            // only a subset of tables (see the v22 branch above).
-            Future<bool> tableExists(String name) async {
-              final rows = await customSelect(
-                'SELECT name FROM sqlite_master '
-                "WHERE type='table' AND name='$name'",
-              ).get();
-              return rows.isNotEmpty;
-            }
-
-            if (await tableExists('media_item_tags')) {
-              await m.addColumn(
-                  mediaItemTagsTable, mediaItemTagsTable.updatedAt);
-              await m.addColumn(
-                  mediaItemTagsTable, mediaItemTagsTable.deleted);
-            }
-            if (await tableExists('shelf_items')) {
-              await m.addColumn(shelfItemsTable, shelfItemsTable.updatedAt);
-              await m.addColumn(shelfItemsTable, shelfItemsTable.deleted);
-            }
-          }
+          // Run the whole upgrade atomically. Drift does not wrap
+          // onUpgrade in a transaction, so an app killed mid-upgrade
+          // used to leave the applied DDL committed while user_version
+          // stayed at the old value — every subsequent open then re-ran
+          // already-applied statements and failed with errors such as
+          // `duplicate column name`, permanently blocking startup.
+          // SQLite DDL is transactional, so rollback on crash is safe.
+          await transaction(() => _runUpgrade(m, from));
         },
       );
+
+  /// The step-by-step upgrade branches, run inside a transaction
+  /// by `migration.onUpgrade`.
+  Future<void> _runUpgrade(Migrator m, int from) async {
+    if (from < 2) {
+      await m.createTable(borrowersTable);
+      await m.createTable(loansTable);
+    }
+    if (from < 3) {
+      await m.addColumn(mediaItemsTable, mediaItemsTable.criticScore);
+      await m.addColumn(mediaItemsTable, mediaItemsTable.criticSource);
+    }
+    if (from < 4) {
+      await m.createTable(ripAlbumsTable);
+      await m.createTable(ripTracksTable);
+    }
+    if (from < 6) {
+      await _createFts5Table(m);
+    }
+    if (from < 7) {
+      // The v1→v2 branch creates `loans` from the current Dart
+      // definition, which already includes `due_at` — and a
+      // half-applied earlier upgrade may have committed any of these
+      // columns before crashing (observed in the wild at
+      // user_version=6 with the v7–v10 branches already applied).
+      // Guard on the live schema so re-runs are no-ops instead of
+      // `duplicate column name` failures that block startup.
+      await _addColumnIfMissing(m, loansTable, loansTable.dueAt);
+      await m.createTable(batchSessionsTable);
+      await m.createTable(batchQueueItemsTable);
+      await _addColumnIfMissing(m, syncLogTable, syncLogTable.errorMessage);
+      await _addColumnIfMissing(m, syncLogTable, syncLogTable.durationMs);
+      await _addColumnIfMissing(m, syncLogTable, syncLogTable.direction);
+      await _addColumnIfMissing(m, syncLogTable, syncLogTable.resolvedBy);
+    }
+    if (from < 8) {
+      // Base indexes only: the tmdb_account_sync_items table (and its
+      // indexes) don't exist until the v20 branch below runs.
+      await _createBaseIndexes();
+    }
+    if (from < 9) {
+      // The v1→v4 branch creates `rip_albums` at the current shape,
+      // which already includes this column — see the v7 note above.
+      await _addColumnIfMissing(
+          m, ripAlbumsTable, ripAlbumsTable.cueFilePath);
+    }
+    if (from < 10) {
+      await m.createTable(playlistsTable);
+      await m.createTable(playlistTracksTable);
+    }
+    if (from < 12) {
+      await m.addColumn(
+          mediaItemsTable, mediaItemsTable.ownershipStatus);
+      await m.addColumn(mediaItemsTable, mediaItemsTable.condition);
+      await m.addColumn(mediaItemsTable, mediaItemsTable.pricePaid);
+      await m.addColumn(mediaItemsTable, mediaItemsTable.acquiredAt);
+      await m.addColumn(mediaItemsTable, mediaItemsTable.retailer);
+      // Backfill acquiredAt from dateAdded where null (column defaults
+      // apply to new rows; existing rows keep NULL without this).
+      await customStatement(
+          'UPDATE media_items '
+          'SET acquired_at = date_added WHERE acquired_at IS NULL');
+    }
+    if (from < 13) {
+      await m.createTable(locationsTable);
+      await m.addColumn(
+          mediaItemsTable, mediaItemsTable.locationId);
+    }
+    if (from < 14) {
+      await m.createTable(seriesTable);
+      await m.addColumn(
+          mediaItemsTable, mediaItemsTable.seriesId);
+      await m.addColumn(
+          mediaItemsTable, mediaItemsTable.seriesPosition);
+    }
+    if (from < 15) {
+      await m.addColumn(
+          mediaItemsTable, mediaItemsTable.progressCurrent);
+      await m.addColumn(
+          mediaItemsTable, mediaItemsTable.progressTotal);
+      await m.addColumn(
+          mediaItemsTable, mediaItemsTable.progressUnit);
+      await m.addColumn(
+          mediaItemsTable, mediaItemsTable.startedAt);
+      await m.addColumn(
+          mediaItemsTable, mediaItemsTable.completedAt);
+      await m.addColumn(
+          mediaItemsTable, mediaItemsTable.consumed);
+    }
+    if (from < 17) {
+      // Schema v16 added rip_albums.gnudb_disc_id to the table
+      // definition (commit 9060213) but shipped without an
+      // onUpgrade branch, so any user who upgraded from v15
+      // sat at user_version=16 with the column missing. The app
+      // is unpublished, so the agreed recovery is drop-and-
+      // recreate the rip tables instead of carrying a one-off
+      // addColumn migration. v17 retriggers this fix for the
+      // window of installs that took the broken v16 build —
+      // existing rip data is rebuilt by re-scanning the library.
+      // rip_tracks must go first because of the FK to rip_albums.
+      await customStatement('DROP TABLE IF EXISTS rip_tracks');
+      await customStatement('DROP TABLE IF EXISTS rip_albums');
+      await m.createTable(ripAlbumsTable);
+      await m.createTable(ripTracksTable);
+    }
+    if (from < 18) {
+      // Cluster-3 MED-3: the prior FTS5 triggers re-inserted into
+      // media_items_fts on every UPDATE, including the soft-delete
+      // UPDATE that sets deleted=1. Soft-deleted items therefore
+      // kept matching full-text search even though every other
+      // surface filters them out. Re-create the triggers with a
+      // deleted=0 guard and rebuild the index from the
+      // non-deleted rows so any already-soft-deleted items drop
+      // out immediately.
+      //
+      // Production paths from v6+ already have the FTS table.
+      // Some artificially-seeded migration tests start without it
+      // (or even without the media_items table); skip cleanly in
+      // those cases — a fresh schema setup will build it via
+      // `onCreate` when it eventually opens at v18+.
+      final ftsExists = await customSelect(
+        'SELECT name FROM sqlite_master '
+        "WHERE type='table' AND name='media_items_fts'",
+      ).get();
+      if (ftsExists.isNotEmpty) {
+        await customStatement(
+            'DROP TRIGGER IF EXISTS media_items_fts_insert');
+        await customStatement(
+            'DROP TRIGGER IF EXISTS media_items_fts_update');
+        await customStatement(
+            'DROP TRIGGER IF EXISTS media_items_fts_update_insert');
+        await customStatement(
+            'DROP TRIGGER IF EXISTS media_items_fts_delete');
+        await _createFtsTriggers();
+        await customStatement('DELETE FROM media_items_fts');
+        await customStatement(
+          'INSERT INTO media_items_fts(rowid, title, subtitle, '
+          'description, publisher, genres) '
+          'SELECT rowid, title, subtitle, description, publisher, '
+          'genres FROM media_items WHERE deleted = 0',
+        );
+      }
+    }
+    if (from < 19) {
+      // Cluster-7 MED-1: the v18 fix added a `deleted = 0` guard to
+      // the insert and update triggers but missed the hard-delete
+      // trigger. Hard-deleting a row that was never indexed (the
+      // soft-deleted-then-wiped path that `resetLocalDatabase`
+      // walks) issued an FTS5 `delete` against a rowid the index
+      // had never seen, corrupting the contentless shadow tables.
+      // Drop and recreate the delete trigger with the matching
+      // guard. The other three already have it, so leave them
+      // alone.
+      final ftsExists = await customSelect(
+        'SELECT name FROM sqlite_master '
+        "WHERE type='table' AND name='media_items_fts'",
+      ).get();
+      if (ftsExists.isNotEmpty) {
+        await customStatement(
+            'DROP TRIGGER IF EXISTS media_items_fts_delete');
+        await customStatement('''
+          CREATE TRIGGER media_items_fts_delete
+          AFTER DELETE ON media_items WHEN old.deleted = 0 BEGIN
+            INSERT INTO media_items_fts(media_items_fts, rowid, title, subtitle, description, publisher, genres)
+            VALUES ('delete', old.rowid, old.title, old.subtitle, old.description, old.publisher, old.genres);
+          END
+        ''');
+      }
+    }
+    if (from < 20) {
+      await m.createTable(tmdbAccountSyncItemsTable);
+      await _createTmdbIndexes();
+    }
+    if (from < 21) {
+      // audio_defect_detector 0.2.0 partitions defects into four
+      // DefectType buckets (click/pop/clipping/dropout) and reports
+      // an aggregate confidence per analysis. Existing rows keep
+      // their clickCount; the new columns are nullable so a re-run
+      // of "Analyse Quality" is what backfills them.
+      //
+      // The v17 branch above drops and recreates rip_tracks using
+      // the *current* Dart definition, which now includes these
+      // four columns. Upgrades from < 17 therefore arrive here
+      // with the columns already present and addColumn would fail
+      // with `duplicate column name`. Guard on the live schema so
+      // the branch is a no-op when v17 already rebuilt the table
+      // at the v21 shape.
+      final tableInfo = await customSelect(
+        'PRAGMA table_info(rip_tracks)',
+      ).get();
+      final existing = tableInfo
+          .map((r) => r.read<String>('name'))
+          .toSet();
+      if (!existing.contains('pop_count')) {
+        await m.addColumn(ripTracksTable, ripTracksTable.popCount);
+      }
+      if (!existing.contains('clipping_count')) {
+        await m.addColumn(ripTracksTable, ripTracksTable.clippingCount);
+      }
+      if (!existing.contains('dropout_count')) {
+        await m.addColumn(ripTracksTable, ripTracksTable.dropoutCount);
+      }
+      if (!existing.contains('defect_confidence')) {
+        await m.addColumn(
+            ripTracksTable, ripTracksTable.defectConfidence);
+      }
+    }
+    if (from < 22) {
+      // Phase 4: external marketplace lookup populates current_value
+      // (REAL, null until first lookup) and stamps current_value_as_of
+      // (epoch millis). Both nullable so existing rows continue to
+      // work; the UI distinguishes "never looked up" from "looked up
+      // and unavailable" via current_value_as_of presence.
+      //
+      // Synthetic migration tests can seed only a subset of tables
+      // (e.g. just the rip tables for v17 regression coverage), so
+      // guard on media_items being present — a fresh setup builds
+      // the columns via the table definition in `onCreate`.
+      final mediaItemsExists = await customSelect(
+        'SELECT name FROM sqlite_master '
+        "WHERE type='table' AND name='media_items'",
+      ).get();
+      if (mediaItemsExists.isNotEmpty) {
+        await m.addColumn(
+            mediaItemsTable, mediaItemsTable.currentValue);
+        await m.addColumn(
+            mediaItemsTable, mediaItemsTable.currentValueAsOf);
+      }
+    }
+    if (from < 23) {
+      // Join-table sync: media_item_tags and shelf_items gain
+      // `updated_at` (LWW basis) and `deleted` (removal tombstone)
+      // so tag assignments and shelf memberships replicate. They
+      // previously had no sync representation at all.
+      //
+      // Guard on table existence — synthetic migration tests seed
+      // only a subset of tables (see the v22 branch above).
+      Future<bool> tableExists(String name) async {
+        final rows = await customSelect(
+          'SELECT name FROM sqlite_master '
+          "WHERE type='table' AND name='$name'",
+        ).get();
+        return rows.isNotEmpty;
+      }
+
+      if (await tableExists('media_item_tags')) {
+        await m.addColumn(
+            mediaItemTagsTable, mediaItemTagsTable.updatedAt);
+        await m.addColumn(
+            mediaItemTagsTable, mediaItemTagsTable.deleted);
+      }
+      if (await tableExists('shelf_items')) {
+        await m.addColumn(shelfItemsTable, shelfItemsTable.updatedAt);
+        await m.addColumn(shelfItemsTable, shelfItemsTable.deleted);
+      }
+    }
+  }
 
   /// Creates the FTS5 virtual table and sync triggers for full-text search.
   Future<void> _createFts5Table(Migrator m) async {
@@ -468,7 +481,35 @@ class AppDatabase extends _$AppDatabase {
   }
 
   /// Creates indexes on commonly queried columns to improve performance.
+  /// Adds [column] to [table] unless the live schema already has it.
+  ///
+  /// Branches that add columns to tables created by an *earlier* branch
+  /// in the same chain (those are created from the current Dart
+  /// definition, later columns included), or that re-run against a
+  /// half-applied upgrade, would otherwise fail with
+  /// `duplicate column name` and block the app from ever opening.
+  Future<void> _addColumnIfMissing(
+    Migrator m,
+    TableInfo<Table, dynamic> table,
+    GeneratedColumn column,
+  ) async {
+    final rows = await customSelect(
+      "SELECT name FROM pragma_table_info('${table.actualTableName}')",
+    ).get();
+    final existing = rows.map((r) => r.read<String>('name')).toSet();
+    if (!existing.contains(column.name)) {
+      await m.addColumn(table, column);
+    }
+  }
+
   Future<void> _createIndexes() async {
+    await _createBaseIndexes();
+    await _createTmdbIndexes();
+  }
+
+  /// Indexes on tables that have existed since schema v7 or earlier —
+  /// safe to (re)create from the v8 upgrade branch onwards.
+  Future<void> _createBaseIndexes() async {
     await customStatement(
         'CREATE INDEX IF NOT EXISTS idx_media_items_deleted '
         'ON media_items (deleted)');
@@ -490,6 +531,11 @@ class AppDatabase extends _$AppDatabase {
     await customStatement(
         'CREATE INDEX IF NOT EXISTS idx_loans_active '
         'ON loans (returned_at)');
+  }
+
+  /// Indexes on `tmdb_account_sync_items`, which only exists from
+  /// schema v20 — created by `onCreate` and the v20 upgrade branch.
+  Future<void> _createTmdbIndexes() async {
     await customStatement(
         'CREATE INDEX IF NOT EXISTS idx_tmdb_bridge_media_item_id '
         'ON tmdb_account_sync_items(media_item_id)');
