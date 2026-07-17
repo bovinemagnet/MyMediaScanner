@@ -19,6 +19,8 @@ class FilterBar extends ConsumerWidget {
         children: [
           FilterChip(
             label: const Text('All'),
+            shape: const StadiumBorder(),
+            showCheckmark: false,
             selected: filter.mediaType == null,
             onSelected: (_) =>
                 ref.read(collectionFilterProvider.notifier).setMediaType(null),
@@ -30,6 +32,8 @@ class FilterBar extends ConsumerWidget {
                     padding: const EdgeInsets.only(right: 8),
                     child: FilterChip(
                       label: Text(type.label),
+                      shape: const StadiumBorder(),
+                      showCheckmark: false,
                       selected: filter.mediaType == type,
                       onSelected: (_) => ref
                           .read(collectionFilterProvider.notifier)
@@ -39,6 +43,8 @@ class FilterBar extends ConsumerWidget {
                   )),
           FilterChip(
             label: const Text('Lent out'),
+            shape: const StadiumBorder(),
+            showCheckmark: false,
             selected: filter.lentOnly,
             onSelected: (_) =>
                 ref.read(collectionFilterProvider.notifier).toggleLentOnly(),
@@ -46,6 +52,8 @@ class FilterBar extends ConsumerWidget {
           const SizedBox(width: 8),
           FilterChip(
             label: const Text('Ripped'),
+            shape: const StadiumBorder(),
+            showCheckmark: false,
             selected: filter.rippedOnly,
             onSelected: (_) =>
                 ref.read(collectionFilterProvider.notifier).toggleRippedOnly(),
@@ -130,6 +138,8 @@ class _RipStatusFilterChip extends ConsumerWidget {
           .toList(),
       child: FilterChip(
         label: Text(_label(current)),
+        shape: const StadiumBorder(),
+        showCheckmark: false,
         selected: isActive,
         onSelected: (_) {}, // selection handled by PopupMenuButton
       ),
