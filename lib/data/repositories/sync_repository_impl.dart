@@ -76,7 +76,26 @@ class SyncRepositoryImpl implements ISyncRepository {
         final stopwatch = Stopwatch()..start();
         try {
           final decoded = jsonDecode(log.payloadJson);
-          if (decoded is! Map<String, dynamic>) continue;
+          if (decoded is! Map<String, dynamic>) {
+            // Structurally invalid (an array, a scalar, or null) but not
+            // a JSON syntax error, so jsonDecode above didn't throw. This
+            // previously fell through to a silent `continue` — never
+            // marked synced, no errorMessage, not counted in
+            // firstFailure, and retried forever with no diagnostics.
+            // Record it exactly like the `on Exception` handler below so
+            // it surfaces the same way as any other push failure.
+            stopwatch.stop();
+            final error = 'Invalid payload: expected a JSON object, got '
+                '${decoded.runtimeType}';
+            await _syncLogDao.updateLogResult(
+              log.id,
+              durationMs: stopwatch.elapsedMilliseconds,
+              direction: 'push',
+              errorMessage: error,
+            );
+            firstFailure ??= FormatException(error);
+            continue;
+          }
           // Resolve table from a maintained map — naive `+s` pluralisation
           // mangles `shelf`/`series` and previously caused those pushes
           // to fail the allow-list check before they ever reached the
