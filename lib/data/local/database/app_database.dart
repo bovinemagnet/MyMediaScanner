@@ -91,7 +91,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 23;
+  int get schemaVersion => 24;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -365,6 +365,22 @@ class AppDatabase extends _$AppDatabase {
       if (await tableExists('shelf_items')) {
         await m.addColumn(shelfItemsTable, shelfItemsTable.updatedAt);
         await m.addColumn(shelfItemsTable, shelfItemsTable.deleted);
+      }
+    }
+    if (from < 24) {
+      // Rip library artwork: path of the locally cached cover image.
+      // Guarded because the v17 branch above recreates rip_albums from
+      // the current Dart definition, which already includes the
+      // column for upgrades that came through it.
+      //
+      // Guard on table existence — synthetic migration tests seed
+      // only a subset of tables (see the v22 branch above).
+      final ripAlbumsExists = await customSelect(
+        'SELECT name FROM sqlite_master '
+        "WHERE type='table' AND name='rip_albums'",
+      ).get();
+      if (ripAlbumsExists.isNotEmpty) {
+        await _addColumnIfMissing(m, ripAlbumsTable, ripAlbumsTable.coverPath);
       }
     }
   }
