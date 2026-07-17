@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mymediascanner/app/theme/app_typography.dart';
 
 /// Inline screen header used on desktop in place of [AppBar].
 ///
@@ -8,6 +9,7 @@ class ScreenHeader extends StatelessWidget {
   const ScreenHeader({
     super.key,
     required this.title,
+    this.eyebrow,
     this.subtitle,
     this.actions,
     this.bottom,
@@ -15,6 +17,7 @@ class ScreenHeader extends StatelessWidget {
   });
 
   final String title;
+  final String? eyebrow;
   final String? subtitle;
   final List<Widget>? actions;
   final Widget? bottom;
@@ -45,9 +48,23 @@ class ScreenHeader extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    if (eyebrow != null) ...[
+                      Text(
+                        eyebrow!,
+                        style: AppTypography.monoLabel(
+                          color: colors.primary,
+                          letterSpacing: 2.4,
+                          fontSize: 11,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
                     Text(
                       title,
-                      style: theme.textTheme.headlineLarge,
+                      style: eyebrow != null
+                          ? AppTypography.displayTitle(
+                              color: colors.onSurface)
+                          : theme.textTheme.headlineLarge,
                       softWrap: true,
                     ),
                     if (subtitle != null) ...[
