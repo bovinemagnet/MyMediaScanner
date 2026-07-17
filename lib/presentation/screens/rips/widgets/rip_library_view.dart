@@ -870,6 +870,17 @@ class _RipAlbumDetailPanelState extends ConsumerState<_RipAlbumDetailPanel> {
           ),
         ),
         const SizedBox(height: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: RipCoverThumb(
+              coverPath: widget.album.coverPath,
+              size: 140,
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
         // Quality analysis
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 12),
