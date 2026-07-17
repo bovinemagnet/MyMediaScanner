@@ -15,6 +15,7 @@ import 'package:mymediascanner/presentation/providers/rip_provider.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/gnudb_lookup_button.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/playback_widgets.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/quality_widgets.dart';
+import 'package:mymediascanner/presentation/screens/rips/widgets/rip_cover_thumb.dart';
 import 'package:mymediascanner/presentation/widgets/error_state.dart';
 import 'package:mymediascanner/presentation/widgets/loading_indicator.dart';
 
@@ -283,6 +284,14 @@ class _RipAlbumDetailDialogState extends ConsumerState<RipAlbumDetailDialog> {
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 16),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: RipCoverThumb(
+                  coverPath: widget.album.coverPath,
+                  size: 140,
+                ),
               ),
               const SizedBox(height: 16),
 
