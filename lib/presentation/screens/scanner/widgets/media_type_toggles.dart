@@ -33,6 +33,7 @@ class MediaTypeToggles extends ConsumerWidget {
         return FilterChip(
           avatar: Icon(icon, size: 18, color: isOn ? colour : Colors.grey),
           label: Text(label),
+          shape: const StadiumBorder(),
           selected: isOn,
           selectedColor: colour.withAlpha(40),
           checkmarkColor: colour,
