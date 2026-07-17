@@ -27,13 +27,21 @@ class _RipsScreenState extends ConsumerState<RipsScreen> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const ScreenHeader(
-            title: 'Rip Library',
+          ScreenHeader(
+            title: switch (_selected) {
+              _RipsSegment.library => 'Rip Library',
+              _RipsSegment.coverage => 'Rip Coverage',
+              _RipsSegment.playlists => 'Playlists',
+            },
             eyebrow: 'FLAC RIP COLLECTION',
             subtitle:
                 'Manage your FLAC rip collection and compare coverage '
                 'against physical media.',
-            actions: [RipHealthStatCards()],
+            actions: switch (_selected) {
+              _RipsSegment.library => const [RipHealthStatCards()],
+              _RipsSegment.coverage => const [RipCoverageStatCards()],
+              _RipsSegment.playlists => const [],
+            },
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
