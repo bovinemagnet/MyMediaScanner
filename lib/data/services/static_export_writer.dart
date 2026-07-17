@@ -38,7 +38,11 @@ class StaticExportWriter {
 
     Map<String, Uint8List> covers = const {};
     if (options.bundleCovers) {
-      covers = await _fetchCovers(items, onProgress: onProgress);
+      // Only fetch covers for items the service will actually render —
+      // private-tagged and soft-deleted items are excluded from the
+      // export, so their covers should never be downloaded either (#101).
+      final visible = _service.visibleItems(items, options);
+      covers = await _fetchCovers(visible, onProgress: onProgress);
     }
 
     final bundle = _service.build(

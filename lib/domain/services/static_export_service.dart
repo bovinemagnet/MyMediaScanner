@@ -39,29 +39,55 @@ class StaticExportOptions {
 class StaticExportService {
   const StaticExportService();
 
+  /// Items that survive the private/deleted exclusion for [options].
+  /// Exposed so callers (e.g. [StaticExportWriter]) can apply the same
+  /// exclusion before fetching cover assets.
+  List<MediaItem> visibleItems(
+    List<MediaItem> items,
+    StaticExportOptions options,
+  ) =>
+      items
+          .where((i) => !i.deleted)
+          .where((i) => !_hasTag(i, options.privateTag))
+          .toList();
+
   /// Build the export. Returns a map of relative paths to byte content.
+  ///
+  /// The `covers` entries are filtered down to the ones expected by a
+  /// visible item's `coverUrl` — covers for private/deleted items are
+  /// dropped even if present in [covers], and a cover missing from
+  /// [covers] (e.g. a failed download) is treated as absent so the
+  /// rendered HTML never links to a local asset that doesn't exist.
   Map<String, Uint8List> build({
     required List<MediaItem> items,
     StaticExportOptions options = const StaticExportOptions(),
     Map<String, Uint8List> covers = const {},
   }) {
-    final visible = items
-        .where((i) => !i.deleted)
-        .where((i) => !_hasTag(i, options.privateTag))
-        .toList();
+    final visible = visibleItems(items, options);
 
-    final index = _renderIndex(visible, options);
+    final expectedCoverKeys = <String>{
+      for (final i in visible)
+        if (i.coverUrl != null && i.coverUrl!.isNotEmpty)
+          '${i.id}${_extFromUrl(i.coverUrl!)}',
+    };
+    final bundledCovers = <String, Uint8List>{
+      for (final e in covers.entries)
+        if (expectedCoverKeys.contains(e.key)) e.key: e.value,
+    };
+    final bundledKeys = bundledCovers.keys.toSet();
+
+    final index = _renderIndex(visible, options, bundledKeys);
     final output = <String, Uint8List>{
       'index.html': Uint8List.fromList(utf8.encode(index)),
     };
 
     for (final item in visible) {
-      final page = _renderItem(item, options);
+      final page = _renderItem(item, options, bundledKeys);
       output['items/${item.id}.html'] =
           Uint8List.fromList(utf8.encode(page));
     }
 
-    for (final e in covers.entries) {
+    for (final e in bundledCovers.entries) {
       output['covers/${e.key}'] = e.value;
     }
 
@@ -70,7 +96,11 @@ class StaticExportService {
 
   // ── HTML rendering ────────────────────────────────────────────────
 
-  String _renderIndex(List<MediaItem> items, StaticExportOptions opts) {
+  String _renderIndex(
+    List<MediaItem> items,
+    StaticExportOptions opts,
+    Set<String> bundledCoverKeys,
+  ) {
     final mediaTypes = <String>{for (final i in items) i.mediaType.label};
     final tags = <String>{
       for (final i in items)
@@ -81,7 +111,7 @@ class StaticExportService {
 
     final cards = <String>[];
     for (final item in items) {
-      final cover = _coverPath(item, opts);
+      final cover = _coverPath(item, opts, bundledCoverKeys);
       final tagList = _tagsOf(item)
           .where((t) => t != opts.privateTag)
           .join(',');
@@ -176,8 +206,12 @@ ${cards.join('\n')}
 ''';
   }
 
-  String _renderItem(MediaItem item, StaticExportOptions opts) {
-    final cover = _coverPath(item, opts);
+  String _renderItem(
+    MediaItem item,
+    StaticExportOptions opts,
+    Set<String> bundledCoverKeys,
+  ) {
+    final cover = _coverPath(item, opts, bundledCoverKeys);
     final details = <(String, String)>[
       if (item.year != null) ('Year', item.year.toString()),
       if (item.publisher != null) ('Publisher', item.publisher!),
@@ -242,15 +276,23 @@ ${cards.join('\n')}
 
   // ── Helpers ───────────────────────────────────────────────────────
 
-  /// Returns the `covers/<id>.<ext>` path when covers are bundled and we
-  /// have a URL (used by the writer to pick the extension). Returns the
-  /// original URL when not bundling.
-  String? _coverPath(MediaItem item, StaticExportOptions opts) {
+  /// Returns the `covers/<id>.<ext>` path when covers are bundled and the
+  /// cover was actually supplied in [bundledCoverKeys] (i.e. the download
+  /// succeeded). Returns the original URL when not bundling, or `null`
+  /// when bundling was expected but the cover is missing — e.g. a failed
+  /// download — so the caller falls back to the placeholder instead of
+  /// linking to a local asset that was never written.
+  String? _coverPath(
+    MediaItem item,
+    StaticExportOptions opts,
+    Set<String> bundledCoverKeys,
+  ) {
     final url = item.coverUrl;
     if (url == null || url.isEmpty) return null;
     if (!opts.bundleCovers) return url;
-    final ext = _extFromUrl(url);
-    return 'covers/${item.id}$ext';
+    final key = '${item.id}${_extFromUrl(url)}';
+    if (!bundledCoverKeys.contains(key)) return null;
+    return 'covers/$key';
   }
 
   static String _extFromUrl(String url) {
