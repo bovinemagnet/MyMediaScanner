@@ -173,6 +173,16 @@ class RipLibraryRepositoryImpl implements IRipLibraryRepository {
   }
 
   @override
+  Stream<Map<String, List<RipTrack>>> watchAllTracksByAlbum() {
+    return _dao.watchAllTracksByAlbum().map(
+          (grouped) => grouped.map(
+            (albumId, rows) =>
+                MapEntry(albumId, rows.map(_trackFromRow).toList()),
+          ),
+        );
+  }
+
+  @override
   Future<void> linkToMediaItem(String ripAlbumId, String mediaItemId) async {
     await _dao.linkToMediaItem(ripAlbumId, mediaItemId);
   }

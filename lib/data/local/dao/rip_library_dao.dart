@@ -167,6 +167,28 @@ class RipLibraryDao extends DatabaseAccessor<AppDatabase>
     });
   }
 
+  /// Stream of every track belonging to a non-deleted rip album, grouped
+  /// by rip album ID. One query for the whole library — feeds the derived
+  /// album-health model on the rips screen.
+  Stream<Map<String, List<RipTracksTableData>>> watchAllTracksByAlbum() {
+    final query = select(ripTracksTable).join([
+      innerJoin(
+        ripAlbumsTable,
+        ripAlbumsTable.id.equalsExp(ripTracksTable.ripAlbumId),
+        useColumns: false,
+      ),
+    ])
+      ..where(ripAlbumsTable.deleted.equals(0));
+    return query.watch().map((rows) {
+      final grouped = <String, List<RipTracksTableData>>{};
+      for (final row in rows) {
+        final track = row.readTable(ripTracksTable);
+        grouped.putIfAbsent(track.ripAlbumId, () => []).add(track);
+      }
+      return grouped;
+    });
+  }
+
   /// Link a rip album to a media item.
   Future<void> linkToMediaItem(String ripAlbumId, String mediaItemId) {
     final now = DateTime.now().millisecondsSinceEpoch;
