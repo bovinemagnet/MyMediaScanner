@@ -29,11 +29,18 @@ class QualityAnalysisProgress {
     required this.currentTrack,
     required this.totalTracks,
     required this.currentStep,
+    this.failedTracks = 0,
   });
 
   final int currentTrack;
   final int totalTracks;
   final String currentStep;
+
+  /// Number of tracks that could not be analysed (e.g. decode failures).
+  ///
+  /// Carried on every event so the final one always holds the total;
+  /// callers surface it to the user instead of completing silently.
+  final int failedTracks;
 }
 
 /// Signature for executing a CPU-bound computation off the main thread.
@@ -206,6 +213,7 @@ class AnalyseRipQualityUseCase {
     }
 
     // Process each track that needs analysis
+    var failedTracks = 0;
     for (var i = 0; i < tracksNeedingAnalysis.length; i++) {
       final track = tracksNeedingAnalysis[i];
       final trackIndex =
@@ -221,9 +229,17 @@ class AnalyseRipQualityUseCase {
 
       Uint8List pcmData;
       try {
-        pcmData =
-            await _isolateRunner(() => _flacDecoder.decode(track.filePath));
+        // Call the decoder directly: it already runs the decode in its
+        // own isolate. Wrapping it in another _isolateRunner created the
+        // closure inside this async* frame, which dragged the
+        // generator's _AsyncCompleter into the isolate spawn message —
+        // an unsendable object — so every decode failed instantly.
+        pcmData = await _flacDecoder.decode(track.filePath);
       } catch (_) {
+        // Decode failed — stamp the track so re-analysis stays possible
+        // and count the failure so it reaches the UI via the final
+        // progress event rather than vanishing silently.
+        failedTracks++;
         await _repository.updateTrackQuality(
           track.id,
           arStatus: 'not_checked',
@@ -338,6 +354,15 @@ class AnalyseRipQualityUseCase {
         qualityCheckedAt: now,
       );
     }
+
+    // Final event so callers always see the failure tally, even when the
+    // last track failed and never produced a step-specific event.
+    yield QualityAnalysisProgress(
+      currentTrack: totalTracks,
+      totalTracks: totalTracks,
+      currentStep: 'Complete',
+      failedTracks: failedTracks,
+    );
   }
 
   /// Try to find and parse a rip log file in the album directory.

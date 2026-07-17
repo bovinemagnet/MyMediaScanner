@@ -73,7 +73,7 @@ dependencies:
   dart_metaflac: ^0.0.1
   dart_flac: ^0.0.1
   dart_accuraterip: ^0.0.3
-  audio_defect_detector: ^0.2.0
+  audio_defect_detector: ^0.4.0
   app_links: ^6.4.0
   dart_rip_log: ^0.0.1
   dart_cue: ^0.0.1
@@ -81,6 +81,12 @@ dependencies:
   pdf: ^3.11.0
   printing: ^5.14.0
   marionette_flutter: ^0.6.0
+
+# TODO: remove once dart_metaflac 0.0.3 (ID3v2-prefixed FLAC fix) is
+# published to pub.dev and the dependency above is bumped.
+dependency_overrides:
+  dart_metaflac:
+    path: ../dart-metaflac
 
 dev_dependencies:
   flutter_test:

@@ -85,10 +85,10 @@ packages:
     dependency: "direct main"
     description:
       name: audio_defect_detector
-      sha256: "4097162d046b519ab0149ae8e5e522eb36dc96a1f4a683afd6541d30b6aab27f"
+      sha256: "448e21783baec1dc2b34c9b910693906daf66d8bb99911439a0da22ebaff0def"
       url: "https://pub.dev"
     source: hosted
-    version: "0.2.0"
+    version: "0.4.0"
   audio_session:
     dependency: transitive
     description:
@@ -412,11 +412,10 @@ packages:
   dart_metaflac:
     dependency: "direct main"
     description:
-      name: dart_metaflac
-      sha256: f21d366fdddb2c0e7888cda3e070f5cc7fe159c6180ced1343b7a431981e80d6
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.0.2"
+      path: "../dart-metaflac"
+      relative: true
+    source: path
+    version: "0.0.3"
   dart_rip_log:
     dependency: "direct main"
     description:

@@ -436,7 +436,9 @@ class QualityAnalysisNotifier extends Notifier<QualityAnalysisState> {
         sensitivity: sensitivity,
       );
 
+      var failedTracks = 0;
       await for (final progress in useCase.execute(ripAlbumId)) {
+        failedTracks = progress.failedTracks;
         state = state.copyWith(
           currentTrack: progress.currentTrack,
           totalTracks: progress.totalTracks,
@@ -444,7 +446,16 @@ class QualityAnalysisNotifier extends Notifier<QualityAnalysisState> {
         );
       }
 
-      state = state.copyWith(status: QualityAnalysisStatus.complete);
+      // Decode failures are non-fatal per track, but completing silently
+      // leaves the user staring at unchanged "?" statuses — say what
+      // happened instead.
+      state = state.copyWith(
+        status: QualityAnalysisStatus.complete,
+        error: failedTracks > 0
+            ? '$failedTracks of ${state.totalTracks} tracks could not be '
+                'decoded, so their quality was not analysed.'
+            : null,
+      );
 
       // Invalidate track data so UI refreshes
       ref.invalidate(ripTracksProvider);

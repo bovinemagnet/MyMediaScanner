@@ -290,5 +290,59 @@ void main() {
         await expectLater(notifier.analyse('album-5'), completes);
       });
     });
+
+    group('surfaces decode failures', () {
+      test('analyse_withAllDecodesFailing_setsErrorSummary', () async {
+        // Arrange — every decode throws; previously this completed with
+        // no error at all, leaving the user with silent "?" statuses.
+        final tracks = [
+          const RipTrack(
+            id: 'track-1',
+            ripAlbumId: 'album-6',
+            trackNumber: 1,
+            filePath: '/fake/path/1.flac',
+            fileSizeBytes: 1,
+            updatedAt: 0,
+          ),
+          const RipTrack(
+            id: 'track-2',
+            ripAlbumId: 'album-6',
+            trackNumber: 2,
+            filePath: '/fake/path/2.flac',
+            fileSizeBytes: 1,
+            updatedAt: 0,
+          ),
+        ];
+        when(() => mockRipRepo.getTracksForAlbum('album-6'))
+            .thenAnswer((_) async => tracks);
+        when(() => mockFlacDecoder.isAvailable())
+            .thenAnswer((_) async => true);
+        when(() => mockFlacDecoder.decode(any()))
+            .thenThrow(const FlacDecodeException('decode failed'));
+        when(() => mockRipRepo.updateTrackQuality(
+              any(),
+              arStatus: any(named: 'arStatus'),
+              qualityCheckedAt: any(named: 'qualityCheckedAt'),
+            )).thenAnswer((_) async {});
+
+        final container = _createContainer(
+          ripRepo: mockRipRepo,
+          flacDecoder: mockFlacDecoder,
+          arClient: mockArClient,
+        );
+        addTearDown(container.dispose);
+
+        final notifier =
+            container.read(qualityAnalysisNotifierProvider.notifier);
+
+        // Act
+        await notifier.analyse('album-6');
+
+        // Assert — completed with a human-readable failure summary.
+        final state = container.read(qualityAnalysisNotifierProvider);
+        expect(state.status, QualityAnalysisStatus.complete);
+        expect(state.error, contains('2 of 2'));
+      });
+    });
   });
 }
