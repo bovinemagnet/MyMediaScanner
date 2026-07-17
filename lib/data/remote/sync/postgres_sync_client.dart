@@ -295,6 +295,30 @@ class PostgresSyncClient {
     });
   }
 
+  /// SQL used to read the server's current wall-clock time, expressed as
+  /// epoch milliseconds — the same units as the `updated_at` columns
+  /// compared throughout the sync pipeline. Exposed as a public constant
+  /// for testability without requiring a live connection.
+  static const String serverTimestampSql =
+      'SELECT (extract(epoch from clock_timestamp()) * 1000)::bigint AS ms';
+
+  /// Returns the server's current time as epoch milliseconds.
+  ///
+  /// Used by `SyncRepositoryImpl.pullChanges` as a safe upper boundary for
+  /// the next incremental-pull watermark, captured BEFORE any table is
+  /// read — see that method's doc comment for the race this closes.
+  Future<int> fetchServerTimestampMillis() {
+    return _connectionLock.synchronized(() async {
+      final conn = await _getConnection();
+      final result = await conn.execute(serverTimestampSql);
+      final value = result.first.toColumnMap()['ms'];
+      if (value is int) return value;
+      if (value is BigInt) return value.toInt();
+      if (value is num) return value.toInt();
+      throw StateError('Unexpected server timestamp result: $value');
+    });
+  }
+
   /// Lightweight connectivity check using `SELECT 1` with a 5-second timeout.
   /// Returns a [ConnectionHealth] status.
   Future<ConnectionHealth> ping() async {

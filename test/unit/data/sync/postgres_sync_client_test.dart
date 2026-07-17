@@ -249,6 +249,15 @@ void main() {
       });
     });
 
+    group('serverTimestampSql (issue #102 pre-read pull boundary)', () {
+      test('reads the server clock scaled to epoch milliseconds', () {
+        expect(PostgresSyncClient.serverTimestampSql,
+            contains('clock_timestamp()'));
+        expect(
+            PostgresSyncClient.serverTimestampSql, contains('extract(epoch'));
+      });
+    });
+
     group('buildSelectByIdsSql (targeted pull for conflict resolution)', () {
       test('generates an IN clause with one named parameter per id', () {
         final result = PostgresSyncClient.buildSelectByIdsSql(
