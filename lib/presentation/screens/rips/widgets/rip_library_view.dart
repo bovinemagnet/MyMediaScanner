@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mymediascanner/app/theme/app_media_colors.dart';
 import 'package:mymediascanner/core/constants/app_constants.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
@@ -21,6 +20,7 @@ import 'package:mymediascanner/presentation/screens/rips/widgets/batch_tag_edito
 import 'package:mymediascanner/presentation/screens/rips/widgets/playback_widgets.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/quality_widgets.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/queue_panel.dart';
+import 'package:mymediascanner/presentation/screens/rips/widgets/rip_album_card.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/rip_album_detail_dialog.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/rip_cover_thumb.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/rip_health_filter_chips.dart';
@@ -254,15 +254,15 @@ class _RipLibraryViewState extends ConsumerState<RipLibraryView> {
               return GridView.builder(
                 padding: const EdgeInsets.all(16),
                 gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 280,
-                  childAspectRatio: 1.3,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
+                  maxCrossAxisExtent: 420,
+                  mainAxisExtent: 208,
+                  mainAxisSpacing: 14,
+                  crossAxisSpacing: 14,
                 ),
                 itemCount: filtered.length,
                 itemBuilder: (context, index) {
                   final album = filtered[index];
-                  return _RipAlbumCard(
+                  return RipAlbumCard(
                     album: album,
                     onTap: () {
                       if (isSelecting) {
@@ -355,196 +355,6 @@ class _AnalyseAllButton extends ConsumerWidget {
 
     ref.read(batchAnalysisProvider.notifier).queueAlbums(ids);
     unawaited(ref.read(batchAnalysisProvider.notifier).startAnalysis());
-  }
-}
-
-class _RipAlbumCard extends ConsumerWidget {
-  const _RipAlbumCard({
-    required this.album,
-    this.onTap,
-    this.onLongPress,
-    this.isSelected = false,
-    this.showCheckbox = false,
-  });
-
-  final RipAlbum album;
-  final VoidCallback? onTap;
-  final VoidCallback? onLongPress;
-  final bool isSelected;
-  final bool showCheckbox;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final tracksAsync = ref.watch(ripTracksProvider(album.id));
-    final theme = Theme.of(context);
-    final mediaColors = context.mediaColors;
-    final nowPlayingAlbumId = ref.watch(
-      nowPlayingProvider.select((s) => s.album?.id),
-    );
-    final isNowPlaying = nowPlayingAlbumId == album.id;
-
-    // Quality summary from tracks
-    final tracks = tracksAsync.whenOrNull(data: (t) => t) ?? [];
-    final arVerified =
-        tracks.where((t) => t.accurateRipStatus == 'verified').length;
-    final withDefects = tracks.where((t) => t.totalDefects > 0).length;
-
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      shape: isSelected
-          ? RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(color: theme.colorScheme.primary, width: 2),
-            )
-          : isNowPlaying
-              ? RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: theme.colorScheme.primary, width: 2),
-                )
-              : null,
-      child: InkWell(
-        onTap: onTap ??
-            () => showDialog<void>(
-                  context: context,
-                  builder: (_) => RipAlbumDetailDialog(album: album),
-                ),
-        onLongPress: onLongPress,
-        child: Stack(
-          children: [
-            Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              RipCoverThumb(coverPath: album.coverPath),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      album.artist ?? 'Unknown Artist',
-                      style: theme.textTheme.titleSmall,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      album.albumTitle ?? 'Unknown Album',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const Spacer(),
-                    Row(
-                      children: [
-                        Icon(Icons.music_note, size: 14, color: theme.colorScheme.onSurfaceVariant),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: Text('${album.trackCount} tracks',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.bodySmall),
-                        ),
-                        const SizedBox(width: 12),
-                        Icon(Icons.storage, size: 14, color: theme.colorScheme.onSurfaceVariant),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: Text(_formatSize(album.totalSizeBytes),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.bodySmall),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        if (tracks.isNotEmpty) ...[
-                          Icon(
-                            Icons.verified,
-                            size: 14,
-                            color: arVerified == tracks.length
-                                ? mediaColors.book
-                                : arVerified > 0
-                                    ? mediaColors.tv
-                                    : theme.colorScheme.onSurfaceVariant,
-                          ),
-                          const SizedBox(width: 4),
-                          Flexible(
-                            child: Text(
-                              '$arVerified/${tracks.length} AR',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.bodySmall,
-                            ),
-                          ),
-                          if (withDefects > 0) ...[
-                            const SizedBox(width: 8),
-                            Icon(Icons.warning_amber,
-                                size: 14, color: mediaColors.tv),
-                            const SizedBox(width: 4),
-                            Flexible(
-                              child: Text('$withDefects defects',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: theme.textTheme.bodySmall),
-                            ),
-                          ],
-                        ],
-                        const Spacer(),
-                        if (isNowPlaying)
-                          Icon(Icons.volume_up, size: 14, color: theme.colorScheme.primary),
-                        if (album.mediaItemId != null)
-                          Padding(
-                            padding: EdgeInsets.only(left: isNowPlaying ? 6 : 0),
-                            child: Icon(Icons.link, size: 14, color: theme.colorScheme.primary),
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-            // Checkbox overlay when in selection mode
-            if (showCheckbox)
-              Positioned(
-                top: 6,
-                right: 6,
-                child: IgnorePointer(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.surface.withValues(alpha: 0.8),
-                      shape: BoxShape.circle,
-                    ),
-                    padding: const EdgeInsets.all(2),
-                    child: Icon(
-                      isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
-                      size: 20,
-                      color: isSelected
-                          ? theme.colorScheme.onPrimary
-                          : theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  String _formatSize(int bytes) {
-    if (bytes >= 1024 * 1024 * 1024) {
-      return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
-    }
-    return '${(bytes / (1024 * 1024)).toStringAsFixed(0)} MB';
   }
 }
 
