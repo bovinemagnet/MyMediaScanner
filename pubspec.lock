@@ -412,9 +412,10 @@ packages:
   dart_metaflac:
     dependency: "direct main"
     description:
-      path: "../dart-metaflac"
-      relative: true
-    source: path
+      name: dart_metaflac
+      sha256: "5ed63d655c46f862d701224cae0b15ce19d5b6f057ac75dfb48975913c71daa1"
+      url: "https://pub.dev"
+    source: hosted
     version: "0.0.3"
   dart_rip_log:
     dependency: "direct main"
