@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mymediascanner/app/theme/app_typography.dart';
 import 'package:mymediascanner/core/constants/app_constants.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
@@ -24,6 +25,8 @@ import 'package:mymediascanner/presentation/screens/rips/widgets/rip_album_card.
 import 'package:mymediascanner/presentation/screens/rips/widgets/rip_album_detail_dialog.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/rip_cover_thumb.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/rip_health_filter_chips.dart';
+import 'package:mymediascanner/presentation/screens/rips/widgets/rip_health_widgets.dart';
+import 'package:mymediascanner/presentation/screens/rips/widgets/rip_quality_report.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/rip_table_view.dart';
 import 'package:mymediascanner/presentation/widgets/empty_state.dart';
 import 'package:mymediascanner/presentation/widgets/error_state.dart';
@@ -586,12 +589,26 @@ class _RipAlbumDetailPanelState extends ConsumerState<_RipAlbumDetailPanel> {
     setState(() => _editing = false);
   }
 
+  Widget _sectionLabel(BuildContext context, String text) => Text(
+        text,
+        style: AppTypography.monoLabel(
+          color: Theme.of(context).colorScheme.outline,
+          fontSize: 9.5,
+          letterSpacing: 1.5,
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
     final tracksAsync = ref.watch(ripTracksProvider(widget.album.id));
     final editState = ref.watch(ripMetadataEditNotifierProvider);
     final isSaving = editState.status == RipMetadataEditStatus.saving;
     final theme = Theme.of(context);
+    final tracks = tracksAsync.whenOrNull(data: (t) => t) ?? <RipTrack>[];
+    final healthMap = ref.watch(ripAlbumHealthMapProvider);
+    final health = ripAlbumHealthOf(healthMap, widget.album.id);
+    final arVerified =
+        tracks.where((t) => t.accurateRipStatus == 'verified').length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -649,22 +666,42 @@ class _RipAlbumDetailPanelState extends ConsumerState<_RipAlbumDetailPanel> {
                   ],
                 )
               : Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    RipCoverThumb(
+                        coverPath: widget.album.coverPath, size: 76),
+                    const SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            widget.album.artist ?? 'Unknown Artist',
-                            style: theme.textTheme.labelMedium?.copyWith(
+                            (widget.album.artist ?? 'UNKNOWN ARTIST')
+                                .toUpperCase(),
+                            style: AppTypography.monoLabel(
                               color: theme.colorScheme.onSurfaceVariant,
+                              fontSize: 9,
+                              letterSpacing: 1.4,
+                              fontWeight: FontWeight.w600,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
+                          const SizedBox(height: 6),
                           Text(
                             widget.album.albumTitle ?? 'Unknown Album',
-                            style: theme.textTheme.titleSmall,
+                            style: AppTypography.displayTitle(
+                              color: theme.colorScheme.onSurface,
+                              fontSize: 20,
+                            ),
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 9),
+                          RipStatusPill(
+                            health: health,
+                            detail: tracks.isEmpty
+                                ? null
+                                : 'AR $arVerified/${tracks.length}',
                           ),
                         ],
                       ),
@@ -684,136 +721,208 @@ class _RipAlbumDetailPanelState extends ConsumerState<_RipAlbumDetailPanel> {
                   ],
                 ),
         ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          child: Text(
-            widget.album.libraryPath,
-            style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: RipCoverThumb(
-              coverPath: widget.album.coverPath,
-              size: 140,
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        // Quality analysis
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 12),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerHigh,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: QualityAnalysisSection(albumId: widget.album.id),
-        ),
-        const SizedBox(height: 12),
-        // Playback controls (visible when this album is playing)
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: InlinePlayerControls(album: widget.album),
-        ),
-        // Track listing
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Text('TRACKS',
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-                letterSpacing: 1.0,
-                fontWeight: FontWeight.w700,
-              )),
-        ),
-        const SizedBox(height: 4),
         Expanded(
-          child: tracksAsync.when(
-            loading: () => const LoadingIndicator(),
-            error: (e, _) => ErrorState(
-              message: 'Error: $e',
-              onRetry: () =>
-                  ref.invalidate(ripTracksProvider(widget.album.id)),
-            ),
-            data: (tracks) {
-              if (tracks.isEmpty) {
-                return const Center(child: Text('No tracks found.'));
-              }
-              return ListView.builder(
-                itemCount: tracks.length,
-                itemBuilder: (context, index) {
-                  final track = tracks[index];
-                  if (_editing) {
-                    return _EditableTrackTileInline(
-                      track: track,
-                      titleController: _trackController(track),
-                      tagControllers: _tagControllers,
-                    );
-                  }
-                  final duration = formatPlaybackDurationMs(track.durationMs);
-                  final discLabel = track.discNumber > 1
-                      ? 'Disc ${track.discNumber} · '
-                      : '';
-                  final subtitle =
-                      '$discLabel${track.trackNumber.toString().padLeft(2, '0')}'
-                      '${duration.isNotEmpty ? ' · $duration' : ''}';
-                  final nowPlaying = ref.watch(nowPlayingProvider);
-                  final currentIdx =
-                      ref.watch(currentTrackIndexProvider).value;
-                  final isThisTrackPlaying =
-                      nowPlaying.album?.id == track.ripAlbumId &&
-                          currentIdx == index;
-                  return ListTile(
-                    dense: true,
-                    leading: isThisTrackPlaying
-                        ? Icon(Icons.volume_up,
-                            color: theme.colorScheme.primary, size: 20)
-                        : QualityIcon(track: track),
-                    title: Text(
-                      track.title ?? 'Track ${track.trackNumber}',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight:
-                            track.title != null ? FontWeight.w500 : null,
-                        fontStyle:
-                            track.title == null ? FontStyle.italic : null,
-                        color: isThisTrackPlaying
-                            ? theme.colorScheme.primary
-                            : (track.title == null
-                                ? theme.colorScheme.onSurfaceVariant
-                                : null),
-                      ),
-                    ),
-                    subtitle: Text(
-                      subtitle,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    onTap: () {
-                      if (!ref.read(playOnSelectProvider)) return;
-                      final np = ref.read(nowPlayingProvider);
-                      final actions =
-                          ref.read(playbackActionProvider.notifier);
-                      if (np.album?.id == widget.album.id) {
-                        actions.seekToIndex(index);
-                      } else {
-                        actions.playAlbum(
-                          album: widget.album,
-                          tracks: tracks,
-                          startIndex: index,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 6),
+                  child: Text(
+                    widget.album.libraryPath,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Quality analysis
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHigh,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: QualityAnalysisSection(albumId: widget.album.id),
+                ),
+                const SizedBox(height: 12),
+                // Playback controls (visible when this album is playing)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: InlinePlayerControls(album: widget.album),
+                ),
+                const SizedBox(height: 12),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _sectionLabel(context, 'QUALITY REPORT'),
+                      const SizedBox(height: 8),
+                      RipQualityReport(tracks: tracks),
+                      const SizedBox(height: 14),
+                      _sectionLabel(context, 'SOURCE'),
+                      const SizedBox(height: 8),
+                      RipSourceSection(album: widget.album, tracks: tracks),
+                    ],
+                  ),
+                ),
+                // Track listing
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: _sectionLabel(context, 'TRACKS'),
+                ),
+                const SizedBox(height: 4),
+                tracksAsync.when(
+                  loading: () => const Padding(
+                    padding: EdgeInsets.all(24),
+                    child: LoadingIndicator(),
+                  ),
+                  error: (e, _) => ErrorState(
+                    message: 'Error: $e',
+                    onRetry: () =>
+                        ref.invalidate(ripTracksProvider(widget.album.id)),
+                  ),
+                  data: (tracks) {
+                    if (tracks.isEmpty) {
+                      return const Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Center(child: Text('No tracks found.')),
+                      );
+                    }
+                    return ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: tracks.length,
+                      itemBuilder: (context, index) {
+                        final track = tracks[index];
+                        if (_editing) {
+                          return _EditableTrackTileInline(
+                            track: track,
+                            titleController: _trackController(track),
+                            tagControllers: _tagControllers,
+                          );
+                        }
+                        final nowPlaying = ref.watch(nowPlayingProvider);
+                        final currentIdx =
+                            ref.watch(currentTrackIndexProvider).value;
+                        final isThisTrackPlaying =
+                            nowPlaying.album?.id == track.ripAlbumId &&
+                                currentIdx == index;
+                        final isVerified =
+                            track.accurateRipStatus == 'verified';
+                        final numberLabel = track.discNumber > 1
+                            ? '${track.discNumber}-'
+                                '${track.trackNumber.toString().padLeft(2, '0')}'
+                            : track.trackNumber.toString().padLeft(2, '0');
+                        return Material(
+                          color: isThisTrackPlaying
+                              ? theme.colorScheme.primary
+                                  .withValues(alpha: 0.10)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(9),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(9),
+                            onTap: () {
+                              if (!ref.read(playOnSelectProvider)) return;
+                              final np = ref.read(nowPlayingProvider);
+                              final actions =
+                                  ref.read(playbackActionProvider.notifier);
+                              if (np.album?.id == widget.album.id) {
+                                actions.seekToIndex(index);
+                              } else {
+                                actions.playAlbum(
+                                  album: widget.album,
+                                  tracks: tracks,
+                                  startIndex: index,
+                                );
+                              }
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 8),
+                              child: Row(
+                                children: [
+                                  isThisTrackPlaying
+                                      ? Icon(Icons.volume_up,
+                                          color: theme.colorScheme.primary,
+                                          size: 16)
+                                      : QualityIcon(track: track),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    numberLabel,
+                                    style: AppTypography.monoLabel(
+                                      color: isThisTrackPlaying
+                                          ? theme.colorScheme.primary
+                                          : theme.colorScheme.outline,
+                                      fontSize: 10,
+                                      letterSpacing: 0.2,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      track.title ??
+                                          'Track ${track.trackNumber}',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style:
+                                          theme.textTheme.bodyMedium?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        fontStyle: track.title == null
+                                            ? FontStyle.italic
+                                            : null,
+                                        color: isThisTrackPlaying
+                                            ? theme.colorScheme.primary
+                                            : (track.title == null
+                                                ? theme
+                                                    .colorScheme.onSurfaceVariant
+                                                : null),
+                                      ),
+                                    ),
+                                  ),
+                                  if (isVerified &&
+                                      track.accurateRipConfidence !=
+                                          null) ...[
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'AR ${track.accurateRipConfidence}',
+                                      style: AppTypography.monoLabel(
+                                        color: theme.colorScheme.outline,
+                                        fontSize: 9,
+                                        letterSpacing: 0.2,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    formatPlaybackDurationMs(
+                                        track.durationMs),
+                                    style: AppTypography.monoLabel(
+                                      color: isThisTrackPlaying
+                                          ? theme.colorScheme.primary
+                                          : theme
+                                              .colorScheme.onSurfaceVariant,
+                                      fontSize: 10,
+                                      letterSpacing: 0.2,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         );
-                      }
-                    },
-                  );
-                },
-              );
-            },
+                      },
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       ],

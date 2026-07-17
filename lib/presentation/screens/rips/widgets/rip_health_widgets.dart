@@ -57,7 +57,13 @@ class RipStatusPill extends StatelessWidget {
         children: [
           Icon(ripHealthIcon(health), size: 12, color: colour),
           const SizedBox(width: 5),
-          Text(label, style: AppTypography.monoLabel(color: colour)),
+          Flexible(
+            child: Text(
+              label,
+              style: AppTypography.monoLabel(color: colour),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ],
       ),
     );
