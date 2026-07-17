@@ -29,6 +29,9 @@ abstract interface class IRipLibraryRepository {
   /// grouped by media item ID. One query for the whole collection,
   /// replacing per-item album + tracks lookups.
   Stream<Map<String, List<RipTrack>>> watchTracksByMediaItem();
+
+  /// Every track of every non-deleted rip album, grouped by rip album ID.
+  Stream<Map<String, List<RipTrack>>> watchAllTracksByAlbum();
   Future<void> linkToMediaItem(String ripAlbumId, String mediaItemId);
   Future<void> unlinkFromMediaItem(String ripAlbumId);
   Future<List<RipAlbum>> getAllNonDeleted();

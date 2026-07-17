@@ -7,21 +7,72 @@ import 'package:flutter/material.dart';
 abstract final class AppTypography {
   static const _manrope = 'Manrope';
   static const _inter = 'Inter';
+  static const _spaceGrotesk = 'SpaceGrotesk';
+  static const _jetBrainsMono = 'JetBrainsMono';
 
   /// Display style for large numerics (hero stat cards, count badges).
   ///
-  /// Uses extra-bold Manrope with a slight negative tracking. If the
-  /// `Space Grotesk` font is added to `assets/fonts/` in future, swap the
-  /// `fontFamily` here to pick it up everywhere without call-site churn.
+  /// Uses extra-bold Space Grotesk with a slight negative tracking.
   static TextStyle displayNumeric({
     required Color color,
     double fontSize = 64,
   }) {
     return TextStyle(
-      fontFamily: _manrope,
+      fontFamily: _spaceGrotesk,
       fontSize: fontSize,
       fontWeight: FontWeight.w800,
       letterSpacing: -fontSize * 0.02,
+      height: 1.0,
+      color: color,
+    );
+  }
+
+  /// Display style for screen and card titles in the themed redesign.
+  /// Space Grotesk with tight tracking — pairs with [monoLabel] eyebrows.
+  static TextStyle displayTitle({
+    required Color color,
+    double fontSize = 34,
+    FontWeight fontWeight = FontWeight.w700,
+  }) {
+    return TextStyle(
+      fontFamily: _spaceGrotesk,
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      letterSpacing: -fontSize * 0.025,
+      height: 1.1,
+      color: color,
+    );
+  }
+
+  /// Uppercase letterspaced technical label (eyebrows, section headers,
+  /// chips). Callers supply already-uppercased text.
+  static TextStyle monoLabel({
+    required Color color,
+    double fontSize = 10,
+    double letterSpacing = 1.4,
+    FontWeight fontWeight = FontWeight.w700,
+  }) {
+    return TextStyle(
+      fontFamily: _jetBrainsMono,
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      letterSpacing: letterSpacing,
+      height: 1.0,
+      color: color,
+    );
+  }
+
+  /// Monospaced numeric for stat values and counters.
+  static TextStyle monoNumeric({
+    required Color color,
+    double fontSize = 24,
+    FontWeight fontWeight = FontWeight.w700,
+  }) {
+    return TextStyle(
+      fontFamily: _jetBrainsMono,
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      letterSpacing: -fontSize * 0.03,
       height: 1.0,
       color: color,
     );

@@ -54,7 +54,8 @@ class StatisticsScreen extends ConsumerWidget {
             // ── Header ───────────────────────────────────────────
             if (isDesktop)
               const ScreenHeader(
-                title: 'Analytics',
+                eyebrow: 'CURATION',
+                title: 'Insights & Analytics',
                 subtitle:
                     'Deep dive into your media collection. Precision tracking '
                     'for your physical and digital assets.',

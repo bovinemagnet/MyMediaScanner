@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/playlist_view.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/rip_coverage_view.dart';
+import 'package:mymediascanner/presentation/screens/rips/widgets/rip_health_widgets.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/rip_library_view.dart';
 import 'package:mymediascanner/presentation/widgets/screen_header.dart';
 
@@ -28,9 +29,11 @@ class _RipsScreenState extends ConsumerState<RipsScreen> {
         children: [
           const ScreenHeader(
             title: 'Rip Library',
+            eyebrow: 'FLAC RIP COLLECTION',
             subtitle:
                 'Manage your FLAC rip collection and compare coverage '
                 'against physical media.',
+            actions: [RipHealthStatCards()],
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
