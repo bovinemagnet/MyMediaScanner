@@ -11,6 +11,7 @@ import 'package:mymediascanner/presentation/providers/album_selection_provider.d
 import 'package:mymediascanner/presentation/providers/audio_player_provider.dart';
 import 'package:mymediascanner/presentation/providers/batch_analysis_provider.dart';
 import 'package:mymediascanner/presentation/providers/database_provider.dart';
+import 'package:mymediascanner/presentation/providers/rip_health_provider.dart';
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
 import 'package:mymediascanner/presentation/providers/selected_rip_album_provider.dart';
 import 'package:mymediascanner/presentation/providers/rip_view_mode_provider.dart';
@@ -22,6 +23,7 @@ import 'package:mymediascanner/presentation/screens/rips/widgets/quality_widgets
 import 'package:mymediascanner/presentation/screens/rips/widgets/queue_panel.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/rip_album_detail_dialog.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/rip_cover_thumb.dart';
+import 'package:mymediascanner/presentation/screens/rips/widgets/rip_health_filter_chips.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/rip_table_view.dart';
 import 'package:mymediascanner/presentation/widgets/empty_state.dart';
 import 'package:mymediascanner/presentation/widgets/error_state.dart';
@@ -79,6 +81,8 @@ class _RipLibraryViewState extends ConsumerState<RipLibraryView> {
     final viewMode = ref.watch(ripViewModeProvider);
     final isSelecting = ref.watch(isInSelectionModeProvider);
     final selectedIds = ref.watch(albumSelectionProvider);
+    final healthMap = ref.watch(ripAlbumHealthMapProvider);
+    final healthFilter = ref.watch(ripHealthFilterProvider);
 
     final masterContent = Column(
       children: [
@@ -162,6 +166,10 @@ class _RipLibraryViewState extends ConsumerState<RipLibraryView> {
             ],
           ),
         ),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          child: RipHealthFilterChips(),
+        ),
         if (scanState.status == RipScanStatus.scanning)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -212,7 +220,7 @@ class _RipLibraryViewState extends ConsumerState<RipLibraryView> {
               onRetry: () => ref.invalidate(allRipAlbumsProvider),
             ),
             data: (albums) {
-              final filtered = _searchQuery.isEmpty
+              var filtered = _searchQuery.isEmpty
                   ? albums
                   : albums.where((a) {
                       final artist = (a.artist ?? '').toLowerCase();
@@ -220,11 +228,18 @@ class _RipLibraryViewState extends ConsumerState<RipLibraryView> {
                       return artist.contains(_searchQuery) ||
                           title.contains(_searchQuery);
                     }).toList();
+              if (healthFilter != RipHealthFilter.all) {
+                filtered = filtered
+                    .where((a) => healthFilter
+                        .matches(ripAlbumHealthOf(healthMap, a.id)))
+                    .toList();
+              }
 
               if (filtered.isEmpty) {
-                return const EmptyState(
-                  message:
-                      'No rip albums found. Use "Scan Library" to discover FLAC rips.',
+                return EmptyState(
+                  message: albums.isNotEmpty
+                      ? 'No albums match the current filter.'
+                      : 'No rip albums found. Use "Scan Library" to discover FLAC rips.',
                   icon: Icons.album_outlined,
                 );
               }
