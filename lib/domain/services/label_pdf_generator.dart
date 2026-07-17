@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:mymediascanner/domain/entities/label_sheet_preset.dart';
 import 'package:mymediascanner/domain/entities/label_target.dart';
 import 'package:pdf/pdf.dart';
@@ -9,7 +10,10 @@ import 'package:pdf/widgets.dart' as pw;
 /// grid defined by a [LabelSheetPreset]. Each label carries a QR of the
 /// target's [LabelTarget.qrPayload] and its human-readable title.
 ///
-/// Pure: no I/O, no Flutter dependencies. Returns the rendered PDF as a
+/// Embeds the bundled Manrope regular/bold fonts so titles, subtitles,
+/// and QR payload text render Unicode text (accented Latin, Cyrillic,
+/// CJK, etc.) correctly instead of falling back to the PDF package's
+/// non-Unicode default Helvetica fonts. Returns the rendered PDF as a
 /// [Uint8List]; callers are responsible for previewing, saving, or
 /// sharing the bytes.
 class LabelPdfGenerator {
@@ -21,7 +25,15 @@ class LabelPdfGenerator {
     required List<LabelTarget> targets,
     required LabelSheetPreset preset,
   }) async {
-    final doc = pw.Document();
+    final baseFont = pw.Font.ttf(
+      await rootBundle.load('assets/fonts/Manrope-Regular.ttf'),
+    );
+    final boldFont = pw.Font.ttf(
+      await rootBundle.load('assets/fonts/Manrope-Bold.ttf'),
+    );
+    final doc = pw.Document(
+      theme: pw.ThemeData.withFont(base: baseFont, bold: boldFont),
+    );
     final perPage = preset.labelsPerPage;
     final pageSize = PdfPageFormat(preset.pageWidthPt, preset.pageHeightPt);
 
