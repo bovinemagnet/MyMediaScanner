@@ -1,9 +1,11 @@
 import 'dart:async';
-import 'dart:typed_data';
+import 'dart:io';
 
 import 'package:dart_accuraterip/dart_accuraterip.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mymediascanner/core/services/secure_bookmark_service.dart';
 import 'package:mymediascanner/core/utils/flac_decoder.dart';
 import 'package:mymediascanner/core/utils/flac_reader.dart';
 import 'package:mymediascanner/core/utils/metaflac_writer.dart';
@@ -17,6 +19,7 @@ import 'package:mymediascanner/domain/usecases/match_rips_usecase.dart';
 import 'package:mymediascanner/domain/usecases/scan_rip_library_usecase.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/settings_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Stream of all non-deleted rip albums.
 final allRipAlbumsProvider = StreamProvider<List<RipAlbum>>((ref) {
@@ -66,8 +69,18 @@ final rippedItemIdsProvider = StreamProvider<Set<String>>((ref) {
   return ref.watch(ripLibraryRepositoryProvider).watchRippedMediaItemIds();
 });
 
-/// The configured FLAC library root path, stored in secure storage.
+/// The configured FLAC library root path, stored in SharedPreferences
+/// (it is not a secret, and Keychain-backed secure storage does not
+/// survive relaunches of ad-hoc-signed macOS debug builds).
 const _ripLibraryPathKey = 'rip_library_path';
+
+/// Security-scoped bookmark for the library root (sandboxed macOS only).
+const _ripLibraryBookmarkKey = 'rip_library_bookmark';
+
+/// Bridges to the platform's security-scoped bookmark support.
+final secureBookmarkServiceProvider = Provider<SecureBookmarkService>((ref) {
+  return MacosSecureBookmarkService();
+});
 
 final ripLibraryPathProvider =
     AsyncNotifierProvider<RipLibraryPathNotifier, String?>(
@@ -75,17 +88,84 @@ final ripLibraryPathProvider =
 );
 
 class RipLibraryPathNotifier extends AsyncNotifier<String?> {
+  /// Guards against re-running the (idempotent but not free) access
+  /// restore every time the provider rebuilds within one app session.
+  static bool _accessRestored = false;
+
+  /// Test hook: reset the once-per-session access restore guard.
+  @visibleForTesting
+  static void resetAccessRestoredForTesting() => _accessRestored = false;
+
+  SharedPreferences? _prefs;
+
+  Future<SharedPreferences> get _instance async =>
+      _prefs ??= await SharedPreferences.getInstance();
+
   @override
   Future<String?> build() async {
-    final storage = ref.watch(secureStorageProvider);
-    return storage.read(key: _ripLibraryPathKey);
+    final prefs = await _instance;
+    var path = prefs.getString(_ripLibraryPathKey);
+    if (path == null) {
+      // Legacy migration: the path used to live in secure storage, but
+      // Keychain-backed values do not survive relaunches on macOS debug
+      // builds (the ad-hoc signature changes each rebuild and breaks
+      // the ACL match) — and a folder path is not a secret anyway.
+      final legacy = await ref
+          .read(secureStorageProvider)
+          .read(key: _ripLibraryPathKey);
+      if (legacy != null) {
+        await prefs.setString(_ripLibraryPathKey, legacy);
+        path = legacy;
+      }
+    }
+    await _restoreAccess(prefs);
+    return path;
   }
 
+  /// On sandboxed macOS, re-arms the security-scoped grant captured
+  /// when the user last picked the folder, so scanning/analysis keep
+  /// working after an app restart. Runs once per session.
+  Future<void> _restoreAccess(SharedPreferences prefs) async {
+    if (_accessRestored) return;
+    final service = ref.read(secureBookmarkServiceProvider);
+    if (!service.isAvailable) return;
+    final bookmark = prefs.getString(_ripLibraryBookmarkKey);
+    if (bookmark == null) return;
+    _accessRestored = true;
+    final current = await service.startAccess(bookmark);
+    if (current != null && current != bookmark) {
+      // macOS flagged the blob as stale and issued a fresh one.
+      await prefs.setString(_ripLibraryBookmarkKey, current);
+    }
+  }
+
+  /// Stores a manually typed path. A typed path carries no sandbox
+  /// grant, so any bookmark for a previous folder is dropped.
   Future<void> setPath(String path) async {
-    await ref.read(secureStorageProvider).write(
-          key: _ripLibraryPathKey,
-          value: path,
-        );
+    final prefs = await _instance;
+    final previous = prefs.getString(_ripLibraryPathKey);
+    if (previous != path) {
+      await prefs.remove(_ripLibraryBookmarkKey);
+    }
+    await prefs.setString(_ripLibraryPathKey, path);
+    ref.invalidateSelf();
+  }
+
+  /// Stores a path the user chose in the native folder picker and
+  /// captures a security-scoped bookmark while the picker's grant is
+  /// still live, so the folder stays readable after an app restart.
+  Future<void> setPickedPath(String path) async {
+    final prefs = await _instance;
+    final service = ref.read(secureBookmarkServiceProvider);
+    if (service.isAvailable) {
+      final bookmark = await service.createBookmark(path);
+      if (bookmark != null) {
+        await prefs.setString(_ripLibraryBookmarkKey, bookmark);
+      } else {
+        await prefs.remove(_ripLibraryBookmarkKey);
+      }
+    }
+    await prefs.setString(_ripLibraryPathKey, path);
     ref.invalidateSelf();
   }
 }
@@ -167,6 +247,23 @@ class RipScanNotifier extends Notifier<RipScanState> {
 
       // Invalidate rip-related providers so UI updates
       ref.invalidate(rippedItemIdsProvider);
+    } on FileSystemException catch (e) {
+      // EPERM (1) is the sandboxed-macOS denial; EACCES (13) is a
+      // plain filesystem permission problem. Either way the fix is to
+      // (re-)grant access through the folder picker, so say that
+      // instead of dumping the raw exception.
+      const eperm = 1;
+      const eacces = 13;
+      final code = e.osError?.errorCode;
+      final denied = code == eperm || code == eacces;
+      state = state.copyWith(
+        status: RipScanStatus.complete,
+        error: denied
+            ? 'Permission to read "$rootPath" was denied. Use Browse… next '
+                'to the library path in Settings to select the folder — '
+                'picking it there grants the app access to it.'
+            : e.toString(),
+      );
     } catch (e) {
       state = state.copyWith(
         status: RipScanStatus.complete,

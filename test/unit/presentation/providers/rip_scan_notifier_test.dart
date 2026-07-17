@@ -9,6 +9,7 @@
 library;
 
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -224,6 +225,38 @@ void main() {
         final state = container.read(ripScanNotifierProvider);
         expect(state.status, RipScanStatus.complete);
         expect(state.error, contains('Repository error'));
+      });
+
+      test(
+          'maps permission-denied scan failures to a message that points '
+          'at Browse…', () async {
+        // Arrange — a directory the test user cannot list. On sandboxed
+        // macOS the same failure surfaces as EPERM instead of EACCES;
+        // both must map to the guidance message.
+        final tempDir = await Directory.systemTemp.createTemp('mms_locked_');
+        addTearDown(() async {
+          await Process.run('chmod', ['700', tempDir.path]);
+          await tempDir.delete(recursive: true);
+        });
+        await Process.run('chmod', ['000', tempDir.path]);
+
+        final container = _createContainer(
+          ripRepo: mockRipRepo,
+          mediaItemRepo: mockMediaItemRepo,
+        );
+        addTearDown(container.dispose);
+
+        final notifier = container.read(ripScanNotifierProvider.notifier);
+
+        // Act
+        await notifier.startScan(tempDir.path);
+
+        // Assert — the raw FileSystemException is replaced by guidance
+        // to re-grant folder access via the picker.
+        final state = container.read(ripScanNotifierProvider);
+        expect(state.status, RipScanStatus.complete);
+        expect(state.error, contains('Browse'));
+        expect(state.error, contains(tempDir.path));
       });
     });
   });
