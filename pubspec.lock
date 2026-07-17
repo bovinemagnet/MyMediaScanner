@@ -389,26 +389,26 @@ packages:
     dependency: "direct main"
     description:
       name: dart_accuraterip
-      sha256: ab618d541e4677713d44947cf044ee41c413627402a23941c10df033dca232a3
+      sha256: "6cf5160d972029f8cff785e525632212a66a3071ad97b447285de6c72b6fd483"
       url: "https://pub.dev"
     source: hosted
-    version: "0.0.3"
+    version: "0.0.5"
   dart_cue:
     dependency: "direct main"
     description:
       name: dart_cue
-      sha256: b34e7d5265e841b246595ad198ca9fe6817dfc2ea5c4431150bee1b9e26a38af
+      sha256: cafb38674022ff830f076f7b436901838e0f9dd730bca563d3074bad8ec1ec40
       url: "https://pub.dev"
     source: hosted
-    version: "0.0.6"
+    version: "0.1.1"
   dart_flac:
     dependency: "direct main"
     description:
       name: dart_flac
-      sha256: "46ccf29b91f070a7c5a39ca41c28fc4b14e975442ab0f2fbb70eec9b040a3fd7"
+      sha256: ae9bbc4e1ecaae1a16cffd676a3656264c08491e47385962f31629f8777c793b
       url: "https://pub.dev"
     source: hosted
-    version: "0.0.6"
+    version: "0.0.7"
   dart_metaflac:
     dependency: "direct main"
     description:
@@ -421,10 +421,10 @@ packages:
     dependency: "direct main"
     description:
       name: dart_rip_log
-      sha256: a13953ad961e0c4286786192129ed42261bf38cf885e8797187532176b2501ed
+      sha256: "2d36cfb3edadd08d74469e26163a481dd0cdd057c8fe9b1dd8b17bdfc3d5aaa6"
       url: "https://pub.dev"
     source: hosted
-    version: "0.0.5"
+    version: "0.2.0"
   dart_style:
     dependency: transitive
     description:
