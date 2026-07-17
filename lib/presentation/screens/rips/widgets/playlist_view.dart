@@ -9,6 +9,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mymediascanner/app/theme/app_typography.dart';
 import 'package:mymediascanner/data/local/database/app_database.dart';
 import 'package:mymediascanner/presentation/providers/playlist_provider.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/playback_widgets.dart';
@@ -73,9 +74,11 @@ class _PlaylistGrid extends ConsumerWidget {
             child: Row(
               children: [
                 Text(
-                  'My Playlists',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
+                  'MY PLAYLISTS',
+                  style: AppTypography.monoLabel(
+                    color: colors.onSurfaceVariant,
+                    fontSize: 11,
+                    letterSpacing: 1.5,
                   ),
                 ),
                 const Spacer(),
@@ -268,31 +271,33 @@ class _PlaylistCard extends ConsumerWidget {
                     playlist.name,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: isSelected ? colors.primary : null,
+                    style: AppTypography.displayTitle(
+                      color: isSelected ? colors.primary : colors.onSurface,
+                      fontSize: 14,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
                   Row(
                     children: [
                       Expanded(
                         child: Text(
-                          trackCountStr,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color:
-                                colors.onSurfaceVariant.withValues(alpha: 0.7),
-                            fontSize: 11,
+                          trackCountStr.toUpperCase(),
+                          style: AppTypography.monoLabel(
+                            color: colors.onSurfaceVariant,
+                            fontSize: 9.5,
+                            letterSpacing: 0.4,
+                            fontWeight: FontWeight.w600,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       Text(
                         dateStr,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color:
-                              colors.onSurfaceVariant.withValues(alpha: 0.5),
-                          fontSize: 10,
+                        style: AppTypography.monoLabel(
+                          color: colors.onSurfaceVariant.withValues(alpha: 0.6),
+                          fontSize: 9.5,
+                          letterSpacing: 0.2,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
