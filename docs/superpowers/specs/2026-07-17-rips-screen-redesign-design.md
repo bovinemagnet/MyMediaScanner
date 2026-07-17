@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-17
 **Author:** Paul Snow
-**Source design:** claude.ai/design project `ecec9774-d658-446f-bc0d-81d46538af09`, file `Media Scanner Themed.dc.html` ("Desktop · Rip Library — quality & playback" frame)
+**Source design:** internal themed design mock, file `Media Scanner Themed.dc.html` ("Desktop · Rip Library — quality & playback" frame)
 
 ## Goal
 
