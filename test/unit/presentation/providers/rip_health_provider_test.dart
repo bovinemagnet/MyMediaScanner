@@ -15,11 +15,11 @@ void main() {
   late MockRipLibraryRepository repo;
   late ProviderContainer container;
 
-  final albumA = RipAlbum(
+  const albumA = RipAlbum(
     id: 'a', libraryPath: '/a', trackCount: 1, totalSizeBytes: 100,
     lastScannedAt: 0, updatedAt: 0,
   );
-  final trackVerified = RipTrack(
+  const trackVerified = RipTrack(
     id: 't1', ripAlbumId: 'a', trackNumber: 1, filePath: '/a/1.flac',
     fileSizeBytes: 10, updatedAt: 0,
     qualityCheckedAt: 1, accurateRipStatus: 'verified',
@@ -39,15 +39,15 @@ void main() {
 
   test('health map classifies albums from the tracks stream', () async {
     // Riverpod 3: listen before awaiting .future or the test hangs.
-    container.listen(ripAllTracksByAlbumProvider, (_, __) {});
+    container.listen(ripAllTracksByAlbumProvider, (_, _) {});
     await container.read(ripAllTracksByAlbumProvider.future);
     final map = container.read(ripAlbumHealthMapProvider);
     expect(map['a'], RipAlbumHealth.verified);
   });
 
   test('stats provider aggregates albums and tracks', () async {
-    container.listen(ripAllTracksByAlbumProvider, (_, __) {});
-    container.listen(allRipAlbumsProvider, (_, __) {});
+    container.listen(ripAllTracksByAlbumProvider, (_, _) {});
+    container.listen(allRipAlbumsProvider, (_, _) {});
     await container.read(ripAllTracksByAlbumProvider.future);
     await container.read(allRipAlbumsProvider.future);
     final stats = container.read(ripLibraryHealthStatsProvider);

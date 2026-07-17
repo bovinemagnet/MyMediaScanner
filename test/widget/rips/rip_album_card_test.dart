@@ -17,7 +17,7 @@ import 'package:mymediascanner/presentation/screens/rips/widgets/rip_album_card.
 
 class MockRipLibraryRepository extends Mock implements IRipLibraryRepository {}
 
-final _album = RipAlbum(
+const _album = RipAlbum(
   id: 'a',
   libraryPath: '/library/a',
   artist: 'Test Artist',
@@ -56,7 +56,7 @@ List<RipTrack> _unanalysedTracks() => List.generate(
 
 Widget _wrap(MockRipLibraryRepository repo) => ProviderScope(
       overrides: [ripLibraryRepositoryProvider.overrideWithValue(repo)],
-      child: MaterialApp(
+      child: const MaterialApp(
         home: Scaffold(body: RipAlbumCard(album: _album)),
       ),
     );
@@ -116,7 +116,7 @@ void main() {
       overrides: [ripLibraryRepositoryProvider.overrideWithValue(repo)],
       child: MaterialApp(
         theme: AppTheme.dark(),
-        home: Scaffold(
+        home: const Scaffold(
           body: Center(
             child: SizedBox(
               width: 368,
