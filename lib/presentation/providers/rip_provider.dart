@@ -19,6 +19,7 @@ import 'package:mymediascanner/domain/usecases/match_rips_usecase.dart';
 import 'package:mymediascanner/domain/usecases/scan_rip_library_usecase.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/settings_provider.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Stream of all non-deleted rip albums.
@@ -220,12 +221,23 @@ class RipScanNotifier extends Notifier<RipScanState> {
 
     state = const RipScanState(status: RipScanStatus.scanning);
 
+    // Resolve the cover cache directory up front; on platforms or in
+    // tests where the channel is unavailable, scan without artwork.
+    String? coverCacheDir;
+    try {
+      final supportDir = await getApplicationSupportDirectory();
+      coverCacheDir = '${supportDir.path}/rip_covers';
+    } catch (_) {
+      coverCacheDir = null;
+    }
+
     try {
       final scanUseCase = ScanRipLibraryUseCase(
         repository: ref.read(ripLibraryRepositoryProvider),
       );
 
-      await for (final progress in scanUseCase.execute(rootPath)) {
+      await for (final progress
+          in scanUseCase.execute(rootPath, coverCacheDir: coverCacheDir)) {
         state = state.copyWith(
           albumsScanned: progress.albumsScanned,
           totalDirectories: progress.totalDirectories,
