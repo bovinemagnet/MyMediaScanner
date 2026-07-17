@@ -167,6 +167,26 @@ void main() {
           .first;
       expect(filtered.map((e) => e.id).toSet(), {'b'});
     });
+
+    test('mediaType filter is preserved on the FTS search path (#103)',
+        () async {
+      // Identically-titled rows across two media types: an unfiltered FTS
+      // search would match both, but a mediaType filter must narrow to one.
+      await repo.save(baseItem(id: 'book1')
+          .copyWith(mediaType: MediaType.book, title: 'Chronicles'));
+      await repo.save(baseItem(id: 'film1')
+          .copyWith(mediaType: MediaType.film, title: 'Chronicles'));
+
+      final books = await repo
+          .watchAll(mediaType: MediaType.book, searchQuery: 'Chronicles')
+          .first;
+      expect(books.map((e) => e.id).toSet(), {'book1'});
+
+      final films = await repo
+          .watchAll(mediaType: MediaType.film, searchQuery: 'Chronicles')
+          .first;
+      expect(films.map((e) => e.id).toSet(), {'film1'});
+    });
   });
 
   group('mirror auto-remove hook (update + softDelete)', () {
