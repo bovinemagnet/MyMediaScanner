@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/app/theme/app_media_colors.dart';
 import 'package:mymediascanner/app/theme/app_typography.dart';
 import 'package:mymediascanner/domain/entities/rip_album_health.dart';
+import 'package:mymediascanner/domain/entities/rip_coverage.dart';
+import 'package:mymediascanner/presentation/providers/rip_coverage_provider.dart';
 import 'package:mymediascanner/presentation/providers/rip_health_provider.dart';
 
 Color ripHealthColour(BuildContext context, RipAlbumHealth health) {
@@ -113,6 +115,62 @@ class RipHealthStatCards extends ConsumerWidget {
           label: 'TOTAL SIZE',
           value: formatSize(stats.totalSizeBytes),
           valueColour: theme.colorScheme.primary,
+        ),
+      ],
+    );
+  }
+}
+
+/// Colour for a coverage status, mapped through the media-type palette.
+Color coverageStatusColour(BuildContext context, CoverageStatus status) {
+  final mediaColors = context.mediaColors;
+  final colors = Theme.of(context).colorScheme;
+  return switch (status) {
+    CoverageStatus.notRipped => colors.outline,
+    CoverageStatus.partiallyRipped => mediaColors.tv,
+    CoverageStatus.fullyRipped => mediaColors.book,
+    CoverageStatus.qualityIssues => mediaColors.tv,
+  };
+}
+
+/// Four compact header stat cards for the Coverage tab: ripped / total CDs /
+/// coverage percent / quality issues. Reads [ripCoverageStatsProvider].
+class RipCoverageStatCards extends ConsumerWidget {
+  const RipCoverageStatCards({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final stats = ref.watch(ripCoverageStatsProvider);
+    final theme = Theme.of(context);
+    final mediaColors = context.mediaColors;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _StatCard(
+          label: 'RIPPED',
+          value: '${stats.rippedCount}',
+          dotColour: mediaColors.book,
+        ),
+        const SizedBox(width: 10),
+        _StatCard(
+          label: 'TOTAL CDS',
+          value: '${stats.total}',
+        ),
+        const SizedBox(width: 10),
+        _StatCard(
+          label: 'COVERAGE',
+          value: '${stats.coveragePercent}%',
+          valueColour: theme.colorScheme.primary,
+        ),
+        const SizedBox(width: 10),
+        _StatCard(
+          label: 'ISSUES',
+          value: '${stats.countOf(CoverageStatus.qualityIssues)}',
+          dotColour: mediaColors.tv,
+          valueColour: stats.countOf(CoverageStatus.qualityIssues) > 0
+              ? mediaColors.tv
+              : null,
         ),
       ],
     );
