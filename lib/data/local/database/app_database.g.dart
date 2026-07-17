@@ -5847,6 +5847,17 @@ class $RipAlbumsTableTable extends RipAlbumsTable
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _coverPathMeta = const VerificationMeta(
+    'coverPath',
+  );
+  @override
+  late final GeneratedColumn<String> coverPath = GeneratedColumn<String>(
+    'cover_path',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _deletedMeta = const VerificationMeta(
     'deleted',
   );
@@ -5874,6 +5885,7 @@ class $RipAlbumsTableTable extends RipAlbumsTable
     updatedAt,
     cueFilePath,
     gnudbDiscId,
+    coverPath,
     deleted,
   ];
   @override
@@ -5993,6 +6005,12 @@ class $RipAlbumsTableTable extends RipAlbumsTable
         ),
       );
     }
+    if (data.containsKey('cover_path')) {
+      context.handle(
+        _coverPathMeta,
+        coverPath.isAcceptableOrUnknown(data['cover_path']!, _coverPathMeta),
+      );
+    }
     if (data.containsKey('deleted')) {
       context.handle(
         _deletedMeta,
@@ -6060,6 +6078,10 @@ class $RipAlbumsTableTable extends RipAlbumsTable
         DriftSqlType.string,
         data['${effectivePrefix}gnudb_disc_id'],
       ),
+      coverPath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}cover_path'],
+      ),
       deleted: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}deleted'],
@@ -6088,6 +6110,7 @@ class RipAlbumsTableData extends DataClass
   final int updatedAt;
   final String? cueFilePath;
   final String? gnudbDiscId;
+  final String? coverPath;
   final int deleted;
   const RipAlbumsTableData({
     required this.id,
@@ -6103,6 +6126,7 @@ class RipAlbumsTableData extends DataClass
     required this.updatedAt,
     this.cueFilePath,
     this.gnudbDiscId,
+    this.coverPath,
     required this.deleted,
   });
   @override
@@ -6132,6 +6156,9 @@ class RipAlbumsTableData extends DataClass
     }
     if (!nullToAbsent || gnudbDiscId != null) {
       map['gnudb_disc_id'] = Variable<String>(gnudbDiscId);
+    }
+    if (!nullToAbsent || coverPath != null) {
+      map['cover_path'] = Variable<String>(coverPath);
     }
     map['deleted'] = Variable<int>(deleted);
     return map;
@@ -6164,6 +6191,9 @@ class RipAlbumsTableData extends DataClass
       gnudbDiscId: gnudbDiscId == null && nullToAbsent
           ? const Value.absent()
           : Value(gnudbDiscId),
+      coverPath: coverPath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(coverPath),
       deleted: Value(deleted),
     );
   }
@@ -6187,6 +6217,7 @@ class RipAlbumsTableData extends DataClass
       updatedAt: serializer.fromJson<int>(json['updatedAt']),
       cueFilePath: serializer.fromJson<String?>(json['cueFilePath']),
       gnudbDiscId: serializer.fromJson<String?>(json['gnudbDiscId']),
+      coverPath: serializer.fromJson<String?>(json['coverPath']),
       deleted: serializer.fromJson<int>(json['deleted']),
     );
   }
@@ -6207,6 +6238,7 @@ class RipAlbumsTableData extends DataClass
       'updatedAt': serializer.toJson<int>(updatedAt),
       'cueFilePath': serializer.toJson<String?>(cueFilePath),
       'gnudbDiscId': serializer.toJson<String?>(gnudbDiscId),
+      'coverPath': serializer.toJson<String?>(coverPath),
       'deleted': serializer.toJson<int>(deleted),
     };
   }
@@ -6225,6 +6257,7 @@ class RipAlbumsTableData extends DataClass
     int? updatedAt,
     Value<String?> cueFilePath = const Value.absent(),
     Value<String?> gnudbDiscId = const Value.absent(),
+    Value<String?> coverPath = const Value.absent(),
     int? deleted,
   }) => RipAlbumsTableData(
     id: id ?? this.id,
@@ -6240,6 +6273,7 @@ class RipAlbumsTableData extends DataClass
     updatedAt: updatedAt ?? this.updatedAt,
     cueFilePath: cueFilePath.present ? cueFilePath.value : this.cueFilePath,
     gnudbDiscId: gnudbDiscId.present ? gnudbDiscId.value : this.gnudbDiscId,
+    coverPath: coverPath.present ? coverPath.value : this.coverPath,
     deleted: deleted ?? this.deleted,
   );
   RipAlbumsTableData copyWithCompanion(RipAlbumsTableCompanion data) {
@@ -6273,6 +6307,7 @@ class RipAlbumsTableData extends DataClass
       gnudbDiscId: data.gnudbDiscId.present
           ? data.gnudbDiscId.value
           : this.gnudbDiscId,
+      coverPath: data.coverPath.present ? data.coverPath.value : this.coverPath,
       deleted: data.deleted.present ? data.deleted.value : this.deleted,
     );
   }
@@ -6293,6 +6328,7 @@ class RipAlbumsTableData extends DataClass
           ..write('updatedAt: $updatedAt, ')
           ..write('cueFilePath: $cueFilePath, ')
           ..write('gnudbDiscId: $gnudbDiscId, ')
+          ..write('coverPath: $coverPath, ')
           ..write('deleted: $deleted')
           ..write(')'))
         .toString();
@@ -6313,6 +6349,7 @@ class RipAlbumsTableData extends DataClass
     updatedAt,
     cueFilePath,
     gnudbDiscId,
+    coverPath,
     deleted,
   );
   @override
@@ -6332,6 +6369,7 @@ class RipAlbumsTableData extends DataClass
           other.updatedAt == this.updatedAt &&
           other.cueFilePath == this.cueFilePath &&
           other.gnudbDiscId == this.gnudbDiscId &&
+          other.coverPath == this.coverPath &&
           other.deleted == this.deleted);
 }
 
@@ -6349,6 +6387,7 @@ class RipAlbumsTableCompanion extends UpdateCompanion<RipAlbumsTableData> {
   final Value<int> updatedAt;
   final Value<String?> cueFilePath;
   final Value<String?> gnudbDiscId;
+  final Value<String?> coverPath;
   final Value<int> deleted;
   final Value<int> rowid;
   const RipAlbumsTableCompanion({
@@ -6365,6 +6404,7 @@ class RipAlbumsTableCompanion extends UpdateCompanion<RipAlbumsTableData> {
     this.updatedAt = const Value.absent(),
     this.cueFilePath = const Value.absent(),
     this.gnudbDiscId = const Value.absent(),
+    this.coverPath = const Value.absent(),
     this.deleted = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -6382,6 +6422,7 @@ class RipAlbumsTableCompanion extends UpdateCompanion<RipAlbumsTableData> {
     required int updatedAt,
     this.cueFilePath = const Value.absent(),
     this.gnudbDiscId = const Value.absent(),
+    this.coverPath = const Value.absent(),
     this.deleted = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -6404,6 +6445,7 @@ class RipAlbumsTableCompanion extends UpdateCompanion<RipAlbumsTableData> {
     Expression<int>? updatedAt,
     Expression<String>? cueFilePath,
     Expression<String>? gnudbDiscId,
+    Expression<String>? coverPath,
     Expression<int>? deleted,
     Expression<int>? rowid,
   }) {
@@ -6421,6 +6463,7 @@ class RipAlbumsTableCompanion extends UpdateCompanion<RipAlbumsTableData> {
       if (updatedAt != null) 'updated_at': updatedAt,
       if (cueFilePath != null) 'cue_file_path': cueFilePath,
       if (gnudbDiscId != null) 'gnudb_disc_id': gnudbDiscId,
+      if (coverPath != null) 'cover_path': coverPath,
       if (deleted != null) 'deleted': deleted,
       if (rowid != null) 'rowid': rowid,
     });
@@ -6440,6 +6483,7 @@ class RipAlbumsTableCompanion extends UpdateCompanion<RipAlbumsTableData> {
     Value<int>? updatedAt,
     Value<String?>? cueFilePath,
     Value<String?>? gnudbDiscId,
+    Value<String?>? coverPath,
     Value<int>? deleted,
     Value<int>? rowid,
   }) {
@@ -6457,6 +6501,7 @@ class RipAlbumsTableCompanion extends UpdateCompanion<RipAlbumsTableData> {
       updatedAt: updatedAt ?? this.updatedAt,
       cueFilePath: cueFilePath ?? this.cueFilePath,
       gnudbDiscId: gnudbDiscId ?? this.gnudbDiscId,
+      coverPath: coverPath ?? this.coverPath,
       deleted: deleted ?? this.deleted,
       rowid: rowid ?? this.rowid,
     );
@@ -6504,6 +6549,9 @@ class RipAlbumsTableCompanion extends UpdateCompanion<RipAlbumsTableData> {
     if (gnudbDiscId.present) {
       map['gnudb_disc_id'] = Variable<String>(gnudbDiscId.value);
     }
+    if (coverPath.present) {
+      map['cover_path'] = Variable<String>(coverPath.value);
+    }
     if (deleted.present) {
       map['deleted'] = Variable<int>(deleted.value);
     }
@@ -6529,6 +6577,7 @@ class RipAlbumsTableCompanion extends UpdateCompanion<RipAlbumsTableData> {
           ..write('updatedAt: $updatedAt, ')
           ..write('cueFilePath: $cueFilePath, ')
           ..write('gnudbDiscId: $gnudbDiscId, ')
+          ..write('coverPath: $coverPath, ')
           ..write('deleted: $deleted, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -11977,10 +12026,7 @@ final class $$MediaItemsTableTableReferences
   _mediaItemTagsTableRefsTable(_$AppDatabase db) =>
       MultiTypedResultKey.fromTable(
         db.mediaItemTagsTable,
-        aliasName: $_aliasNameGenerator(
-          db.mediaItemsTable.id,
-          db.mediaItemTagsTable.mediaItemId,
-        ),
+        aliasName: 'media_items__id__media_item_tags__media_item_id',
       );
 
   $$MediaItemTagsTableTableProcessedTableManager get mediaItemTagsTableRefs {
@@ -12000,10 +12046,7 @@ final class $$MediaItemsTableTableReferences
   static MultiTypedResultKey<$ShelfItemsTableTable, List<ShelfItemsTableData>>
   _shelfItemsTableRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.shelfItemsTable,
-    aliasName: $_aliasNameGenerator(
-      db.mediaItemsTable.id,
-      db.shelfItemsTable.mediaItemId,
-    ),
+    aliasName: 'media_items__id__shelf_items__media_item_id',
   );
 
   $$ShelfItemsTableTableProcessedTableManager get shelfItemsTableRefs {
@@ -12023,10 +12066,7 @@ final class $$MediaItemsTableTableReferences
   static MultiTypedResultKey<$LoansTableTable, List<LoansTableData>>
   _loansTableRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.loansTable,
-    aliasName: $_aliasNameGenerator(
-      db.mediaItemsTable.id,
-      db.loansTable.mediaItemId,
-    ),
+    aliasName: 'media_items__id__loans__media_item_id',
   );
 
   $$LoansTableTableProcessedTableManager get loansTableRefs {
@@ -12044,10 +12084,7 @@ final class $$MediaItemsTableTableReferences
   static MultiTypedResultKey<$RipAlbumsTableTable, List<RipAlbumsTableData>>
   _ripAlbumsTableRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.ripAlbumsTable,
-    aliasName: $_aliasNameGenerator(
-      db.mediaItemsTable.id,
-      db.ripAlbumsTable.mediaItemId,
-    ),
+    aliasName: 'media_items__id__rip_albums__media_item_id',
   );
 
   $$RipAlbumsTableTableProcessedTableManager get ripAlbumsTableRefs {
@@ -13207,10 +13244,7 @@ final class $$TagsTableTableReferences
   _mediaItemTagsTableRefsTable(_$AppDatabase db) =>
       MultiTypedResultKey.fromTable(
         db.mediaItemTagsTable,
-        aliasName: $_aliasNameGenerator(
-          db.tagsTable.id,
-          db.mediaItemTagsTable.tagId,
-        ),
+        aliasName: 'tags__id__media_item_tags__tag_id',
       );
 
   $$MediaItemTagsTableTableProcessedTableManager get mediaItemTagsTableRefs {
@@ -13520,13 +13554,9 @@ final class $$MediaItemTagsTableTableReferences
     super.$_typedResult,
   );
 
-  static $MediaItemsTableTable _mediaItemIdTable(_$AppDatabase db) =>
-      db.mediaItemsTable.createAlias(
-        $_aliasNameGenerator(
-          db.mediaItemTagsTable.mediaItemId,
-          db.mediaItemsTable.id,
-        ),
-      );
+  static $MediaItemsTableTable _mediaItemIdTable(_$AppDatabase db) => db
+      .mediaItemsTable
+      .createAlias('media_item_tags__media_item_id__media_items__id');
 
   $$MediaItemsTableTableProcessedTableManager get mediaItemId {
     final $_column = $_itemColumn<String>('media_item_id')!;
@@ -13543,9 +13573,7 @@ final class $$MediaItemTagsTableTableReferences
   }
 
   static $TagsTableTable _tagIdTable(_$AppDatabase db) =>
-      db.tagsTable.createAlias(
-        $_aliasNameGenerator(db.mediaItemTagsTable.tagId, db.tagsTable.id),
-      );
+      db.tagsTable.createAlias('media_item_tags__tag_id__tags__id');
 
   $$TagsTableTableProcessedTableManager get tagId {
     final $_column = $_itemColumn<String>('tag_id')!;
@@ -13928,10 +13956,7 @@ final class $$ShelvesTableTableReferences
   static MultiTypedResultKey<$ShelfItemsTableTable, List<ShelfItemsTableData>>
   _shelfItemsTableRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.shelfItemsTable,
-    aliasName: $_aliasNameGenerator(
-      db.shelvesTable.id,
-      db.shelfItemsTable.shelfId,
-    ),
+    aliasName: 'shelves__id__shelf_items__shelf_id',
   );
 
   $$ShelfItemsTableTableProcessedTableManager get shelfItemsTableRefs {
@@ -14262,9 +14287,7 @@ final class $$ShelfItemsTableTableReferences
   );
 
   static $ShelvesTableTable _shelfIdTable(_$AppDatabase db) =>
-      db.shelvesTable.createAlias(
-        $_aliasNameGenerator(db.shelfItemsTable.shelfId, db.shelvesTable.id),
-      );
+      db.shelvesTable.createAlias('shelf_items__shelf_id__shelves__id');
 
   $$ShelvesTableTableProcessedTableManager get shelfId {
     final $_column = $_itemColumn<String>('shelf_id')!;
@@ -14280,13 +14303,9 @@ final class $$ShelfItemsTableTableReferences
     );
   }
 
-  static $MediaItemsTableTable _mediaItemIdTable(_$AppDatabase db) =>
-      db.mediaItemsTable.createAlias(
-        $_aliasNameGenerator(
-          db.shelfItemsTable.mediaItemId,
-          db.mediaItemsTable.id,
-        ),
-      );
+  static $MediaItemsTableTable _mediaItemIdTable(_$AppDatabase db) => db
+      .mediaItemsTable
+      .createAlias('shelf_items__media_item_id__media_items__id');
 
   $$MediaItemsTableTableProcessedTableManager get mediaItemId {
     final $_column = $_itemColumn<String>('media_item_id')!;
@@ -15255,10 +15274,7 @@ final class $$BorrowersTableTableReferences
   static MultiTypedResultKey<$LoansTableTable, List<LoansTableData>>
   _loansTableRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.loansTable,
-    aliasName: $_aliasNameGenerator(
-      db.borrowersTable.id,
-      db.loansTable.borrowerId,
-    ),
+    aliasName: 'borrowers__id__loans__borrower_id',
   );
 
   $$LoansTableTableProcessedTableManager get loansTableRefs {
@@ -15601,9 +15617,7 @@ final class $$LoansTableTableReferences
   $$LoansTableTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
   static $MediaItemsTableTable _mediaItemIdTable(_$AppDatabase db) =>
-      db.mediaItemsTable.createAlias(
-        $_aliasNameGenerator(db.loansTable.mediaItemId, db.mediaItemsTable.id),
-      );
+      db.mediaItemsTable.createAlias('loans__media_item_id__media_items__id');
 
   $$MediaItemsTableTableProcessedTableManager get mediaItemId {
     final $_column = $_itemColumn<String>('media_item_id')!;
@@ -15620,9 +15634,7 @@ final class $$LoansTableTableReferences
   }
 
   static $BorrowersTableTable _borrowerIdTable(_$AppDatabase db) =>
-      db.borrowersTable.createAlias(
-        $_aliasNameGenerator(db.loansTable.borrowerId, db.borrowersTable.id),
-      );
+      db.borrowersTable.createAlias('loans__borrower_id__borrowers__id');
 
   $$BorrowersTableTableProcessedTableManager get borrowerId {
     final $_column = $_itemColumn<String>('borrower_id')!;
@@ -16069,6 +16081,7 @@ typedef $$RipAlbumsTableTableCreateCompanionBuilder =
       required int updatedAt,
       Value<String?> cueFilePath,
       Value<String?> gnudbDiscId,
+      Value<String?> coverPath,
       Value<int> deleted,
       Value<int> rowid,
     });
@@ -16087,6 +16100,7 @@ typedef $$RipAlbumsTableTableUpdateCompanionBuilder =
       Value<int> updatedAt,
       Value<String?> cueFilePath,
       Value<String?> gnudbDiscId,
+      Value<String?> coverPath,
       Value<int> deleted,
       Value<int> rowid,
     });
@@ -16104,13 +16118,9 @@ final class $$RipAlbumsTableTableReferences
     super.$_typedResult,
   );
 
-  static $MediaItemsTableTable _mediaItemIdTable(_$AppDatabase db) =>
-      db.mediaItemsTable.createAlias(
-        $_aliasNameGenerator(
-          db.ripAlbumsTable.mediaItemId,
-          db.mediaItemsTable.id,
-        ),
-      );
+  static $MediaItemsTableTable _mediaItemIdTable(_$AppDatabase db) => db
+      .mediaItemsTable
+      .createAlias('rip_albums__media_item_id__media_items__id');
 
   $$MediaItemsTableTableProcessedTableManager? get mediaItemId {
     final $_column = $_itemColumn<String>('media_item_id');
@@ -16129,10 +16139,7 @@ final class $$RipAlbumsTableTableReferences
   static MultiTypedResultKey<$RipTracksTableTable, List<RipTracksTableData>>
   _ripTracksTableRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.ripTracksTable,
-    aliasName: $_aliasNameGenerator(
-      db.ripAlbumsTable.id,
-      db.ripTracksTable.ripAlbumId,
-    ),
+    aliasName: 'rip_albums__id__rip_tracks__rip_album_id',
   );
 
   $$RipTracksTableTableProcessedTableManager get ripTracksTableRefs {
@@ -16214,6 +16221,11 @@ class $$RipAlbumsTableTableFilterComposer
 
   ColumnFilters<String> get gnudbDiscId => $composableBuilder(
     column: $table.gnudbDiscId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get coverPath => $composableBuilder(
+    column: $table.coverPath,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -16340,6 +16352,11 @@ class $$RipAlbumsTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get coverPath => $composableBuilder(
+    column: $table.coverPath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get deleted => $composableBuilder(
     column: $table.deleted,
     builder: (column) => ColumnOrderings(column),
@@ -16427,6 +16444,9 @@ class $$RipAlbumsTableTableAnnotationComposer
     column: $table.gnudbDiscId,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get coverPath =>
+      $composableBuilder(column: $table.coverPath, builder: (column) => column);
 
   GeneratedColumn<int> get deleted =>
       $composableBuilder(column: $table.deleted, builder: (column) => column);
@@ -16523,6 +16543,7 @@ class $$RipAlbumsTableTableTableManager
                 Value<int> updatedAt = const Value.absent(),
                 Value<String?> cueFilePath = const Value.absent(),
                 Value<String?> gnudbDiscId = const Value.absent(),
+                Value<String?> coverPath = const Value.absent(),
                 Value<int> deleted = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => RipAlbumsTableCompanion(
@@ -16539,6 +16560,7 @@ class $$RipAlbumsTableTableTableManager
                 updatedAt: updatedAt,
                 cueFilePath: cueFilePath,
                 gnudbDiscId: gnudbDiscId,
+                coverPath: coverPath,
                 deleted: deleted,
                 rowid: rowid,
               ),
@@ -16557,6 +16579,7 @@ class $$RipAlbumsTableTableTableManager
                 required int updatedAt,
                 Value<String?> cueFilePath = const Value.absent(),
                 Value<String?> gnudbDiscId = const Value.absent(),
+                Value<String?> coverPath = const Value.absent(),
                 Value<int> deleted = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => RipAlbumsTableCompanion.insert(
@@ -16573,6 +16596,7 @@ class $$RipAlbumsTableTableTableManager
                 updatedAt: updatedAt,
                 cueFilePath: cueFilePath,
                 gnudbDiscId: gnudbDiscId,
+                coverPath: coverPath,
                 deleted: deleted,
                 rowid: rowid,
               ),
@@ -16739,12 +16763,7 @@ final class $$RipTracksTableTableReferences
   );
 
   static $RipAlbumsTableTable _ripAlbumIdTable(_$AppDatabase db) =>
-      db.ripAlbumsTable.createAlias(
-        $_aliasNameGenerator(
-          db.ripTracksTable.ripAlbumId,
-          db.ripAlbumsTable.id,
-        ),
-      );
+      db.ripAlbumsTable.createAlias('rip_tracks__rip_album_id__rip_albums__id');
 
   $$RipAlbumsTableTableProcessedTableManager get ripAlbumId {
     final $_column = $_itemColumn<String>('rip_album_id')!;
@@ -16767,10 +16786,7 @@ final class $$RipTracksTableTableReferences
   _playlistTracksTableRefsTable(_$AppDatabase db) =>
       MultiTypedResultKey.fromTable(
         db.playlistTracksTable,
-        aliasName: $_aliasNameGenerator(
-          db.ripTracksTable.id,
-          db.playlistTracksTable.ripTrackId,
-        ),
+        aliasName: 'rip_tracks__id__playlist_tracks__rip_track_id',
       );
 
   $$PlaylistTracksTableTableProcessedTableManager get playlistTracksTableRefs {
@@ -18039,10 +18055,7 @@ final class $$PlaylistsTableTableReferences
   _playlistTracksTableRefsTable(_$AppDatabase db) =>
       MultiTypedResultKey.fromTable(
         db.playlistTracksTable,
-        aliasName: $_aliasNameGenerator(
-          db.playlistsTable.id,
-          db.playlistTracksTable.playlistId,
-        ),
+        aliasName: 'playlists__id__playlist_tracks__playlist_id',
       );
 
   $$PlaylistTracksTableTableProcessedTableManager get playlistTracksTableRefs {
@@ -18394,13 +18407,9 @@ final class $$PlaylistTracksTableTableReferences
     super.$_typedResult,
   );
 
-  static $PlaylistsTableTable _playlistIdTable(_$AppDatabase db) =>
-      db.playlistsTable.createAlias(
-        $_aliasNameGenerator(
-          db.playlistTracksTable.playlistId,
-          db.playlistsTable.id,
-        ),
-      );
+  static $PlaylistsTableTable _playlistIdTable(_$AppDatabase db) => db
+      .playlistsTable
+      .createAlias('playlist_tracks__playlist_id__playlists__id');
 
   $$PlaylistsTableTableProcessedTableManager get playlistId {
     final $_column = $_itemColumn<String>('playlist_id')!;
@@ -18416,13 +18425,9 @@ final class $$PlaylistTracksTableTableReferences
     );
   }
 
-  static $RipTracksTableTable _ripTrackIdTable(_$AppDatabase db) =>
-      db.ripTracksTable.createAlias(
-        $_aliasNameGenerator(
-          db.playlistTracksTable.ripTrackId,
-          db.ripTracksTable.id,
-        ),
-      );
+  static $RipTracksTableTable _ripTrackIdTable(_$AppDatabase db) => db
+      .ripTracksTable
+      .createAlias('playlist_tracks__rip_track_id__rip_tracks__id');
 
   $$RipTracksTableTableProcessedTableManager get ripTrackId {
     final $_column = $_itemColumn<String>('rip_track_id')!;

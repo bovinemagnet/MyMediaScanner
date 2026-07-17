@@ -21,6 +21,7 @@ import 'package:mymediascanner/presentation/screens/rips/widgets/playback_widget
 import 'package:mymediascanner/presentation/screens/rips/widgets/quality_widgets.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/queue_panel.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/rip_album_detail_dialog.dart';
+import 'package:mymediascanner/presentation/screens/rips/widgets/rip_cover_thumb.dart';
 import 'package:mymediascanner/presentation/screens/rips/widgets/rip_table_view.dart';
 import 'package:mymediascanner/presentation/widgets/empty_state.dart';
 import 'package:mymediascanner/presentation/widgets/error_state.dart';
@@ -397,74 +398,99 @@ class _RipAlbumCard extends ConsumerWidget {
           children: [
             Padding(
           padding: const EdgeInsets.all(12),
-          child: Column(
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                album.artist ?? 'Unknown Artist',
-                style: theme.textTheme.titleSmall,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 2),
-              Text(
-                album.albumTitle ?? 'Unknown Album',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const Spacer(),
-              Row(
-                children: [
-                  Icon(Icons.music_note, size: 14, color: theme.colorScheme.onSurfaceVariant),
-                  const SizedBox(width: 4),
-                  Text('${album.trackCount} tracks',
-                      style: theme.textTheme.bodySmall),
-                  const SizedBox(width: 12),
-                  Icon(Icons.storage, size: 14, color: theme.colorScheme.onSurfaceVariant),
-                  const SizedBox(width: 4),
-                  Text(_formatSize(album.totalSizeBytes),
-                      style: theme.textTheme.bodySmall),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  if (tracks.isNotEmpty) ...[
-                    Icon(
-                      Icons.verified,
-                      size: 14,
-                      color: arVerified == tracks.length
-                          ? mediaColors.book
-                          : arVerified > 0
-                              ? mediaColors.tv
-                              : theme.colorScheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(width: 4),
+              RipCoverThumb(coverPath: album.coverPath),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      '$arVerified/${tracks.length} AR',
-                      style: theme.textTheme.bodySmall,
+                      album.artist ?? 'Unknown Artist',
+                      style: theme.textTheme.titleSmall,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    if (withDefects > 0) ...[
-                      const SizedBox(width: 8),
-                      Icon(Icons.warning_amber,
-                          size: 14, color: mediaColors.tv),
-                      const SizedBox(width: 4),
-                      Text('$withDefects defects',
-                          style: theme.textTheme.bodySmall),
-                    ],
+                    const SizedBox(height: 2),
+                    Text(
+                      album.albumTitle ?? 'Unknown Album',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const Spacer(),
+                    Row(
+                      children: [
+                        Icon(Icons.music_note, size: 14, color: theme.colorScheme.onSurfaceVariant),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text('${album.trackCount} tracks',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodySmall),
+                        ),
+                        const SizedBox(width: 12),
+                        Icon(Icons.storage, size: 14, color: theme.colorScheme.onSurfaceVariant),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(_formatSize(album.totalSizeBytes),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodySmall),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        if (tracks.isNotEmpty) ...[
+                          Icon(
+                            Icons.verified,
+                            size: 14,
+                            color: arVerified == tracks.length
+                                ? mediaColors.book
+                                : arVerified > 0
+                                    ? mediaColors.tv
+                                    : theme.colorScheme.onSurfaceVariant,
+                          ),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              '$arVerified/${tracks.length} AR',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodySmall,
+                            ),
+                          ),
+                          if (withDefects > 0) ...[
+                            const SizedBox(width: 8),
+                            Icon(Icons.warning_amber,
+                                size: 14, color: mediaColors.tv),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text('$withDefects defects',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: theme.textTheme.bodySmall),
+                            ),
+                          ],
+                        ],
+                        const Spacer(),
+                        if (isNowPlaying)
+                          Icon(Icons.volume_up, size: 14, color: theme.colorScheme.primary),
+                        if (album.mediaItemId != null)
+                          Padding(
+                            padding: EdgeInsets.only(left: isNowPlaying ? 6 : 0),
+                            child: Icon(Icons.link, size: 14, color: theme.colorScheme.primary),
+                          ),
+                      ],
+                    ),
                   ],
-                  const Spacer(),
-                  if (isNowPlaying)
-                    Icon(Icons.volume_up, size: 14, color: theme.colorScheme.primary),
-                  if (album.mediaItemId != null)
-                    Padding(
-                      padding: EdgeInsets.only(left: isNowPlaying ? 6 : 0),
-                      child: Icon(Icons.link, size: 14, color: theme.colorScheme.primary),
-                    ),
-                ],
+                ),
               ),
             ],
           ),
@@ -844,6 +870,17 @@ class _RipAlbumDetailPanelState extends ConsumerState<_RipAlbumDetailPanel> {
           ),
         ),
         const SizedBox(height: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: RipCoverThumb(
+              coverPath: widget.album.coverPath,
+              size: 140,
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
         // Quality analysis
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 12),

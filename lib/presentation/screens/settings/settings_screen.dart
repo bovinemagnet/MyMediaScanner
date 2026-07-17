@@ -831,7 +831,12 @@ class _FlacLibrarySectionState extends ConsumerState<_FlacLibrarySection> {
                     await FilePicker.platform.getDirectoryPath();
                 if (path != null) {
                   _pathController.text = path;
-                  await ref.read(ripLibraryPathProvider.notifier).setPath(path);
+                  // setPickedPath also captures a security-scoped
+                  // bookmark while the picker's sandbox grant is live,
+                  // so the folder stays readable after a restart.
+                  await ref
+                      .read(ripLibraryPathProvider.notifier)
+                      .setPickedPath(path);
                 }
               },
             ),

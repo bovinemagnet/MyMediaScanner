@@ -614,5 +614,125 @@ End of status report
             ));
       });
     });
+
+    group('reports decode failures instead of failing silently', () {
+      test(
+          'execute_withFailingDecoder_reportsFailedTrackCountInFinalEvent',
+          () async {
+        // Arrange — decoding every track throws, as happened when the
+        // decode closure captured the async* generator's unsendable
+        // completer and every Isolate.run spawn failed instantly.
+        final tracks = [
+          _track(id: 'track-1', trackNumber: 1),
+          _track(id: 'track-2', trackNumber: 2),
+        ];
+
+        when(() => mockRepo.getTracksForAlbum('album-1'))
+            .thenAnswer((_) async => tracks);
+        when(() => mockFlacDecoder.isAvailable())
+            .thenAnswer((_) async => true);
+        when(() => mockFlacDecoder.decode(any()))
+            .thenThrow(const FlacDecodeException('decode failed'));
+        when(() => mockRepo.updateTrackQuality(
+              any(),
+              arStatus: any(named: 'arStatus'),
+              qualityCheckedAt: any(named: 'qualityCheckedAt'),
+            )).thenAnswer((_) async {});
+
+        // Act
+        final events = await useCase.execute('album-1').toList();
+
+        // Assert — the final progress event reports both failures, and
+        // the tracks are still stamped so re-analysis remains possible.
+        expect(events.last.failedTracks, 2);
+        verify(() => mockRepo.updateTrackQuality(
+              'track-1',
+              arStatus: 'not_checked',
+              qualityCheckedAt: any(named: 'qualityCheckedAt'),
+            )).called(1);
+        verify(() => mockRepo.updateTrackQuality(
+              'track-2',
+              arStatus: 'not_checked',
+              qualityCheckedAt: any(named: 'qualityCheckedAt'),
+            )).called(1);
+      });
+
+      test('execute_withHealthyPipeline_reportsZeroFailedTracks', () async {
+        // Arrange — no tracks at all still yields no failures; the field
+        // must default to zero on ordinary progress events.
+        final tracks = [_track(id: 'track-1', trackNumber: 1)];
+
+        when(() => mockRepo.getTracksForAlbum('album-1'))
+            .thenAnswer((_) async => tracks);
+        when(() => mockFlacDecoder.isAvailable())
+            .thenAnswer((_) async => false);
+        when(() => mockRepo.updateTrackQuality(
+              any(),
+              arStatus: any(named: 'arStatus'),
+              qualityCheckedAt: any(named: 'qualityCheckedAt'),
+            )).thenAnswer((_) async {});
+
+        // Act
+        final events = await useCase.execute('album-1').toList();
+
+        // Assert
+        expect(events.first.failedTracks, 0);
+      });
+    });
+
+    group('runs its isolate computations with the real Isolate.run', () {
+      test(
+          'execute_withRealIsolateRunner_completesCrcAndDefectDetection',
+          () async {
+        // Regression: the CRC and defect-detection closures are handed to
+        // Isolate.run. When such a closure captures the enclosing async*
+        // generator frame it drags an unsendable _AsyncCompleter into the
+        // isolate spawn message and the whole analysis dies. The sync
+        // isolate runner used by the other tests can never catch that, so
+        // this test runs the pipeline with the real Isolate.run.
+        final realIsolateUseCase = AnalyseRipQualityUseCase(
+          repository: mockRepo,
+          flacDecoder: mockFlacDecoder,
+          accurateRipClient: mockArClient,
+        );
+
+        final tracks = [_track(id: 'track-1', trackNumber: 1)];
+        when(() => mockRepo.getTracksForAlbum('album-1'))
+            .thenAnswer((_) async => tracks);
+        when(() => mockFlacDecoder.isAvailable())
+            .thenAnswer((_) async => true);
+        // One second of silent 16-bit stereo PCM.
+        when(() => mockFlacDecoder.decode(any()))
+            .thenAnswer((_) async => Uint8List(176400));
+        when(() => mockRepo.updateTrackQuality(
+              any(),
+              arStatus: any(named: 'arStatus'),
+              clickCount: any(named: 'clickCount'),
+              popCount: any(named: 'popCount'),
+              clippingCount: any(named: 'clippingCount'),
+              dropoutCount: any(named: 'dropoutCount'),
+              defectConfidence: any(named: 'defectConfidence'),
+              qualityCheckedAt: any(named: 'qualityCheckedAt'),
+            )).thenAnswer((_) async {});
+
+        // Act
+        final events =
+            await realIsolateUseCase.execute('album-1').toList();
+
+        // Assert — the pipeline reached defect detection and recorded a
+        // result rather than dying on an unsendable isolate message.
+        expect(events.last.failedTracks, 0);
+        verify(() => mockRepo.updateTrackQuality(
+              'track-1',
+              arStatus: 'not_found',
+              clickCount: any(named: 'clickCount'),
+              popCount: any(named: 'popCount'),
+              clippingCount: any(named: 'clippingCount'),
+              dropoutCount: any(named: 'dropoutCount'),
+              defectConfidence: any(named: 'defectConfidence'),
+              qualityCheckedAt: any(named: 'qualityCheckedAt'),
+            )).called(1);
+      });
+    });
   });
 }

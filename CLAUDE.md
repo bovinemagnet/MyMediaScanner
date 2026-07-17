@@ -75,6 +75,15 @@ flutter build macos --debug
 
 The project has ~729 tests: ~683 unit/widget tests covering domain logic, data layer, presentation providers, and widget tests, plus ~46 integration tests covering full-app user flows. Run `flutter test` to execute the unit/widget suite. Integration tests run individually per file: `flutter test integration_test/<file>.dart -d linux`. Tests use `mocktail` for mocking and `ProviderContainer` with overrides for provider testing.
 
+### Runtime UI Automation (Marionette MCP)
+
+The app is instrumented with [Marionette](https://github.com/leancodepl/marionette_mcp) so AI agents can drive a running debug build (inspect the widget tree, tap, enter text, scroll, screenshot, read logs, hot reload). Intended primarily for exploratory/smoke testing of the desktop app; codify anything worth keeping as a real integration test.
+
+- `marionette_flutter` is a normal dependency; `MarionetteBinding.ensureInitialized()` is called in `main.dart` behind `kDebugMode`, so nothing ships in release builds.
+- The MCP server is registered in `.mcp.json` as `dart pub global run marionette_mcp` — it requires a one-off `dart pub global activate marionette_mcp` on each machine (the bare `marionette_mcp` command is not used because `~/.pub-cache/bin` may not be on PATH).
+- To use: run the app in debug mode (e.g. `flutter run -d macos`), copy the VM service URI from the console, and pass the WebSocket form (`ws://127.0.0.1:<port>/<token>/ws`) to the `connect` tool.
+- Available tools include `tap`, `enter_text`, `scroll_to`, `press_key` (useful for the table keyboard-navigation flows), `take_screenshots`, `get_logs`, `hot_reload`, and `hot_restart`.
+
 ## Architecture
 
 Clean architecture with strict dependency rules: `domain/` has zero dependencies on `data/` or `presentation/`.

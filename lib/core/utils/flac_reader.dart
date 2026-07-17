@@ -27,6 +27,8 @@ class FlacMetadata {
     this.durationMs,
     this.totalSamples,
     this.rawTags = const {},
+    this.coverArt,
+    this.coverArtMimeType,
   });
 
   final String? artist;
@@ -50,6 +52,13 @@ class FlacMetadata {
   /// When a key appears more than once the first occurrence wins, matching
   /// the previous implementation.
   final Map<String, String> rawTags;
+
+  /// Raw bytes of the first embedded PICTURE block, or null when the
+  /// file carries no artwork.
+  final Uint8List? coverArt;
+
+  /// MIME type of [coverArt] (e.g. `image/jpeg`), or null.
+  final String? coverArtMimeType;
 
   /// The effective artist — ALBUMARTIST takes precedence over ARTIST.
   String? get effectiveArtist => albumArtist ?? artist;
@@ -93,6 +102,7 @@ class FlacReader {
     }
 
     final barcode = tags['BARCODE'] ?? tags['UPC'] ?? tags['EAN'];
+    final picture = doc.pictures.isEmpty ? null : doc.pictures.first;
 
     return FlacMetadata(
       artist: tags['ARTIST'],
@@ -107,6 +117,8 @@ class FlacReader {
       durationMs: durationMs,
       totalSamples: totalSamples,
       rawTags: tags,
+      coverArt: picture?.data,
+      coverArtMimeType: picture?.mimeType,
     );
   }
 

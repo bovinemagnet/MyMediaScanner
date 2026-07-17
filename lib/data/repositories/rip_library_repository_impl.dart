@@ -43,6 +43,7 @@ class RipLibraryRepositoryImpl implements IRipLibraryRepository {
       mediaItemId: Value(album.mediaItemId),
       cueFilePath: Value(album.cueFilePath),
       gnudbDiscId: Value(album.gnudbDiscId),
+      coverPath: Value(album.coverPath),
       lastScannedAt: Value(album.lastScannedAt),
       updatedAt: Value(album.updatedAt),
     ));
@@ -62,6 +63,7 @@ class RipLibraryRepositoryImpl implements IRipLibraryRepository {
       mediaItemId: Value(album.mediaItemId),
       cueFilePath: Value(album.cueFilePath),
       gnudbDiscId: Value(album.gnudbDiscId),
+      coverPath: Value(album.coverPath),
       lastScannedAt: Value(album.lastScannedAt),
       updatedAt: Value(album.updatedAt),
     ));
@@ -126,6 +128,7 @@ class RipLibraryRepositoryImpl implements IRipLibraryRepository {
         mediaItemId: Value(album.mediaItemId),
         cueFilePath: Value(album.cueFilePath),
         gnudbDiscId: Value(album.gnudbDiscId),
+        coverPath: Value(album.coverPath),
         lastScannedAt: Value(album.lastScannedAt),
         updatedAt: Value(album.updatedAt),
       );
@@ -197,6 +200,7 @@ class RipLibraryRepositoryImpl implements IRipLibraryRepository {
         mediaItemId: row.mediaItemId,
         cueFilePath: row.cueFilePath,
         gnudbDiscId: row.gnudbDiscId,
+        coverPath: row.coverPath,
         lastScannedAt: row.lastScannedAt,
         updatedAt: row.updatedAt,
         deleted: row.deleted == 1,

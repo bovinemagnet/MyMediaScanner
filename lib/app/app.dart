@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/l10n/app_localizations.dart';
+import 'package:mymediascanner/presentation/providers/rip_provider.dart';
 import 'package:mymediascanner/presentation/providers/text_scale_provider.dart';
 import 'package:mymediascanner/app/router.dart';
 import 'package:mymediascanner/app/theme/app_theme.dart';
@@ -26,6 +27,14 @@ class _AppState extends ConsumerState<App> {
   @override
   void initState() {
     super.initState();
+    // Eagerly initialise the rip library path provider: its build()
+    // re-arms the sandboxed-macOS security-scoped folder grant from the
+    // stored bookmark. Analysis and playback read rip file paths
+    // directly without touching this provider, so without the eager
+    // read a fresh session would hit "Operation not permitted" until
+    // something happened to read the path.
+    ref.read(ripLibraryPathProvider);
+
     // Eagerly construct the handler so the URI listener is alive
     // before any approval URL is launched. Provider's `onDispose`
     // owns teardown.

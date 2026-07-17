@@ -19,6 +19,7 @@ class RipAlbumsTable extends Table {
   IntColumn get updatedAt => integer()();
   TextColumn get cueFilePath => text().nullable()();
   TextColumn get gnudbDiscId => text().nullable()();
+  TextColumn get coverPath => text().nullable()();
   IntColumn get deleted => integer().withDefault(const Constant(0))();
 
   @override

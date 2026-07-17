@@ -3,6 +3,7 @@ import 'dart:isolate';
 
 import 'package:dart_cue/dart_cue.dart';
 import 'package:mymediascanner/core/utils/audio_metadata_reader.dart';
+import 'package:mymediascanner/core/utils/rip_cover_extractor.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
 import 'package:mymediascanner/domain/entities/rip_track.dart';
 import 'package:mymediascanner/domain/repositories/i_rip_library_repository.dart';
@@ -33,6 +34,7 @@ class _AlbumScanResult {
     required this.totalSizeBytes,
     required this.tracks,
     this.cueFilePath,
+    this.coverPath,
   });
 
   final String directoryPath;
@@ -44,6 +46,7 @@ class _AlbumScanResult {
   final int totalSizeBytes;
   final List<_TrackScanResult> tracks;
   final String? cueFilePath;
+  final String? coverPath;
 }
 
 class _TrackScanResult {
@@ -78,9 +81,13 @@ class ScanRipLibraryUseCase {
   ///
   /// After scanning completes, the stream closes. The caller should read
   /// the final progress event for summary statistics.
-  Stream<RipScanProgress> execute(String rootPath) async* {
+  Stream<RipScanProgress> execute(
+    String rootPath, {
+    String? coverCacheDir,
+  }) async* {
     // Phase 1: Scan files in an isolate to avoid blocking the UI
-    final scanResults = await Isolate.run(() => _scanDirectory(rootPath));
+    final scanResults =
+        await Isolate.run(() => _scanDirectory(rootPath, coverCacheDir));
 
     if (scanResults.isEmpty) {
       yield const RipScanProgress(
@@ -131,6 +138,7 @@ class ScanRipLibraryUseCase {
           lastScannedAt: now,
           updatedAt: now,
           cueFilePath: result.cueFilePath,
+          coverPath: result.coverPath,
         );
         await _repo.updateAlbumAndReplaceTracks(
           updated,
@@ -153,6 +161,7 @@ class ScanRipLibraryUseCase {
           lastScannedAt: now,
           updatedAt: now,
           cueFilePath: result.cueFilePath,
+          coverPath: result.coverPath,
         );
         await _repo.insertAlbumWithTracks(
           album,
@@ -190,7 +199,10 @@ class ScanRipLibraryUseCase {
   }
 
   /// Scans the directory tree for audio files and CUE sheets. Runs in an isolate.
-  static Future<List<_AlbumScanResult>> _scanDirectory(String rootPath) async {
+  static Future<List<_AlbumScanResult>> _scanDirectory(
+    String rootPath,
+    String? coverCacheDir,
+  ) async {
     final rootDir = Directory(rootPath);
     if (!await rootDir.exists()) return [];
 
@@ -269,6 +281,16 @@ class ScanRipLibraryUseCase {
           ? dirPath.substring(rootPath.length).replaceAll(RegExp(r'^[/\\]'), '')
           : dirPath;
 
+      String? coverPath;
+      if (coverCacheDir != null) {
+        coverPath = await RipCoverExtractor.extractCover(
+          albumDirPath: dirPath,
+          relativePath: relativePath,
+          audioFilePaths: files.map((f) => f.path).toList(),
+          cacheDirPath: coverCacheDir,
+        );
+      }
+
       results.add(_AlbumScanResult(
         directoryPath: relativePath,
         artist: firstTrackMeta?.effectiveArtist,
@@ -278,6 +300,7 @@ class ScanRipLibraryUseCase {
         discCount: maxDisc,
         totalSizeBytes: totalSize,
         tracks: tracks,
+        coverPath: coverPath,
       ));
 
       // Check if this directory has a CUE file — enrich/override album metadata
@@ -320,6 +343,7 @@ class ScanRipLibraryUseCase {
             totalSizeBytes: totalSize,
             tracks: cueTracks,
             cueFilePath: cueRelativePath,
+            coverPath: coverPath,
           ));
 
           cueByDir.remove(dirPath);
@@ -370,6 +394,16 @@ class ScanRipLibraryUseCase {
           ? cueFile.path.substring(rootPath.length).replaceAll(RegExp(r'^[/\\]'), '')
           : cueFile.path;
 
+      String? cueCoverPath;
+      if (coverCacheDir != null) {
+        cueCoverPath = await RipCoverExtractor.extractCover(
+          albumDirPath: dirPath,
+          relativePath: relativePath,
+          audioFilePaths: const [],
+          cacheDirPath: coverCacheDir,
+        );
+      }
+
       results.add(_AlbumScanResult(
         directoryPath: relativePath,
         artist: cueSheet.performer,
@@ -380,6 +414,7 @@ class ScanRipLibraryUseCase {
         totalSizeBytes: totalSize,
         tracks: cueTracks,
         cueFilePath: cueRelativePath,
+        coverPath: cueCoverPath,
       ));
     }
 
