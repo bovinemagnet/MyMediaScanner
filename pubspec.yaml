@@ -45,7 +45,12 @@ dependencies:
   postgres: ^3.5.9
   dio: ^5.9.2
   retrofit: ^4.9.2
-  mobile_scanner: ^7.2.0
+  # Pinned to 7.2.0: mobile_scanner 7.2.1+ bumped its Android module to
+  # Kotlin 2.3.20+ / AGP 8.13.2, which the project's Kotlin 2.2.20 / AGP 8.11.1
+  # toolchain cannot configure — its plugin class then never compiles and the
+  # Android build fails with "cannot find symbol MobileScannerPlugin". 7.2.0 is
+  # the last release on Kotlin 2.1.0. Revisit when the app's AGP/Kotlin are bumped.
+  mobile_scanner: 7.2.0
   flutter_secure_storage: ^10.0.0
   cached_network_image: ^3.4.1
   freezed_annotation: ^3.1.0
