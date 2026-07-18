@@ -69,7 +69,6 @@ class MediaItemRepositoryImpl implements IMediaItemRepository {
       final taggedIds = await resolveTaggedIds();
       return rows
           .where((r) =>
-              useFts ||
               mediaType == null ||
               r.mediaType == mediaType.name)
           .where((r) =>
