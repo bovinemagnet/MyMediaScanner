@@ -1,9 +1,14 @@
+import 'dart:async';
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mymediascanner/domain/entities/label_sheet_preset.dart';
 import 'package:mymediascanner/domain/entities/label_target.dart';
 import 'package:mymediascanner/domain/services/label_pdf_generator.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   const generator = LabelPdfGenerator();
 
   test('a4_24 preset reports 24 labels per page', () {
@@ -77,5 +82,45 @@ void main() {
       preset: preset,
     );
     expect(bytes.length, greaterThan(onePage.length));
+  });
+
+  test(
+      'renders accented Latin and non-Latin Unicode label text without '
+      'Helvetica Unicode warnings', () async {
+    final targets = [
+      const LabelTarget(
+        qrPayload: 'item:cafe',
+        title: 'Café Tacvba',
+        subtitle: 'Русская полка',
+      ),
+      const LabelTarget(
+        qrPayload: 'item:jp',
+        title: 'こんにちは世界',
+        subtitle: '日本語のサブタイトル',
+      ),
+    ];
+
+    final prints = <String>[];
+    late Uint8List bytes;
+    await runZoned(
+      () async {
+        bytes = await generator.generate(
+          targets: targets,
+          preset: LabelSheetPresets.a4_8,
+        );
+      },
+      zoneSpecification: ZoneSpecification(
+        print: (self, parent, zone, line) => prints.add(line),
+      ),
+    );
+
+    expect(bytes.length, greaterThan(500));
+    expect(String.fromCharCodes(bytes.sublist(0, 5)), '%PDF-');
+    expect(
+      prints.where((line) => line.contains('has no Unicode support')),
+      isEmpty,
+      reason: 'Helvetica fallback fonts should not be instantiated once '
+          'Unicode-capable fonts are embedded',
+    );
   });
 }
