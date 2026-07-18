@@ -76,7 +76,26 @@ class SyncRepositoryImpl implements ISyncRepository {
         final stopwatch = Stopwatch()..start();
         try {
           final decoded = jsonDecode(log.payloadJson);
-          if (decoded is! Map<String, dynamic>) continue;
+          if (decoded is! Map<String, dynamic>) {
+            // Structurally invalid (an array, a scalar, or null) but not
+            // a JSON syntax error, so jsonDecode above didn't throw. This
+            // previously fell through to a silent `continue` — never
+            // marked synced, no errorMessage, not counted in
+            // firstFailure, and retried forever with no diagnostics.
+            // Record it exactly like the `on Exception` handler below so
+            // it surfaces the same way as any other push failure.
+            stopwatch.stop();
+            final error = 'Invalid payload: expected a JSON object, got '
+                '${decoded.runtimeType}';
+            await _syncLogDao.updateLogResult(
+              log.id,
+              durationMs: stopwatch.elapsedMilliseconds,
+              direction: 'push',
+              errorMessage: error,
+            );
+            firstFailure ??= FormatException(error);
+            continue;
+          }
           // Resolve table from a maintained map — naive `+s` pluralisation
           // mangles `shelf`/`series` and previously caused those pushes
           // to fail the allow-list check before they ever reached the
@@ -156,6 +175,20 @@ class SyncRepositoryImpl implements ISyncRepository {
       // Without this the pull grows linearly with the remote table size
       // and eventually times out on mobile networks.
       final lastSyncedAt = await _getLastSyncedAt();
+
+      // Capture a server-side boundary BEFORE reading any table (issue
+      // #102). The previous implementation read every remote table
+      // sequentially against `lastSyncedAt`, then stored the CLIENT
+      // clock (`DateTime.now()`) as the new watermark only once every
+      // table had already been read. A remote row updated after its
+      // table was read but before that final client-clock snapshot has
+      // an `updated_at` older than the new watermark, so a later pull
+      // (`updated_at > watermark`) would never fetch it again —
+      // permanently skipped. A boundary captured up-front, before any
+      // read, doesn't have that gap: anything written afterwards keeps
+      // an `updated_at` at or beyond this boundary and stays eligible
+      // for the next pull.
+      final pullBoundary = await _syncClient.fetchServerTimestampMillis();
       final remoteItems = await _syncClient.pullRecords(
         'media_items',
         afterTimestamp: lastSyncedAt,
@@ -299,7 +332,10 @@ class SyncRepositoryImpl implements ISyncRepository {
       // does not depend on a later pull re-downloading them. Holding the
       // watermark back only forced every subsequent pull to re-download
       // everything since the last clean sync.
-      await _storeLastSyncedAt(DateTime.now().millisecondsSinceEpoch);
+      //
+      // Store the pre-read server boundary captured above, not the
+      // client clock — see the comment where `pullBoundary` is captured.
+      await _storeLastSyncedAt(pullBoundary);
 
       _progressController.add(SyncProgress.idle);
       await _emitStatus(

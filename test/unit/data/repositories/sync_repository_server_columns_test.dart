@@ -70,6 +70,8 @@ void main() {
         .thenAnswer((_) async => <Map<String, dynamic>>[]);
     when(() => client.pullRecordsByIds(any(), any()))
         .thenAnswer((_) async => <Map<String, dynamic>>[]);
+    when(() => client.fetchServerTimestampMillis())
+        .thenAnswer((_) async => 999999);
   });
 
   tearDown(() async {
