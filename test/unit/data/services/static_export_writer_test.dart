@@ -17,6 +17,8 @@ MediaItem _item({
   String title = 'Title',
   String? coverUrl,
   MediaType mediaType = MediaType.film,
+  List<String> tags = const [],
+  bool deleted = false,
 }) =>
     MediaItem(
       id: id,
@@ -25,7 +27,8 @@ MediaItem _item({
       mediaType: mediaType,
       title: title,
       coverUrl: coverUrl,
-      extraMetadata: const {},
+      deleted: deleted,
+      extraMetadata: tags.isEmpty ? const {} : {'tags': tags},
       dateAdded: 0,
       dateScanned: 0,
       updatedAt: 0,
@@ -113,7 +116,9 @@ void main() {
     expect(await coverFile.readAsBytes(), Uint8List.fromList(bytes));
   });
 
-  test('skips covers when the download fails', () async {
+  test(
+      'skips covers when the download fails and HTML has no broken '
+      'reference (#104)', () async {
     final dio = MockDio();
     when(() => dio.get<List<int>>(
           any(),
@@ -136,6 +141,82 @@ void main() {
     }
     // Export itself still succeeds.
     expect(await File(p.join(tempDir.path, 'index.html')).exists(), isTrue);
+
+    final indexHtml =
+        await File(p.join(tempDir.path, 'index.html')).readAsString();
+    expect(indexHtml, isNot(contains('covers/a.jpg')));
+
+    final itemHtml =
+        await File(p.join(tempDir.path, 'items', 'a.html')).readAsString();
+    expect(itemHtml, isNot(contains('covers/a.jpg')));
+  });
+
+  // Regression tests for #101: the writer must not fetch or persist
+  // covers for items that the service would exclude from the HTML.
+  test('does not fetch or write covers for private-tagged items', () async {
+    final dio = MockDio();
+    when(() => dio.get<List<int>>(
+          any(),
+          options: any(named: 'options'),
+        )).thenAnswer(
+            (_) async => _bytesResponse([1, 2, 3], 'https://example.com'));
+
+    final writer = StaticExportWriter(dio: dio);
+    await writer.write(
+      targetDir: tempDir,
+      items: [
+        _item(id: 'visible', coverUrl: 'https://example.com/visible.jpg'),
+        _item(
+          id: 'secret',
+          coverUrl: 'https://example.com/secret.jpg',
+          tags: ['private'],
+        ),
+      ],
+      options: const StaticExportOptions(bundleCovers: true),
+    );
+
+    verifyNever(() => dio.get<List<int>>(
+          'https://example.com/secret.jpg',
+          options: any(named: 'options'),
+        ));
+    expect(
+        await File(p.join(tempDir.path, 'covers', 'secret.jpg')).exists(),
+        isFalse);
+    expect(
+        await File(p.join(tempDir.path, 'covers', 'visible.jpg')).exists(),
+        isTrue);
+  });
+
+  test('does not fetch or write covers for soft-deleted items', () async {
+    final dio = MockDio();
+    when(() => dio.get<List<int>>(
+          any(),
+          options: any(named: 'options'),
+        )).thenAnswer(
+            (_) async => _bytesResponse([1, 2, 3], 'https://example.com'));
+
+    final writer = StaticExportWriter(dio: dio);
+    await writer.write(
+      targetDir: tempDir,
+      items: [
+        _item(id: 'live', coverUrl: 'https://example.com/live.jpg'),
+        _item(
+          id: 'gone',
+          coverUrl: 'https://example.com/gone.jpg',
+          deleted: true,
+        ),
+      ],
+      options: const StaticExportOptions(bundleCovers: true),
+    );
+
+    verifyNever(() => dio.get<List<int>>(
+          'https://example.com/gone.jpg',
+          options: any(named: 'options'),
+        ));
+    expect(await File(p.join(tempDir.path, 'covers', 'gone.jpg')).exists(),
+        isFalse);
+    expect(await File(p.join(tempDir.path, 'covers', 'live.jpg')).exists(),
+        isTrue);
   });
 
   test('reports progress for write phase', () async {
