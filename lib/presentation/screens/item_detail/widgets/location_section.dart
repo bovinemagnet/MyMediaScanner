@@ -84,14 +84,20 @@ class LocationSection extends ConsumerWidget {
         children: [
           Row(
             children: [
-              Text(
-                'LOCATION',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: colors.onSurfaceVariant,
-                  letterSpacing: 0.8,
+              // Expanded rather than Spacer: at large text scales the
+              // buttons alone are wider than the row, so the label has to
+              // be the part that gives way.
+              Expanded(
+                child: Text(
+                  'LOCATION',
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                    letterSpacing: 0.8,
+                  ),
                 ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               TextButton.icon(
                 onPressed: () => _changeLocation(context, ref),
                 icon: Icon(

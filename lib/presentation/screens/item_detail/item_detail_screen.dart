@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:mymediascanner/app/theme/app_layout_extension.dart';
+import 'package:mymediascanner/core/constants/app_constants.dart';
 import 'package:mymediascanner/app/theme/app_media_colors.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
@@ -54,39 +55,100 @@ class ItemDetailScreen extends ConsumerWidget {
         if (item == null) {
           return const Scaffold(body: ErrorState(message: 'Item not found'));
         }
+        final needsCover = item.coverUrl == null || item.coverUrl!.isEmpty;
+        // On a phone the four-or-five actions leave the title ~83dp — barely
+        // two words. Collapse everything but Edit into an overflow menu
+        // there; desktop has the width to keep them all inline.
+        final isCompact = MediaQuery.sizeOf(context).width <
+            AppConstants.compactBreakpoint;
+
         return Scaffold(
           appBar: AppBar(
             title: Text(item.title),
             actions: [
-              IconButton(
-                icon: const Icon(Icons.shelves),
-                onPressed: () => showDialog<void>(
-                  context: context,
-                  builder: (_) => ShelfPickerDialog(mediaItemId: item.id),
-                ),
-                tooltip: 'Add to shelf',
-              ),
-              IconButton(
-                icon: const Icon(Icons.refresh),
-                onPressed: () => _refreshMetadata(context, ref, item),
-                tooltip: 'Refresh metadata',
-              ),
-              if (item.coverUrl == null || item.coverUrl!.isEmpty)
+              if (!isCompact) ...[
                 IconButton(
-                  icon: const Icon(Icons.image_search),
-                  onPressed: () => _fetchMissingCover(context, ref, item),
-                  tooltip: 'Fetch cover art',
+                  icon: const Icon(Icons.shelves),
+                  onPressed: () => showDialog<void>(
+                    context: context,
+                    builder: (_) => ShelfPickerDialog(mediaItemId: item.id),
+                  ),
+                  tooltip: 'Add to shelf',
                 ),
+                IconButton(
+                  icon: const Icon(Icons.refresh),
+                  onPressed: () => _refreshMetadata(context, ref, item),
+                  tooltip: 'Refresh metadata',
+                ),
+                if (needsCover)
+                  IconButton(
+                    icon: const Icon(Icons.image_search),
+                    onPressed: () => _fetchMissingCover(context, ref, item),
+                    tooltip: 'Fetch cover art',
+                  ),
+              ],
               IconButton(
                 icon: const Icon(Icons.edit),
                 onPressed: () => context.go('/collection/item/${item.id}/edit'),
                 tooltip: 'Edit',
               ),
-              IconButton(
-                icon: const Icon(Icons.delete_outline),
-                onPressed: () => _confirmDelete(context, ref),
-                tooltip: 'Delete',
-              ),
+              if (!isCompact)
+                IconButton(
+                  icon: const Icon(Icons.delete_outline),
+                  onPressed: () => _confirmDelete(context, ref),
+                  tooltip: 'Delete',
+                ),
+              if (isCompact)
+                PopupMenuButton<String>(
+                  tooltip: 'More actions',
+                  onSelected: (value) {
+                    switch (value) {
+                      case 'shelf':
+                        showDialog<void>(
+                          context: context,
+                          builder: (_) =>
+                              ShelfPickerDialog(mediaItemId: item.id),
+                        );
+                      case 'refresh':
+                        _refreshMetadata(context, ref, item);
+                      case 'cover':
+                        _fetchMissingCover(context, ref, item);
+                      case 'delete':
+                        _confirmDelete(context, ref);
+                    }
+                  },
+                  itemBuilder: (_) => [
+                    const PopupMenuItem(
+                      value: 'shelf',
+                      child: ListTile(
+                        leading: Icon(Icons.shelves),
+                        title: Text('Add to shelf'),
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'refresh',
+                      child: ListTile(
+                        leading: Icon(Icons.refresh),
+                        title: Text('Refresh metadata'),
+                      ),
+                    ),
+                    if (needsCover)
+                      const PopupMenuItem(
+                        value: 'cover',
+                        child: ListTile(
+                          leading: Icon(Icons.image_search),
+                          title: Text('Fetch cover art'),
+                        ),
+                      ),
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: ListTile(
+                        leading: Icon(Icons.delete_outline),
+                        title: Text('Delete'),
+                      ),
+                    ),
+                  ],
+                ),
             ],
           ),
           body: SafeArea(

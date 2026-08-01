@@ -66,6 +66,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     final rippedIds = ref.watch(rippedItemIdsProvider).value ?? <String>{};
     final selectedId = ref.watch(selectedItemProvider);
     final viewMode = ref.watch(collectionViewModeProvider);
+    final filter = ref.watch(collectionFilterProvider);
     final isDesktop = PlatformCapability.isDesktop;
 
     final masterContent = Column(
@@ -191,6 +192,10 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
             ? null
             : AppBar(
                 title: const Text('Library'),
+                // The secondary actions live in an overflow menu: five
+                // IconButtons plus the SortSelector overflowed
+                // AppBar.actions by 57px on a 411dp phone and squeezed the
+                // title out of the toolbar entirely.
                 actions: [
                   IconButton(
                     icon: const Icon(Icons.shelves),
@@ -205,23 +210,77 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                     tooltip: 'Wishlist',
                     onPressed: () => context.go('/wishlist'),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.image_search),
-                    tooltip: 'Fetch missing covers',
-                    onPressed: () =>
-                        showFillMissingCoversDialog(context, ref),
+                  PopupMenuButton<String>(
+                    tooltip: 'More actions',
+                    onSelected: (value) {
+                      final notifier =
+                          ref.read(collectionFilterProvider.notifier);
+                      switch (value) {
+                        case 'direction':
+                          notifier.setSort(
+                            filter.sortBy ?? 'dateAdded',
+                            ascending: !filter.ascending,
+                          );
+                        case 'covers':
+                          showFillMissingCoversDialog(context, ref);
+                        case 'export':
+                          _showExportDialog(context, ref);
+                        case 'statistics':
+                          context.go('/collection/statistics');
+                        default:
+                          if (value.startsWith('sort:')) {
+                            notifier.setSort(value.substring(5));
+                          }
+                      }
+                    },
+                    itemBuilder: (_) => [
+                      for (final entry in SortSelector.options.entries)
+                        PopupMenuItem(
+                          value: 'sort:${entry.key}',
+                          child: ListTile(
+                            leading: Icon(
+                              (filter.sortBy ?? 'dateAdded') == entry.key
+                                  ? Icons.radio_button_checked
+                                  : Icons.radio_button_unchecked,
+                            ),
+                            title: Text('Sort by ${entry.value}'),
+                          ),
+                        ),
+                      const PopupMenuDivider(),
+                      PopupMenuItem(
+                        value: 'direction',
+                        child: ListTile(
+                          leading: Icon(filter.ascending
+                              ? Icons.arrow_upward
+                              : Icons.arrow_downward),
+                          title:
+                              Text(filter.ascending ? 'Ascending' : 'Descending'),
+                        ),
+                      ),
+                      const PopupMenuDivider(),
+                      const PopupMenuItem(
+                        value: 'covers',
+                        child: ListTile(
+                          leading: Icon(Icons.image_search),
+                          title: Text('Fetch missing covers'),
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'export',
+                        child: ListTile(
+                          leading: Icon(Icons.download),
+                          title: Text('Export collection'),
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'statistics',
+                        child: ListTile(
+                          leading: Icon(Icons.bar_chart),
+                          title: Text('Statistics'),
+                        ),
+                      ),
+                    ],
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.download),
-                    tooltip: 'Export collection',
-                    onPressed: () => _showExportDialog(context, ref),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.bar_chart),
-                    tooltip: 'Statistics',
-                    onPressed: () => context.go('/collection/statistics'),
-                  ),
-                  const SortSelector(),
                 ],
               ),
         body: MasterDetailLayout(

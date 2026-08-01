@@ -104,11 +104,26 @@ class AppScaffold extends StatelessWidget {
     final useSidebar = width >= AppConstants.compactBreakpoint;
     final isDesktop = PlatformCapability.isDesktop;
 
+    // Each branch roots its own navigator, so once a branch's nested routes
+    // have popped there is nothing left for the root navigator to pop and
+    // Android back closes the app — even from Settings or Shelves. Send it
+    // to the branch the screen was entered from instead. Nested routes
+    // (item detail, shelf detail) still pop normally: their branch
+    // navigator handles back before it ever reaches this PopScope.
     Widget wrapWithShortcuts(Widget scaffold) {
-      if (!isDesktop) return scaffold;
+      final backBranch = shellIndexToBackBranch(navigationShell.currentIndex);
+      final guarded = PopScope(
+        canPop: backBranch == null,
+        onPopInvokedWithResult: (didPop, _) {
+          if (didPop || backBranch == null) return;
+          navigationShell.goBranch(backBranch);
+        },
+        child: scaffold,
+      );
+      if (!isDesktop) return guarded;
       return DesktopShortcuts(
         onSwitchTab: _onDestinationSelected,
-        child: scaffold,
+        child: guarded,
       );
     }
 
@@ -186,7 +201,7 @@ class AppScaffold extends StatelessWidget {
     // Branch 0 = Dashboard (Home), 1 = Collection (Library),
     // 2 = Scanner, 3 = Shelves, 4 = Batch, 5 = Insights, 6 = Settings, 7 = Rips
     // Mobile shows: Home(0), Scanner(2), Library(1), Insights(5)
-    final mobileIndex = _shellIndexToMobileIndex(navigationShell.currentIndex);
+    final mobileIndex = shellIndexToMobileIndex(navigationShell.currentIndex);
 
     final design = Theme.of(context).extension<AppDesignExtension>();
     final colors = Theme.of(context).colorScheme;
@@ -230,16 +245,6 @@ class AppScaffold extends StatelessWidget {
     );
   }
 
-  int _shellIndexToMobileIndex(int shellIndex) {
-    return switch (shellIndex) {
-      0 => 0, // Dashboard -> Home
-      1 => 2, // Collection -> Library
-      2 => 1, // Scanner -> Scanner
-      5 => 3, // Insights -> Insights
-      _ => 0, // Default to Home
-    };
-  }
-
   int _mobileIndexToShellIndex(int mobileIndex) {
     return switch (mobileIndex) {
       0 => 0, // Home -> Dashboard
@@ -249,6 +254,50 @@ class AppScaffold extends StatelessWidget {
       _ => 0,
     };
   }
+}
+
+/// Maps a router shell branch index onto the four-entry mobile bottom nav.
+///
+/// Only four of the router's 17 branches have their own bottom-nav
+/// destination. The rest are reached from within one of those four, so each
+/// maps onto the destination it is entered from — otherwise the nav
+/// highlights an unrelated tab while the user is somewhere else entirely.
+///
+/// Keep this in step with the branch order in `app/router.dart`.
+int shellIndexToMobileIndex(int shellIndex) {
+  return switch (shellIndex) {
+    0 => 0, // Dashboard  -> Home
+    1 => 2, // Collection -> Library
+    2 => 1, // Scanner    -> Scanner
+    3 => 2, // Shelves    -> Library  (entered from the Library AppBar)
+    4 => 1, // Batch      -> Scanner  (entered from the scan screen)
+    5 => 3, // Insights   -> Insights
+    6 => 0, // Settings   -> Home     (entered from the dashboard)
+    // 7 Rips, 8 Wishlist, 9 Locations, 10 Series, 11 Wishlist suggestions
+    // and 12-16 the TMDB account lists are all library-side content views.
+    >= 7 && <= 16 => 2, // -> Library
+    _ => 0, // Default to Home
+  };
+}
+
+/// The branch a system back gesture should return to, or `null` on the
+/// Dashboard where back should fall through and exit the app.
+///
+/// Every branch is a root of its own navigator, so once its nested routes
+/// have popped there is nothing left to pop and Android back would close
+/// the app — even from Settings or Shelves. These targets mirror the
+/// leading back buttons on the same screens so both gestures agree.
+int? shellIndexToBackBranch(int shellIndex) {
+  return switch (shellIndex) {
+    0 => null, // Dashboard  -> let back exit the app
+    3 => 1, // Shelves    -> Collection
+    4 => 2, // Batch      -> Scanner
+    11 => 0, // Suggestions -> Dashboard
+    // 7 Rips, 8 Wishlist, 9 Locations, 10 Series and 12-16 the TMDB
+    // account lists are all reached from the library.
+    >= 7 && <= 16 => 1, // -> Collection
+    _ => 0, // Everything else -> Dashboard
+  };
 }
 
 // ── Desktop sidebar ──────────────────────────────────────────────────

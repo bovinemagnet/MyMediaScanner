@@ -31,9 +31,26 @@ class SettingsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: isDesktop
           ? null
-          : AppBar(title: const Text('Settings')),
+          : AppBar(
+              title: const Text('Settings'),
+              // Own shell branch entered from the dashboard, so there is no
+              // route to pop and no automatic back button.
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => context.go('/'),
+              ),
+            ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        // The shell Scaffold sets extendBody, so the list runs underneath
+        // the bottom nav and reports its height as MediaQuery padding.
+        // Without adding it here the final tile ("About …") sits behind the
+        // nav bar with no scroll extent left to reveal it.
+        padding: EdgeInsets.fromLTRB(
+          16,
+          16,
+          16,
+          16 + MediaQuery.paddingOf(context).bottom,
+        ),
         children: [
           if (isDesktop)
             const ScreenHeader(

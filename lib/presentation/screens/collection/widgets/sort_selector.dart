@@ -5,7 +5,10 @@ import 'package:mymediascanner/presentation/providers/collection_provider.dart';
 class SortSelector extends ConsumerWidget {
   const SortSelector({super.key});
 
-  static const _options = {
+  /// Sort keys mapped to their user-facing labels. Also used by the
+  /// collection screen's mobile overflow menu, which offers the same sort
+  /// choices without the width cost of a dropdown in `AppBar.actions`.
+  static const options = {
     'dateAdded': 'Date Added',
     'title': 'Title',
     'year': 'Year',
@@ -29,7 +32,7 @@ class SortSelector extends ConsumerWidget {
             value: filter.sortBy,
             isExpanded: true,
             underline: const SizedBox.shrink(),
-            items: _options.entries
+            items: options.entries
                 .map((e) => DropdownMenuItem(
                       value: e.key,
                       child: Text(e.value,

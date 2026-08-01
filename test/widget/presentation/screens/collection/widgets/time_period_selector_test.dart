@@ -51,4 +51,26 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets(
+    'the selected segment reserves no width for a checkmark icon',
+    (tester) async {
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: SizedBox(width: 320, child: TimePeriodSelector()),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // The default leading checkmark steals horizontal space from the
+      // selected segment only, so its label alone scales down and renders
+      // visibly smaller than its neighbours. Selection stays legible via
+      // the filled background colour instead.
+      expect(find.byIcon(Icons.check), findsNothing);
+    },
+  );
 }

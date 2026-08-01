@@ -69,6 +69,16 @@ void _configureDesktopViewport(WidgetTester tester) {
   addTearDown(tester.view.resetDevicePixelRatio);
 }
 
+/// Sets a phone-sized viewport matching a Galaxy S9+ in logical pixels
+/// (411.4×797.7dp) so [CollectionScreen]'s mobile `AppBar` branch is laid
+/// out at a realistic narrow width.
+void _configureMobileViewport(WidgetTester tester) {
+  tester.view.physicalSize = const Size(411, 798);
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+}
+
 /// Wraps [CollectionScreen] in a minimal GoRouter + ProviderScope so that
 /// GoRouter-dependent code (context.go, etc.) does not throw.
 Widget _wrap({
@@ -351,5 +361,116 @@ void main() {
       },
       variant: TargetPlatformVariant.desktop(),
     );
+
+    testWidgets(
+      'mobile AppBar lays out without overflowing on a phone-width screen',
+      (tester) async {
+        _configureMobileViewport(tester);
+        _stubEmpty(mediaRepo, loanRepo, ripRepo);
+
+        await tester.pumpWidget(
+          _wrap(
+            mediaRepo: mediaRepo,
+            loanRepo: loanRepo,
+            borrowerRepo: borrowerRepo,
+            ripRepo: ripRepo,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(tester.takeException(), isNull);
+      },
+      variant: TargetPlatformVariant.only(TargetPlatform.android),
+    );
+
+    testWidgets(
+      'mobile AppBar keeps its title visible alongside the actions',
+      (tester) async {
+        _configureMobileViewport(tester);
+        _stubEmpty(mediaRepo, loanRepo, ripRepo);
+
+        await tester.pumpWidget(
+          _wrap(
+            mediaRepo: mediaRepo,
+            loanRepo: loanRepo,
+            borrowerRepo: borrowerRepo,
+            ripRepo: ripRepo,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // find.text alone is not enough: an ellipsised title still matches
+        // even when the actions have squeezed it down to a few pixels.
+        expect(find.text('Library'), findsOneWidget);
+        expect(
+          tester.getSize(find.text('Library')).width,
+          greaterThan(50),
+          reason: 'the title must have room to render, not be ellipsised away',
+        );
+      },
+      variant: TargetPlatformVariant.only(TargetPlatform.android),
+    );
+
+    testWidgets(
+      'mobile AppBar exposes the secondary actions in an overflow menu',
+      (tester) async {
+        _configureMobileViewport(tester);
+        _stubEmpty(mediaRepo, loanRepo, ripRepo);
+
+        await tester.pumpWidget(
+          _wrap(
+            mediaRepo: mediaRepo,
+            loanRepo: loanRepo,
+            borrowerRepo: borrowerRepo,
+            ripRepo: ripRepo,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byType(PopupMenuButton<String>));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Fetch missing covers'), findsOneWidget);
+        expect(find.text('Export collection'), findsOneWidget);
+        expect(find.text('Statistics'), findsOneWidget);
+      },
+      variant: TargetPlatformVariant.only(TargetPlatform.android),
+    );
+
+    // Android 14+ lets users scale text to 200%; the AppBar and the grid
+    // cards must still fit a 411dp phone.
+    for (final scale in const [1.3, 1.6, 2.0]) {
+      testWidgets(
+        'lays out without overflow at textScale $scale',
+        (tester) async {
+          _configureMobileViewport(tester);
+          _stubEmpty(mediaRepo, loanRepo, ripRepo);
+          when(() => mediaRepo.watchByStatus(OwnershipStatus.owned))
+              .thenAnswer((_) => Stream.value([
+                    _item(
+                      id: 'p1',
+                      title: 'A Really Rather Long Film Title Indeed',
+                    ),
+                    _item(id: 'p2', title: 'Short'),
+                  ]));
+
+          await tester.pumpWidget(
+            MediaQuery(
+              data: MediaQueryData(textScaler: TextScaler.linear(scale)),
+              child: _wrap(
+                mediaRepo: mediaRepo,
+                loanRepo: loanRepo,
+                borrowerRepo: borrowerRepo,
+                ripRepo: ripRepo,
+              ),
+            ),
+          );
+          await tester.pumpAndSettle();
+
+          expect(tester.takeException(), isNull);
+        },
+        variant: TargetPlatformVariant.only(TargetPlatform.android),
+      );
+    }
   });
 }
