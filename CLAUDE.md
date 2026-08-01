@@ -11,7 +11,8 @@ Cross-platform Flutter/Dart application for scanning barcodes on physical media 
 - Lending tracker (borrowers and loans management)
 - Critic scores from TMDB, Discogs, and Google Books
 - FLAC/MP3 rip library scanner with CUE sheet support and coverage comparison against physical collection
-- Audio quality analysis (AccurateRip verification + click/pop detection)
+- Rip album artwork: extracted at scan time (folder image `cover|folder|album|front`.`jpg|jpeg|png` preferred, embedded FLAC PICTURE fallback) and cached under Application Support/`rip_covers`; path stored in `rip_albums.cover_path`
+- Audio quality analysis (AccurateRip verification + click/pop/clipping/dropout detection via `audio_defect_detector`)
 - Insights & analytics dashboard with CSV/JSON export
 - Camera + Bluetooth/USB scanner support on mobile; webcam scanning on all desktop platforms
 - Media type filter on scan screen
@@ -34,7 +35,7 @@ Cross-platform Flutter/Dart application for scanning barcodes on physical media 
 - **Models:** Freezed for immutable entities and sealed classes
 - **Scanning:** mobile_scanner (ML Kit) on Android/iOS/macOS; camera_desktop + flutter_zxing on Windows/Linux; keyboard-wedge USB scanner on all desktop platforms
 - **OCR:** Google ML Kit text recognition (Android/iOS); macOS Vision framework via method channel (`com.mymediascanner/vision_ocr`); Windows/Linux desktop OCR not currently wired (`TesseractOcrService` is a no-op stub)
-- **Secrets:** flutter_secure_storage for Postgres credentials and API keys
+- **Secrets:** flutter_secure_storage for Postgres credentials and API keys. Non-secrets (rip library path, its sandbox bookmark) live in SharedPreferences — macOS Keychain items do not survive relaunches of ad-hoc-signed debug builds, so never park settings that must persist in secure storage
 - **Fonts:** Manrope and Inter bundled in `assets/fonts/` (no google_fonts runtime dependency)
 
 ## Build & Development Commands
@@ -73,7 +74,7 @@ flutter build macos --debug
 
 ## Testing
 
-The project has ~729 tests: ~683 unit/widget tests covering domain logic, data layer, presentation providers, and widget tests, plus ~46 integration tests covering full-app user flows. Run `flutter test` to execute the unit/widget suite. Integration tests run individually per file: `flutter test integration_test/<file>.dart -d linux`. Tests use `mocktail` for mocking and `ProviderContainer` with overrides for provider testing.
+The project has ~1,790 unit/widget tests covering domain logic, data layer, presentation providers, and widget tests, plus integration tests (18 files) covering full-app user flows. Run `flutter test` to execute the unit/widget suite. Integration tests run individually per file: `flutter test integration_test/<file>.dart -d linux`. Tests use `mocktail` for mocking and `ProviderContainer` with overrides for provider testing.
 
 ### Runtime UI Automation (Marionette MCP)
 
@@ -129,7 +130,9 @@ lib/
 
 ## Navigation Structure
 
-Routes are organised as 8 `StatefulShellBranch` entries:
+Routes are organised as 17 `StatefulShellBranch` entries. Only branches 0,
+1, 2 and 5 own a mobile bottom-nav destination; every other branch is
+reached from within one of those:
 
 | Branch | Route | Screen | Desktop Sidebar | Mobile Bottom Nav |
 |--------|-------|--------|-----------------|-------------------|
@@ -137,12 +140,25 @@ Routes are organised as 8 `StatefulShellBranch` entries:
 | 1 | `/collection` | Collection/Library | Yes | Yes (Library) |
 | 2 | `/scan` | Scanner | Yes | Yes |
 | 3 | `/shelves` | Shelves | Yes | No (accessible from Library AppBar) |
-| 4 | `/batch` | Batch Editor | Yes | No |
+| 4 | `/batch` | Batch Editor | Yes | No (from the scan screen) |
 | 5 | `/insights` | Insights/Statistics | Yes | Yes |
-| 6 | `/settings` | Settings | Yes | No |
+| 6 | `/settings` | Settings | Yes | No (from the dashboard gear) |
 | 7 | `/rips` | Rips (desktop only) | Yes | No |
+| 8 | `/wishlist` | Wishlist | Yes | No (from Library AppBar) |
+| 9 | `/locations` | Locations | Yes | No (desktop only) |
+| 10 | `/series` | Series | Yes | No (desktop only) |
+| 11 | `/wishlist-suggestions` | Wishlist suggestions | Yes | No (from the dashboard) |
+| 12–15 | `/tmdb/{watchlist,rated,favourites,saved}` | TMDB account lists | When TMDB connected | No |
+| 16 | `/tmdb/conflicts` | TMDB sync conflicts | When conflicts exist | No |
 
 Item detail routes are nested under collection: `/collection/item/:id`
+
+Two mappings in `presentation/widgets/app_scaffold.dart` must be kept in
+step with this branch order — `shellIndexToMobileIndex` (which bottom-nav
+tab highlights) and `shellIndexToBackBranch` (where system back goes).
+A branch with no entry in either silently falls back to Home, which reads
+as the nav highlighting an unrelated tab. Branch-root screens also carry
+an explicit `leading` back button, since there is no route to pop.
 
 ## Design System
 
@@ -185,8 +201,8 @@ Shape tokens live in `AppShapes` (chunkier Popcorn radii) and the hero-numeric `
 - Soft deletes only: set `deleted = 1`, never hard-delete rows; deleted records are included in sync
 - Metadata lookup follows a tiered strategy: cache check → barcode type detection → specialist API → UPCitemdb fallback
 - Sync uses last-write-wins per-field conflict resolution based on `updated_at` timestamps, with user-facing conflict resolution UI for concurrent edits within a configurable threshold
-- Database schema changes require a new migration in `AppDatabase`
-- Current schema version is 12 with 13 tables: `media_items`, `tags`, `media_item_tags`, `shelves`, `shelf_items`, `barcode_cache`, `sync_log`, `borrowers`, `loans`, `rip_albums`, `rip_tracks`, `batch_sessions`, `batch_queue_items`
+- Database schema changes require a new migration branch in `AppDatabase._runUpgrade` (runs inside a transaction). Any `addColumn` there must use `_addColumnIfMissing` — the v2/v4/v17 branches create tables from the *current* Dart definition, so later columns may already exist and an unguarded add bricks the upgrade with `duplicate column name`
+- Current schema version is 24 with 18 tables: `media_items`, `tags`, `media_item_tags`, `shelves`, `shelf_items`, `barcode_cache`, `sync_log`, `borrowers`, `loans`, `rip_albums`, `rip_tracks`, `batch_sessions`, `batch_queue_items`, `playlists`, `playlist_tracks`, `locations`, `series`, `tmdb_account_sync_items` (plus the `media_items_fts` FTS5 virtual table)
 - Desktop screens use inline `ScreenHeader` widget instead of AppBar; mobile screens keep AppBar for back navigation
 - Sections use tonal containers (`surfaceContainerHigh`) with uppercase label headers, not dividers
 
@@ -208,6 +224,8 @@ Users supply their own API keys (stored in secure storage) for TMDB, Discogs, UP
 
 ## Known Constraints
 
+- macOS runs in the App Sandbox: the FLAC library folder is only readable via a security-scoped bookmark captured when the user picks it with Browse… (method channel `com.mymediascanner/secure_bookmarks` in `MainFlutterWindow.swift`, re-armed at app startup from `app.dart`). Typed paths cannot be granted access; spawned child processes do not inherit the grant
+- Closures passed to `Isolate.run` must not be created inside `async*` methods or capture `this`/fields — the generator's `_AsyncCompleter` makes the spawn message unsendable and the call fails instantly ("object is unsendable"). Create them in a plain frame capturing only sendable values; note `FlacDecoder.decode` already runs in its own isolate, so never wrap it in another
 - `file_picker` pinned to `>=10.3.10 <11.0.0` — v11 has a broken Android Gradle config (missing kotlin-android plugin)
 - iOS deployment target is 15.5 (required by google_mlkit_commons)
 - Google ML Kit ships no arm64-**simulator** binary, so Flutter builds the iOS simulator app as x86_64 — which cannot run on Apple-Silicon iOS 26+ simulators. Physical devices (arm64) build and run normally. To run on a simulator, use `scripts/ios_sim.sh`, which temporarily overrides `google_mlkit_text_recognition` with the pure-Dart stub in `tool/mlkit_text_recognition_stub` (cover OCR returns no text on the simulator; barcode scanning is unaffected)
