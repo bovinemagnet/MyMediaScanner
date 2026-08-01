@@ -23,29 +23,15 @@ class ScanOverlay extends StatelessWidget {
           height: cutoutHeight,
         );
 
-        return Stack(
-          children: [
-            CustomPaint(
-              size: size,
-              painter: _ScanOverlayPainter(
-                cutoutRect: cutoutRect,
-                cornerColour: Theme.of(context).colorScheme.primary,
-              ),
-            ),
-            Positioned(
-              left: 0,
-              right: 0,
-              top: cutoutRect.bottom + 24,
-              child: Text(
-                'Position barcode in frame',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ],
+        // The hint text lives in the scan screen's bottom control panel,
+        // not here. Positioned against the cutout it sat at a fixed offset
+        // while the panel grew upward, so the batch banner overlapped it.
+        return CustomPaint(
+          size: size,
+          painter: _ScanOverlayPainter(
+            cutoutRect: cutoutRect,
+            cornerColour: Theme.of(context).colorScheme.primary,
+          ),
         );
       },
     );

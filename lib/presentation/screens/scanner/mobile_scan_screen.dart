@@ -13,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:mymediascanner/core/utils/debug_log.dart';
+import 'package:mymediascanner/presentation/providers/batch_editor_provider.dart';
 import 'package:mymediascanner/presentation/providers/scanner_provider.dart';
 import 'package:mymediascanner/presentation/screens/scanner/widgets/batch_scan_counter.dart';
 import 'package:mymediascanner/presentation/screens/scanner/widgets/manual_barcode_entry_dialog.dart';
@@ -165,6 +166,17 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
     _cameraController.start();
     debugLog('[MMS-scan] _resumeScanning exit (camera.start dispatched)');
   }
+
+  /// How many scans are actually sitting in the batch queue.
+  ///
+  /// `ScannerState.batchCount` is a separate tally that `toggleBatchMode`
+  /// resets to zero, while the batch session and its rows survive the
+  /// toggle — so it under-reports (the AppBar read "1 scanned" against
+  /// three queued rows). The editor's own list is the source of truth.
+  int get _queuedCount => ref.watch(batchEditorProvider).maybeWhen(
+        data: (state) => state.items.length,
+        orElse: () => 0,
+      );
 
   /// Queue a batch-mode scan result without blocking the synchronous
   /// `ref.listen` callback. The batch editor rolls the item back from
@@ -384,10 +396,10 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
         ),
         actions: [
           // Batch mode toggle
-          if (scannerState.batchMode && scannerState.batchCount > 0)
+          if (scannerState.batchMode && _queuedCount > 0)
             Padding(
               padding: const EdgeInsets.only(right: 4),
-              child: BatchScanCounter(count: scannerState.batchCount),
+              child: BatchScanCounter(count: _queuedCount),
             ),
           const Text(
             'Batch',
@@ -408,6 +420,8 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
   }
 
   Widget _buildCameraBody(ScannerState scannerState) {
+    final showsStatusStrip = scannerState.state == ScanState.lookingUp ||
+        (scannerState.batchMode && _queuedCount > 0);
     return Stack(
       children: [
         MobileScanner(
@@ -515,6 +529,20 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Dropped while a status strip is showing: the panel grows
+                // from the bottom, and keeping both pushes the hint up into
+                // the scan cutout. The strip already says what is happening.
+                if (!showsStatusStrip) ...[
+                  Text(
+                    'Position barcode in frame',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
                 const SaveTargetToggle(),
                 const SizedBox(height: 8),
                 const ScanModeToggle(),
@@ -527,11 +555,12 @@ class _MobileScanScreenState extends ConsumerState<MobileScanScreen>
                     color: Theme.of(context).colorScheme.primary,
                     onCancel: () => ref.read(scannerProvider.notifier).cancel(),
                   ),
-                ] else if (scannerState.batchMode &&
-                    scannerState.batchCount > 0) ...[
+                ] else if (scannerState.batchMode && _queuedCount > 0) ...[
                   const SizedBox(height: 12),
                   _StatusStrip(
-                    label: '${scannerState.batchCount} items queued to batch',
+                    label: _queuedCount == 1
+                        ? '1 item queued to batch'
+                        : '$_queuedCount items queued to batch',
                     color: Theme.of(context).colorScheme.primary,
                   ),
                 ],
