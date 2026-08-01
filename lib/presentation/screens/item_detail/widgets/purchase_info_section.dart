@@ -173,6 +173,9 @@ class _PurchaseInfoSectionState extends State<PurchaseInfoSection> {
           DropdownButtonFormField<ItemCondition?>(
             key: const Key('condition-dropdown'),
             initialValue: widget.item.condition,
+            // Without this the selected label keeps its natural width and
+            // overflows the field at large text scales.
+            isExpanded: true,
             decoration: const InputDecoration(
               labelText: 'Condition',
               border: OutlineInputBorder(),

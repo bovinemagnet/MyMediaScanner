@@ -334,5 +334,83 @@ void main() {
         expect(find.textContaining('MusicBrainz'), findsOneWidget);
       },
     );
+
+    // -----------------------------------------------------------------------
+    // AppBar crowding on a phone-width screen
+    // -----------------------------------------------------------------------
+
+    testWidgets(
+      'AppBar title keeps its width on a phone when the item has no cover',
+      (tester) async {
+        // A cover-less item shows the extra "Fetch cover art" action, which
+        // is the worst case: five IconButtons plus the back button leave the
+        // title barely any room on a 411dp phone.
+        tester.view.physicalSize = const Size(411, 798);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        _stubLendingProviders(loanRepo, borrowerRepo);
+        _stubNoRip(ripRepo);
+
+        await tester.pumpWidget(
+          _wrap(
+            item: _baseItem,
+            mediaRepo: mediaRepo,
+            loanRepo: loanRepo,
+            borrowerRepo: borrowerRepo,
+            ripRepo: ripRepo,
+            tagRepo: tagRepo,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final titleFinder = find.descendant(
+          of: find.byType(AppBar),
+          matching: find.text(_baseItem.title),
+        );
+        expect(titleFinder, findsOneWidget);
+        expect(
+          tester.getSize(titleFinder).width,
+          greaterThan(150),
+          reason: 'the actions must not squeeze the title off the toolbar',
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
+
+    // Android 14+ lets users scale text to 200%. At that size the purchase
+    // and location sections overflowed their rows.
+    for (final scale in const [1.3, 1.6, 2.0]) {
+      testWidgets(
+        'lays out without overflow at textScale $scale',
+        (tester) async {
+          tester.view.physicalSize = const Size(411, 798);
+          tester.view.devicePixelRatio = 1.0;
+          addTearDown(tester.view.resetPhysicalSize);
+          addTearDown(tester.view.resetDevicePixelRatio);
+
+          _stubLendingProviders(loanRepo, borrowerRepo);
+          _stubNoRip(ripRepo);
+
+          await tester.pumpWidget(
+            MediaQuery(
+              data: MediaQueryData(textScaler: TextScaler.linear(scale)),
+              child: _wrap(
+                item: _baseItem,
+                mediaRepo: mediaRepo,
+                loanRepo: loanRepo,
+                borrowerRepo: borrowerRepo,
+                ripRepo: ripRepo,
+                tagRepo: tagRepo,
+              ),
+            ),
+          );
+          await tester.pumpAndSettle();
+
+          expect(tester.takeException(), isNull);
+        },
+      );
+    }
   });
 }

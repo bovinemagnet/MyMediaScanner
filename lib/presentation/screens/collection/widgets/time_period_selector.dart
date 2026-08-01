@@ -81,6 +81,11 @@ class TimePeriodSelector extends ConsumerWidget {
                 ),
               );
             }).toList(),
+            // Without this the selected segment alone gives up ~24px to a
+            // leading checkmark, so its label is the only one the FittedBox
+            // shrinks — "12 months" renders visibly smaller than its
+            // neighbours. The filled background already signals selection.
+            showSelectedIcon: false,
             selected: {selected},
             onSelectionChanged: (newSelection) {
               ref
