@@ -6,6 +6,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
 import 'package:mymediascanner/domain/entities/metadata_result.dart';
@@ -29,7 +30,15 @@ class WishlistSuggestionsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: isDesktop
           ? null
-          : AppBar(title: const Text('Wishlist suggestions')),
+          : AppBar(
+              title: const Text('Wishlist suggestions'),
+              // Own shell branch entered from the dashboard, so there is no
+              // route to pop and no automatic back button.
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => context.go('/'),
+              ),
+            ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Column(

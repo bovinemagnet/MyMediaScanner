@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/entities/media_type.dart';
@@ -125,4 +126,48 @@ void main() {
     final status = captured[1] as OwnershipStatus;
     expect(status, OwnershipStatus.wishlist);
   });
+
+  testWidgets(
+    'mobile AppBar offers a way back to the dashboard',
+    (tester) async {
+      // Reached from the dashboard recommendations section, and its own
+      // shell branch — so nothing to pop and no automatic back button.
+      final router = GoRouter(
+        initialLocation: '/wishlist-suggestions',
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (_, _) => const Scaffold(body: Text('dashboard')),
+          ),
+          GoRoute(
+            path: '/wishlist-suggestions',
+            builder: (_, _) => const WishlistSuggestionsScreen(),
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            wishlistSuggestionsProvider.overrideWith((ref) async => const []),
+            saveMediaItemUseCaseProvider.overrideWithValue(saveUseCase),
+          ],
+          child: MaterialApp.router(routerConfig: router),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final back = find.descendant(
+        of: find.byType(AppBar),
+        matching: find.byIcon(Icons.arrow_back),
+      );
+      expect(back, findsOneWidget);
+
+      await tester.tap(back);
+      await tester.pumpAndSettle();
+
+      expect(find.text('dashboard'), findsOneWidget);
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.android),
+  );
 }

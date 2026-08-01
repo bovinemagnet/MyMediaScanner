@@ -56,7 +56,15 @@ class WishlistScreen extends ConsumerWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Wishlist')),
+      appBar: AppBar(
+        title: const Text('Wishlist'),
+        // Own shell branch entered from the Library AppBar, so there is no
+        // route to pop and no automatic back button. Same as ShelvesScreen.
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/collection'),
+        ),
+      ),
       body: body,
     );
   }

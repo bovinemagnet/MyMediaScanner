@@ -136,6 +136,12 @@ class _BatchPlaceholderScreenState
           ? null
           : AppBar(
               title: const Text('Batch Editor'),
+              // Own shell branch entered from the scan screen, so there is
+              // no route to pop and no automatic back button.
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => context.go('/scan'),
+              ),
               actions: [
                 IconButton(
                   icon: const Icon(Icons.undo),

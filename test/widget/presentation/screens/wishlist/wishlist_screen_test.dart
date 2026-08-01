@@ -35,6 +35,10 @@ Widget _wrap(IMediaItemRepository repo, {GoRouter? router}) {
             builder: (_, _) => const WishlistScreen(),
           ),
           GoRoute(
+            path: '/collection',
+            builder: (_, _) => const Scaffold(body: Text('collection')),
+          ),
+          GoRoute(
             path: '/collection/item/:id',
             builder: (_, state) =>
                 Scaffold(body: Text('detail:${state.pathParameters['id']}')),
@@ -115,4 +119,36 @@ void main() {
     expect(captured.ownershipStatus, OwnershipStatus.owned);
     expect(captured.acquiredAt, isNotNull);
   });
+
+  testWidgets(
+    'mobile AppBar offers a way back to the collection',
+    (tester) async {
+      // /wishlist is its own shell branch entered from the Library AppBar,
+      // so there is no route to pop and GoRouter renders no back button.
+      // Without an explicit one the only way out is the bottom nav — the
+      // same reason ShelvesScreen carries a leading back button.
+      tester.view.physicalSize = const Size(411, 798);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final repo = MockMediaItemRepository();
+      when(() => repo.watchByStatus(OwnershipStatus.wishlist))
+          .thenAnswer((_) => Stream.value([_wishlistItem()]));
+
+      await tester.pumpWidget(_wrap(repo));
+      await tester.pumpAndSettle();
+
+      final back = find.descendant(
+        of: find.byType(AppBar),
+        matching: find.byIcon(Icons.arrow_back),
+      );
+      expect(back, findsOneWidget);
+
+      await tester.tap(back);
+      await tester.pumpAndSettle();
+
+      expect(find.text('collection'), findsOneWidget);
+    },
+  );
 }
