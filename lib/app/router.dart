@@ -32,6 +32,7 @@ import 'package:mymediascanner/presentation/screens/about/about_screen.dart';
 import 'package:mymediascanner/presentation/screens/borrowers/borrowers_screen.dart';
 import 'package:mymediascanner/presentation/screens/borrowers/borrower_detail_screen.dart';
 import 'package:mymediascanner/presentation/widgets/app_scaffold.dart';
+import 'package:mymediascanner/presentation/widgets/branch_back_guard.dart';
 import 'package:mymediascanner/domain/entities/tmdb_bridge_bucket.dart';
 import 'package:mymediascanner/presentation/screens/tmdb/tmdb_bucket_screen.dart';
 import 'package:mymediascanner/presentation/screens/tmdb/tmdb_resolve_conflicts_screen.dart';
@@ -96,7 +97,8 @@ final router = GoRouter(
           routes: [
             GoRoute(
               path: '/',
-              builder: (context, state) => const DashboardScreen(),
+              builder: (context, state) =>
+                  const BranchBackGuard(child: DashboardScreen()),
             ),
           ],
         ),
@@ -106,7 +108,8 @@ final router = GoRouter(
           routes: [
             GoRoute(
               path: '/collection',
-              builder: (context, state) => const CollectionScreen(),
+              builder: (context, state) =>
+                  const BranchBackGuard(child: CollectionScreen()),
               routes: [
                 GoRoute(
                   path: 'statistics',
@@ -148,7 +151,8 @@ final router = GoRouter(
           routes: [
             GoRoute(
               path: '/scan',
-              builder: (context, state) => const ScannerScreen(),
+              builder: (context, state) =>
+                  const BranchBackGuard(child: ScannerScreen()),
               routes: [
                 GoRoute(
                   path: 'confirm',
@@ -172,7 +176,8 @@ final router = GoRouter(
           routes: [
             GoRoute(
               path: '/shelves',
-              builder: (context, state) => const ShelvesScreen(),
+              builder: (context, state) =>
+                  const BranchBackGuard(child: ShelvesScreen()),
               routes: [
                 GoRoute(
                   path: ':id',
@@ -190,8 +195,8 @@ final router = GoRouter(
           routes: [
             GoRoute(
               path: '/batch',
-              builder: (context, state) =>
-                  const BatchPlaceholderScreen(),
+              builder: (context, state) => const BranchBackGuard(
+                  child: BatchPlaceholderScreen()),
               routes: [
                 GoRoute(
                   path: 'history',
@@ -209,7 +214,8 @@ final router = GoRouter(
           routes: [
             GoRoute(
               path: '/insights',
-              builder: (context, state) => const StatisticsScreen(),
+              builder: (context, state) =>
+                  const BranchBackGuard(child: StatisticsScreen()),
             ),
           ],
         ),
@@ -219,7 +225,8 @@ final router = GoRouter(
           routes: [
             GoRoute(
               path: '/settings',
-              builder: (context, state) => const SettingsScreen(),
+              builder: (context, state) =>
+                  const BranchBackGuard(child: SettingsScreen()),
               routes: [
                 GoRoute(
                   path: 'postgres',
@@ -291,7 +298,8 @@ final router = GoRouter(
           routes: [
             GoRoute(
               path: '/rips',
-              builder: (context, state) => const RipsScreen(),
+              builder: (context, state) =>
+                  const BranchBackGuard(child: RipsScreen()),
             ),
           ],
         ),
@@ -301,7 +309,8 @@ final router = GoRouter(
           routes: [
             GoRoute(
               path: '/wishlist',
-              builder: (context, state) => const WishlistScreen(),
+              builder: (context, state) =>
+                  const BranchBackGuard(child: WishlistScreen()),
             ),
           ],
         ),
@@ -311,7 +320,8 @@ final router = GoRouter(
           routes: [
             GoRoute(
               path: '/locations',
-              builder: (context, state) => const LocationBrowserScreen(),
+              builder: (context, state) => const BranchBackGuard(
+                  child: LocationBrowserScreen()),
             ),
           ],
         ),
@@ -321,7 +331,8 @@ final router = GoRouter(
           routes: [
             GoRoute(
               path: '/series',
-              builder: (context, state) => const SeriesListScreen(),
+              builder: (context, state) =>
+                  const BranchBackGuard(child: SeriesListScreen()),
               routes: [
                 GoRoute(
                   path: ':id',
@@ -339,8 +350,8 @@ final router = GoRouter(
           routes: [
             GoRoute(
               path: '/wishlist-suggestions',
-              builder: (context, state) =>
-                  const WishlistSuggestionsScreen(),
+              builder: (context, state) => const BranchBackGuard(
+                  child: WishlistSuggestionsScreen()),
             ),
           ],
         ),
@@ -351,8 +362,9 @@ final router = GoRouter(
             GoRoute(
               path: '/tmdb/watchlist',
               pageBuilder: (context, state) => const NoTransitionPage(
-                  child: TmdbBucketScreen(
-                      bucket: TmdbBridgeBucket.watchlist)),
+                  child: BranchBackGuard(
+                      child: TmdbBucketScreen(
+                          bucket: TmdbBridgeBucket.watchlist))),
             ),
           ],
         ),
@@ -363,8 +375,9 @@ final router = GoRouter(
             GoRoute(
               path: '/tmdb/rated',
               pageBuilder: (context, state) => const NoTransitionPage(
-                  child: TmdbBucketScreen(
-                      bucket: TmdbBridgeBucket.rated)),
+                  child: BranchBackGuard(
+                      child: TmdbBucketScreen(
+                          bucket: TmdbBridgeBucket.rated))),
             ),
           ],
         ),
@@ -375,8 +388,9 @@ final router = GoRouter(
             GoRoute(
               path: '/tmdb/favourites',
               pageBuilder: (context, state) => const NoTransitionPage(
-                  child: TmdbBucketScreen(
-                      bucket: TmdbBridgeBucket.favourite)),
+                  child: BranchBackGuard(
+                      child: TmdbBucketScreen(
+                          bucket: TmdbBridgeBucket.favourite))),
             ),
           ],
         ),
@@ -387,7 +401,9 @@ final router = GoRouter(
             GoRoute(
               path: '/tmdb/saved',
               pageBuilder: (context, state) => const NoTransitionPage(
-                  child: TmdbBucketScreen(bucket: TmdbBridgeBucket.saved)),
+                  child: BranchBackGuard(
+                      child: TmdbBucketScreen(
+                          bucket: TmdbBridgeBucket.saved))),
             ),
           ],
         ),
@@ -399,7 +415,7 @@ final router = GoRouter(
             GoRoute(
               path: '/tmdb/conflicts',
               pageBuilder: (context, state) => const NoTransitionPage(
-                  child: TmdbResolveConflictsScreen()),
+                  child: BranchBackGuard(child: TmdbResolveConflictsScreen())),
             ),
           ],
         ),
