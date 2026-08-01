@@ -104,26 +104,15 @@ class AppScaffold extends StatelessWidget {
     final useSidebar = width >= AppConstants.compactBreakpoint;
     final isDesktop = PlatformCapability.isDesktop;
 
-    // Each branch roots its own navigator, so once a branch's nested routes
-    // have popped there is nothing left for the root navigator to pop and
-    // Android back closes the app — even from Settings or Shelves. Send it
-    // to the branch the screen was entered from instead. Nested routes
-    // (item detail, shelf detail) still pop normally: their branch
-    // navigator handles back before it ever reaches this PopScope.
+    // The system-back guard is NOT here: a PopScope wrapping the shell is
+    // never consulted on Android 15+, because the platform's back callback
+    // only reaches routes inside the current branch's navigator. It lives
+    // in `BranchBackGuard`, applied per branch root in `app/router.dart`.
     Widget wrapWithShortcuts(Widget scaffold) {
-      final backBranch = shellIndexToBackBranch(navigationShell.currentIndex);
-      final guarded = PopScope(
-        canPop: backBranch == null,
-        onPopInvokedWithResult: (didPop, _) {
-          if (didPop || backBranch == null) return;
-          navigationShell.goBranch(backBranch);
-        },
-        child: scaffold,
-      );
-      if (!isDesktop) return guarded;
+      if (!isDesktop) return scaffold;
       return DesktopShortcuts(
         onSwitchTab: _onDestinationSelected,
-        child: guarded,
+        child: scaffold,
       );
     }
 
