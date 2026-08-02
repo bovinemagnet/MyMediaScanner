@@ -153,12 +153,30 @@ reached from within one of those:
 
 Item detail routes are nested under collection: `/collection/item/:id`
 
-Two mappings in `presentation/widgets/app_scaffold.dart` must be kept in
-step with this branch order — `shellIndexToMobileIndex` (which bottom-nav
-tab highlights) and `shellIndexToBackBranch` (where system back goes).
-A branch with no entry in either silently falls back to Home, which reads
-as the nav highlighting an unrelated tab. Branch-root screens also carry
-an explicit `leading` back button, since there is no route to pop.
+Adding a branch means touching three places, and two of them fail
+silently if you miss them:
+
+1. Both mappings in `presentation/widgets/app_scaffold.dart` —
+   `shellIndexToMobileIndex` (which bottom-nav tab highlights) and
+   `shellIndexToBackBranch` (where system back goes). A branch with no
+   entry falls back to Home, which reads as the nav highlighting an
+   unrelated tab.
+2. Wrap the branch's **root** route builder in `BranchBackGuard` in
+   `app/router.dart`. This is what consults `shellIndexToBackBranch`;
+   without it, system back closes the app from that branch on Android
+   15+. Do not "simplify" this by hoisting the guard into `AppScaffold`
+   — a `PopScope` around the shell is not consulted on Android 15+,
+   because the platform's `OnBackInvokedCallback` only reaches routes
+   inside the current branch's navigator. It *is* consulted on the
+   legacy pop channel, so the mistake passes review, passes the widget
+   tests, and passes on an older handset. Nested routes (item detail,
+   shelf detail) need no guard — their branch navigator pops them first.
+3. Give the branch-root screen an explicit `leading` back button, since
+   there is no route to pop.
+
+Widget tests cannot catch a misplaced guard: the test binding simulates
+the legacy pop channel, where placement does not matter. Verify back
+navigation on a real Android 15+ device or emulator.
 
 ## Design System
 
