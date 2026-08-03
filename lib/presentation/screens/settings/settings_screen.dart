@@ -516,7 +516,10 @@ class _PaletteCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          height: 88,
+          // A minimum rather than a fixed height: the palette name scales
+          // with text size while the swatches do not, so a hard 88 clipped
+          // and overflowed the tile by ~14px at 1.5x.
+          constraints: const BoxConstraints(minHeight: 88),
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             color: surface,
@@ -657,6 +660,36 @@ class _ReplayGainSection extends ConsumerWidget {
     final preamp = ref.watch(replayGainPreampProvider);
     final preventClipping = ref.watch(preventClippingProvider);
 
+    final modeSelector = SegmentedButton<ReplayGainMode>(
+      segments: const [
+        ButtonSegment(
+          value: ReplayGainMode.off,
+          label: Text('Off'),
+        ),
+        ButtonSegment(
+          value: ReplayGainMode.track,
+          label: Text('Track'),
+        ),
+        ButtonSegment(
+          value: ReplayGainMode.album,
+          label: Text('Album'),
+        ),
+      ],
+      selected: {mode},
+      onSelectionChanged: (selection) {
+        ref.read(replayGainModeProvider.notifier).setMode(selection.first);
+      },
+      showSelectedIcon: false,
+    );
+
+    // The segment labels scale with text size, and as a ListTile `trailing`
+    // the selector claims its intrinsic width before the title column gets
+    // what is left. At 1.5x on a phone that left the title about 110px, so
+    // "ReplayGain Mode" wrapped one or two characters per line and the row
+    // overflowed. Past ~1.3x there is no longer room for both side by side.
+    final textScale = MediaQuery.textScalerOf(context).scale(14) / 14;
+    final stackSelector = textScale > 1.3;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -665,30 +698,13 @@ class _ReplayGainSection extends ConsumerWidget {
           contentPadding: EdgeInsets.zero,
           title: const Text('ReplayGain Mode'),
           subtitle: const Text('Normalise track loudness'),
-          trailing: SegmentedButton<ReplayGainMode>(
-            segments: const [
-              ButtonSegment(
-                value: ReplayGainMode.off,
-                label: Text('Off'),
-              ),
-              ButtonSegment(
-                value: ReplayGainMode.track,
-                label: Text('Track'),
-              ),
-              ButtonSegment(
-                value: ReplayGainMode.album,
-                label: Text('Album'),
-              ),
-            ],
-            selected: {mode},
-            onSelectionChanged: (selection) {
-              ref
-                  .read(replayGainModeProvider.notifier)
-                  .setMode(selection.first);
-            },
-            showSelectedIcon: false,
-          ),
+          trailing: stackSelector ? null : modeSelector,
         ),
+        if (stackSelector)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: modeSelector,
+          ),
 
         // Pre-amp
         ListTile(

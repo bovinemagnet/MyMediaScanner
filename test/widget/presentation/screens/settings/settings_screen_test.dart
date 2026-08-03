@@ -96,6 +96,7 @@ class _FakePreventClippingNotifier extends PreventClippingNotifier {
 Widget _buildSettings({
   MockFlutterSecureStorage? storage,
   ThemeChoiceNotifier Function()? themeNotifierFactory,
+  double textScale = 1.0,
 }) {
   final mockStorage = storage ?? MockFlutterSecureStorage();
   when(() => mockStorage.read(key: any(named: 'key')))
@@ -121,8 +122,11 @@ Widget _buildSettings({
           .overrideWith(_FakeReplayGainPreampNotifier.new),
       preventClippingProvider.overrideWith(_FakePreventClippingNotifier.new),
     ],
-    child: const MaterialApp(
-      home: SettingsScreen(),
+    child: MaterialApp(
+      home: MediaQuery(
+        data: MediaQueryData(textScaler: TextScaler.linear(textScale)),
+        child: const SettingsScreen(),
+      ),
     ),
   );
 }
@@ -331,6 +335,37 @@ void main() {
 
     final title = tester.widget<Text>(find.text('Theme'));
     expect(title.maxLines, 1);
+  });
+
+  testWidgets(
+      'ReplayGain Mode label keeps a usable width at 150% text scale',
+      (tester) async {
+    // A phone-width surface — the segmented button and the label are only
+    // in contention when the row is narrow.
+    tester.view.physicalSize = const Size(411 * 3, 900 * 3);
+    tester.view.devicePixelRatio = 3.0;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(_buildSettings(textScale: 1.5));
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.byType(SegmentedButton<ReplayGainMode>),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    // The segmented button's labels scale too, and as `trailing` it takes
+    // its intrinsic width before the title column gets what is left. At
+    // 1.5x that left roughly 110px, so "ReplayGain Mode" wrapped one or
+    // two characters per line. Anything under half the row is unreadable.
+    final width = tester.getSize(find.text('ReplayGain Mode')).width;
+    expect(
+      width,
+      greaterThan(205),
+      reason: 'label squeezed to ${width}px — it will wrap mid-word',
+    );
   });
 
   // -------------------------------------------------------------------------
