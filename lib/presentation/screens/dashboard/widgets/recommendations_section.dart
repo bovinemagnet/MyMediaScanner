@@ -73,49 +73,54 @@ class _RecommendationTile extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: rec.item.coverUrl != null
-          ? ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: Image.network(
-                rec.item.coverUrl!,
-                width: 36,
-                height: 54,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => const SizedBox(width: 36),
-              ),
-            )
-          : const Icon(Icons.movie_outlined),
-      title: Text(rec.item.title,
-          maxLines: 1, overflow: TextOverflow.ellipsis),
-      subtitle: Wrap(
-        spacing: 4,
-        runSpacing: 4,
-        children: [
-          for (final reason in rec.reasons.take(2))
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: colors.primary.withValues(alpha: 0.12),
+    // The enclosing section paints its own background, so the tile needs a
+    // transparent Material of its own for its ink splash to be visible.
+    return Material(
+      type: MaterialType.transparency,
+      child: ListTile(
+        contentPadding: EdgeInsets.zero,
+        leading: rec.item.coverUrl != null
+            ? ClipRRect(
                 borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                reason.label,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: colors.primary,
+                child: Image.network(
+                  rec.item.coverUrl!,
+                  width: 36,
+                  height: 54,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => const SizedBox(width: 36),
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              )
+            : const Icon(Icons.movie_outlined),
+        title: Text(rec.item.title,
+            maxLines: 1, overflow: TextOverflow.ellipsis),
+        subtitle: Wrap(
+          spacing: 4,
+          runSpacing: 4,
+          children: [
+            for (final reason in rec.reasons.take(2))
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: colors.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  reason.label,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: colors.primary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-            ),
-        ],
+          ],
+        ),
+        trailing: Text('${(rec.score * 100).round()}',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: colors.onSurfaceVariant,
+            )),
+        onTap: () => context.go('/collection/item/${rec.item.id}'),
       ),
-      trailing: Text('${(rec.score * 100).round()}',
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: colors.onSurfaceVariant,
-          )),
-      onTap: () => context.go('/collection/item/${rec.item.id}'),
     );
   }
 }
