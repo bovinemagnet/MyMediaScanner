@@ -6,6 +6,7 @@ import 'package:mymediascanner/presentation/providers/text_scale_provider.dart';
 import 'package:mymediascanner/app/router.dart';
 import 'package:mymediascanner/app/theme/app_theme.dart';
 import 'package:mymediascanner/core/constants/app_constants.dart';
+import 'package:mymediascanner/core/utils/text_scale.dart';
 import 'package:mymediascanner/domain/entities/tmdb_deep_link_event.dart';
 import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/providers/settings_provider.dart';
@@ -109,11 +110,10 @@ class _AppState extends ConsumerState<App> {
       builder: (context, child) {
         if (child == null) return const SizedBox.shrink();
         final mq = MediaQuery.of(context);
-        final platformScaler = mq.textScaler;
-        final combined =
-            platformScaler.scale(textScale) / platformScaler.scale(1.0);
         return MediaQuery(
-          data: mq.copyWith(textScaler: TextScaler.linear(combined)),
+          data: mq.copyWith(
+            textScaler: stackTextScale(mq.textScaler, textScale),
+          ),
           child: child,
         );
       },

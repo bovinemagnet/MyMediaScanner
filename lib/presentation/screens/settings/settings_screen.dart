@@ -1017,7 +1017,8 @@ class _TextScaleSection extends ConsumerWidget {
           const SizedBox(height: 4),
           Text(
             'Stacks on top of the platform text-size setting so the whole '
-            'app scales together with the rest of your device.',
+            'app scales together with the rest of your device. The combined '
+            'size is capped so layouts stay usable.',
             style: theme.textTheme.bodySmall
                 ?.copyWith(color: colors.onSurfaceVariant),
           ),
