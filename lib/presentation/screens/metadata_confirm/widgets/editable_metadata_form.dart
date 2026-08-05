@@ -774,7 +774,14 @@ class _EditableMetadataFormState extends State<EditableMetadataForm> {
               else
                 Icon(widget.primarySaveIcon, size: 20),
               const SizedBox(width: 8),
-              Text(_saving ? 'Saving…' : widget.primarySaveLabel),
+              // Flexible so a long label ellipsises instead of overflowing
+              // the button once the user scales text up.
+              Flexible(
+                child: Text(
+                  _saving ? 'Saving…' : widget.primarySaveLabel,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
         ),

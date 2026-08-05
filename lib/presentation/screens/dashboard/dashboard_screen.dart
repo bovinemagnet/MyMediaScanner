@@ -287,21 +287,26 @@ class _InProgressTile extends StatelessWidget {
       label = 'In progress';
     }
 
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      title: Text(item.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: theme.textTheme.bodySmall),
-          const SizedBox(height: 4),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(3),
-            child: LinearProgressIndicator(value: ratio, minHeight: 4),
-          ),
-        ],
+    // The enclosing section paints its own background, so the tile needs a
+    // transparent Material of its own for its ink splash to be visible.
+    return Material(
+      type: MaterialType.transparency,
+      child: ListTile(
+        contentPadding: EdgeInsets.zero,
+        title: Text(item.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: theme.textTheme.bodySmall),
+            const SizedBox(height: 4),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(3),
+              child: LinearProgressIndicator(value: ratio, minHeight: 4),
+            ),
+          ],
+        ),
+        onTap: () => GoRouter.of(context).go('/collection/item/${item.id}'),
       ),
-      onTap: () => GoRouter.of(context).go('/collection/item/${item.id}'),
     );
   }
 }
