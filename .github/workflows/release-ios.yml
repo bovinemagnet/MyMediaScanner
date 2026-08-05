@@ -18,6 +18,14 @@ jobs:
     permissions:
       contents: write
 
+    # Signing switches on only when the secrets exist, the same way
+    # release-android.yml gates on ANDROID_KEYSTORE_BASE64. Without them the
+    # job still proves the app compiles, which is all it did before.
+    env:
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      IOS_DISTRIBUTION_CERT_BASE64: ${{ secrets.IOS_DISTRIBUTION_CERT_BASE64 }}
+      APPSTORE_API_KEY_ID: ${{ secrets.APPSTORE_API_KEY_ID }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -63,8 +71,16 @@ jobs:
       - name: Run tests
         run: flutter test
 
-      - name: Build iOS release (no codesign)
-        run: flutter build ios --release --no-codesign
+      - name: Report signing mode
+        id: signing
+        run: |
+          if [ -n "$IOS_DISTRIBUTION_CERT_BASE64" ] && [ -n "$APPLE_TEAM_ID" ]; then
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+            echo "Signing enabled — building an uploadable IPA."
+          else
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No iOS signing secrets set; building unsigned. See docs/IOS_RELEASE.md."
+          fi
 
       - name: Determine version
         id: version
@@ -72,28 +88,144 @@ jobs:
           VERSION=$(grep '^\s*version:' pubspec.yaml | sed 's/.*version:[[:space:]]*//' | sed 's/+.*//' | tr -d ' ')
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
+      # ---------------------------------------------------------------- signed
+
+      - name: Import signing certificate and profile
+        if: steps.signing.outputs.signed == 'true'
+        env:
+          CERT_PASSWORD: ${{ secrets.IOS_DISTRIBUTION_CERT_PASSWORD }}
+          PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+        run: |
+          KEYCHAIN_PASSWORD=$(uuidgen)
+          KEYCHAIN=$RUNNER_TEMP/signing.keychain-db
+
+          echo "$IOS_DISTRIBUTION_CERT_BASE64" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          echo "$PROFILE_BASE64" | base64 --decode > "$RUNNER_TEMP/profile.mobileprovision"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security import "$RUNNER_TEMP/cert.p12" -k "$KEYCHAIN" \
+            -P "$CERT_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security
+          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+            -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" > /dev/null
+          # Keep the login keychain in the search list so system roots resolve.
+          security list-keychain -d user -s "$KEYCHAIN" login.keychain-db
+
+          PROFILES="$HOME/Library/MobileDevice/Provisioning Profiles"
+          mkdir -p "$PROFILES"
+          cp "$RUNNER_TEMP/profile.mobileprovision" "$PROFILES/"
+
+          rm -f "$RUNNER_TEMP/cert.p12"
+
+      - name: Write signing configuration
+        if: steps.signing.outputs.signed == 'true'
+        env:
+          PROFILE_NAME: ${{ secrets.IOS_PROVISIONING_PROFILE_NAME }}
+        run: |
+          cat > ios/Flutter/Signing.xcconfig <<EOF
+          DEVELOPMENT_TEAM = ${APPLE_TEAM_ID}
+          CODE_SIGN_STYLE = Manual
+          CODE_SIGN_IDENTITY[sdk=iphoneos*] = Apple Distribution
+          PROVISIONING_PROFILE_SPECIFIER = ${PROFILE_NAME}
+          EOF
+
+          BUNDLE_ID=com.paulsnow.mymediascanner
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+            <dict>
+              <key>method</key><string>app-store-connect</string>
+              <key>teamID</key><string>${APPLE_TEAM_ID}</string>
+              <key>signingStyle</key><string>manual</string>
+              <key>uploadSymbols</key><true/>
+              <key>provisioningProfiles</key>
+              <dict>
+                <key>${BUNDLE_ID}</key><string>${PROFILE_NAME}</string>
+              </dict>
+            </dict>
+          </plist>
+          EOF
+          plutil -lint "$RUNNER_TEMP/ExportOptions.plist"
+
+      # TestFlight rejects a build number it has already seen, so take it from
+      # the run number, which only ever increases.
+      - name: Build signed IPA
+        if: steps.signing.outputs.signed == 'true'
+        id: signed_ipa
+        env:
+          APP_VERSION: ${{ steps.version.outputs.version }}
+          BUILD_NUMBER: ${{ github.run_number }}
+        run: |
+          flutter build ipa --release \
+            --build-number="$BUILD_NUMBER" \
+            --export-options-plist="$RUNNER_TEMP/ExportOptions.plist"
+
+          SRC=$(ls build/ios/ipa/*.ipa | head -1)
+          IPA_NAME="MyMediaScanner-${APP_VERSION}-ios.ipa"
+          mv "$SRC" "build/ios/ipa/${IPA_NAME}"
+          echo "ipa_name=${IPA_NAME}" >> "$GITHUB_OUTPUT"
+          echo "ipa_path=build/ios/ipa/${IPA_NAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload to TestFlight
+        if: steps.signing.outputs.signed == 'true' && env.APPSTORE_API_KEY_ID != ''
+        working-directory: ios
+        env:
+          APPSTORE_API_ISSUER_ID: ${{ secrets.APPSTORE_API_ISSUER_ID }}
+          APPSTORE_API_PRIVATE_KEY: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+        run: |
+          gem install fastlane --no-document
+          fastlane beta
+
+      # -------------------------------------------------------------- unsigned
+
+      - name: Build iOS release (no codesign)
+        if: steps.signing.outputs.signed != 'true'
+        run: flutter build ios --release --no-codesign
+
       - name: Create unsigned IPA
-        id: ipa
+        if: steps.signing.outputs.signed != 'true'
+        id: unsigned_ipa
+        env:
+          APP_VERSION: ${{ steps.version.outputs.version }}
         run: |
           APP_NAME="MyMediaScanner"
-          VERSION="${{ steps.version.outputs.version }}"
+          VERSION="${APP_VERSION}"
           IPA_NAME="${APP_NAME}-${VERSION}-ios-unsigned.ipa"
-          BUILD_DIR="build/ios/iphoneos"
-          APP_PATH="${BUILD_DIR}/Runner.app"
           PAYLOAD_DIR="build/Payload"
           mkdir -p "${PAYLOAD_DIR}"
-          cp -R "${APP_PATH}" "${PAYLOAD_DIR}/"
+          cp -R "build/ios/iphoneos/Runner.app" "${PAYLOAD_DIR}/"
           cd build
           zip -r -q "${IPA_NAME}" Payload/
           cd ..
           echo "ipa_name=${IPA_NAME}" >> "$GITHUB_OUTPUT"
           echo "ipa_path=build/${IPA_NAME}" >> "$GITHUB_OUTPUT"
 
+      # ----------------------------------------------------------- publication
+
+      - name: Collect artefact paths
+        id: artefact
+        env:
+          SIGNED: ${{ steps.signing.outputs.signed }}
+          SIGNED_NAME: ${{ steps.signed_ipa.outputs.ipa_name }}
+          SIGNED_PATH: ${{ steps.signed_ipa.outputs.ipa_path }}
+          UNSIGNED_NAME: ${{ steps.unsigned_ipa.outputs.ipa_name }}
+          UNSIGNED_PATH: ${{ steps.unsigned_ipa.outputs.ipa_path }}
+        run: |
+          if [ "$SIGNED" = "true" ]; then
+            echo "name=${SIGNED_NAME}" >> "$GITHUB_OUTPUT"
+            echo "path=${SIGNED_PATH}" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=${UNSIGNED_NAME}" >> "$GITHUB_OUTPUT"
+            echo "path=${UNSIGNED_PATH}" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Upload IPA artefact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.ipa.outputs.ipa_name }}
-          path: ${{ steps.ipa.outputs.ipa_path }}
+          name: ${{ steps.artefact.outputs.name }}
+          path: ${{ steps.artefact.outputs.path }}
           retention-days: 30
 
       - name: Create GitHub Release
@@ -102,5 +234,5 @@ jobs:
         with:
           draft: false
           prerelease: false
-          files: ${{ steps.ipa.outputs.ipa_path }}
+          files: ${{ steps.artefact.outputs.path }}
           generate_release_notes: true

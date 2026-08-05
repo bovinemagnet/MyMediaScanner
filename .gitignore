@@ -35,6 +35,8 @@ migrate_working_dir/
 # Flutter/Dart/Pub related
 **/doc/api/
 **/ios/Flutter/.last_build_id
+# Local code-signing settings; see ios/Flutter/Signing.xcconfig.example
+**/ios/Flutter/Signing.xcconfig
 .dart_tool/
 .flutter-plugins-dependencies
 # Local-only ML Kit stub toggle for iOS simulator builds (see scripts/ios_sim.sh)

@@ -255,6 +255,8 @@ npx antora local-antora-playbook-search.yml
 
 Android releases go to Google Play. See link:docs/PLAY_STORE_RELEASE.md[docs/PLAY_STORE_RELEASE.md] for the full runbook -- upload keystore, Play Console declarations, store graphics, and the tag-and-publish workflow.
 
+iOS releases go to TestFlight and the App Store. See link:docs/IOS_RELEASE.md[docs/IOS_RELEASE.md] -- Developer Program enrolment, signing, the privacy manifest, App Store Connect API key, and the tag-and-publish workflow.
+
 == Privacy
 
 MyMediaScanner has no servers and no accounts. Your collection is stored locally on your device, and the app contains no analytics, advertising, or crash-reporting SDKs.
