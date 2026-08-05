@@ -251,6 +251,16 @@ npx antora local-antora-playbook-search.yml
 # Output: target/public/
 ----
 
+== Releasing
+
+Android releases go to Google Play. See link:docs/PLAY_STORE_RELEASE.md[docs/PLAY_STORE_RELEASE.md] for the full runbook -- upload keystore, Play Console declarations, store graphics, and the tag-and-publish workflow.
+
+== Privacy
+
+MyMediaScanner has no servers and no accounts. Your collection is stored locally on your device, and the app contains no analytics, advertising, or crash-reporting SDKs.
+
+Full policy: https://bovinemagnet.github.io/MyMediaScanner/privacy-policy.html[Privacy Policy] -- source at link:{url-docs}/privacy-policy.adoc[privacy-policy.adoc], rendered to `docs/privacy-policy.html` by `tools/render-privacy-policy.sh`.
+
 == Licence
 
 Private project. All rights reserved.

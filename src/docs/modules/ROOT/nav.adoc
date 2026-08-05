@@ -26,3 +26,4 @@
 * xref:api-configuration.adoc[API Configuration]
 * xref:integrations.adoc[Metadata Integrations]
 * xref:testing.adoc[Testing]
+* xref:privacy-policy.adoc[Privacy Policy]

@@ -1,4 +1,4 @@
-name: Release Android APK
+name: Release Android
 
 on:
   push:
@@ -24,6 +24,14 @@ on:
         options:
           - 'false'
           - 'true'
+      publish_to_play:
+        description: 'Upload the AAB to the Play internal testing track'
+        required: true
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
 
 env:
   FLUTTER_CHANNEL: stable
@@ -31,11 +39,17 @@ env:
 
 jobs:
   build-android-apk:
-    name: Build Android APK
+    name: Build Android APK + AAB
     runs-on: ubuntu-latest
 
     permissions:
       contents: write
+
+    env:
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+
+    outputs:
+      aab_name: ${{ steps.rename_aab.outputs.aab_name }}
 
     steps:
       - name: Checkout repository
@@ -90,6 +104,26 @@ jobs:
       - name: Run tests
         run: flutter test
 
+      # Without this the release build falls back to debug keys, which Play
+      # rejects — android/app/build.gradle.kts fails the build outright when
+      # CI is set and key.properties is missing. See docs/PLAY_STORE_RELEASE.md.
+      - name: Configure release signing
+        if: env.ANDROID_KEYSTORE_BASE64 != ''
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
+          cat > android/key.properties <<'EOF'
+          storeFile=upload-keystore.jks
+          EOF
+          {
+            echo "storePassword=${KEYSTORE_PASSWORD}"
+            echo "keyAlias=${KEY_ALIAS}"
+            echo "keyPassword=${KEY_PASSWORD}"
+          } >> android/key.properties
+
       - name: Determine build flavor
         id: flavor
         run: |
@@ -126,6 +160,40 @@ jobs:
           path: ${{ steps.rename_apk.outputs.apk_path }}
           retention-days: 30
 
+      # Play accepts app bundles, not APKs. The APK above stays for direct
+      # sideloading from the GitHub Release.
+      - name: Build release App Bundle
+        run: flutter build appbundle --release --flavor ${{ steps.flavor.outputs.flavor }}
+
+      - name: Locate and rename AAB
+        id: rename_aab
+        run: |
+          FLAVOR="${{ steps.flavor.outputs.flavor }}"
+          VERSION=$(grep '^\s*version:' pubspec.yaml | sed 's/.*version:[[:space:]]*//' | sed 's/+.*//' | tr -d ' ')
+          AAB_DIR="build/app/outputs/bundle/${FLAVOR}Release"
+          AAB_SRC=$(find "$AAB_DIR" -maxdepth 1 -name "app-${FLAVOR}-release.aab" | head -n 1)
+          if [ -z "$AAB_SRC" ]; then
+            echo "ERROR: Release AAB not found in $AAB_DIR" >&2
+            ls -la "$AAB_DIR" >&2
+            exit 1
+          fi
+          AAB_NAME="MyMediaScanner-${VERSION}-${FLAVOR}-release.aab"
+          mv "$AAB_SRC" "${AAB_DIR}/${AAB_NAME}"
+          echo "aab_name=${AAB_NAME}" >> "$GITHUB_OUTPUT"
+          echo "aab_path=${AAB_DIR}/${AAB_NAME}" >> "$GITHUB_OUTPUT"
+
+      # Proves the bundle carries the upload key rather than debug keys —
+      # the failure mode that silently shipped debug-signed artefacts before.
+      - name: Report AAB signing certificate
+        run: keytool -printcert -jarfile "${{ steps.rename_aab.outputs.aab_path }}"
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.rename_aab.outputs.aab_name }}
+          path: ${{ steps.rename_aab.outputs.aab_path }}
+          retention-days: 30
+
       - name: Determine release metadata
         id: release_meta
         if: startsWith(github.ref, 'refs/tags/')
@@ -146,5 +214,52 @@ jobs:
           name: ${{ steps.release_meta.outputs.release_name }}
           draft: false
           prerelease: ${{ steps.release_meta.outputs.prerelease }}
-          files: ${{ steps.rename_apk.outputs.apk_path }}
+          files: |
+            ${{ steps.rename_apk.outputs.apk_path }}
+            ${{ steps.rename_aab.outputs.aab_path }}
           generate_release_notes: true
+
+  publish-play:
+    name: Publish to Google Play (internal)
+    needs: build-android-apk
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && inputs.publish_to_play == 'true'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Require Play service account secret
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          if [ -z "$PLAY_SERVICE_ACCOUNT_JSON" ]; then
+            echo "ERROR: PLAY_SERVICE_ACCOUNT_JSON secret is not set." >&2
+            echo "       See docs/PLAY_STORE_RELEASE.md for how to create it." >&2
+            exit 1
+          fi
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+
+      - name: Install fastlane
+        run: gem install fastlane --no-document
+
+      - name: Download AAB artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-android-apk.outputs.aab_name }}
+          path: dist
+
+      - name: Upload to Play internal testing track
+        working-directory: android
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          AAB_NAME: ${{ needs.build-android-apk.outputs.aab_name }}
+        run: |
+          printf '%s' "$PLAY_SERVICE_ACCOUNT_JSON" > "${RUNNER_TEMP}/play-key.json"
+          export PLAY_JSON_KEY_PATH="${RUNNER_TEMP}/play-key.json"
+          export AAB_PATH="../dist/${AAB_NAME}"
+          fastlane beta

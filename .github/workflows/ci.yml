@@ -55,3 +55,27 @@ jobs:
 
       - name: Run tests
         run: flutter test
+
+  privacy-policy:
+    name: Privacy policy up to date
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+
+      # Pinned so the rendered HTML is byte-identical to what the script
+      # produces locally — otherwise the diff below would be version noise.
+      - name: Install asciidoctor
+        run: gem install asciidoctor -v 2.0.23 --no-document
+
+      # docs/privacy-policy.html is what GitHub Pages serves as the app's
+      # Play Store privacy policy URL. If it drifts from the AsciiDoc source,
+      # the published policy silently stops matching the repo.
+      - name: Check rendered privacy policy matches source
+        run: tools/render-privacy-policy.sh --check

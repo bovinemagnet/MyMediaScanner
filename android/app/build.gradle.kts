@@ -65,11 +65,23 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
-            // Sign with the upload keystore when android/key.properties exists;
-            // fall back to debug keys for local release builds without one.
+            // Sign with the upload keystore when android/key.properties exists.
+            // Locally we fall back to debug keys so `flutter run --release`
+            // still works, but on CI a missing keystore is a hard error — a
+            // debug-signed artefact would be rejected by Play and is worse
+            // than a failed build.
             signingConfig = if (keystorePropertiesFile.exists()) {
                 signingConfigs.getByName("release")
+            } else if (System.getenv("CI") != null) {
+                throw GradleException(
+                    "Release build on CI without android/key.properties. " +
+                        "Set the ANDROID_KEYSTORE_* secrets — see docs/PLAY_STORE_RELEASE.md."
+                )
             } else {
+                logger.warn(
+                    "WARNING: android/key.properties not found — signing the release " +
+                        "build with DEBUG keys. This artefact cannot be uploaded to Play."
+                )
                 signingConfigs.getByName("debug")
             }
             proguardFiles(

@@ -1,37 +1,48 @@
 default_platform(:android)
 
+# Output of `flutter build appbundle --release --flavor prod`, relative to
+# android/ (fastlane's working directory). Override with AAB_PATH when the
+# bundle comes from somewhere else, e.g. a downloaded CI artefact.
+AAB_PATH = ENV["AAB_PATH"] || "../build/app/outputs/bundle/prodRelease/app-prod-release.aab"
+
+# Fastlane cannot create the Play Console app entry — the very first bundle
+# must be uploaded by hand. Metadata pushes fail until the listing exists, so
+# set SKIP_METADATA=true for that first run.
+SKIP_METADATA = ENV["SKIP_METADATA"] == "true"
+
 platform :android do
-  desc "Upload to Google Play internal testing track"
-  lane :beta do
-    # Prerequisites:
-    # 1. Set json_key_file in Appfile to your Google Play service account JSON path
-    # 2. Build the APK/AAB first: flutter build appbundle --release --flavor prod
-    #
-    # Usage: cd android && fastlane beta
+  # Prerequisites for every lane below:
+  # 1. export PLAY_JSON_KEY_PATH=/path/to/play-service-account.json
+  # 2. flutter build appbundle --release --flavor prod
+  # See docs/PLAY_STORE_RELEASE.md.
+
+  private_lane :upload_bundle do |options|
     upload_to_play_store(
-      track: "internal",
-      aab: "../build/app/outputs/bundle/prodRelease/app-prod-release.aab",
-      skip_upload_metadata: false,
-      skip_upload_changelogs: false,
+      track: options[:track],
+      aab: AAB_PATH,
+      validate_only: options[:validate_only] || false,
+      skip_upload_metadata: SKIP_METADATA,
+      skip_upload_changelogs: SKIP_METADATA,
       skip_upload_images: true,
       skip_upload_screenshots: true
     )
   end
 
+  desc "Dry-run the upload against the Play API without publishing"
+  lane :validate do
+    # Usage: cd android && fastlane validate
+    upload_bundle(track: "internal", validate_only: true)
+  end
+
+  desc "Upload to Google Play internal testing track"
+  lane :beta do
+    # Usage: cd android && fastlane beta
+    upload_bundle(track: "internal")
+  end
+
   desc "Upload to Google Play production track"
   lane :release do
-    # Prerequisites:
-    # 1. Set json_key_file in Appfile to your Google Play service account JSON path
-    # 2. Build the APK/AAB first: flutter build appbundle --release --flavor prod
-    #
     # Usage: cd android && fastlane release
-    upload_to_play_store(
-      track: "production",
-      aab: "../build/app/outputs/bundle/prodRelease/app-prod-release.aab",
-      skip_upload_metadata: false,
-      skip_upload_changelogs: false,
-      skip_upload_images: true,
-      skip_upload_screenshots: true
-    )
+    upload_bundle(track: "production")
   end
 end

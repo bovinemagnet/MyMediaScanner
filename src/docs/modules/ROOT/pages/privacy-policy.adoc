@@ -1,0 +1,117 @@
+= MyMediaScanner Privacy Policy
+:description: How MyMediaScanner handles your data on-device, and which third-party services receive lookup requests.
+
+_Last updated: 6 August 2026_
+
+MyMediaScanner is an app for cataloguing a personal collection of physical media — CDs, DVDs, Blu-rays, books, and video games.
+This policy explains what the app does with your information.
+
+== The short version
+
+MyMediaScanner has no servers and no accounts.
+Your collection is stored on your device.
+Nothing is sent to the developer, and the app contains no analytics, advertising, or crash-reporting SDKs.
+
+== What the app stores, and where
+
+* *Your collection* — items, shelves, tags, locations, series, wishlist, borrowers, and loan records — is stored in a local SQLite database on your device.
+* *Cached metadata and cover artwork* retrieved from the services listed below is stored locally so the app works offline and makes fewer network requests.
+* *Your settings*, such as the chosen theme and layout preferences, are stored locally.
+* *Credentials you enter* — third-party API keys and, if you use it, your PostgreSQL connection details — are held in the operating system's secure storage (the Android Keystore, the iOS and macOS Keychain, or the platform equivalent).
+
+Uninstalling the app removes this data from your device.
+The app performs no automatic backup to the developer or to any third party.
+
+== Camera
+
+The app requests camera access so you can scan barcodes and, optionally, read text from a cover using OCR.
+Camera frames are processed on your device and are not uploaded anywhere.
+Text recognition uses Google ML Kit's on-device models.
+The app does not store photographs of what you scan; it keeps only the decoded barcode number.
+
+== Information sent to third parties
+
+When you scan an item or search for one, the app sends the barcode, ISBN, IMDb ID, or search text to metadata providers in order to look up a title.
+It sends nothing else about you — no device identifier, no account, no location.
+Which providers are used depends on the media type and on which API keys you have supplied.
+
+[cols="1,2,2", options="header"]
+|===
+| Provider | Used for | Privacy policy
+
+| TMDB
+| Films and TV
+| https://www.themoviedb.org/privacy-policy[themoviedb.org/privacy-policy]
+
+| TheTVDB
+| TV series
+| https://www.thetvdb.com/privacy-policy[thetvdb.com/privacy-policy]
+
+| Discogs
+| Music releases
+| https://www.discogs.com/privacy[discogs.com/privacy]
+
+| MusicBrainz
+| Music releases
+| https://metabrainz.org/privacy[metabrainz.org/privacy]
+
+| TheAudioDB
+| Music metadata
+| https://www.theaudiodb.com/[theaudiodb.com]
+
+| Fanart.tv
+| Artwork
+| https://fanart.tv/privacy-policy/[fanart.tv/privacy-policy]
+
+| Google Books
+| Books
+| https://policies.google.com/privacy[policies.google.com/privacy]
+
+| Open Library
+| Books
+| https://archive.org/about/terms.php[archive.org/about/terms]
+
+| UPCitemdb
+| Barcode fallback
+| https://www.upcitemdb.com/wp/docs/privacy-policy/[upcitemdb.com privacy policy]
+
+| AccurateRip
+| Audio rip verification (desktop only)
+| https://www.accuraterip.com/[accuraterip.com]
+|===
+
+These providers will see the IP address your request comes from, as they would for any internet request.
+Their handling of that is governed by their own policies, linked above.
+The developer of MyMediaScanner receives none of it.
+
+== Optional TMDB account linking
+
+If you choose to connect a TMDB account, the app authenticates directly with TMDB and can read and update your TMDB watchlist, ratings, and favourites.
+That activity goes to TMDB under their privacy policy.
+Your TMDB session token is kept in your device's secure storage.
+You can disconnect the account from Settings at any time.
+
+== Optional self-hosted sync
+
+The app can synchronise your collection to a PostgreSQL database.
+That database is one *you* run and configure — the app connects directly to the address you give it.
+No intermediary service is involved and the developer has no access to it.
+Securing that server, and the network path to it, is your responsibility.
+
+== Music rip library scanning
+
+On desktop platforms, the app can scan a folder of FLAC or MP3 files that you nominate.
+It reads audio tags, embedded artwork, and CUE sheets to build a local index and to compare against your physical collection.
+Those files are read from disk and analysed locally; their contents are not uploaded.
+
+== Children
+
+MyMediaScanner is not directed at children and does not knowingly collect information from anyone.
+
+== Changes to this policy
+
+Any changes will be published on this page with an updated date above.
+
+== Contact
+
+Questions about this policy, or about the app's handling of data, can be raised as an issue at https://github.com/bovinemagnet/MyMediaScanner/issues[GitHub].
