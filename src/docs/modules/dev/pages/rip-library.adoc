@@ -156,22 +156,32 @@ Each individual FLAC file within an album is stored as a row in `rip_tracks`.
 
 The coverage view on the rip library screen compares your physical collection against your ripped albums.
 
+Each music item in the collection is assigned one of four coverage states, derived by `categoriseRipCoverage()`.
+
 .Coverage states
 [cols="1,3", options="header"]
 |===
 | State | Meaning
 
-| Ripped & matched
-| The album exists in both `rip_albums` (with a non-null `media_item_id`) and `media_items`.
+| Not ripped (`notRipped`)
+| No rip album is linked to this item (no `rip_albums` row whose `media_item_id` matches it).
 
-| Ripped, unmatched
-| The album is in `rip_albums` but `media_item_id` is `NULL`. Use the *Match* action to link it.
+| Partially ripped (`partiallyRipped`)
+| A rip album is linked, but its track count is below the expected track count taken from the item's `track_listing` metadata.
 
-| Physical only (not ripped)
-| The item exists in `media_items` but has no corresponding `rip_albums` row.
+| Fully ripped (`fullyRipped`)
+| The linked rip album's track count meets or exceeds the expected track count, and quality analysis has found no problems (or has not yet run).
+An item with no `track_listing` metadata cannot be judged incomplete, so it is also treated as fully ripped by default.
+
+| Quality issues (`qualityIssues`)
+| As fully ripped, but at least one track has been quality-checked and either failed AccurateRip verification or has one or more detected defects (clicks, pops, clipping, dropouts).
 |===
 
-The summary card at the top of the rips screen shows overall coverage as a percentage and a breakdown by state.
+Coverage entries are sorted by state, `notRipped` first, in the order shown above.
+
+The summary card at the top of the rips screen shows overall coverage as a percentage.
+Both `fullyRipped` and `qualityIssues` albums count towards it, so an album with quality problems still counts as ripped for the headline figure.
+The percentage is the ripped count divided by the total number of music items considered, rounded to the nearest whole number, and is 0 when there are no items to consider.
 
 == Audio Quality Analysis
 

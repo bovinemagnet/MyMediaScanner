@@ -141,7 +141,7 @@ Tapping a series card navigates to `/series/:id`, the series detail screen, whic
 Items you own are highlighted; items you do not own are shown as placeholders with an *Add to Wishlist* action.
 
 NOTE: The series screen is desktop-only.
-On mobile, series membership is visible in the item detail screen but there is no dedicated series browser.
+On mobile there is no way to see series membership at all: the item detail screen has no series section, and there is no dedicated series browser.
 
 == Related Pages
 
