@@ -78,7 +78,7 @@ These devices emulate a keyboard: they type the barcode digits followed by an `E
 The scan screen keeps a dedicated text field in focus at all times.
 When the scanner fires, the barcode string is inserted into the field and the `Enter` key triggers the metadata lookup automatically — no mouse interaction is required.
 
-There is no shortcut to restore focus if it is lost; `Ctrl+N` returns to the scan screen from anywhere on desktop, which re-establishes it (see xref:desktop-mode.adoc#_keyboard_shortcuts[Desktop Mode: Keyboard Shortcuts]).
+There is no shortcut to restore focus if it is lost; `Ctrl+N` returns to the scan screen from anywhere on desktop, which re-establishes it (see xref:desktop-mode.adoc#keyboard-shortcuts[Desktop Mode: Keyboard Shortcuts]).
 
 === Webcam Scanning
 
