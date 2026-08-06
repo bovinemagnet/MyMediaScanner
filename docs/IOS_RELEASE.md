@@ -55,6 +55,42 @@ The name must be unique across the whole App Store. If "MyMediaScanner" is
 taken, the store name and the on-device name can differ — only the store name
 has to be unique.
 
+### App Information
+
+App Store Connect → your app → **General** → **App Information**. The text
+values live in `ios/fastlane/metadata/en-GB/`, so paste from there rather than
+inventing new copy — `fastlane release` uploads those same files and would
+otherwise overwrite whatever you typed.
+
+| Field | Value | Limit |
+|---|---|---|
+| Name | `MyMediaScanner` | 30 |
+| Subtitle | `Catalogue your physical media` | 30 |
+| Privacy Policy URL | `https://bovinemagnet.github.io/MyMediaScanner/privacy-policy.html` | — |
+| Primary category | Utilities | — |
+| Secondary category | Reference | — |
+| Content Rights | Contains third-party content — see below | — |
+| Age Rating | answer all "None"; the app rates 4+ | — |
+| Licence Agreement | Apple's standard EULA | — |
+
+Two fields live on the **version** page rather than App Information, and one
+of them has no file in the repo:
+
+| Field | Value |
+|---|---|
+| Promotional text / Description | `description.txt` |
+| Keywords | `keywords.txt` |
+| What's New | `release_notes.txt` |
+| **Support URL** (required) | `https://github.com/bovinemagnet/MyMediaScanner/issues` |
+
+**Content Rights.** Cover art and metadata come from third-party APIs (TMDB,
+Discogs, MusicBrainz, Google Books, Open Library, TheAudioDB, Fanart,
+UPCitemdb), fetched when the user scans an item. Answer that the app contains
+third-party content. Note that TMDB's API terms require visible attribution —
+wording to the effect of "This product uses the TMDB API but is not endorsed
+or certified by TMDB" — and the app does not display it anywhere yet. Worth
+settling before submission.
+
 ## 3. Configure local signing
 
 ```bash
