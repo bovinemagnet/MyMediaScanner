@@ -17,6 +17,8 @@ It is unrelated to connecting your TMDB account to import ratings and watchlists
 A running PostgreSQL server that your device can reach over the network, along with a database, a role (username and password) that can read and write to it, and — ideally — TLS configured on the server.
 A self-signed certificate is fine for a home server.
 
+If you want to sync while away from home, see <<tailscale>> — it is a far safer way to reach your server than opening a port on your router.
+
 == Setting up the connection
 
 . Open *Settings* and go to the *Sync* section.
@@ -50,6 +52,10 @@ A self-signed certificate is fine for a home server.
 | Require TLS
 | On
 | Strongly recommended. See <<tls>>.
+
+| Verify server certificate
+| On
+| Checks that the server's certificate is genuine and issued for the host you typed. Turn it off if your server uses a self-signed certificate. Only adjustable while *Require TLS* is on.
 |===
 
 . Tap *Test Connection*.
@@ -81,6 +87,51 @@ WARNING: Only turn *Require TLS* off for testing on a trusted local network.
 Never disable it when connecting over the internet or any network you do not fully control.
 
 If your server uses a self-signed certificate, that is fine for personal use — you don't need a certificate from a public authority to run TLS at home.
+You do need to switch *Verify server certificate* off, though: a self-signed certificate cannot be checked against a trusted authority, so leaving verification on will make *Test Connection* fail even when everything else is correct.
+The connection is still encrypted with verification off — the app simply stops asking who signed the certificate.
+
+[#tailscale]
+== Connecting over Tailscale
+
+Sync needs your device to reach your PostgreSQL server over the network.
+Inside your own home that is easy; from anywhere else it is the hard part, and the obvious fix is the wrong one.
+Forwarding port `5432` through your router puts your database on a public address, where automated login attempts will find it within hours.
+PostgreSQL was never designed to sit exposed on the open internet.
+
+https://tailscale.com/[Tailscale] sidesteps this.
+It builds a private encrypted network — a *tailnet* — between machines you own.
+Your server and each device running MyMediaScanner join it and can then reach one another directly, whatever network they happen to be on.
+No router ports are opened and nothing is published to the internet.
+
+Tailscale has clients for every platform this app runs on, so the same approach works from an Android phone on mobile data as from a laptop in a café.
+
+=== Setting it up
+
+. Install Tailscale on the machine running PostgreSQL and on each device you sync from, signing in to the same Tailscale account on all of them.
+. In the Tailscale admin console, find the name of the machine running PostgreSQL.
+With MagicDNS switched on it is reachable as something like `nas.your-tailnet.ts.net`.
+Every machine also gets a fixed address in the `100.64.0.0/10` range, which works just as well.
+. Let PostgreSQL listen on the tailnet.
+In `postgresql.conf`, `listen_addresses` must cover the server's Tailscale address, and `pg_hba.conf` needs a line allowing your sync role to connect from `100.64.0.0/10`.
+. Restart PostgreSQL.
+. Back in the app, put the MagicDNS name or the `100.x.y.z` address in *Host*, leave *Port* at `5432`, and tap *Test Connection*.
+
+Nothing else about the setup changes — sync, conflict handling, and history all behave exactly as they do on a local network.
+
+=== Certificates on a tailnet
+
+Keep *Require TLS* on.
+Tailscale already encrypts everything between your devices, so this is belt and braces rather than strictly necessary, but it costs nothing and protects the database session itself.
+
+*Verify server certificate* needs a moment's thought, because a self-signed certificate is almost certainly not issued for your new `.ts.net` name:
+
+* Switch verification off and the connection is encrypted but unchecked. On a tailnet this is a reasonable trade — only your own machines can reach the server in the first place.
+* Alternatively, use `tailscale cert` on the server to obtain a real certificate for its MagicDNS name, point PostgreSQL at it, and leave verification on.
+
+TIP: On phones and tablets Tailscale runs as a VPN profile, which has to be connected for the server to be reachable.
+If sync suddenly reports *Could not reach the server* while away from home, check Tailscale is still connected before assuming anything is wrong with the database.
+
+If you want to tighten things further, a Tailscale ACL can restrict port `5432` to just the devices that actually run the app, rather than every machine on your tailnet.
 
 == What gets synced
 

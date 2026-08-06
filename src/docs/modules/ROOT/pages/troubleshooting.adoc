@@ -59,6 +59,7 @@ See xref:rip-library.adoc[Rip Library] for the full setup walk-through.
 
 * *Authentication failed* means the username or password is wrong for the role on your PostgreSQL server — double-check both, and confirm the role has permission to read and write the target database.
 * *Could not reach the server* is a network problem: check the host and port, that the server is running, and that your device and the server are on a network that can actually see each other (this often trips people up when testing over a VPN or a firewalled home network).
+If you reach your server over Tailscale, confirm the VPN is connected on this device first — see xref:sync.adoc#tailscale[Connecting over Tailscale].
 * If your server uses a self-signed TLS certificate, that's fine for personal use — but if you disabled *Require TLS* to work around a certificate problem, remember to re-enable it once resolved; running without TLS sends your password and your collection data unencrypted.
 
 See xref:sync.adoc[Sync] for the full connection walk-through and what each field means.
