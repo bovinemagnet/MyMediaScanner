@@ -1,0 +1,25 @@
+// iOS code-signing settings, kept out of version control.
+//
+// Copy to Signing.xcconfig and fill in your Team ID. Release.xcconfig
+// includes it optionally, so release builds fall back to unsigned when the
+// file is absent — the same shape as android/key.properties.
+//
+// Your Team ID is the 10-character string in the Apple Developer portal
+// under Membership details, and next to the team name in Xcode's Accounts
+// pane.
+//
+// Author: Paul Snow
+// Since: 0.0.0
+
+DEVELOPMENT_TEAM = YOUR_TEAM_ID
+
+// Let Xcode manage certificates and profiles. This is what you want on a
+// machine signed in to your Apple ID.
+CODE_SIGN_STYLE = Automatic
+
+// For unattended signing (CI, or a machine with no Apple ID session), swap
+// the block above for manual signing and name the profile you installed:
+//
+// CODE_SIGN_STYLE = Manual
+// CODE_SIGN_IDENTITY[sdk=iphoneos*] = Apple Distribution
+// PROVISIONING_PROFILE_SPECIFIER = MyMediaScanner App Store

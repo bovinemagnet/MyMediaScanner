@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+	<dict>
+		<!-- No advertising identifier, no cross-app tracking, no analytics. -->
+		<key>NSPrivacyTracking</key>
+		<false/>
+		<key>NSPrivacyTrackingDomains</key>
+		<array/>
+		<!-- Nothing is collected by this app or on its behalf: the catalogue
+		     lives in local SQLite, and optional sync goes to a PostgreSQL
+		     server the user owns. Metadata lookups send a barcode or title to
+		     third-party APIs at the user's request; those are not collected
+		     for our purposes. The App Privacy questionnaire in App Store
+		     Connect is where that flow is described to reviewers. -->
+		<key>NSPrivacyCollectedDataTypes</key>
+		<array/>
+		<!-- Required-reason APIs. Over-declaring is harmless; omitting one
+		     that a statically linked dependency reaches gets the upload
+		     rejected with ITMS-91053. -->
+		<key>NSPrivacyAccessedAPITypes</key>
+		<array>
+			<dict>
+				<!-- Cover art, rip scanning and the local database all stat
+				     files inside the app container. -->
+				<key>NSPrivacyAccessedAPIType</key>
+				<string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
+				<key>NSPrivacyAccessedAPITypeReasons</key>
+				<array>
+					<string>C617.1</string>
+				</array>
+			</dict>
+			<dict>
+				<!-- shared_preferences: theme choice, text size, rip library
+				     path. Read and written only by this app. -->
+				<key>NSPrivacyAccessedAPIType</key>
+				<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+				<key>NSPrivacyAccessedAPITypeReasons</key>
+				<array>
+					<string>CA92.1</string>
+				</array>
+			</dict>
+			<dict>
+				<!-- SQLite and artwork caching check for free space before
+				     writing. -->
+				<key>NSPrivacyAccessedAPIType</key>
+				<string>NSPrivacyAccessedAPICategoryDiskSpace</string>
+				<key>NSPrivacyAccessedAPITypeReasons</key>
+				<array>
+					<string>E174.1</string>
+				</array>
+			</dict>
+		</array>
+	</dict>
+</plist>

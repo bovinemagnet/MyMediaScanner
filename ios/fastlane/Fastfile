@@ -1,28 +1,49 @@
 default_platform(:ios)
 
+# Authentication uses an App Store Connect API key rather than an Apple ID and
+# app-specific password: it works unattended and does not break under 2FA.
+#
+# Required environment:
+#   APPSTORE_API_KEY_ID      Key ID from App Store Connect > Users and Access > Integrations
+#   APPSTORE_API_ISSUER_ID   Issuer ID from the same page
+#   APPSTORE_API_PRIVATE_KEY Contents of the downloaded .p8 file
+#
+# Build the IPA first: flutter build ipa --release
+#
+# Author: Paul Snow
+# Since: 0.0.0
+
+def connect_api_key
+  app_store_connect_api_key(
+    key_id: ENV.fetch("APPSTORE_API_KEY_ID"),
+    issuer_id: ENV.fetch("APPSTORE_API_ISSUER_ID"),
+    key_content: ENV.fetch("APPSTORE_API_PRIVATE_KEY")
+  )
+end
+
+# Flutter names the IPA after the Xcode scheme's product, so glob rather than
+# hardcode it — a product rename would otherwise fail only after a green build.
+def built_ipa
+  path = Dir.glob(File.join(__dir__, "..", "..", "build", "ios", "ipa", "*.ipa")).first
+  UI.user_error!("No IPA in build/ios/ipa — run: flutter build ipa --release") if path.nil?
+  path
+end
+
 platform :ios do
   desc "Upload to TestFlight"
   lane :beta do
-    # Prerequisites:
-    # 1. Configure code signing (certificates and provisioning profiles)
-    # 2. Build the IPA first: flutter build ipa --release
-    #
-    # Usage: cd ios && fastlane beta
     upload_to_testflight(
-      ipa: "../build/ios/ipa/MyMediaScanner.ipa",
+      api_key: connect_api_key,
+      ipa: built_ipa,
       skip_waiting_for_build_processing: true
     )
   end
 
-  desc "Upload to App Store"
+  desc "Upload to App Store (does not submit for review)"
   lane :release do
-    # Prerequisites:
-    # 1. Configure code signing (certificates and provisioning profiles)
-    # 2. Build the IPA first: flutter build ipa --release
-    #
-    # Usage: cd ios && fastlane release
     upload_to_app_store(
-      ipa: "../build/ios/ipa/MyMediaScanner.ipa",
+      api_key: connect_api_key,
+      ipa: built_ipa,
       skip_metadata: false,
       skip_screenshots: true,
       submit_for_review: false

@@ -107,6 +107,9 @@ dev_dependencies:
   retrofit_generator: ^10.2.4
   mocktail: ^1.0.4
   sqlite3: ^3.3.0
+  # Parses ios/Runner/Info.plist and PrivacyInfo.xcprivacy in
+  # test/unit/platform/ios_release_config_test.dart.
+  xml: ^6.6.1
   flutter_launcher_icons: ^0.14.4
   flutter_native_splash: ^2.4.6
   msix: ^3.16.8
