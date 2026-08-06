@@ -1,9 +1,10 @@
 # Superpowers brainstorm sessions
 .superpowers/
 
-# Antora build output and cache
+# Antora build output, cache and toolchain
 .cache/
 target/
+node_modules/
 local-antora-playbook-search.yml
 
 # Miscellaneous

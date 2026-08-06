@@ -1,0 +1,61 @@
+# Antora playbook for the published documentation site.
+#
+# This is the playbook CI uses to build the site deployed to GitHub Pages by
+# .github/workflows/docs.yml. Build it locally with the same command CI runs:
+#
+#   npm ci
+#   npm run docs
+#
+# The output lands in target/public, which is gitignored.
+#
+# Author: Paul Snow
+# Since: 0.0.0
+
+antora:
+  extensions:
+    - require: "@antora/lunr-extension"
+      index_latest_only: true
+    - require: "@sntke/antora-mermaid-extension"
+      mermaid_library_url: https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs
+      script_stem: header-scripts
+      mermaid_initialize_options:
+        start_on_load: true
+
+runtime:
+  cache_dir: ./.cache/antora
+  fetch: true
+  log:
+    failure_level: warn
+
+site:
+  title: MyMediaScanner Documentation
+  # Must match the GitHub Pages base path, or the sitemap and 404 page point
+  # at the wrong origin.
+  url: https://bovinemagnet.github.io/MyMediaScanner
+  start_page: mymediascanner::index.adoc
+  robots: allow
+
+git:
+  ensure_git_suffix: false
+
+content:
+  sources:
+    - url: .
+      start_path: src/docs
+      branches: HEAD
+
+ui:
+  bundle:
+    url: https://gitlab.com/antora/antora-ui-default/-/jobs/artifacts/HEAD/raw/build/ui-bundle.zip?job=bundle-stable
+    snapshot: true
+  supplemental_files: "./src/docs/supp-ui"
+
+output:
+  clean: true
+  dir: ./target/public
+
+asciidoc:
+  attributes:
+    idprefix: ""
+    idseparator: "-"
+    experimental: ""

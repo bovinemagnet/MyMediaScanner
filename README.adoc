@@ -230,7 +230,7 @@ lib/
 
 == Documentation
 
-Full documentation is available in AsciiDoc format under `link:{url-docs}/index.adoc[src/docs/]`, built with https://antora.org[Antora].
+Full documentation is published at https://bovinemagnet.github.io/MyMediaScanner/[bovinemagnet.github.io/MyMediaScanner], built with https://antora.org[Antora] from the AsciiDoc sources under `link:{url-docs}/index.adoc[src/docs/]`. Every push to `main` that touches the docs redeploys the site.
 
 Key pages:
 
@@ -243,11 +243,12 @@ Key pages:
 * link:{url-docs}/sync-strategy.adoc[Sync Strategy] -- PostgreSQL sync with conflict resolution
 * link:{url-docs}/testing.adoc[Testing] -- test structure and how to run the suite
 
-To build the documentation locally:
+To build the documentation locally, using the same pinned Antora toolchain as CI:
 
 [source,bash]
 ----
-npx antora local-antora-playbook-search.yml
+npm ci
+npm run docs
 # Output: target/public/
 ----
 

@@ -1,0 +1,94 @@
+name: Documentation
+
+# Builds the Antora documentation site from src/docs and publishes it to
+# GitHub Pages at https://bovinemagnet.github.io/MyMediaScanner/
+#
+# Pull requests build the site but do not deploy, so a broken xref or nav
+# entry fails review rather than the published site.
+#
+# Pages must be configured with Source: GitHub Actions (Settings -> Pages).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/docs/**'
+      - 'docs/privacy-policy.html'
+      - 'antora-playbook.yml'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/docs.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/docs/**'
+      - 'docs/privacy-policy.html'
+      - 'antora-playbook.yml'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/docs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Never cancel an in-flight deployment — a half-published site is worse than
+# a slightly stale one.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build site
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install Antora
+        run: npm ci
+
+      # The playbook logs at failure_level: warn, so a broken xref, a missing
+      # include or a page absent from nav.adoc fails the build here.
+      - name: Build documentation
+        run: npm run docs
+
+      # docs/privacy-policy.html is the standalone page whose URL is
+      # registered with Google Play. Serving it from the site root keeps
+      # /MyMediaScanner/privacy-policy.html working alongside the Antora
+      # version of the same page. The CI workflow's privacy-policy job is what
+      # guarantees this file matches its AsciiDoc source.
+      - name: Publish standalone privacy policy at the site root
+        run: cp docs/privacy-policy.html target/public/privacy-policy.html
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: target/public
+
+  deploy:
+    name: Deploy to Pages
+    needs: build
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
