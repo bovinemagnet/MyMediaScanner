@@ -1,0 +1,16 @@
+{
+  "name": "mymediascanner-docs",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Antora toolchain for the MyMediaScanner documentation site. Not part of the Flutter app build.",
+  "author": "Paul Snow",
+  "scripts": {
+    "docs": "antora --fetch antora-playbook.yml",
+    "docs:local": "antora --fetch local-antora-playbook-search.yml"
+  },
+  "devDependencies": {
+    "@antora/lunr-extension": "1.0.0-alpha.13",
+    "@sntke/antora-mermaid-extension": "0.0.13",
+    "antora": "3.1.15"
+  }
+}
