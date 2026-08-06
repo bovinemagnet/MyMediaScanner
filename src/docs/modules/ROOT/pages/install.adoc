@@ -1,0 +1,106 @@
+= Install MyMediaScanner
+include::_attributes.adoc[]
+:description: How to install MyMediaScanner and what to expect the first time you open it, on each of the five supported platforms.
+
+MyMediaScanner runs on Android, iOS, macOS, Windows, and Linux.
+There is no account to create and no sign-up step — you install the app and start cataloguing.
+
+[cols="1,3,1", options="header"]
+|===
+| Platform | How you get it | Notes
+
+| Android
+| APK/AAB attached to each release on https://github.com/bovinemagnet/MyMediaScanner/releases[GitHub Releases]
+| Sideloaded install
+
+| iOS
+| TestFlight
+| Requires iOS 15.5 or later
+
+| macOS
+| DMG attached to each release on https://github.com/bovinemagnet/MyMediaScanner/releases[GitHub Releases]
+| Runs in the macOS App Sandbox
+
+| Windows
+| MSIX package attached to each release on https://github.com/bovinemagnet/MyMediaScanner/releases[GitHub Releases]
+| —
+
+| Linux
+| AppImage attached to each release on https://github.com/bovinemagnet/MyMediaScanner/releases[GitHub Releases]
+| No installation step — run it directly
+|===
+
+TIP: Once the app is open, head to xref:quick-start.adoc[Quick Start] to catalogue your first item.
+
+== Android
+
+. Download the APK from the project's https://github.com/bovinemagnet/MyMediaScanner/releases[GitHub Releases] page.
+. Open the downloaded file to install it.
+
+NOTE: Because the APK does not come from the Play Store, Android will ask you to confirm that you want to install an app from outside the store the first time you do this.
+Allow it for this file, then continue with the install.
+
+=== First launch
+
+The first time you scan a barcode, Android will ask for permission to use the camera.
+Allow it — scanning will not work without it.
+If you would rather not grant camera access, you can still add items by hand; see xref:manual-add.adoc[Manual Add].
+
+== iOS
+
+MyMediaScanner is distributed through TestFlight.
+
+. Install *TestFlight* from the App Store if you do not already have it.
+. Open the invite link you were given for MyMediaScanner in TestFlight.
+. Install the app from there.
+
+NOTE: iOS 15.5 or later is required.
+
+=== First launch
+
+The first time you scan a barcode, iOS will ask for permission to use the camera.
+Allow it to scan; if you decline, you can still add items by hand with xref:manual-add.adoc[Manual Add].
+
+== macOS
+
+. Download the DMG from the project's https://github.com/bovinemagnet/MyMediaScanner/releases[GitHub Releases] page.
+. Open the DMG and drag MyMediaScanner into your Applications folder.
+
+WARNING: The build is not notarised or signed with an identified-developer certificate, so macOS will refuse to open it the first time with a warning that it is from an unidentified developer.
+Open the app once from Finder using *Control-click > Open*, or approve it in *System Settings > Privacy & Security*, then it will open normally from then on.
+
+=== First launch
+
+The first time you scan a barcode, macOS will ask for permission to use the camera.
+MyMediaScanner runs inside the macOS App Sandbox, which matters if you plan to use the rip library feature: the FLAC/MP3 folder must be chosen with the *Browse…* button so the app is granted access to it — typing a path will not work.
+See xref:rip-library.adoc[Rip Library] for the full setup.
+
+== Windows
+
+. Download the MSIX package from the project's https://github.com/bovinemagnet/MyMediaScanner/releases[GitHub Releases] page.
+. Open the downloaded file to install it.
+
+WARNING: The package is not signed by a trusted publisher certificate, so Windows will warn you that it is from an unrecognised source before it lets you install or run it.
+You will need to choose to proceed anyway to continue.
+
+=== First launch
+
+The first time you use scanning, Windows may prompt you to allow the app to use a connected webcam.
+Allow it if you plan to scan with a webcam; a keyboard-wedge USB barcode scanner or manual entry work without it.
+
+== Linux
+
+. Download the AppImage from the project's https://github.com/bovinemagnet/MyMediaScanner/releases[GitHub Releases] page.
+. Make it executable and run it, for example from a terminal:
++
+[source,bash]
+----
+chmod +x MyMediaScanner-*.AppImage
+./MyMediaScanner-*.AppImage
+----
+
+There is no separate install step — the AppImage runs directly.
+
+=== First launch
+
+Barcode scanning on Linux uses a webcam or a keyboard-wedge USB barcode scanner rather than a built-in camera; see xref:scanning.adoc[Scanning] for how to switch between them.

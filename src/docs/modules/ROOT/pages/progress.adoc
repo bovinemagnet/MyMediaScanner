@@ -1,163 +1,48 @@
-= Reading and Watching Progress
-Paul Snow
-0.0.0
+= Progress
 include::_attributes.adoc[]
-:description: Track your reading and watching progress per item, including start date, current position, and completion.
+:description: Track how far through a book, series, or film you are, and mark it finished when you are done.
 
-The progress feature lets you record where you are in a book, TV series, or film so you can pick up exactly where you left off.
-Progress is tracked per media item with a current position, a total, a unit, and optional start and completion timestamps.
+Progress tracking lets you record where you are in a book, TV series, or film so you can pick up exactly where you left off.
+It is entirely optional — an item you have not started stays out of the way and appears in your collection as normal.
 
-== Overview
+image::screenshots/ios/item-detail.png[Item detail screen with a progress bar,role=screenshot,width=360]
+image::screenshots/ios/dashboard.png[Dashboard showing the Currently reading / watching card,role=screenshot,width=360]
 
-Progress tracking is opt-in.
-An item with no progress data is unstarted and appears normally in the collection.
-Once you tap *Start* on an item, a started timestamp is recorded and the item appears on the *Currently reading / watching* tile on the Dashboard.
+== Starting progress on an item
 
-== Schema Additions
+Open the item's detail screen — see xref:item-details.adoc[Item Details] — and tap *Start reading* (books) or *Start watching* (everything else).
 
-Schema version {schema-version} adds six nullable columns to `media_items`:
+A short dialogue asks for:
 
-[cols="2,1,4", options="header"]
-|===
-| Column | Type | Description
+Unit::
+What you are counting — pages or chapters for a book, episodes or minutes for a TV series, minutes for everything else.
+A sensible default is pre-selected based on the item's media type.
 
-| `progress_current`
-| INTEGER
-| Current position in `progress_unit` units. `NULL` when progress tracking has not been started.
+Total::
+The total size in that unit, if you know it — for example the page count or episode count.
+Leave it blank if you are not sure; you can still track your current position without a total.
 
-| `progress_total`
-| INTEGER
-| Total size in `progress_unit` units (e.g. total pages, total episodes). `NULL` if unknown.
+== Updating your position
 
-| `progress_unit`
-| TEXT
-| One of: `page`, `chapter`, `episode`, `minute`. Determines the unit label shown in the UI.
+While an item is in progress, its detail screen shows *Update progress* instead of *Start*.
+Tap it to enter your current position — if you set a total earlier, the value is capped at that total.
 
-| `started_at`
-| INTEGER
-| Unix epoch (ms) when *Start* was first tapped. Set once and never overwritten unless progress is reset.
+== Marking an item finished
 
-| `completed_at`
-| INTEGER
-| Unix epoch (ms) when *Mark Complete* was tapped. `NULL` while the item is in progress.
+Tap *Mark complete* on the item's detail screen once you have finished it.
+The item drops off your in-progress list and is no longer suggested as something to pick up.
 
-| `consumed`
-| INTEGER
-| Boolean flag: `1` when the item has been marked complete, `0` otherwise.
-|===
+If you want to track a re-read or a re-watch, tap *Reset* to clear the item's progress back to not-started, then start it again.
 
-All six columns are nullable so that existing rows require no migration data.
+NOTE: Only the most recent read-through is recorded — there is no history of multiple past readings or viewings.
 
-== ProgressUnit Enum
+== Seeing what is in progress
 
-The `ProgressUnit` Dart enum maps text values stored in `media_items.progress_unit`:
+The dashboard's *Currently reading / watching* card lists a handful of your in-progress items with a progress bar for each, and tapping any of them opens that item's detail screen directly.
 
-[cols="1,1,3", options="header"]
-|===
-| Value | Stored as | Typical media types
+TIP: If nothing is in progress and you are not sure what to pick up next, the dashboard's *Surprise me* card offers a random pick from your collection.
 
-| `page`
-| `page`
-| Books, graphic novels, comics.
+== Related pages
 
-| `chapter`
-| `chapter`
-| Manga, serialised novels, audiobooks.
-
-| `episode`
-| `episode`
-| TV series, podcast series.
-
-| `minute`
-| `minute`
-| Films, documentary programmes.
-|===
-
-The unit is selected automatically based on `media_type` when progress is first started, but can be changed manually in the Start dialogue.
-
-== UpdateProgressUseCase
-
-All progress mutations are routed through `UpdateProgressUseCase`, which exposes four operations:
-
-=== start(String itemId, {int? total, ProgressUnit? unit})
-
-Records `started_at = now()` and sets `progress_current = 0`.
-If `total` and `unit` are provided they are stored; otherwise sensible defaults are derived from `media_type`.
-This call is idempotent: if `started_at` is already set, calling `start` again has no effect.
-
-=== updateCurrent(String itemId, int current)
-
-Updates `progress_current` to the supplied value.
-The value is clamped to `[0, progress_total]` if `progress_total` is non-null.
-Calling `updateCurrent` on an item that has not been started is a no-op.
-
-=== markComplete(String itemId)
-
-. Sets `progress_current = progress_total` (if `progress_total` is non-null).
-. Sets `completed_at = now()`.
-. Sets `consumed = 1`.
-
-Calling `markComplete` on an already-completed item is idempotent.
-
-=== reset(String itemId)
-
-Clears all six progress columns back to `NULL` and sets `consumed = 0`.
-Use this to restart tracking — for example, when re-reading a book.
-
-NOTE: Re-reads and re-watches are intentionally out of scope for this release.
-Only a single `completed_at` timestamp is stored; there is no history of multiple readings.
-
-== watchInProgress Stream
-
-`MediaItemDao.watchInProgress()` streams all non-deleted `media_items` rows where:
-
-* `started_at IS NOT NULL`
-* `completed_at IS NULL`
-
-Items are ordered by `started_at` ascending (longest in progress first).
-This stream feeds both the Dashboard tile and the in-progress filter on the Collection screen.
-
-== User Interface
-
-=== Dashboard Tile
-
-The *Currently reading / watching* tile on the Dashboard displays up to three in-progress items.
-Each entry shows:
-
-* Cover thumbnail.
-* Title.
-* Progress bar: `progress_current / progress_total` (omitted when `progress_total` is `NULL`).
-* Human-readable label, e.g. "Page 142 of 320" or "Episode 4".
-
-Tapping an entry navigates directly to that item's detail screen.
-
-=== Item Detail Progress Section
-
-The *Progress* section on the item detail screen provides:
-
-* A labelled progress bar or, when `progress_total` is unknown, a counter showing `progress_current` alone.
-* A *Start* button (shown when `started_at IS NULL`).
-* A *Update Progress* button (shown when in progress).
-* A *Mark Complete* button (shown when in progress and not yet completed).
-* A *Reset* button (shown when `started_at IS NOT NULL`).
-
-==== Start Dialogue
-
-Tapping *Start* opens a modal dialogue that prompts for:
-
-* *Total* — optional total count in the chosen unit.
-* *Unit* — pre-populated from `media_type` but editable.
-
-The dialogue is media-type-aware: for films it defaults to `minute` and pre-fills `progress_total` from the `runtime` metadata field if available.
-For TV series it defaults to `episode` but leaves `progress_total` blank until the user supplies a value.
-
-==== Update Progress Dialogue
-
-Tapping *Update Progress* opens a numeric input pre-filled with `progress_current`.
-The input enforces the `[0, progress_total]` range client-side.
-
-== Sync Behaviour
-
-The six progress columns are included in the standard sync payload for `media_items`.
-Last-write-wins conflict resolution applies per column based on `updated_at`.
-If you are reading the same book on two devices and update progress on both before syncing, the device with the later `updated_at` wins.
+* xref:item-details.adoc[Item Details] — where progress is started, updated, and marked complete
+* xref:sync.adoc[Sync] — progress travels between devices the same way the rest of an item's details do

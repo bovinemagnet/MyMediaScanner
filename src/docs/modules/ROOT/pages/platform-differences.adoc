@@ -1,0 +1,81 @@
+= Platform Differences
+include::_attributes.adoc[]
+:description: A single table of what works on each platform MyMediaScanner supports, and why a few features are desktop-only.
+
+MyMediaScanner runs on Android, iOS, macOS, Windows, and Linux, and most of what it does works the same way everywhere.
+A handful of features depend on hardware or screen size that only some platforms have, and this page collects those differences in one place.
+
+image::screenshots/ios/dashboard.png[MyMediaScanner on a phone, with the bottom navigation bar visible, role=screenshot, width=360]
+
+image::screenshots/desktop/collection.png[MyMediaScanner on desktop, with the sidebar and resizable master-detail layout visible, role=screenshot, width=720]
+
+== What works where
+
+[cols="2,^1,^1,^1,^1,^1", options="header"]
+|===
+| Feature | Android | iOS | macOS | Windows | Linux
+
+| Camera barcode scanning
+| Yes | Yes | Yes | No | No
+
+| Webcam barcode scanning
+| — | — | Yes | Yes | Yes
+
+| Keyboard-wedge USB barcode scanner
+| — | — | Yes | Yes | Yes
+
+| Bluetooth/USB external barcode scanner
+| Yes | Yes | — | — | —
+
+| Cover OCR (reading text off a cover photo)
+| Yes (on-device) | Yes (on-device) | Yes (Vision framework) | No | No
+
+| Sidebar navigation and resizable master-detail layout
+| No (bottom nav) | No (bottom nav) | Yes | Yes | Yes
+
+| Keyboard navigation in the collection table
+| No | No | Yes | Yes | Yes
+
+| Rip library (FLAC/MP3 scanning)
+| No | No | Yes | Yes | Yes
+
+| Locations screen
+| No | No | Yes | Yes | Yes
+
+| Series screen
+| No | No | Yes | Yes | Yes
+
+| Sync to a self-hosted PostgreSQL server
+| Yes | Yes | Yes | Yes | Yes
+
+| Appearance (five palettes, light/dark, text size)
+| Yes | Yes | Yes | Yes | Yes
+|===
+
+On mobile, xref:organising.adoc[shelves and the wishlist] are reached from the Library screen's app bar and xref:batch-scanning.adoc[batch scanning] from the scan screen, rather than getting their own bottom-navigation tab; on desktop, all of these sit in the sidebar alongside everything else.
+
+== Why the gaps exist
+
+=== Scanning method follows the hardware
+
+Phones and tablets have a camera built for exactly this job, so Android, iOS, and macOS scan with it directly.
+Desktop computers do not reliably have one pointed the right way, so macOS, Windows, and Linux instead support a webcam and, more importantly, a dedicated keyboard-wedge USB barcode scanner — hardware that many people cataloguing a large collection already own, and that types the barcode faster and more reliably than any camera can.
+Mobile devices support pairing a Bluetooth or USB scanner too, for the same reason.
+
+=== Cover OCR is not wired up everywhere yet
+
+Reading text off a cover photo (to fill in a title the barcode lookup could not resolve) uses on-device text recognition on Android and iOS, and Apple's built-in Vision framework on macOS.
+Windows and Linux have no equivalent built-in, no-setup text-recognition engine wired into the app yet, so cover OCR is unavailable on those two platforms for now.
+
+=== A handful of screens assume a desktop-sized window
+
+The sidebar, the resizable master-detail split, and keyboard navigation in tables all assume a window big enough to show two panes side by side and a keyboard close at hand — a fit for someone managing a large collection at a desk, less so for a phone screen.
+For the same reason, the rip library (which points at a folder of ripped audio files on disk), the Locations screen, and the Series screen are desktop-only: each assumes the kind of file access or bulk browsing that makes most sense on a computer.
+
+NOTE: macOS runs the app inside the App Sandbox, which affects the rip library specifically — the FLAC/MP3 folder has to be chosen with the *Browse…* button so the app is granted access to it; a typed path will not work.
+See xref:rip-library.adoc[Rip Library] for the full setup.
+
+=== Sync and appearance are the same everywhere
+
+Because the collection lives in a local database and sync talks directly to a PostgreSQL server you host yourself, xref:sync.adoc[Sync] works identically on all five platforms.
+The same is true of xref:appearance.adoc[Appearance] — the palette, brightness, and text-size choices are available on every platform.

@@ -1,216 +1,103 @@
 = Rip Library
 include::_attributes.adoc[]
-:description: Scan a local FLAC library, analyse audio quality, and compare ripped albums against your physical collection.
+:description: Point the app at a folder of ripped FLAC/MP3 albums, compare coverage against your physical collection, and check rip quality.
 
-The rip library feature is a *desktop-only* capability that scans a directory of FLAC files on your local filesystem, links ripped albums to your physical collection, and performs audio quality analysis including AccurateRip verification and click/pop detection.
+The rip library is a *desktop-only* feature — it appears in the sidebar on macOS, Windows, and Linux, and is not available on Android or iOS.
+It scans a folder of ripped albums on your computer and links them to the physical items already in your collection, so you can see at a glance what you have ripped and how good those rips actually are.
 
-NOTE: The rip library screen is accessible from the `/rips` route and appears in the desktop sidebar only. It is not available on Android or iOS.
+image::screenshots/desktop/rips.png[Rip library showing scanned albums with coverage and quality indicators, role=screenshot, width=720]
 
-image::screenshots/07-rips.png[Rip library showing scanned FLAC albums, role=screenshot, width=720]
+== Pointing the app at your library
 
-== Overview
+. Open *Settings → FLAC Library*.
+. Set the *Library root path* to the folder that contains your ripped albums.
+. Tap *Scan Now*.
 
-The feature answers two key questions:
+CAUTION: On macOS, you *must* set the folder using the *Browse…* button next to the path field — do not type or paste the path directly.
+macOS runs the app in a security sandbox, and only a folder chosen through the system's own picker grants the app permission to read it.
+A typed path that looks correct will still fail, because the app was never granted access to it.
+This is the single most common source of confusion on macOS — if scanning reports no albums found, or an access error, this is the first thing to check.
 
-. *Coverage* — which albums in your physical collection have you ripped, and which are still unripped?
-. *Quality* — are your rips bit-perfect, and do they contain audible defects?
+Once granted via Browse…, the folder stays accessible across restarts, so you only need to do this once.
+On Windows and Linux, typing or pasting a path works normally.
 
-== Configuring the FLAC Library Path
+The scanner reads the tags embedded in each FLAC or MP3 file rather than relying purely on folder names, and it understands accompanying CUE sheets for albums ripped as a single disc image.
+A first scan of a large library can take a few minutes; later scans only revisit files that have changed.
 
-Before scanning, set the path to your FLAC library root in *Settings > Rip Library*.
-The path is stored in `flutter_secure_storage` alongside your other credentials.
+== Cover artwork
 
-The scanner expects a standard directory layout:
+The app tries to find artwork for each ripped album automatically, in this order:
 
-[source]
-----
-/path/to/flac-library/
-  Artist Name/
-    Album Title (Year)/
-      01 - Track Title.flac
-      02 - Track Title.flac
-----
+. A folder image named `cover`, `folder`, `album`, or `front` (`.jpg`, `.jpeg`, or `.png`) sitting alongside the tracks.
+. Artwork embedded directly in the FLAC file itself, if no folder image is found.
 
-Other layouts are supported; the scanner reads tags from FLAC metadata rather than relying solely on directory names.
+Once found, the artwork is cached locally so it appears instantly on later visits without being re-extracted every time.
 
-== Scanning the Library
+== Coverage: what you've ripped and what you haven't
 
-Tap *Scan Library* on the rip library screen to start a full rescan.
-The scanner traverses the configured directory recursively, reads FLAC tags and stream info, and upserts records into the `rip_albums` and `rip_tracks` tables.
+The coverage view compares your physical collection against your ripped albums and sorts every match into one of four states:
 
-A progress indicator shows the current file being processed.
-Large libraries (10,000+ tracks) may take several minutes on first scan; subsequent scans are incremental based on file modification timestamps.
-
-== Database Schema
-
-=== rip_albums Table
-
-Each discovered album is stored as a single row in `rip_albums`.
-
-[cols="1,1,3", options="header"]
-|===
-| Column | Type | Description
-
-| `id`
-| UUID
-| Primary key.
-
-| `media_item_id`
-| UUID? (FK)
-| Nullable foreign key to `media_items.id`. `NULL` when the ripped album has no matching physical item in the collection.
-
-| `album_title`
-| String
-| Album title from FLAC tags or directory name.
-
-| `artist`
-| String
-| Album artist from FLAC tags.
-
-| `year`
-| Integer?
-| Release year from FLAC tags.
-
-| `directory_path`
-| String
-| Absolute path to the album directory on disk.
-
-| `track_count`
-| Integer
-| Number of tracks discovered in this album directory.
-
-| `matched_at`
-| DateTime?
-| When the album was last matched to a `media_items` record.
-
-| `updated_at`
-| DateTime
-| Last scan timestamp.
-|===
-
-The nullable `media_item_id` foreign key is intentional: ripped albums that cannot be automatically matched to a physical collection entry still appear in the rip library with `media_item_id = NULL`.
-Manual matching is performed from the rip library screen by searching and selecting the correct collection item.
-
-=== rip_tracks Table
-
-Each individual FLAC file within an album is stored as a row in `rip_tracks`.
-
-[cols="1,1,3", options="header"]
-|===
-| Column | Type | Description
-
-| `id`
-| UUID
-| Primary key.
-
-| `rip_album_id`
-| UUID (FK)
-| Parent album. References `rip_albums.id`.
-
-| `disc_number`
-| Integer
-| Disc number from FLAC tags. Defaults to `1`.
-
-| `track_number`
-| Integer
-| Track number from FLAC tags.
-
-| `title`
-| String
-| Track title from FLAC tags.
-
-| `file_path`
-| String
-| Absolute path to the `.flac` file.
-
-| `duration_ms`
-| Integer
-| Track duration in milliseconds, read from the FLAC stream info block.
-
-| `codec`
-| String
-| Always `FLAC` for this feature; reserved for future codec support.
-
-| `sample_rate_hz`
-| Integer
-| Sample rate in Hz (e.g. `44100`, `96000`).
-
-| `bit_depth`
-| Integer
-| Bit depth (e.g. `16`, `24`).
-
-| `accuraterip_status`
-| String
-| AccurateRip verification result: `verified`, `mismatch`, or `unknown`.
-
-| `click_pop_detected`
-| Boolean
-| Whether click/pop detection flagged this track.
-
-| `quality_checked_at`
-| DateTime?
-| When quality analysis was last run for this track. `NULL` if not yet analysed.
-|===
-
-== Coverage Analysis
-
-The coverage view on the rip library screen compares your physical collection against your ripped albums.
-
-.Coverage states
 [cols="1,3", options="header"]
 |===
 | State | Meaning
 
-| Ripped & matched
-| The album exists in both `rip_albums` (with a non-null `media_item_id`) and `media_items`.
+| Fully ripped
+| The album is ripped and matched to a physical item, with all tracks present.
 
-| Ripped, unmatched
-| The album is in `rip_albums` but `media_item_id` is `NULL`. Use the *Match* action to link it.
+| Partially ripped
+| Some but not all of the album's tracks have been ripped.
 
-| Physical only (not ripped)
-| The item exists in `media_items` but has no corresponding `rip_albums` row.
+| Not ripped
+| The physical item has no corresponding rip at all.
+
+| Quality issues
+| The album is ripped, but quality analysis has flagged a problem with one or more tracks.
 |===
 
-The summary card at the top of the rips screen shows overall coverage as a percentage and a breakdown by state.
+A ripped album that the scanner could not automatically match to anything in your physical collection still appears in the library — you can match it by hand from the rip library screen.
+Filter chips at the top of the coverage view let you narrow the list down to just one state, for example to see everything still outstanding.
 
-== Audio Quality Analysis
+== Checking rip quality
 
-Quality analysis runs on demand per album or across the full library via *Analyse All*.
-Analysis is compute-intensive and runs on a background isolate to keep the UI responsive.
+Quality analysis is separate from scanning, and you run it on demand — either for a single album (*Analyse Quality*) or across everything at once (*Analyse All*).
+It runs in the background so the app stays responsive while it works, and results are stored so you are not re-checking the same tracks every time you open the library.
 
-=== AccurateRip Verification
+=== AccurateRip verification
 
-AccurateRip is a community database of CRC checksums for CD track rips.
-The scanner computes the AccurateRip CRC for each track and queries the AccurateRip database.
+AccurateRip is a community-maintained database of checksums for CD rips.
+The app computes a checksum for each track and checks it against the database, reporting one of three outcomes:
 
-.AccurateRip status values
 [cols="1,3", options="header"]
 |===
-| Status | Meaning
+| Result | Meaning
 
-| `verified`
-| The computed CRC matches one or more database entries. The rip is considered bit-perfect.
+| Verified
+| The checksum matches the database. The rip is considered bit-perfect.
 
-| `mismatch`
-| The CRC was found in the database but does not match. The rip likely contains errors.
+| Mismatch
+| The checksum was found in the database, but does not match — the rip likely contains an error.
 
-| `unknown`
-| The disc is not present in the AccurateRip database, or the network query failed. The status cannot be determined.
+| Unknown
+| The disc isn't in the AccurateRip database, or the check couldn't reach it. This is not itself a sign of a bad rip.
 |===
 
-NOTE: AccurateRip queries require internet access. Results are cached in `rip_tracks.accuraterip_status` so subsequent opens do not re-query.
+AccurateRip verification needs an internet connection; once a track has been checked, the result is remembered so you don't need to re-check it every time.
 
-=== Click/Pop Detection
+=== Click, pop, clipping, and dropout detection
 
-Click and pop detection analyses the audio waveform for impulsive noise artefacts caused by disc surface damage or ripping errors.
-When artefacts above the detection threshold are found, `click_pop_detected` is set to `true` and the track is flagged in the UI.
+Alongside AccurateRip, the app analyses the audio itself for clicks, pops, clipping, and dropouts — the kinds of defects that come from disc damage or a rip gone wrong rather than from a data error alone.
+Tracks with a detected defect are flagged in the library so you can decide whether to re-rip them.
 
-Detection sensitivity is configurable from *Settings → Audio Quality → Click detection sensitivity*.
-Three levels are available — *Low* (only obvious defects, fewest false positives), *Medium* (default, balanced), and *High* (aggressive, more false positives).
-The selection is persisted to secure storage and applied to subsequent analysis runs.
+You can tune how aggressively this runs from *Settings → Audio Quality → Click detection sensitivity*, with three levels:
 
-=== quality_checked_at Timestamp
+* *Low* — only flags obvious defects; fewest false positives.
+* *Medium* — the default, a balance between the two.
+* *High* — more aggressive; catches more defects but is more likely to flag legitimate musical transients as well.
 
-`quality_checked_at` records when analysis was last run for a given track.
-Tracks with a `NULL` value have never been analysed.
-Tracks with a stale timestamp (older than 30 days by default) are highlighted as candidates for re-analysis if their file modification time has changed since the last check.
+== Looking up disc metadata (GnuDB)
+
+If an album's tags are incomplete, you can look up its title, artist, and track names from GnuDB — a community disc database — directly from the album's detail view, provided a CUE sheet is available for that album.
+This is separate from the coverage and quality features above and is purely for filling in missing metadata.
+GnuDB settings, including the identifier the app sends when querying it, live under *Settings → GnuDB*.
+
+See xref:troubleshooting.adoc[Troubleshooting] if the library folder won't scan, or xref:insights.adoc[Insights] for how your collection's statistics tie in with what you've ripped.
