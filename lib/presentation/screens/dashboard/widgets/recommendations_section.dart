@@ -35,7 +35,15 @@ class RecommendationsSection extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                // A Row with a Spacer overflowed on phone widths: the label
+                // and the button together are wider than the card. Wrap keeps
+                // them on one line with the same spread when they fit, and
+                // drops the button to its own line when they do not, so no
+                // width can overflow it.
+                Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 8,
                   children: [
                     Text(
                       'RECOMMENDED NEXT',
@@ -44,7 +52,6 @@ class RecommendationsSection extends ConsumerWidget {
                         letterSpacing: 0.8,
                       ),
                     ),
-                    const Spacer(),
                     TextButton(
                       onPressed: () => context.go('/wishlist-suggestions'),
                       child: const Text('Suggestions for wishlist →'),
