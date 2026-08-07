@@ -1,0 +1,45 @@
+{{!--
+  Replaces the Antora default UI's demo masthead, which ships placeholder
+  Products / Services / Download menus. Carries the site title, the search
+  field, and the palette picker.
+
+  The picker sits inside .navbar-brand rather than .navbar-menu so it stays
+  reachable on narrow screens, where .navbar-menu collapses behind the burger.
+--}}
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="{{{or site.url siteRootPath}}}">{{site.title}}</a>
+      {{#if env.SITE_SEARCH_PROVIDER}}
+      <div class="navbar-item search hide-for-print">
+        <div id="search-field" class="field">
+          <input id="search-input" type="text" placeholder="Search the docs"{{#if page.home}} autofocus{{/if}}>
+        </div>
+      </div>
+      {{/if}}
+      <div class="mms-theme hide-for-print" id="mms-theme">
+        <span class="mms-theme__label" aria-hidden="true">Theme</span>
+        <div class="mms-theme__group" role="group" aria-label="Colour palette">
+          <button type="button" class="mms-theme__swatch" data-palette="kinetic" style="--sw:#00e5a0" title="Kinetic" aria-label="Kinetic palette" aria-pressed="false"></button>
+          <button type="button" class="mms-theme__swatch" data-palette="vault" style="--sw:#e3a85a" title="Vault" aria-label="Vault palette" aria-pressed="false"></button>
+          <button type="button" class="mms-theme__swatch" data-palette="index" style="--sw:#5b7bff" title="Index" aria-label="Index palette" aria-pressed="false"></button>
+        </div>
+        <div class="mms-theme__group" role="group" aria-label="Appearance">
+          <button type="button" class="mms-theme__bright" data-bright="light" aria-pressed="false">Light</button>
+          <button type="button" class="mms-theme__bright" data-bright="dark" aria-pressed="false">Dark</button>
+        </div>
+      </div>
+      <button class="navbar-burger" aria-controls="topbar-nav" aria-expanded="false" aria-label="Toggle main menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div id="topbar-nav" class="navbar-menu">
+      <div class="navbar-end">
+        <a class="navbar-item" href="{{{siteRootPath}}}">Documentation</a>
+        <a class="navbar-item" href="https://github.com/bovinemagnet/MyMediaScanner">Source</a>
+      </div>
+    </div>
+  </nav>
+</header>

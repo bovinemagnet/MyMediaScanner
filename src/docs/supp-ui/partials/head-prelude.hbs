@@ -1,0 +1,25 @@
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    {{!--
+      Theme bootstrap. Runs before any stylesheet is requested so the palette
+      is settled before first paint — without this the page flashes the
+      default dark tokens before the stored preference is applied.
+      Keep this inline and keep it first.
+    --}}
+    <script>
+    (function () {
+      var palettes = ['index', 'kinetic', 'vault']
+      var root = document.documentElement
+      var palette, bright
+      try {
+        palette = localStorage.getItem('mms-palette')
+        bright = localStorage.getItem('mms-bright')
+      } catch (e) {}
+      if (palettes.indexOf(palette) < 0) palette = 'index'
+      if (bright !== 'light' && bright !== 'dark') {
+        bright = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+      }
+      root.setAttribute('data-palette', palette)
+      root.setAttribute('data-bright', bright)
+    })()
+    </script>

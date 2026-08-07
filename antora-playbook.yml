@@ -19,7 +19,11 @@ antora:
       mermaid_library_url: https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs
       script_stem: header-scripts
       mermaid_initialize_options:
-        start_on_load: true
+        # Rendering is driven by the UI's own theme layer (js/mms-theme.js) so
+        # diagrams pick up the active palette and re-render when it changes.
+        # Leaving this on would render them once, in mermaid's default light
+        # theme, before the palette tokens are readable.
+        start_on_load: false
 
 runtime:
   cache_dir: ./.cache/antora

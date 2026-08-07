@@ -1,0 +1,1041 @@
+/*
+ * MyMediaScanner documentation theme.
+ *
+ * Supplemental layer over the Antora default UI bundle. Loaded after
+ * site.css, so equal-specificity rules here win on source order.
+ *
+ * The default UI ships no CSS custom properties — every colour is a literal.
+ * This file therefore declares the palette tokens itself and then re-states
+ * the default UI's coloured rules in terms of those tokens. Layout is left
+ * alone; only colour, typography and radii are touched.
+ *
+ * Tokens are ported from the "Media Scanner Themed" design canvas: three
+ * palette families (kinetic, vault, index) x two brightnesses. The active
+ * pair is selected by data-palette and data-bright on <html>, set before
+ * first paint by the bootstrap in partials/head-prelude.hbs.
+ *
+ * Author: Paul Snow
+ * Since: 0.0.0
+ */
+
+/* ==========================================================================
+   1. Palette tokens
+   ========================================================================== */
+
+:root {
+  --font-head: "Space Grotesk", "Manrope", system-ui, -apple-system, sans-serif;
+  --font-body: "Manrope", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  --radius-sm: 6px;
+  --radius: 11px;
+  --radius-lg: 16px;
+  --pill: 999px;
+}
+
+/* --- Index (default) ---------------------------------------------------- */
+
+:root,
+:root[data-palette="index"][data-bright="dark"] {
+  --bg: #0e1116;
+  --surface: #161b22;
+  --s1: #1a2029;
+  --s2: #222a35;
+  --s3: #2c3643;
+  --line: rgba(255, 255, 255, 0.06);
+  --line2: rgba(255, 255, 255, 0.12);
+  --text: #e6eaf0;
+  --dim: #8a93a0;
+  --faint: #576070;
+  --accent: #5b7bff;
+  --onacc: #0a1230;
+  --accsoft: rgba(91, 123, 255, 0.16);
+  --accline: #7e97ff;
+  --link: #8fa5ff;
+  --film: #ff6b6b;
+  --music: #a98bff;
+  --book: #3fd18a;
+  --game: #6e8bff;
+  --caution: #ffb454;
+  --shadow: none;
+  --code-bg: #11161d;
+}
+
+:root[data-palette="index"][data-bright="light"] {
+  --bg: #eef0f3;
+  --surface: #ffffff;
+  --s1: #f7f8fa;
+  --s2: #eef1f6;
+  --s3: #e2e6ec;
+  --line: rgba(20, 26, 32, 0.07);
+  --line2: rgba(20, 26, 32, 0.12);
+  --text: #161a20;
+  --dim: #5b6470;
+  --faint: #9aa3b0;
+  --accent: #2742c8;
+  --onacc: #ffffff;
+  --accsoft: rgba(39, 66, 200, 0.1);
+  --accline: #2742c8;
+  --link: #1e35a8;
+  --film: #d33b3b;
+  --music: #7a3fd0;
+  --book: #1f9b63;
+  --game: #2742c8;
+  --caution: #a85b00;
+  --shadow: 0 1px 2px rgba(20, 26, 32, 0.04), 0 8px 20px rgba(20, 26, 32, 0.07);
+  --code-bg: #f7f8fa;
+}
+
+/* --- Kinetic ------------------------------------------------------------ */
+
+:root[data-palette="kinetic"][data-bright="dark"] {
+  --bg: #0a0b0d;
+  --surface: #0e1013;
+  --s1: #15181c;
+  --s2: #1c2026;
+  --s3: #252a31;
+  --line: rgba(255, 255, 255, 0.07);
+  --line2: rgba(255, 255, 255, 0.12);
+  --text: #f3f6f4;
+  --dim: #8b938f;
+  --faint: #565d59;
+  --accent: #00e5a0;
+  --onacc: #04130d;
+  --accsoft: rgba(0, 229, 160, 0.14);
+  --accline: #00e5a0;
+  --link: #35efb4;
+  --film: #ff6e6e;
+  --music: #c08cff;
+  --book: #5bd6a0;
+  --game: #5fa8ff;
+  --caution: #ffb84d;
+  --shadow: none;
+  --code-bg: #101317;
+}
+
+:root[data-palette="kinetic"][data-bright="light"] {
+  --bg: #eaeeec;
+  --surface: #ffffff;
+  --s1: #f5f8f6;
+  --s2: #eef2f0;
+  --s3: #e5ebe7;
+  --line: rgba(11, 18, 15, 0.07);
+  --line2: rgba(11, 18, 15, 0.12);
+  --text: #0c1410;
+  --dim: #5d655f;
+  --faint: #9aa39d;
+  --accent: #00c389;
+  --onacc: #042016;
+  --accsoft: rgba(0, 195, 137, 0.14);
+  --accline: #059669;
+  /* The design's #00c389 fails contrast as body-copy link ink on white;
+     stepped down to emerald-700 so inline links stay readable. */
+  --link: #047857;
+  --film: #e0455c;
+  --music: #8a4dd6;
+  --book: #0e9e73;
+  --game: #2f6be0;
+  --caution: #b26a00;
+  --shadow: 0 1px 2px rgba(11, 18, 15, 0.04), 0 6px 16px rgba(11, 18, 15, 0.06);
+  --code-bg: #f5f8f6;
+}
+
+/* --- Vault -------------------------------------------------------------- */
+
+:root[data-palette="vault"][data-bright="dark"] {
+  --bg: #100e0f;
+  --surface: #171314;
+  --s1: #1a1617;
+  --s2: #221d1e;
+  --s3: #2c2526;
+  --line: rgba(255, 255, 255, 0.06);
+  --line2: rgba(255, 255, 255, 0.11);
+  --text: #f2ebe0;
+  --dim: #9a9088;
+  --faint: #6e655d;
+  --accent: #e3a85a;
+  --onacc: #1a1206;
+  --accsoft: rgba(227, 168, 90, 0.16);
+  --accline: #e3a85a;
+  --link: #edbb78;
+  --film: #e0654c;
+  --music: #b98be0;
+  --book: #6fc58c;
+  --game: #6e9be8;
+  --caution: #e3a85a;
+  --shadow: none;
+  --code-bg: #14100f;
+}
+
+:root[data-palette="vault"][data-bright="light"] {
+  --bg: #f0e9db;
+  --surface: #fbf7ee;
+  --s1: #f6f1e6;
+  --s2: #efe6d4;
+  --s3: #e7dcc6;
+  --line: rgba(31, 27, 22, 0.08);
+  --line2: rgba(31, 27, 22, 0.14);
+  --text: #1f1b16;
+  --dim: #6e6456;
+  --faint: #a89c88;
+  --accent: #9a6a37;
+  --onacc: #ffffff;
+  --accsoft: rgba(154, 106, 55, 0.14);
+  --accline: #9a6a37;
+  /* Darkened from the design's #9A6A37 for body-copy contrast on parchment. */
+  --link: #7d5427;
+  --film: #a83a2c;
+  --music: #6b4e96;
+  --book: #3c7350;
+  --game: #2e5680;
+  --caution: #8a5a12;
+  --shadow: 0 1px 2px rgba(31, 27, 22, 0.05), 0 6px 16px rgba(31, 27, 22, 0.08);
+  --code-bg: #f6f1e6;
+}
+
+/* No-JS fallback: honour the OS preference when the bootstrap never ran. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-bright]) {
+    --bg: #eef0f3;
+    --surface: #ffffff;
+    --s1: #f7f8fa;
+    --s2: #eef1f6;
+    --s3: #e2e6ec;
+    --line: rgba(20, 26, 32, 0.07);
+    --line2: rgba(20, 26, 32, 0.12);
+    --text: #161a20;
+    --dim: #5b6470;
+    --faint: #9aa3b0;
+    --accent: #2742c8;
+    --onacc: #ffffff;
+    --accsoft: rgba(39, 66, 200, 0.1);
+    --accline: #2742c8;
+    --link: #1e35a8;
+    --film: #d33b3b;
+    --music: #7a3fd0;
+    --book: #1f9b63;
+    --game: #2742c8;
+    --caution: #a85b00;
+    --shadow: 0 1px 2px rgba(20, 26, 32, 0.04), 0 8px 20px rgba(20, 26, 32, 0.07);
+    --code-bg: #f7f8fa;
+  }
+}
+
+/* ==========================================================================
+   2. Base
+   ========================================================================== */
+
+html {
+  background: var(--bg);
+  color-scheme: dark;
+}
+
+:root[data-bright="light"] {
+  color-scheme: light;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: var(--link);
+}
+
+a:hover {
+  color: var(--accline);
+}
+
+::-moz-selection {
+  background: var(--accsoft);
+  color: var(--text);
+}
+
+::selection {
+  background: var(--accsoft);
+  color: var(--text);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accline);
+  outline-offset: 2px;
+}
+
+html::-webkit-scrollbar-thumb,
+body ::-webkit-scrollbar-thumb {
+  background: var(--s3);
+  border-radius: var(--pill);
+}
+
+html::-webkit-scrollbar-thumb:hover,
+body ::-webkit-scrollbar-thumb:hover {
+  background: var(--faint);
+}
+
+html::-webkit-scrollbar,
+body ::-webkit-scrollbar {
+  background: var(--bg);
+}
+
+/* ==========================================================================
+   3. Masthead and theme picker
+   ========================================================================== */
+
+.header,
+body .navbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+
+body .navbar-brand .navbar-item,
+body .navbar-item,
+body .navbar-link {
+  color: var(--text);
+}
+
+body .navbar-brand > .navbar-item:first-child {
+  font-family: var(--font-head);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+body .navbar-item:hover,
+body .navbar-link:hover {
+  background: var(--s2);
+  color: var(--accline);
+}
+
+/* Search field in the masthead. */
+body #search-field input,
+body #search-input {
+  background: var(--s1);
+  border: 1px solid var(--line2);
+  border-radius: var(--pill);
+  color: var(--text);
+  font-family: var(--font-body);
+  padding: 0.3rem 0.85rem;
+}
+
+body #search-input::-webkit-input-placeholder {
+  color: var(--faint);
+}
+
+body #search-input::placeholder {
+  color: var(--faint);
+}
+
+body #search-input:focus {
+  border-color: var(--accline);
+  outline: none;
+}
+
+/* --- Picker ------------------------------------------------------------- */
+
+.mms-theme {
+  align-items: center;
+  display: flex;
+  gap: 0.6rem;
+  margin-left: auto;
+  padding: 0 0.75rem;
+}
+
+.mms-theme__label {
+  color: var(--faint);
+  font: 700 9px/1 var(--font-mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.mms-theme__group {
+  align-items: center;
+  background: var(--s1);
+  border: 1px solid var(--line2);
+  border-radius: var(--pill);
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+}
+
+.mms-theme__swatch {
+  background: var(--sw);
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  height: 16px;
+  padding: 0;
+  width: 16px;
+}
+
+.mms-theme__swatch[aria-pressed="true"] {
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--sw);
+}
+
+.mms-theme__bright {
+  background: none;
+  border: 0;
+  border-radius: var(--pill);
+  color: var(--dim);
+  cursor: pointer;
+  font: 700 10px/1 var(--font-mono);
+  letter-spacing: 0.08em;
+  padding: 5px 9px;
+  text-transform: uppercase;
+}
+
+.mms-theme__bright[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--onacc);
+}
+
+@media screen and (max-width: 1023px) {
+  .mms-theme__label {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   4. Left navigation
+   ========================================================================== */
+
+.nav-container,
+body .nav {
+  background: var(--surface);
+}
+
+body .nav {
+  border-right: 1px solid var(--line);
+}
+
+body .nav a,
+body .nav .nav-text {
+  color: var(--dim);
+}
+
+body .nav a:hover {
+  color: var(--text);
+}
+
+body .nav-menu h3.title,
+body .nav-panel-explore .context {
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+body .nav-list .nav-item[data-depth="1"] > .nav-text {
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+body .is-current-page > .nav-link,
+body .is-current-page > .nav-text {
+  background: var(--accsoft);
+  border-radius: var(--radius-sm);
+  color: var(--accline);
+  font-weight: 700;
+}
+
+body .nav-panel-explore .components,
+body .nav-panel-explore .context {
+  background: var(--s1);
+  border-color: var(--line);
+}
+
+body .nav-item-toggle {
+  color: var(--faint);
+}
+
+/* ==========================================================================
+   5. Toolbar, breadcrumbs, page TOC
+   ========================================================================== */
+
+body .toolbar {
+  background: var(--s1);
+  -webkit-box-shadow: 0 1px 0 var(--line);
+  box-shadow: 0 1px 0 var(--line);
+  color: var(--dim);
+}
+
+body .toolbar a {
+  color: inherit;
+}
+
+body .toolbar a:hover,
+body .toolbar .edit-this-page a:hover {
+  color: var(--accline);
+}
+
+body .toolbar .edit-this-page a {
+  color: var(--faint);
+}
+
+body .breadcrumbs li::after {
+  color: var(--faint);
+}
+
+body .page-versions .version-menu {
+  background: var(--surface);
+  border: 1px solid var(--line2);
+  border-radius: var(--radius-sm);
+}
+
+body .toc .toc-menu h3 {
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+body .toc .toc-menu a {
+  border-left: 2px solid var(--line2);
+  color: var(--dim);
+}
+
+body .toc .toc-menu a:hover {
+  color: var(--text);
+}
+
+body .toc .toc-menu a.is-active {
+  border-left-color: var(--accline);
+  color: var(--accline);
+}
+
+body .sidebar.toc .toc-menu a:focus {
+  background: var(--s2);
+}
+
+/* ==========================================================================
+   6. Document body
+   ========================================================================== */
+
+.doc {
+  color: var(--text);
+}
+
+.doc h1,
+.doc h2,
+.doc h3,
+.doc h4,
+.doc h5,
+.doc h6 {
+  color: var(--text);
+  font-family: var(--font-head);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.doc h1.page {
+  letter-spacing: -0.03em;
+}
+
+.doc h2:not(.discrete) {
+  border-bottom: 1px solid var(--line);
+}
+
+.doc h1 .anchor,
+.doc h2 .anchor,
+.doc h3 .anchor,
+.doc h4 .anchor,
+.doc h5 .anchor,
+.doc h6 .anchor {
+  color: var(--faint);
+}
+
+.doc h1 .anchor:hover,
+.doc h2 .anchor:hover,
+.doc h3 .anchor:hover,
+.doc h4 .anchor:hover,
+.doc h5 .anchor:hover,
+.doc h6 .anchor:hover {
+  color: var(--accline);
+}
+
+.doc a {
+  color: var(--link);
+}
+
+.doc a:hover {
+  color: var(--accline);
+}
+
+.doc a.unresolved {
+  color: var(--film);
+}
+
+.doc .paragraph.lead > p {
+  color: var(--dim);
+}
+
+.doc hr {
+  background: var(--line);
+  border: 0;
+}
+
+.doc blockquote,
+.doc .quoteblock blockquote {
+  border-left: 3px solid var(--line2);
+  color: var(--dim);
+}
+
+.doc .quoteblock .attribution,
+.doc .quoteblock cite {
+  color: var(--faint);
+}
+
+.doc .admonitionblock .title,
+.doc .exampleblock .title,
+.doc .imageblock .title,
+.doc .listingblock .title,
+.doc .literalblock .title,
+.doc .openblock .title,
+.doc .videoblock .title,
+.doc table.tableblock caption,
+.doc .olist .title,
+.doc .ulist .title {
+  color: var(--dim);
+}
+
+/* --- Code --------------------------------------------------------------- */
+
+.doc code,
+.doc p code,
+.doc thead code,
+.doc .colist > table code {
+  background: var(--accsoft);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: var(--font-mono);
+  padding: 0.1em 0.35em;
+}
+
+.doc pre {
+  font-family: var(--font-mono);
+}
+
+/*
+ * The default UI paints highlighted blocks on the <code> and plain blocks on
+ * the <pre>, so both need the surface. Do not add a blanket
+ * `pre > code { background: transparent }` here — it ties on specificity with
+ * the highlight rule below and strips the background off every highlighted
+ * block.
+ */
+.doc .listingblock pre:not(.highlight),
+.doc .literalblock pre,
+.doc pre.highlight > code {
+  background: var(--code-bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  -webkit-box-shadow: none;
+  box-shadow: none;
+  color: var(--text);
+  padding: 0.875em;
+}
+
+/* Keep the inline-code tint from leaking onto <code> inside a plain block. */
+.doc pre:not(.highlight) code {
+  background: transparent;
+  padding: 0;
+}
+
+.doc .listingblock code[data-lang]::before,
+.doc .source-toolbox .source-lang {
+  color: var(--faint);
+  font-family: var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.doc .source-toolbox {
+  color: var(--faint);
+}
+
+.doc .source-toolbox .copy-button {
+  background: var(--s2);
+  border-radius: var(--radius-sm);
+  color: var(--dim);
+}
+
+.doc .source-toolbox .copy-button:hover {
+  color: var(--accline);
+}
+
+.doc .source-toolbox .copy-toast {
+  background: var(--s3);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+}
+
+.doc kbd {
+  background: var(--s2);
+  border: 1px solid var(--line2);
+  border-radius: var(--radius-sm);
+  -webkit-box-shadow: none;
+  box-shadow: none;
+  color: var(--text);
+  font-family: var(--font-mono);
+}
+
+.doc .conum[data-value] {
+  background: var(--accent);
+  border: 0;
+  color: var(--onacc);
+}
+
+/* --- Syntax highlighting ------------------------------------------------ */
+
+.doc .hljs-comment,
+.doc .hljs-quote {
+  color: var(--faint);
+  font-style: italic;
+}
+
+.doc .hljs-keyword,
+.doc .hljs-selector-tag,
+.doc .hljs-literal,
+.doc .hljs-doctag {
+  color: var(--music);
+}
+
+.doc .hljs-string,
+.doc .hljs-regexp,
+.doc .hljs-addition {
+  color: var(--book);
+}
+
+.doc .hljs-number,
+.doc .hljs-bullet,
+.doc .hljs-symbol,
+.doc .hljs-link {
+  color: var(--caution);
+}
+
+.doc .hljs-title,
+.doc .hljs-section,
+.doc .hljs-name,
+.doc .hljs-selector-id,
+.doc .hljs-class {
+  color: var(--accline);
+}
+
+.doc .hljs-attr,
+.doc .hljs-attribute,
+.doc .hljs-variable,
+.doc .hljs-template-variable,
+.doc .hljs-type {
+  color: var(--game);
+}
+
+.doc .hljs-built_in,
+.doc .hljs-builtin-name,
+.doc .hljs-meta,
+.doc .hljs-tag {
+  color: var(--dim);
+}
+
+.doc .hljs-deletion {
+  color: var(--film);
+}
+
+.doc .hljs-emphasis {
+  font-style: italic;
+}
+
+.doc .hljs-strong {
+  font-weight: 700;
+}
+
+/* --- Tables ------------------------------------------------------------- */
+
+.doc table.tableblock,
+.doc table.tableblock > *> tr > * {
+  border-color: var(--line);
+}
+
+.doc table.tableblock th,
+.doc table.grid-all > thead th,
+.doc table.grid-rows > thead th {
+  background: var(--s2);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.doc table.tableblock td {
+  color: var(--text);
+}
+
+.doc table.stripes-all > tbody > tr,
+.doc table.stripes-even > tbody > tr:nth-of-type(2n),
+.doc table.stripes-odd > tbody > tr:nth-of-type(odd) {
+  background: var(--s1);
+}
+
+.doc table.stripes-hover > tbody > tr:hover {
+  background: var(--s2);
+}
+
+.doc table.tableblock > tfoot {
+  background: var(--s1);
+}
+
+/* --- Admonitions -------------------------------------------------------- */
+
+.doc .admonitionblock td.content {
+  background: var(--s1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--text);
+}
+
+.doc .admonitionblock td.icon i {
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  letter-spacing: 0.1em;
+}
+
+.doc .admonitionblock td.icon i.icon-note {
+  background-color: var(--game);
+  color: var(--onacc);
+}
+
+.doc .admonitionblock td.icon i.icon-tip {
+  background-color: var(--book);
+  color: var(--onacc);
+}
+
+.doc .admonitionblock td.icon i.icon-important {
+  background-color: var(--music);
+  color: var(--onacc);
+}
+
+.doc .admonitionblock td.icon i.icon-warning {
+  background-color: var(--film);
+  color: var(--onacc);
+}
+
+.doc .admonitionblock td.icon i.icon-caution {
+  background-color: var(--caution);
+  color: var(--onacc);
+}
+
+/* Dark palettes need light ink on the badge; --onacc is a dark tone there. */
+:root[data-bright="dark"] .doc .admonitionblock td.icon i {
+  color: #0b0d10;
+}
+
+/* --- Example, sidebar and collapsible blocks ---------------------------- */
+
+.doc .exampleblock > .content,
+.doc details.result > .content,
+.doc .sidebarblock {
+  background: var(--s1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.doc details > summary {
+  color: var(--text);
+}
+
+.doc details > summary::before {
+  border-left-color: var(--faint);
+}
+
+/* ==========================================================================
+   7. Footer and pagination
+   ========================================================================== */
+
+body footer.footer {
+  background: none;
+  border-top: 1px solid var(--line);
+  color: var(--faint);
+}
+
+body .footer a {
+  color: var(--dim);
+}
+
+body .footer a:hover {
+  color: var(--accline);
+}
+
+body nav.pagination {
+  border-top: 1px solid var(--line);
+}
+
+body nav.pagination span::before,
+body nav.pagination a::before,
+body nav.pagination a::after {
+  color: var(--faint);
+}
+
+body nav.pagination a {
+  color: var(--link);
+}
+
+/* ==========================================================================
+   8. Search results (lunr extension)
+   ========================================================================== */
+
+/*
+ * search.css is injected by the search UI at runtime and therefore lands
+ * AFTER this stylesheet — source order cannot win. Every selector here is
+ * prefixed with :root purely to outrank its counterpart on specificity.
+ * The painted surface is .search-result-dataset, not the dropdown wrapper.
+ */
+:root .search-result-dataset {
+  background: var(--surface);
+  border: 1px solid var(--line2);
+  border-radius: var(--radius);
+  -webkit-box-shadow: var(--shadow);
+  box-shadow: var(--shadow);
+  color: var(--text);
+}
+
+:root .search-result-component-header {
+  border-bottom: 1px solid var(--line);
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+:root .search-result-document-title {
+  border-right: 1px solid var(--line);
+  color: var(--text);
+  font-family: var(--font-head);
+  font-weight: 700;
+}
+
+:root .search-result-document-hit {
+  color: var(--dim);
+}
+
+:root .search-result-document-hit > a {
+  color: inherit;
+}
+
+:root .search-result-document-hit > a:hover {
+  background-color: var(--accsoft);
+}
+
+:root .search-result-document-hit .search-result-highlight {
+  background: var(--accsoft);
+  color: var(--accline);
+  font-weight: 700;
+}
+
+:root .search-result-document-hit .search-result-section-title {
+  color: var(--text);
+}
+
+:root #search-field .filter {
+  background: var(--s1);
+  border: 1px solid var(--line2);
+  color: var(--text);
+}
+
+/* ==========================================================================
+   9. Mermaid diagrams
+   ========================================================================== */
+
+/*
+ * Diagram colours come from themeVariables in js/mms-theme.js, which reads
+ * the palette tokens at render time. This only frames the block and hides
+ * the raw mermaid source in the window between page load and render.
+ */
+.doc .imageblock > .mermaid {
+  background: var(--s1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  margin: 0;
+  overflow-x: auto;
+  padding: 1rem;
+  text-align: center;
+}
+
+.doc .imageblock > .mermaid:not([data-processed]) {
+  color: transparent;
+  min-height: 3rem;
+}
+
+.doc .imageblock > .mermaid svg {
+  height: auto;
+  max-width: 100%;
+}
+
+/*
+ * Mermaid emits a <style> block scoped by the SVG's own id, so its label
+ * rules outrank anything selector-based here and text renders in mermaid's
+ * derived grey rather than the palette ink. !important is the only reliable
+ * lever; keep it confined to text colour.
+ */
+.doc .mermaid .nodeLabel,
+.doc .mermaid .edgeLabel,
+.doc .mermaid .cluster-label,
+.doc .mermaid .label,
+.doc .mermaid span.nodeLabel,
+.doc .mermaid foreignObject div {
+  color: var(--text) !important;
+}
+
+.doc .mermaid text,
+.doc .mermaid .messageText,
+.doc .mermaid .loopText,
+.doc .mermaid .noteText,
+.doc .mermaid .titleText,
+.doc .mermaid .classTitle,
+.doc .mermaid .entityLabel,
+.doc .mermaid .actor > tspan,
+.doc .mermaid .sectionTitle {
+  fill: var(--text) !important;
+}
+
+.doc .mermaid .edgeLabel,
+.doc .mermaid .edgeLabel rect,
+.doc .mermaid .labelBkg {
+  background-color: var(--s1) !important;
+  fill: var(--s1) !important;
+}
+
+.doc .mermaid .edgeLabel .edgeLabel,
+.doc .mermaid .edgeLabel foreignObject div {
+  background-color: transparent !important;
+}
+
+/* Sequence-diagram number bubbles keep contrast against the accent fill. */
+.doc .mermaid .sequenceNumber {
+  fill: var(--onacc) !important;
+}
+
+/* ==========================================================================
+   10. Print
+   ========================================================================== */
+
+@media print {
+  .mms-theme {
+    display: none;
+  }
+
+  .doc .imageblock > .mermaid {
+    border: 0;
+    padding: 0;
+  }
+}
