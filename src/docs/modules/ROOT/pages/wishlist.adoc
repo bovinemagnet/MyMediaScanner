@@ -1,110 +1,52 @@
-= Wishlist and Suggestions
-Paul Snow
-0.0.0
+= Wishlist
 include::_attributes.adoc[]
-:description: Manage a wishlist of items you want to own and browse trending suggestions ranked by your personal taste profile.
+:description: Track items you want to add to your collection, and let MyMediaScanner suggest what to add next.
 
-The wishlist lets you track media you intend to buy.
-The suggestions surface takes that a step further by surfacing trending titles you have not yet seen, ranked by the same scorer that powers the recommendations engine.
+The wishlist is a holding area for things you want but do not yet own.
+An item on the wishlist behaves like any other entry in your collection — it has a cover, a title, and metadata — but it is flagged as not-yet-owned, so it is easy to tell apart from items you actually hold.
 
-image::screenshots/10-wishlist.png[Wishlist screen with tracked items, role=screenshot, width=720]
+== Opening the wishlist
 
-== Ownership Status
+On mobile, open the *Library* screen and use the wishlist entry in its app bar.
+On desktop, the wishlist has its own entry in the sidebar.
 
-Every `media_items` row carries an `ownership_status` column backed by the `OwnershipStatus` enum:
+If you have not added anything yet, the screen shows a short prompt to scan or add an item and save it to the wishlist instead of the collection.
 
-[cols="1,3", options="header"]
-|===
-| Value | Meaning
+== Adding items to the wishlist
 
-| `owned`
-| You physically own this item. The default for all items added via scanning or import.
+There are two ways to add something to the wishlist:
 
-| `wishlist`
-| You want to own this item but do not yet possess it.
-|===
-
-Wishlist items appear throughout the app with a distinct visual indicator (an unfilled bookmark icon overlaid on the cover) so they are easily distinguished from owned items.
-
-== Wishlist Screen
-
-The wishlist is accessible at the `/wishlist` route, which appears in the desktop sidebar and as a tab in the collection screen on mobile.
-
-The wishlist screen shows all non-deleted items with `ownership_status = wishlist`, grouped by media type.
-Each item displays its cover, title, year, and a *Mark as Owned* action.
-
-=== Adding Items to the Wishlist
-
-There are three entry points for adding an item to the wishlist:
-
-Scan screen::
-On the metadata confirmation screen, tap *Add to Wishlist* instead of *Save to Collection*.
-`SaveMediaItemUseCase` is called with `ownershipStatus = OwnershipStatus.wishlist`.
-
-Series detail screen::
-Instalments you do not own are shown as placeholders with an *Add to Wishlist* button.
-Tapping it calls `SaveMediaItemUseCase` with `ownershipStatus = OwnershipStatus.wishlist` and the series metadata pre-filled.
-
-Recommendations tile::
-The *Add to Wishlist* shortcut on a recommendation card (visible when a series-gap item is surfaced).
+Scan or manual add::
+When you scan a barcode or add an item by hand, the confirmation screen lets you choose whether to save it to your collection or straight to your wishlist, instead of always saving it as owned.
+See xref:scanning.adoc[Scanning] and xref:manual-add.adoc[Manual Add].
 
 Wishlist suggestions::
-The *Add to Wishlist* button on any suggestion card (see below).
+Every suggestion card has a button that adds that title straight to your wishlist without you having to scan or search for it.
+See <<Wishlist Suggestions>> below.
 
-=== Marking an Item as Owned
+== Marking an item as owned
 
-. Open the wishlist screen or the item detail screen for the wishlist item.
-. Tap *Mark as Owned*.
-. `ownership_status` is updated to `owned` and `date_scanned` is set to the current time if it was previously `NULL`.
+Once you actually acquire something on your wishlist, open the wishlist screen and tap the *mark owned* action on that item's row.
+It moves into your main collection immediately, and a confirmation message lets you know it has been added.
+
+TIP: If you scan the barcode of an item that is already sitting on your wishlist, save it as owned as normal — there is no need to remove it from the wishlist first.
 
 == Wishlist Suggestions
 
-The wishlist suggestions surface is accessible at `/wishlist-suggestions` (linked from the wishlist screen toolbar).
+Beyond items you already know about, MyMediaScanner can suggest trending films and TV titles you do not yet own, ranked against your own taste — the genres you love, the tags you use, and the series you actively collect.
 
-`WishlistSuggestionsUseCase` fetches trending titles from TMDB and ranks them using the same scorer as the recommendations engine, so the results feel consistent with your *Recommended next* tile.
+On desktop, *Wishlist suggestions* has its own entry in the sidebar.
+On mobile, reach it from the *Suggestions for wishlist* link on the dashboard's *Recommended next* card.
 
-=== Data Source
+Each suggestion shows a poster, title, year, and a short set of reason chips explaining why it was picked — for example, that it matches a genre you rate highly.
+Tap the wishlist button on any card to add that title straight to your wishlist.
 
-`WishlistSuggestionsUseCase` calls two TMDB endpoints on each refresh:
+IMPORTANT: Wishlist suggestions are pulled from TMDB, so they require a TMDB API key.
+See xref:api-keys.adoc[API Keys] to set one up.
+If the list is empty even with a key configured, try rating a few items in your collection first — the suggestions are ranked using ratings and genres you have already recorded, so a brand-new collection has nothing yet to match against.
 
-* `/trending/movie/week` — top 20 trending films for the current week.
-* `/trending/tv/week` — top 20 trending TV series for the current week.
+== Related pages
 
-Results are merged and deduplicated by `tmdb_id`.
-Items already present in `media_items` (whether `owned` or `wishlist`) are filtered out using a lookup against the local `tmdb_id` index.
-
-IMPORTANT: Wishlist suggestions require a TMDB API key to be configured in *Settings > API Keys*.
-When no key is present, the screen shows a prompt to configure one.
-See xref:api-configuration.adoc[API Configuration] for details.
-
-=== Ranking
-
-After deduplication, the remaining candidates are passed through `RecommendationScorer` using your current `TasteProfile`.
-This is the same scorer used by xref:recommendations.adoc[`RecommendNextUseCase`], with identical weights.
-The full ranked list is sorted by score descending.
-
-Because trending data changes weekly and your taste profile is recalculated on each invocation, the ranked suggestions list is not cached.
-Pull down to refresh at any time.
-
-=== Suggestion Cards
-
-Each card on the suggestions screen shows:
-
-* TMDB poster thumbnail.
-* Title, year, and media type.
-* Score chips showing which taste signals matched (e.g. "Matches your love of Thriller").
-* *Add to Wishlist* button.
-* *Dismiss* button — hides the suggestion from the list for 30 days without adding it to the collection.
-
-== Sync Behaviour
-
-Wishlist items are `media_items` rows and participate fully in the standard sync strategy.
-The `ownership_status` column is included in the per-field last-write-wins conflict resolution.
-
-If you mark an item as owned on one device while another device still shows it as wishlist, the device with the later `updated_at` wins on next sync.
-
-== Related Pages
-
-* xref:recommendations.adoc[Recommendations Engine] — scoring weights, `TasteProfileBuilder`, and `RecommendationReasons`
-* xref:api-configuration.adoc[API Configuration] — how to configure your TMDB key
-* xref:series.adoc[Series and Franchise Grouping] — how series gaps are surfaced in wishlist prompts
+* xref:api-keys.adoc[API Keys] — configuring the TMDB key that suggestions need
+* xref:scanning.adoc[Scanning] and xref:manual-add.adoc[Manual Add] — the two ways to add an item, either to your collection or your wishlist
+* xref:sync.adoc[Sync] — wishlist status travels with the rest of an item if you sync between devices

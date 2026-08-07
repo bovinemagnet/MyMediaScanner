@@ -1,0 +1,120 @@
+= Organising Your Collection
+include::_attributes.adoc[]
+:description: How shelves, physical locations, and series help you group, locate, and track the completeness of items in your collection.
+
+MyMediaScanner gives you three distinct ways to organise your collection, and it is worth knowing what each one is actually for before you reach for it.
+*Shelves* are virtual, freeform lists you create for any purpose you like.
+*Locations* record where an item physically sits in your home.
+*Series* track how complete a franchise or release group is, compared with what is actually available.
+They are independent of each other — an item can sit on a shelf, have a physical location, and belong to a series, all at the same time.
+
+NOTE: Do not confuse shelves with the separate wishlist feature.
+A shelf is something you build yourself for browsing; the wishlist is a dedicated holding area for things you do not yet own.
+See xref:wishlist.adoc[Wishlist] for that feature.
+
+image::screenshots/ios/shelves.png[MyMediaScanner Shelves screen on a phone, showing a list of user-created shelves,role=screenshot,width=360]
+
+== Shelves
+
+A shelf is a named, user-created list for grouping items for whatever purpose suits you — a themed collection, "Loaned out", "Currently reading", or anything else you can think of.
+Shelves are available on both mobile and desktop.
+
+On mobile, open the Shelves screen from an icon in the Library screen's app bar.
+On desktop, Shelves has its own entry in the sidebar.
+
+From the Shelves screen you can:
+
+* Create a new shelf, giving it a name and an optional description.
+* Rename an existing shelf.
+* Delete a shelf.
+
+CAUTION: Deleting a shelf does not delete the items on it.
+Only the shelf itself is removed; every item that was on it stays in your collection untouched.
+
+Opening a shelf shows the items on it as a list, and you can drag items up or down to reorder them.
+This reordered position belongs to the shelf itself — it is independent of whatever sort order you have set on the main collection.
+
+Items are added to a shelf from the item detail screen, or from a card or row's own controls, using an "Add to shelf" action.
+See xref:item-details.adoc[Item Details] for more on the item detail screen.
+
+TIP: On desktop, at wide enough window sizes, selecting a shelf shows its contents in a side panel next to the shelf list — the same master-detail pattern used on the Library screen.
+See xref:browsing.adoc[Browsing Your Collection] for more on that layout.
+
+== Locations
+
+Physical location tracking is a completely separate idea from shelves.
+Shelves are virtual lists for browsing; locations model the real, physical world — which room, which piece of furniture, which box, and which slot an item actually sits in.
+
+Locations form a hierarchy of up to four levels, and every level is optional:
+
+[cols="1,3", options="header"]
+|===
+| Level | Example
+
+| Room
+| "Living room"
+
+| Shelf/Unit
+| An actual bookcase or storage unit
+
+| Box/Drawer
+| A specific box or drawer within that unit
+
+| Slot/Position
+| A precise spot, e.g. "Row 2 Column 4"
+|===
+
+An item can be assigned to any level of this tree, not just the deepest one — assigning it to just a room, for example, is perfectly valid if that is all the precision you need.
+
+IMPORTANT: Building and managing the location tree is desktop-only.
+The Locations screen — for adding rooms, units, boxes, and slots, moving nodes around, or bulk-assigning many items to one location at once — is reached from the desktop sidebar and does not appear on mobile at all.
+
+Assigning an *existing* location to a single item, or simply viewing the location an item already has, works on every platform, including mobile, from that item's own detail screen.
+Mobile users just cannot create new locations or manage the tree itself — only pick from locations that already exist.
+
+CAUTION: Deleting a location node is a soft delete, and it does not cascade to its children.
+If you delete a parent node, its children remain in the tree but become effectively orphaned — it is easy to do this by accident.
+An item whose location was deleted shows a notice that its location no longer exists; reassign or clear it from that item's detail screen.
+
+== Series
+
+A series links related items together — a run of films, a music release group, or similar — and shows how many of the official releases in that series you actually own.
+Each item belongs to at most one series, and has a position within it, so the series can be browsed in the correct order.
+
+Series information is resolved automatically from online metadata when an item is looked up.
+There is nothing to set up manually beyond scanning or adding items as you normally would.
+
+IMPORTANT: Series is a desktop-only feature.
+The Series screen — a list of every series in your collection, each showing a completeness indicator and thumbnails of owned items, with a detail view per series showing the full ordered list of instalments, owned items highlighted, and missing ones offered as an "Add to Wishlist" action — is reached from the desktop sidebar.
+See xref:wishlist.adoc[Wishlist] for what happens once something is added from there.
+
+Series information is not shown anywhere on mobile: there is no series browser, and no series details appear on the mobile item detail screen.
+
+== Which one do I use?
+
+[cols="1,2,2", options="header"]
+|===
+| | Use it for | Availability
+
+| Shelves
+| Any personal grouping for browsing — freeform and manual
+| Mobile and desktop
+
+| Locations
+| Knowing exactly where a physical item is stored, so you can find it again
+| Assigning a location to an item works everywhere; building or managing the location tree is desktop-only
+
+| Series
+| Tracking how complete a franchise or collection is, and what is missing from it
+| Desktop-only; resolved automatically from metadata rather than set up by hand
+|===
+
+image::screenshots/desktop/collection.png[MyMediaScanner desktop collection screen showing the persistent sidebar used to reach Shelves, Locations, and Series,role=screenshot,width=720]
+
+The desktop sidebar shown above is present on every desktop screen, including Shelves, Locations, and Series — it is not a screenshot of either of those screens specifically, but it shows the sidebar entries you use to reach them.
+
+== Related pages
+
+* xref:wishlist.adoc[Wishlist] — the separate holding area for items you do not yet own
+* xref:item-details.adoc[Item Details] — adding an item to a shelf or assigning it a location
+* xref:browsing.adoc[Browsing Your Collection] — the master-detail layout shelves share with the Library screen

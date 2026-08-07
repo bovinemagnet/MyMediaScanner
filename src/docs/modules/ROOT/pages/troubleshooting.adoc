@@ -1,0 +1,97 @@
+= Troubleshooting
+include::_attributes.adoc[]
+:description: Common problems, organised by symptom, with notes on where a platform behaves differently.
+
+This page groups the problems users run into most often by what you're actually seeing, rather than by feature.
+If your issue isn't here, check xref:api-keys.adoc[API Keys], xref:sync.adoc[Sync], or xref:rip-library.adoc[Rip Library] for the full detail behind a related setting.
+
+== The camera won't scan, or shows a permission screen
+
+*Android and iOS:* if scanning shows a black screen with *Camera Permission Required*, the app has not been granted camera access.
+Tap the button on that screen to jump straight to your device's app settings, enable the camera permission, and return to the app.
+
+*macOS:* scanning also uses the device camera; if it stays blank, check camera access for the app under System Settings the same way you would for any other app.
+
+*Windows and Linux:* there is no built-in camera scanning path — the Scan screen uses your webcam instead.
+Toggle between webcam mode and keyboard input using the icon in the top-right of the Scan screen (a camera icon switches to webcam, a keyboard icon switches back).
+If picture quality is poor, try improving lighting or moving the barcode closer to the lens; webcam decoding is more sensitive to focus and glare than a phone camera.
+
+TIP: A USB keyboard-wedge barcode scanner works on *all* desktop platforms (macOS, Windows, Linux) and needs no camera or webcam at all — it simply types the barcode into the scan field as if you had typed it yourself.
+
+== A scan returns no metadata, or the wrong item
+
+* Check that you've selected the right media type hint on the Scan screen — a barcode routed as the wrong type will query the wrong metadata service.
+* For film, TV, and general fallback lookups, confirm the relevant key is entered under *Settings → API Integrations* — see xref:api-keys.adoc[API Keys].
+  Music and basic book lookups work with no key at all, so this is most often the cause for films, TV, or games rather than music.
+* If nothing comes back at all, the item is saved with just the barcode; you can fill in the metadata yourself afterwards, or try xref:manual-add.adoc[Manual Add] with a cleaner title.
+* For box sets and regional pressings, a specialist service can return the wrong or overly general match (for example, a TV box set resolving to the series as a whole rather than a specific season) — edit the saved item's metadata directly if this happens.
+
+== A key I entered seems to be ignored
+
+* Check the field shows a value when you tap the eye icon to reveal it — if it's blank, the save didn't take; paste the key again and tap the save icon.
+* For TMDB specifically, make sure you pasted the *v4 API Read Access Token* (a long string starting `eyJ`), not the shorter v3 API key — the two are easy to mix up on the TMDB website and only the v4 token works here.
+* A freshly created TMDB key can take a few minutes to activate — if it fails immediately after saving, wait and try again before assuming it's wrong.
+* IGDB (games) needs *both* a Twitch Client ID and Client Secret saved — if either is missing, game lookups are skipped entirely rather than partially working.
+
+== Cover text recognition (OCR) finds nothing
+
+*Windows and Linux:* cover text recognition is not currently available on these platforms — the feature works on Android, iOS, and macOS only.
+This is a platform limitation, not a bug; there is no setting to turn it on.
+
+*Android, iOS, macOS:* if OCR consistently returns nothing, try a sharper, better-lit photo of the cover text, and make sure the text fills a reasonable portion of the frame.
+
+== The rip library scan finds nothing, or reports an access error
+
+*macOS is the platform this catches out most often.*
+macOS runs the app in a security sandbox, so the FLAC/MP3 library folder must be chosen using the *Browse…* button next to the path field in *Settings → FLAC Library* — typing or pasting the path, even if it is completely correct, will not grant access, and the scan will find nothing or report an error.
+Use Browse… once; the app remembers the grant across restarts.
+
+*Windows and Linux* don't have this restriction — typing a path works normally there.
+
+Beyond that:
+
+* Confirm the folder actually contains FLAC or MP3 files in a reasonable folder structure — the scanner reads tags from the files themselves, so unusual folder naming is fine as long as the tags are present.
+* A first scan of a very large library (tens of thousands of tracks) can take several minutes — let it finish rather than assuming it has stalled.
+
+See xref:rip-library.adoc[Rip Library] for the full setup walk-through.
+
+== Sync "Test Connection" keeps failing
+
+* *Authentication failed* means the username or password is wrong for the role on your PostgreSQL server — double-check both, and confirm the role has permission to read and write the target database.
+* *Could not reach the server* is a network problem: check the host and port, that the server is running, and that your device and the server are on a network that can actually see each other (this often trips people up when testing over a VPN or a firewalled home network).
+If you reach your server over Tailscale, confirm the VPN is connected on this device first — see xref:sync.adoc#tailscale[Connecting over Tailscale].
+* If your server uses a self-signed TLS certificate, that's fine for personal use — but if you disabled *Require TLS* to work around a certificate problem, remember to re-enable it once resolved; running without TLS sends your password and your collection data unencrypted.
+
+See xref:sync.adoc[Sync] for the full connection walk-through and what each field means.
+
+== Sync reports conflicts
+
+This is expected, not an error: it happens when the same field was edited on two devices at close to the same time, and the app isn't confident which edit is newer.
+A *Sync Conflicts Detected* dialog lets you choose the value to keep for each field, or apply *All Local* / *All Remote* in one go.
+Nothing is overwritten until you tap *Resolve*.
+See xref:sync.adoc[Sync] for how the underlying resolution works.
+
+== Text looks cramped, wraps oddly, or overlaps at a larger size
+
+The app's own text-size setting (*Settings → Accessibility → Text size*) stacks on top of your device's system text-size setting, and the combined result is capped to keep layouts usable.
+If a screen still looks unexpectedly tight, try stepping the in-app setting down one level from *Settings → Accessibility*, or check whether your device's own system text size is already set very large — the two add together.
+See xref:appearance.adoc[Appearance] for the full range of steps available.
+
+== Importing from Goodreads, Discogs, Letterboxd, or Trakt doesn't work
+
+*Settings → Import* expects the export format each service produces natively — for example, Discogs expects a CSV from *Collection → Export*, and Goodreads expects the file from *My Books → Import and export → Export Library*.
+If the import fails or produces unexpected rows, re-export from the source service to make sure you're not importing a stale or hand-edited file.
+
+== I deleted something by accident
+
+Removed items go to *Settings → Trash* rather than disappearing immediately — open Trash to restore the item.
+If sync is enabled, a deletion is itself synced to your other devices, so restoring from Trash on one device will not undo the deletion everywhere else on its own; restore it, then let sync run again.
+
+== I have the same item twice
+
+*Settings → Find duplicates* scans your library for items sharing a barcode, or a near-identical title and year, and lets you review and merge them from one screen.
+
+== The app feels slow with a very large collection or rip library
+
+Large rip libraries (tens of thousands of tracks) take longest on the *first* scan, since every file needs reading; later scans only revisit files that changed.
+Audio quality analysis (AccurateRip and defect detection) is deliberately run on demand rather than automatically, precisely because it is the most compute-intensive part of the app — analyse one album at a time if analysing your whole library at once feels sluggish.

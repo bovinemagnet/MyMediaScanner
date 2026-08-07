@@ -67,7 +67,7 @@ The built-in `RateLimitAwareClient` enforces the ~1 req/s guideline so you will 
 
 === Obtaining API Keys
 
-TMDB:: Create a free account at https://www.themoviedb.org/, then go to *Settings > API* and request a Developer API key. The v3 auth token is used.
+TMDB:: Create a free account at https://www.themoviedb.org/, then go to *Settings > API* and request a Developer API key. Copy the *v4 API Read Access Token*, not the shorter v3 API key — the v3 key will not work.
 
 NOTE: The TMDB API key enables metadata lookups (title search, cover art, cast information).
 It is separate from the optional TMDB account connection that powers rating, watchlist, and favourite sync.

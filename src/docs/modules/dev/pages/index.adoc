@@ -1,0 +1,48 @@
+= Developer Documentation
+include::_attributes.adoc[]
+:description: Architecture, data model and build documentation for people working on MyMediaScanner.
+
+This module documents how MyMediaScanner is built.
+If you are looking for how to *use* the app, start at xref:ROOT:index.adoc[the user guide] instead.
+
+== Where to start
+
+xref:getting-started.adoc[Development Setup]::
+Prerequisites, cloning, running the test suite, and the build command for each platform.
+
+xref:architecture.adoc[Clean Architecture]::
+The layer boundaries, the dependency rule, and where each kind of code belongs.
+
+xref:data-model.adoc[Data Model]::
+The Drift schema, its tables, and how migrations are structured.
+
+xref:testing.adoc[Testing]::
+The unit, widget and integration test layers, and what each is for.
+
+== How the documentation is organised
+
+[cols="1,3",options="header"]
+|===
+| Section | Contents
+
+| Architecture
+| Layer boundaries, navigation shell and routing, and the design system's tokens and theme extensions.
+
+| Data
+| The local schema, the tiered metadata lookup strategy, and how PostgreSQL sync resolves conflicts.
+
+| Features
+| One page per feature, describing how it is implemented rather than how to operate it.
+
+| Reference
+| API configuration, the metadata providers behind each media type, and the test strategy.
+|===
+
+== Conventions
+
+* Repository interfaces live in `domain/repositories/` and are prefixed with `I`.
+* Riverpod providers are hand-written; `riverpod_generator` is not used, because it conflicts with `drift_dev`.
+* Platform checks go through `core/utils/platform_utils.dart` rather than `dart:io Platform`.
+* Deletes are soft: set `deleted = 1` so the row still syncs.
+
+Each feature page states the constraints that apply to it, and those constraints are usually the reason the code looks the way it does rather than incidental detail.

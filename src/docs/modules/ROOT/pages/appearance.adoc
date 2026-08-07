@@ -1,0 +1,60 @@
+= Appearance
+include::_attributes.adoc[]
+:description: Choosing a colour palette, switching between light and dark, and adjusting text size.
+
+MyMediaScanner separates "what it looks like" into two independent choices: a *palette* and a *brightness*.
+You can mix and match either way — for example, the Vault palette in dark, or Index in light.
+A third setting, *text size*, scales the whole app up for readability without affecting the palette or brightness at all.
+
+All three live in *Settings → Preferences*.
+
+image::screenshots/ios/settings.png[Settings screen with the palette picker, role=screenshot, width=360]
+
+== Palettes
+
+Five palette families are available, each with its own light and dark variant:
+
+[cols="1,3", options="header"]
+|===
+| Palette | Character
+
+| Classic
+| Restrained and editorial — deep obsidian surfaces with electric cyan in dark, warm off-white with deep teal in light.
+
+| Popcorn
+| Vibrant and friendly — coral, mint, and periwinkle accents, chunkier rounded shapes, and a floating scan button.
+
+| Kinetic
+| Technical and monochrome — near-black or muted sage surfaces with an electric green accent.
+
+| Vault
+| Warm and atmospheric — deep espresso or warm parchment surfaces with a brass accent.
+
+| Index
+| Precise and data-forward — cool navy or blue-grey surfaces with a cobalt blue accent.
+|===
+
+Tap a palette card in *Settings* to switch immediately — there is a live preview on each card so you can compare them before committing.
+The colours used to distinguish media types on-screen (film, TV, music, books, games) adapt automatically to whichever palette you choose.
+
+== Light, dark, or system
+
+Independently of the palette, choose how bright the interface is:
+
+* *System default* — follows your device's own light/dark setting and switches automatically when it does.
+* *Light* — always uses the light variant of your chosen palette.
+* *Dark* — always uses the dark variant of your chosen palette.
+
+This is a three-way switch next to the palette picker in *Settings*.
+
+== Text size
+
+If the default text is too small, *Settings → Accessibility → Text size* offers four steps: *Default*, *115%*, *130%*, and *150%*.
+
+This setting stacks on top of your device's own system text-size setting rather than replacing it — so if you already have larger text turned on system-wide, the app's setting adds further scaling on top of that.
+The combined result is capped so that layouts stay usable even at the largest sizes; you will not see buttons or labels run off the edge of the screen.
+
+TIP: If you rely on your device's system-wide large-text setting, you may not need to change anything here at all — the app already follows it.
+Use this control when you want the app specifically to be larger than the rest of your device.
+
+See xref:troubleshooting.adoc[Troubleshooting] if a screen looks cramped or oddly wrapped at a larger text size.

@@ -1,0 +1,173 @@
+= Sync
+include::_attributes.adoc[]
+:description: Setting up optional sync to a PostgreSQL server you host yourself, and what happens when two devices disagree.
+
+MyMediaScanner works completely offline.
+Sync is an entirely optional extra for people who use the app on more than one device and want their collection to stay in step across them.
+
+There is no service run by the app's author sitting in the middle.
+Your device connects straight to a PostgreSQL server that you run yourself — on a home server, a NAS, or anywhere else you control.
+No account is created anywhere, and nothing is sent anywhere else.
+
+NOTE: This page covers PostgreSQL sync between your own devices.
+It is unrelated to connecting your TMDB account to import ratings and watchlists — that is a separate, independent feature.
+
+== What you need
+
+A running PostgreSQL server that your device can reach over the network, along with a database, a role (username and password) that can read and write to it, and — ideally — TLS configured on the server.
+A self-signed certificate is fine for a home server.
+
+If you want to sync while away from home, see <<tailscale>> — it is a far safer way to reach your server than opening a port on your router.
+
+== Setting up the connection
+
+. Open *Settings* and go to the *Sync* section.
+. Tap *PostgreSQL Configuration*.
+. Enter the connection details:
+
+[cols="1,1,3", options="header"]
+|===
+| Field | Default | Notes
+
+| Host
+| —
+| Hostname or IP address of your PostgreSQL server.
+
+| Port
+| `5432`
+| The TCP port the server listens on.
+
+| Database
+| —
+| The name of the target database.
+
+| Username
+| —
+| The PostgreSQL role used to connect.
+
+| Password
+| —
+| Stored in your device's secure storage; never written to the local database or logged.
+
+| Require TLS
+| On
+| Strongly recommended. See <<tls>>.
+
+| Verify server certificate
+| On
+| Checks that the server's certificate is genuine and issued for the host you typed. Turn it off if your server uses a self-signed certificate. Only adjustable while *Require TLS* is on.
+|===
+
+. Tap *Test Connection*.
+
+Testing opens a connection and checks it works, but it does not turn sync on by itself — you still need to enable sync separately once the test succeeds.
+
+Test Connection reports one of three outcomes:
+
+[cols="1,3", options="header"]
+|===
+| Outcome | What it means
+
+| Connected successfully
+| The credentials and network path are good. You can enable sync.
+
+| Authentication failed
+| The username or password is wrong — check both against the role you created on the server.
+
+| Could not reach the server
+| A network problem — check the host, the port, and that the server is reachable from this device.
+|===
+
+[#tls]
+== TLS
+
+TLS is on by default, and this is deliberate: without it, your database password and your entire collection travel across the network in plain text.
+
+WARNING: Only turn *Require TLS* off for testing on a trusted local network.
+Never disable it when connecting over the internet or any network you do not fully control.
+
+If your server uses a self-signed certificate, that is fine for personal use — you don't need a certificate from a public authority to run TLS at home.
+You do need to switch *Verify server certificate* off, though: a self-signed certificate cannot be checked against a trusted authority, so leaving verification on will make *Test Connection* fail even when everything else is correct.
+The connection is still encrypted with verification off — the app simply stops asking who signed the certificate.
+
+[#tailscale]
+== Connecting over Tailscale
+
+Sync needs your device to reach your PostgreSQL server over the network.
+Inside your own home that is easy; from anywhere else it is the hard part, and the obvious fix is the wrong one.
+Forwarding port `5432` through your router puts your database on a public address, where automated login attempts will find it within hours.
+PostgreSQL was never designed to sit exposed on the open internet.
+
+https://tailscale.com/[Tailscale] sidesteps this.
+It builds a private encrypted network — a *tailnet* — between machines you own.
+Your server and each device running MyMediaScanner join it and can then reach one another directly, whatever network they happen to be on.
+No router ports are opened and nothing is published to the internet.
+
+Tailscale has clients for every platform this app runs on, so the same approach works from an Android phone on mobile data as from a laptop in a café.
+
+=== Setting it up
+
+. Install Tailscale on the machine running PostgreSQL and on each device you sync from, signing in to the same Tailscale account on all of them.
+. In the Tailscale admin console, find the name of the machine running PostgreSQL.
+With MagicDNS switched on it is reachable as something like `nas.your-tailnet.ts.net`.
+Every machine also gets a fixed address in the `100.64.0.0/10` range, which works just as well.
+. Let PostgreSQL listen on the tailnet.
+In `postgresql.conf`, `listen_addresses` must cover the server's Tailscale address, and `pg_hba.conf` needs a line allowing your sync role to connect from `100.64.0.0/10`.
+. Restart PostgreSQL.
+. Back in the app, put the MagicDNS name or the `100.x.y.z` address in *Host*, leave *Port* at `5432`, and tap *Test Connection*.
+
+Nothing else about the setup changes — sync, conflict handling, and history all behave exactly as they do on a local network.
+
+=== Certificates on a tailnet
+
+Keep *Require TLS* on.
+Tailscale already encrypts everything between your devices, so this is belt and braces rather than strictly necessary, but it costs nothing and protects the database session itself.
+
+*Verify server certificate* needs a moment's thought, because a self-signed certificate is almost certainly not issued for your new `.ts.net` name:
+
+* Switch verification off and the connection is encrypted but unchecked. On a tailnet this is a reasonable trade — only your own machines can reach the server in the first place.
+* Alternatively, use `tailscale cert` on the server to obtain a real certificate for its MagicDNS name, point PostgreSQL at it, and leave verification on.
+
+TIP: On phones and tablets Tailscale runs as a VPN profile, which has to be connected for the server to be reachable.
+If sync suddenly reports *Could not reach the server* while away from home, check Tailscale is still connected before assuming anything is wrong with the database.
+
+If you want to tighten things further, a Tailscale ACL can restrict port `5432` to just the devices that actually run the app, rather than every machine on your tailnet.
+
+== What gets synced
+
+Once sync is enabled, it covers your whole collection: media items, tags, shelves, borrowers and loans, and the cache of past barcode lookups.
+Settings such as your API keys, theme, and rip library path stay local to each device and are not synced.
+
+Each sync run is recorded under *Settings → Sync → Sync History*, so you can see what pushed, what pulled, and whether anything failed.
+
+== How conflicts are resolved
+
+Sync compares each field's last-edited time on your device against the same field on the server.
+Most of the time this needs no input from you: whichever edit happened more recently simply wins, field by field, and the older value is overwritten.
+
+The exception is when two edits happen close together in time — close enough that they were genuinely concurrent rather than one clearly following the other.
+In that case, sync does not guess.
+It stops and asks you.
+
+A *Sync Conflicts Detected* dialog lists every field in dispute, showing the local value and the remote value side by side.
+You can:
+
+* Tap *Local* or *Remote* on each field individually to choose a winner field by field.
+* Use *All Local* or *All Remote* to apply one choice to every conflict at once.
+* Tap *Resolve* once you are happy with the selections.
+
+Nothing is overwritten until you tap *Resolve*.
+
+TIP: If you edit the same item on two devices while one of them is offline, expect a conflict dialog the next time both devices sync — this is normal and just means both edits are visible so you can pick the one to keep.
+
+== Deleted items and sync
+
+Removing an item never deletes it outright while sync is enabled — it goes to Trash and is marked as deleted, and that deletion is itself synced to your other devices like any other change.
+This means a deletion made on one device is reflected on your other devices the next time they sync, and you can still recover the item from Trash if you change your mind.
+
+== If something goes badly wrong
+
+If your local data and the server ever fall out of step in a way you cannot resolve by hand, *Settings → Danger Zone → Reset & Re-sync* discards local changes and replaces them with a full copy from the server.
+This cannot be undone, so use it only as a last resort.
+
+See xref:troubleshooting.adoc[Troubleshooting] if *Test Connection* keeps failing, or xref:api-keys.adoc[API Keys] for the separate credentials used for metadata lookups (those are stored the same secure way, but are entirely independent of your PostgreSQL sync setup).

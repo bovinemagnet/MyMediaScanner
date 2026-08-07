@@ -1,0 +1,155 @@
+= Batch Scanning
+include::_attributes.adoc[]
+:description: Queue-based batch scanning mode for adding multiple items to your collection in a single session.
+
+Batch scanning mode lets you scan a large number of items in rapid succession without returning to the home screen between each one.
+Scanned items are placed in a review queue where you can confirm, edit, or discard individual entries before performing a single bulk save.
+
+image::screenshots/09-batch-editor.png[Batch editor showing the review queue, role=screenshot, width=720]
+
+== Overview
+
+In standard scanning mode each scan triggers an immediate metadata lookup and requires the user to confirm the result before the next scan can begin.
+Batch mode separates *scanning* from *reviewing*: you scan everything first, then work through the queue at your own pace.
+
+This is particularly useful when cataloguing a large physical collection — for example, an entire shelf of DVDs or a box of CDs — where stopping to review each item individually would be impractical.
+
+== Starting a Batch Session
+
+. Navigate to the *Scan* screen.
+. Toggle the *Batch* switch in the app bar to turn on batch mode.
+. Scan items in sequence.
+Each successful scan adds an entry to the queue and immediately returns the viewfinder to a ready state.
+A chip showing the queued item count appears in the app bar once at least one item has been queued.
+. When you have finished scanning, tap the queue count chip to open the Batch Editor and begin reviewing items.
+
+A batch session can also be started from the `/batch` route directly, which opens the Batch Editor screen.
+
+== Session Persistence
+
+Batch state is stored in the database so that sessions survive app restarts.
+
+Two tables manage batch state:
+
+`batch_sessions`::
+Tracks each batch session with a status of `active`, `completed`, or `discarded`.
+Only one session may be `active` at a time.
+When the app restarts, any `active` session is automatically resumed.
+
+`batch_queue_items`::
+Tracks each individual item in the queue.
+Each item has one of the following statuses:
+
+[cols="1,3",options="header"]
+|===
+| Status | Meaning
+
+| `confirmed`
+| The metadata was auto-matched with high confidence and needs no further input before saving.
+
+| `conflict`
+| The metadata lookup returned multiple candidate matches; the item needs user disambiguation before it can be saved.
+
+| `notFound`
+| No metadata was found for this barcode.
+
+| `duplicate`
+| The barcode already exists in the collection, or is a duplicate within the batch; the user decides whether to save a second copy.
+
+| `saved`
+| Successfully written to the SQLite database.
+|===
+
+== Review Queue
+
+The Review Queue is accessible from the Batch Editor screen (`/batch`).
+Items are displayed in the order they were scanned, each already classified as `confirmed`, `conflict`, `notFound`, or `duplicate`.
+
+The action offered on each row depends on its status:
+
+* `confirmed` — *Save*, which writes that single item to the collection immediately.
+* `conflict` — *Resolve*, which opens the candidate picker described below.
+* `duplicate` — *Keep*, which overrides the duplicate check and allows the item to be saved.
+* `notFound` — no action; the barcode yielded no metadata, so the item can only be removed.
+
+Every item that has not yet reached `saved` status also carries a *Remove* button (the bin icon), which drops it from the queue.
+
+NOTE: There is no metadata editor in the Batch Editor.
+Fields cannot be corrected here — an item is saved with the metadata the lookup returned, and edited afterwards from its detail screen.
+
+=== Conflict Resolution
+
+Items with `conflict` status are highlighted in the queue with a warning indicator.
+Opening a conflict item presents the list of candidate metadata matches returned by the lookup.
+You pick the correct candidate, and the item moves to `confirmed` status.
+
+=== Duplicate Handling
+
+Items with `duplicate` status display a notice that the barcode is already in the collection, or that it was scanned twice within the same batch.
+The `DuplicateSource` enum distinguishes the two cases as `collection` and `batch`.
+Use *Remove* to drop the duplicate, or *Keep* to override the check and save a second copy (for example, if you own two physical copies of the same title).
+
+== Bulk Save
+
+Once you have reviewed all items in the queue, tap *Sync All (n)* — where `n` is the number of `confirmed` items — to write every `confirmed` item to the SQLite database in a single transaction.
+
+After saving:
+
+* Each item's status is updated to `saved`.
+* A background sync task queues all newly saved records for upload to PostgreSQL.
+* The session status is updated to `completed`.
+
+You may also save individual items from the Review Queue without waiting to review the entire batch.
+
+== Undo and Redo
+
+The Batch Editor supports undo and redo for every queue operation.
+Each is captured on the undo stack as one of the `BatchAction` subclasses:
+
+[cols="1,3",options="header"]
+|===
+| Action | Operation
+
+| `AddAction`
+| A scanned barcode was appended to the queue.
+
+| `RemoveAction`
+| An item was removed from the queue; the original index is retained so redo restores its position.
+
+| `ResolveAction`
+| A conflict was resolved by picking a candidate match.
+
+| `SaveAction`
+| A single item was saved to the collection.
+
+| `ForceKeepAction`
+| A duplicate was kept via *Keep*.
+|===
+
+Use the toolbar undo (`Ctrl+Z`) and redo (`Ctrl+Y` or `Ctrl+Shift+Z`) actions, or the on-screen buttons on mobile.
+These bindings are registered with `LogicalKeyboardKey.control` rather than a per-platform modifier, so they use the control key on macOS too — `Cmd+Z` does not work.
+
+NOTE: Undo history is held in memory and is not persisted across app restarts.
+Database-level state (item statuses) is always preserved, but the in-memory undo stack is cleared when the app closes.
+
+== Batch History
+
+Completed and discarded sessions are accessible at the `/batch/history` route.
+The history view shows:
+
+* Session start and end timestamps.
+* Total items scanned, confirmed, saved, and discarded.
+* A read-only view of the items in each completed session.
+
+Active sessions do not appear in history until they are completed or discarded.
+
+== Discarding a Session
+
+To abandon the current session without saving any items:
+
+. Open the Batch Editor (`/batch`).
+. Tap *Discard Batch* in the toolbar.
+. Confirm the action in the dialogue.
+
+All items still in the queue — `confirmed`, `conflict`, `notFound`, and `duplicate` — are removed, and the session status is set to `discarded`.
+Items already in `saved` status are not affected — they remain in the collection.

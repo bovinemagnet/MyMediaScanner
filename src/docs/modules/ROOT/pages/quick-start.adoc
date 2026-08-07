@@ -1,0 +1,47 @@
+= Quick Start
+include::_attributes.adoc[]
+:description: Get your first item into MyMediaScanner in a few minutes.
+
+This walks you through cataloguing a single item, from opening the app to seeing it saved in your collection.
+It assumes MyMediaScanner is already installed — see xref:install.adoc[Install MyMediaScanner] if it is not.
+
+image::screenshots/ios/dashboard.png[MyMediaScanner dashboard showing the Quick Scan and Quick Add buttons, role=screenshot, width=360]
+
+== 1. Open the Dashboard
+
+The Dashboard is the first screen you see.
+It has two buttons: *Quick Scan* and *Quick Add*.
+
+* Use *Quick Scan* if the item has a barcode — an EAN, UPC, or ISBN, or an IMDb ID such as `tt1234567`.
+* Use *Quick Add* if it does not, or you would rather type the details in yourself.
+
+== 2. Scan the barcode
+
+Tapping *Quick Scan* opens the scanner.
+
+* On Android, iOS, and macOS, point the device's camera at the barcode.
+* On Windows and Linux, use a webcam, or type or trigger the barcode with a keyboard-wedge USB barcode scanner.
+
+Once the barcode is read, MyMediaScanner looks it up automatically — see xref:scanning.adoc[Scanning] for the full detail on how this works on each platform.
+
+image::screenshots/ios/scanner.png[Scanner screen ready to read a barcode, role=screenshot, width=360]
+
+TIP: Not every disc, book, or cartridge has a scannable barcode.
+If nothing is detected, or you would rather skip scanning entirely, use xref:manual-add.adoc[Manual Add] instead.
+
+== 3. Review the metadata
+
+If the lookup finds a match, you land on a confirmation screen pre-filled with the title, artist or author, year, and other details.
+
+* Check the fields and correct anything that is wrong.
+* If more than one match was found, pick the right one from the candidates shown.
+* If nothing was found, you can still fill the fields in by hand.
+
+Some media types need a free API key that you supply yourself before their lookup will work — see xref:api-keys.adoc[API Keys] if a lookup comes back empty.
+
+== 4. Save it
+
+Tap *Save to Collection* and the item is written to your local collection straight away.
+It is now yours to browse, tag, shelve, or lend out — see xref:browsing.adoc[Browsing Your Collection] for what to do next.
+
+TIP: Cataloguing a whole shelf at once? xref:batch-scanning.adoc[Batch Scanning] lets you scan everything first and review the whole queue afterwards, rather than confirming one item at a time.

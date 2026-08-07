@@ -211,7 +211,7 @@ It is also the service used internally when you enter or scan an IMDb ID — see
 . Register for a free account at `https://www.themoviedb.org/`.
 . Go to *Settings → API → Developer API*.
 . Complete the API request form (choose "Personal use / hobby project").
-. Copy the *v3 auth* (API key) string — not the v4 token.
+. Copy the *API Read Access Token (v4)* — a long string starting `eyJ`. The shorter v3 API key will not work in the TMDB field.
 . In MyMediaScanner, open *Settings → API Keys → TMDB*.
 . Paste the key and tap *Save*.
 

@@ -1,0 +1,91 @@
+= Insights
+include::_attributes.adoc[]
+:description: See statistics about your collection, and export it as CSV, JSON, or a browsable static website.
+
+The Insights screen turns your collection into charts and headline numbers, and is also where you export your data.
+On desktop it has its own sidebar entry; on mobile it is one of the main bottom navigation tabs.
+
+image::screenshots/ios/insights.png[Insights screen with collection statistics,role=screenshot,width=360]
+
+== What you will see
+
+[cols="1,3", options="header"]
+|===
+| Section | What it shows
+
+| Headline stats
+| Total items catalogued, how many media types are represented, your average rating, and how many items you have rated.
+
+| Collection growth
+| A chart of how your collection has grown over time.
+
+| Collection value
+| The combined price paid across your owned items, if you record prices.
+
+| Genre and media type breakdown
+| A bar chart of your most common genres alongside a pie chart of your collection by media type.
+
+| Items by year
+| A bar chart of how many items you own from each release year.
+|===
+
+A time period selector at the top of the screen lets you restrict the growth chart to a shorter window.
+
+== If you track purchase value
+
+Once you have recorded a price on at least one owned item, three extra cards appear: your top value items, a value breakdown by media type, and a value-over-time timeline.
+Alongside them, a *Valuation report* lets you export an insurance-style report — one row per priced item plus totals by media type — as a CSV file or a formatted HTML page.
+A *Refresh all current values* action is also offered there, which re-checks the current market value of eligible music items in your collection.
+
+== Lending and rip library snapshots
+
+If you have any loan history, a lending summary appears showing active and overdue loans and your most frequent borrowers — see xref:lending.adoc[Lending].
+If you have a rip library configured, a coverage card appears alongside it — see xref:rip-library.adoc[Rip Library].
+Either card is hidden until you have data for it to show.
+
+== Exporting your collection
+
+[cols="1,3", options="header"]
+|===
+| Format | What you get
+
+| CSV
+| A spreadsheet-friendly file with one row per item and columns for title, media type, genres, rating, price, and more.
+
+| JSON
+| The same data in a structured file, useful for feeding into another tool.
+|===
+
+Both buttons live in the *Export* section of the Insights screen.
+Deleted (trashed) items are never included in either export.
+Once the export finishes, the app shows you the exact path of the file it wrote.
+
+== Static website export
+
+For a portable, browsable copy of your whole collection, use the static HTML export instead: open *Settings > Export > Static HTML export*.
+
+image::screenshots/desktop/settings.png[Settings screen, home of the static HTML export,role=screenshot,width=720]
+
+[cols="1,3", options="header"]
+|===
+| Option | What it does
+
+| Site title
+| The heading shown at the top of the exported site.
+
+| Private tag
+| Items carrying this tag are left out of the export entirely — useful for anything you would rather not include if you share the export.
+
+| Download and bundle cover art
+| Saves a local copy of every cover image so the exported site still shows artwork when viewed offline.
+|===
+
+Choose a destination folder and the export writes a searchable, filterable website — a grid of your collection plus a page per item — that you can open directly in a browser, drop into a static hosting service such as Netlify Drop or GitHub Pages, or serve from your own web server.
+
+NOTE: Deleted (trashed) items are never included in the static export, and items tagged with your chosen private tag are left out as well — neither their covers nor their titles appear anywhere in the exported files.
+
+== Related pages
+
+* xref:lending.adoc[Lending] — the loans summarised on the Insights screen
+* xref:rip-library.adoc[Rip Library] — the rip coverage card summarised on the Insights screen
+* xref:organising.adoc[Organising] — tags, including the tag you might use as the static export's private tag

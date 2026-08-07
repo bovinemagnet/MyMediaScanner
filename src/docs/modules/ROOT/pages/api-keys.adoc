@@ -1,0 +1,106 @@
+= API Keys
+include::_attributes.adoc[]
+:description: Which metadata services need a key, which work with no setup at all, and how to enter your keys.
+
+MyMediaScanner looks up metadata from several external services when you scan or add an item.
+Some of these services are free and open, and need nothing from you.
+Others require a personal key or token that you request yourself, free of charge, from the service's own website.
+
+You never share a key with the app's author, and the app has no account of its own.
+Each key you enter is written straight to your device's secure storage — the Keychain on iOS and macOS, the Keystore on Android, and the platform equivalent on Windows and Linux — and is used only to talk to that one service.
+
+NOTE: Music lookups work out of the box.
+MusicBrainz, the primary music metadata source, is built into the app and needs no key at all.
+
+image::screenshots/ios/settings.png[Settings screen with the API keys section, role=screenshot, width=360]
+
+== Which services need a key
+
+[cols="2,1,3", options="header"]
+|===
+| Service | Key needed? | Where to get it
+
+| TMDB (film & TV)
+| Yes
+| Free account at themoviedb.org, then *Settings → API* on the TMDB website
+
+| Discogs (music, optional fallback)
+| Optional
+| Free account at discogs.com, then *Settings → Developers* → generate a personal access token
+
+| UPCitemdb (general barcode fallback)
+| Yes
+| Free trial key from the UPCitemdb website dashboard
+
+| TVDB (TV enrichment, optional)
+| Optional
+| Free account at thetvdb.com, then *Account → API Access*
+
+| fanart.tv (extra artwork, optional)
+| Optional
+| Free account at fanart.tv, then copy your personal API key from your profile
+
+| IGDB / Games (via Twitch, optional)
+| Optional
+| Free Twitch developer application at dev.twitch.tv/console, giving a Client ID and Client Secret
+
+| MusicBrainz (music)
+| No
+| Built in — no account needed
+
+| Google Books (books)
+| No (optional key raises the daily limit)
+| Free key via the Google Cloud Console if you scan a lot of books in one sitting
+
+| Open Library (books, fallback)
+| No
+| Open — no account needed
+
+| TheAudioDB (music enrichment)
+| No
+| Built in — no account needed
+|===
+
+TIP: If you only ever scan music and books, you can use MyMediaScanner productively without entering a single key.
+Add TMDB before scanning films or TV, and add UPCitemdb as a general safety net for anything the specialist services miss.
+
+== Getting each key
+
+TMDB:: Create a free account at themoviedb.org, then go to *Settings → API*.
++
+WARNING: TMDB now uses the *v4 API Read Access Token* — a long string, roughly 250 characters, starting with `eyJ`.
+This is different from the shorter v3 API key that older instructions sometimes mention.
+Paste the v4 token; the shorter v3 key will not work in the TMDB field.
+
+Discogs:: Sign in at discogs.com and open *Settings → Developers*.
+Generate a personal access token — no OAuth flow is needed.
+Discogs is only used as a fallback when MusicBrainz has nothing, so this key is optional.
+
+UPCitemdb:: Sign up at upcitemdb.com and copy the key from your account dashboard.
+The free trial covers a limited number of lookups per month; consider a paid plan if you scan heavily.
+
+TVDB:: Register at thetvdb.com, then go to *Account → API Access* and create a project to get a v4 API key.
+This only enriches TV entries that TMDB has already found, so the app works fine without it.
+
+fanart.tv:: Register at fanart.tv and copy your personal API key from your profile page.
+This adds extra artwork on top of what TMDB, TVDB, and MusicBrainz already supply.
+
+IGDB / Games:: Video game lookups use IGDB, which authenticates through Twitch rather than issuing you a single key.
+Log in at dev.twitch.tv/console, register an application (category *Website Integration*, redirect URL `http://localhost`), then copy the *Client ID* and generate a *Client Secret*.
+Twitch shows the secret only once, so copy it before navigating away.
+
+== Entering keys in the app
+
+. Open *Settings*.
+. Scroll to the *API Integrations* section.
+. Tap the field for the service you want to configure and paste your key or token.
+. Tap the save icon next to the field.
+
+Each field is masked by default; tap the eye icon to reveal what you have typed before saving.
+Fields for optional services can be left blank — the corresponding lookups are simply skipped.
+
+WARNING: A newly created TMDB key can take a few minutes to activate.
+If scans fail immediately after saving a brand-new key, wait a short while before assuming the key is wrong.
+
+If a service you have configured stops returning results, see xref:troubleshooting.adoc[Troubleshooting] for symptom-led fixes, or check that your key has not expired on the provider's own website.
+For how these providers fit into the overall scanning flow, see xref:scanning.adoc[Scanning].

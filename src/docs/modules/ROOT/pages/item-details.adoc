@@ -1,0 +1,111 @@
+= Item Details
+include::_attributes.adoc[]
+:description: How to read the cover art, ratings, and metadata on an item's detail screen, and how to edit it, add it to a shelf, or refresh its cover art and metadata from there.
+
+Every item in your collection has its own detail screen, showing everything MyMediaScanner knows about it and giving you the actions to change it.
+This page walks through what you see there, top to bottom, and what each toolbar action does.
+
+== Opening an item
+
+Tap an item in xref:browsing.adoc[Browsing Your Collection] — or, on a narrow window or a phone, in a shelf — to open its detail screen.
+On a wide desktop window the same information can appear instead in a side panel next to the collection list, without leaving the list view; see xref:browsing.adoc[Browsing Your Collection] for that layout.
+
+image::screenshots/ios/item-detail.png[Item detail screen on a phone, showing the cover art, star rating, and metadata sections, role=screenshot, width=360]
+
+== Cover art, title, and your rating
+
+At the top of the screen is the item's cover art, shown large and centred with rounded corners.
+If no cover art has been found yet, a placeholder icon is shown in its place — see <<Fetching cover art>> below.
+
+Below the cover art is the title, and a subtitle if the item has one, such as an artist or director name.
+Underneath that sits a five-star rating control: tap a star to set your own personal rating for the item, from one to five stars.
+This rating is entirely your own opinion and is never fetched from anywhere.
+
+If the item's metadata included a critic score, it appears just below your star rating as a score out of ten, together with the name of the source that supplied it — for example TMDB, Discogs, or Google Books, depending on the type of item.
+Critic scores come from the same online lookup used when the item was first scanned or added, so not every item will have one; when a score is not available, nothing is shown in its place.
+See <<Star rating vs critic score>> below for how the two relate to each other.
+
+== Further down the page
+
+Below the rating and critic score, in order, you may find:
+
+* Any tags attached to the item.
+* A free-text personal review, if one has been written.
+* Purchase information and a current estimated value.
+* The item's physical location — see xref:organising.adoc[Organising Your Collection].
+* Progress tracking, if you are partway through the item — see xref:progress.adoc[Tracking Progress].
+* Lending status, if the item is currently on loan — see xref:lending.adoc[Lending Tracker].
+* For music items only, a rip status section showing whether the album has been matched to a ripped copy in your rip library — see xref:rip-library.adoc[Rip Library] for how that matching works.
+
+Not every section appears for every item; a section is only shown when it has something to show.
+
+== The metadata section
+
+At the bottom of the screen is a metadata section with three parts:
+
+Description:: The item's description or synopsis, if one was found.
+Details:: Format, publisher, year, barcode, and genres, plus a few fields specific to the type of item — for example runtime for a film, or page count for a book.
+Sources:: Which online services the item's metadata came from.
+
+== Toolbar actions
+
+The top of the screen offers actions for adding the item to a shelf, refreshing its metadata, fetching cover art, editing it, and deleting it.
+
+NOTE: On a narrow phone screen, only *Edit* stays directly visible in the toolbar.
+The shelf, refresh, and cover-art actions — and, on the very narrowest screens, delete — collapse into a "more actions" overflow menu so the title has room to breathe.
+This is purely a space-saving layout choice; every action is still available, just one tap further away.
+
+=== Editing an item
+
+Tap *Edit* to open a form pre-filled with the item's current details.
+Change any field you like, and optionally re-run the online lookup from within the form to pull in fresh values before saving.
+Saving shows a confirmation and returns you to the item detail screen.
+
+=== Fetching cover art
+
+The *Fetch cover art* action appears only when the item currently has no cover art.
+It searches online sources for artwork and reports back one of three outcomes: cover art updated, no cover art found, or — as a safeguard — that the item already has cover art.
+
+=== Refreshing metadata
+
+*Refresh metadata* re-runs the item's original online lookup and updates its stored details with whatever comes back.
+A brief status message is shown while the lookup runs, and the app reports whether it succeeded or, if the lookup failed, shows an error.
+
+TIP: Refreshing is useful when a metadata source has since corrected or expanded its entry for the item, for instance adding a critic score that was not yet available when you first scanned it.
+
+=== Adding to a shelf
+
+*Add to shelf* opens a picker so you can add the item to one or more shelves.
+See xref:organising.adoc[Organising Your Collection] for what shelves are and how to manage them.
+
+=== Deleting an item
+
+*Delete* removes the item from your collection, after a confirmation prompt.
+Deletion is soft: the item moves to Trash rather than being erased outright, so it can still be restored — see xref:browsing.adoc[Browsing Your Collection] for how.
+
+== Star rating vs critic score
+
+The star rating and the critic score can look similar at a glance, but they measure different things and never influence one another.
+
+[cols="1,2,2", options="header"]
+|===
+| | Star rating | Critic score
+
+| Whose opinion is it?
+| Yours
+| An external source
+
+| Scale
+| One to five stars
+| Out of ten
+
+| Where it comes from
+| You tap a star
+| Fetched automatically with the item's metadata
+
+| Always present?
+| Yes, once you set it
+| No — absent for niche or very new releases
+|===
+
+Changing your star rating never affects the critic score, and a low (or missing) critic score has no bearing on the rating you choose to give the item yourself.

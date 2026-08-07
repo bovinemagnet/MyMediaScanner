@@ -21,8 +21,8 @@ TIP: Run `flutter doctor` after installation to verify your environment is confi
 
 [source,bash]
 ----
-git clone https://github.com/yourorg/mymediascanner.git
-cd mymediascanner
+git clone https://github.com/bovinemagnet/MyMediaScanner.git
+cd MyMediaScanner
 flutter pub get
 ----
 

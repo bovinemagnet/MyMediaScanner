@@ -1,0 +1,132 @@
+= Browsing Your Collection
+include::_attributes.adoc[]
+:description: How to search, filter, sort, and select items in your collection, and how deleting and restoring items works.
+
+Once you have scanned or added a few items, the Library screen is where you go to find them again.
+It offers a grid or table view, a live search bar, filter chips for media type and a handful of other conditions, several sort orders, and — on desktop — a resizable side-by-side view and full keyboard navigation.
+
+On mobile (Android and iOS), Library is one of four bottom-navigation tabs, alongside Home, Scanner, and Insights.
+On desktop (macOS, Windows, and Linux), Library is reached from a persistent sidebar.
+The sidebar collapses into a drawer behind a hamburger menu when the window is narrower than 600 pixels.
+
+TIP: Shelves and Wishlist are not separate navigation tabs.
+Open them from the shelves icon and the heart icon in the Library screen's own toolbar.
+See xref:organising.adoc[Organising Your Collection] and xref:wishlist.adoc[Wishlist] for what each of those screens does.
+
+image::screenshots/ios/library.png[MyMediaScanner Library screen on a phone, showing the search bar, media-type filter chips, and a grid of collection cards, role=screenshot, width=360]
+
+== Grid view and table view
+
+Grid view is the default on every platform, and the only view available on mobile.
+It shows one card per item, with cover art as the main visual anchor.
+
+On desktop, a toggle in the header switches between the grid and a sortable table.
+The table adds columns you cannot see on a card at a glance, and is virtualised so it stays responsive even in a very large collection.
+
+[cols="1,2,2", options="header"]
+|===
+| | Grid view | Table view
+
+| Available on
+| Mobile and desktop
+| Desktop only
+
+| Best for
+| Browsing by cover art
+| Scanning many items at once, comparing fields
+
+| Columns/fields shown
+| Cover, title, and a summary line per card
+| Title, Artist/Director, Type, Format, Barcode, Added, Rating
+
+| Sortable by clicking a column
+| No
+| Yes
+|===
+
+image::screenshots/desktop/collection.png[MyMediaScanner collection screen on desktop, showing the table view with sortable columns next to a resizable item-detail panel, role=screenshot, width=720]
+
+== Searching and filtering
+
+A search bar sits at the top of the Library screen, with the placeholder text "Search collection...".
+It filters the visible list as you type, with no need to press Enter or open a separate search screen.
+
+Below the search bar is a row of filter chips.
+The first chip is "All".
+The rest are one chip per media type — film, TV, music, books, and video games.
+Selecting a media-type chip narrows the list to that type alone.
+Selecting it again, or selecting "All", clears the filter.
+
+On mobile, this chip row sits directly under the search bar.
+On desktop, it sits under a header row that also carries the sort and view controls described below.
+
+Alongside the media-type chips are a few toggle chips for narrower conditions:
+
+* *Lent out* — shows only items currently on loan to someone.
+* *Ripped* — shows only music already present in your rip library.
+* A rip-status chip for the music side of the collection, with the options All, Has Rip, Not Ripped, Verified, and Quality Issues.
+
+A tune icon opens a bottom sheet with more filters and saved searches: a year range, a minimum star rating, and genre chips, plus any searches you have saved for reuse.
+
+TIP: Combine a media-type chip with the search bar to find something fast — for example, select the *music* chip, then type an artist's name.
+
+== Sorting
+
+A sort control offers four orders: Date Added, Title, Year, and Rating, alongside a separate button that flips the order between ascending and descending.
+
+On desktop, the sort control and the grid/table toggle sit directly in the screen's header, next to buttons for fetching missing cover art, exporting the collection, and jumping to xref:insights.adoc[Insights].
+On mobile, the same sort options are tucked into the app bar's overflow ("more actions") menu, to keep the main toolbar uncluttered.
+
+== The desktop master-detail layout
+
+On a sufficiently wide desktop window, selecting an item in the Library list does not navigate you away from it.
+Instead, the item's details open in a side panel next to the list, so you can keep browsing and inspecting items side by side.
+
+On a narrower desktop window, or on mobile, selecting an item instead opens the full item detail screen — see xref:item-details.adoc[Item Details] for what is shown there.
+
+NOTE: The divider between the list and the detail panel can be dragged to resize the two panes.
+MyMediaScanner remembers your preferred split and reopens the same layout next time.
+
+== Keyboard navigation on desktop
+
+When the collection table has focus, you can browse and act on items entirely from the keyboard.
+
+[cols="1,3", options="header"]
+|===
+| Key | Action
+
+| Up / Down
+| Move the selection to the previous or next row
+
+| Home / End
+| Jump to the first or last row
+
+| Enter
+| Open the selected item
+
+| Delete / Backspace
+| Delete the selected item (with the same confirmation described below)
+
+| Escape
+| Clear the current selection
+|===
+
+This only applies to the desktop table view.
+Grid view has no equivalent keyboard scheme.
+
+== Deleting and restoring items
+
+You can delete an item from a card's context menu, from a row in the table view, or from the item detail screen itself.
+Every one of these routes shows the same confirmation dialog first — "Delete item?", "This item will be removed from your collection." — so nothing is removed by accident.
+
+WARNING: Deleting an item here does not erase it immediately.
+The item is moved to Trash, and nothing is ever silently or permanently deleted from a single tap.
+
+Trash is reached from Settings, which you open from the gear icon on the dashboard.
+The Trash screen lists every removed item together with its media type and when it was trashed, and offers two actions per item:
+
+Restore:: Returns the item to your active collection, exactly as it was before deletion.
+Delete forever:: Permanently erases the item.
+A second confirmation dialog warns that this cannot be undone before anything is actually removed.
+
+Permanent deletion is therefore always a deliberate, second step taken from Trash — never an accidental side effect of deleting an item from the Library screen.
