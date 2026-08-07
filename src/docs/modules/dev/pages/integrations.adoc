@@ -485,7 +485,7 @@ No browser redirect or callback URL is involved.
 
 ==== Setup
 
-See xref:api-configuration.adoc#_igdb_games_configuration[API Configuration — IGDB / Games Configuration] for step-by-step instructions on registering a Twitch application and entering credentials.
+See xref:api-configuration.adoc#igdb-games-configuration[API Configuration — IGDB / Games Configuration] for step-by-step instructions on registering a Twitch application and entering credentials.
 
 ==== Endpoint and query shape
 

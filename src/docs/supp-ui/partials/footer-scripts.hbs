@@ -1,0 +1,11 @@
+{{!--
+  Mirrors the default UI's footer-scripts, with the theme picker appended.
+  Keep the search-scripts include — the lunr extension supplies that partial
+  and the search box in the masthead is dead without it.
+--}}
+<script id="site-script" src="{{{uiRootPath}}}/js/site.js" data-ui-root-path="{{{uiRootPath}}}"></script>
+<script async src="{{{uiRootPath}}}/js/vendor/highlight.js"></script>
+<script src="{{{uiRootPath}}}/js/mms-theme.js"></script>
+{{#if env.SITE_SEARCH_PROVIDER}}
+{{> search-scripts}}
+{{/if}}

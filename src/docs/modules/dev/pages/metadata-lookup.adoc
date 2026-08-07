@@ -292,7 +292,7 @@ Routing uses the same per-type specialist clients as barcode lookup:
 * Unknown → cascade through TMDB, MusicBrainz, Google Books in order.
 
 Because the film / TV route has no key-free fallback, searching for a film or TV title without a TMDB key configured would silently return `NotFoundScanResult`.
-The manual-add screen pre-checks `apiKeysProvider` and short-circuits with a specific snackbar in that case; see xref:manual-add.adoc#_api_key_requirements[Manual Add — API Key Requirements].
+The manual-add screen pre-checks `apiKeysProvider` and short-circuits with a specific snackbar in that case; see xref:manual-add.adoc#api-key-requirements[Manual Add — API Key Requirements].
 
 == Related Pages
 
