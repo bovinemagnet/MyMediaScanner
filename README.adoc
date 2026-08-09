@@ -258,6 +258,8 @@ Android releases go to Google Play. See link:docs/PLAY_STORE_RELEASE.md[docs/PLA
 
 iOS releases go to TestFlight and the App Store. See link:docs/IOS_RELEASE.md[docs/IOS_RELEASE.md] -- Developer Program enrolment, signing, the privacy manifest, App Store Connect API key, and the tag-and-publish workflow.
 
+macOS ships as a DMG from GitHub Releases. See link:docs/MACOS_RELEASE.md[docs/MACOS_RELEASE.md] -- Developer ID certificate, hardened-runtime signing, notarisation and stapling. Without those the DMG builds but Gatekeeper rejects it on any machine other than the one that built it.
+
 == Privacy
 
 MyMediaScanner has no servers and no accounts. Your collection is stored locally on your device, and the app contains no analytics, advertising, or crash-reporting SDKs.
