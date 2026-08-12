@@ -22,10 +22,27 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Three plugins pkg-config their way to native libraries that the
+      # runner does not ship, and CMake fails configuration rather than
+      # skipping them:
+      #   camera_desktop        gstreamer-1.0, gstreamer-app-1.0,
+      #                         gstreamer-video-1.0  (webcam scanning)
+      #   audioplayers_linux    gstreamer-audio-1.0
+      #   flutter_secure_storage_linux
+      #                         libsecret-1 >= 0.18.4  (API keys)
+      # printing needs gtk+-unix-print-3.0, which libgtk-3-dev already
+      # provides.
       - name: Install Linux build dependencies
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y ninja-build libgtk-3-dev libblkid-dev liblzma-dev
+          sudo apt-get install -y \
+            ninja-build \
+            libgtk-3-dev \
+            libblkid-dev \
+            liblzma-dev \
+            libgstreamer1.0-dev \
+            libgstreamer-plugins-base1.0-dev \
+            libsecret-1-dev
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -67,9 +84,16 @@ jobs:
           VERSION=$(grep '^\s*version:' pubspec.yaml | sed 's/.*version:[[:space:]]*//' | sed 's/+.*//' | tr -d ' ')
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
+      # appimagetool is itself an AppImage, so it tries to self-mount with
+      # FUSE 2 — which current Ubuntu runners do not carry, giving
+      # "dlopen(): error loading libfuse.so.2". Unpacking it instead avoids
+      # needing FUSE on the runner at all, which is steadier than installing
+      # a deprecated libfuse2 whose package name keeps changing between
+      # Ubuntu releases.
       - name: Build AppImage
         env:
           APP_VERSION: ${{ steps.version.outputs.version }}
+          APPIMAGE_EXTRACT_AND_RUN: 1
         run: |
           # Download appimagetool
           wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool
