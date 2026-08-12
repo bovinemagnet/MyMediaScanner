@@ -18,6 +18,14 @@ jobs:
     permissions:
       contents: write
 
+    # Signing switches on only when the secrets exist, matching how
+    # release-ios.yml and release-android.yml gate. Without them the job still
+    # produces a DMG, but one Gatekeeper rejects — see docs/MACOS_RELEASE.md.
+    env:
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      MACOS_DEVELOPER_ID_CERT_BASE64: ${{ secrets.MACOS_DEVELOPER_ID_CERT_BASE64 }}
+      APPSTORE_API_KEY_ID: ${{ secrets.APPSTORE_API_KEY_ID }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -63,8 +71,71 @@ jobs:
       - name: Run tests
         run: flutter test
 
+      - name: Report signing mode
+        id: signing
+        run: |
+          if [ -n "$MACOS_DEVELOPER_ID_CERT_BASE64" ] && [ -n "$APPLE_TEAM_ID" ]; then
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+            echo "Developer ID signing enabled."
+          else
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No macOS signing secrets set. The DMG will be ad-hoc signed and Gatekeeper will reject it. See docs/MACOS_RELEASE.md."
+          fi
+
+      - name: Import Developer ID certificate
+        if: steps.signing.outputs.signed == 'true'
+        env:
+          CERT_PASSWORD: ${{ secrets.MACOS_DEVELOPER_ID_CERT_PASSWORD }}
+        run: |
+          KEYCHAIN_PASSWORD=$(uuidgen)
+          KEYCHAIN=$RUNNER_TEMP/signing.keychain-db
+
+          echo "$MACOS_DEVELOPER_ID_CERT_BASE64" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security import "$RUNNER_TEMP/cert.p12" -k "$KEYCHAIN" \
+            -P "$CERT_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security
+          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+            -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" > /dev/null
+          security list-keychain -d user -s "$KEYCHAIN" login.keychain-db
+
+          rm -f "$RUNNER_TEMP/cert.p12"
+          security find-identity -v -p codesigning "$KEYCHAIN"
+
       - name: Build macOS release
         run: flutter build macos --release
+
+      # Flutter ad-hoc signs the bundle, so re-sign it with the Developer ID
+      # identity. Nested code has to be signed before the bundle that contains
+      # it, or the outer signature seals a stale inner one. --options runtime
+      # enables the hardened runtime, without which notarisation is refused.
+      - name: Sign for distribution
+        if: steps.signing.outputs.signed == 'true'
+        run: |
+          APP="build/macos/Build/Products/Release/MyMediaScanner.app"
+          IDENTITY="Developer ID Application"
+          ENTITLEMENTS="macos/Runner/Release.entitlements"
+
+          sign() {
+            codesign --force --timestamp --options runtime \
+              --sign "$IDENTITY" "$@"
+          }
+
+          # Frameworks and loose dylibs first, deepest paths ahead of shallow.
+          find "$APP/Contents/Frameworks" \
+            -name "*.dylib" -o -name "*.framework" -o -name "*.xpc" 2>/dev/null |
+            awk '{ print gsub("/","/"), $0 }' | sort -rn | cut -d" " -f2- |
+            while read -r item; do
+              echo "signing nested: $item"
+              sign "$item"
+            done
+
+          # Then the app itself, which is what carries the entitlements.
+          sign --entitlements "$ENTITLEMENTS" "$APP"
+
+          codesign --verify --deep --strict --verbose=2 "$APP"
 
       - name: Install create-dmg
         run: brew install create-dmg
@@ -95,6 +166,34 @@ jobs:
             "${BUILD_DIR}/${APP_NAME}.app"
           echo "dmg_name=${DMG_NAME}" >> "$GITHUB_ENV"
           echo "dmg_path=build/${DMG_NAME}" >> "$GITHUB_ENV"
+
+      # Notarisation is what actually clears Gatekeeper: signing alone is not
+      # enough for a download. Stapling attaches the ticket so the first launch
+      # works without a network round-trip.
+      - name: Notarise and staple the DMG
+        if: steps.signing.outputs.signed == 'true' && env.APPSTORE_API_KEY_ID != ''
+        env:
+          APPSTORE_API_ISSUER_ID: ${{ secrets.APPSTORE_API_ISSUER_ID }}
+          APPSTORE_API_PRIVATE_KEY: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+        run: |
+          KEY_FILE="$RUNNER_TEMP/AuthKey.p8"
+          printf '%s' "$APPSTORE_API_PRIVATE_KEY" > "$KEY_FILE"
+
+          xcrun notarytool submit "$dmg_path" \
+            --key "$KEY_FILE" \
+            --key-id "$APPSTORE_API_KEY_ID" \
+            --issuer "$APPSTORE_API_ISSUER_ID" \
+            --wait
+
+          rm -f "$KEY_FILE"
+          xcrun stapler staple "$dmg_path"
+
+      - name: Verify Gatekeeper accepts the DMG
+        if: steps.signing.outputs.signed == 'true' && env.APPSTORE_API_KEY_ID != ''
+        run: |
+          xcrun stapler validate "$dmg_path"
+          # This is the check that failed before notarisation was wired up.
+          spctl -a -t open --context context:primary-signature -vvv "$dmg_path"
 
       - name: Upload DMG artefact
         uses: actions/upload-artifact@v4
