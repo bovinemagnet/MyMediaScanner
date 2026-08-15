@@ -701,7 +701,7 @@ class MetadataRepositoryImpl implements IMetadataRepository {
       final release = await musicBrainzApi!.getRelease(candidate.sourceId);
       if (release != null) {
         await _cacheResponse(barcode, 'music', 'musicbrainz', release.toJson());
-        return _buildMusicBrainzResult(release, barcode, barcodeType);
+        return await _buildMusicBrainzResult(release, barcode, barcodeType);
       }
     } on RateLimitExceededException catch (e) {
       debugLog('MusicBrainz rate-limited during detail fetch: $e');

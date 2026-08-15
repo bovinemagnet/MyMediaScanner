@@ -433,5 +433,32 @@ void main() {
 
       expect(result, isNull);
     });
+
+    test('returns null when Cover Art Archive lookup throws', () async {
+      const release = MusicBrainzReleaseDto(
+        id: 'rel-art-fails',
+        title: 'Artwork Unavailable',
+        releaseGroup:
+            MusicBrainzReleaseGroupDto(id: 'rg-2', title: 'Group'),
+      );
+      when(() => mbApi.getRelease('rel-art-fails'))
+          .thenAnswer((_) async => release);
+      when(() => coverArtApi.findFrontArtwork(
+            releaseId: any(named: 'releaseId'),
+            releaseGroupId: any(named: 'releaseGroupId'),
+          )).thenThrow(Exception('cover art archive unreachable'));
+
+      final result = await repo.fetchCandidateDetail(
+        const MetadataCandidate(
+          sourceApi: 'musicbrainz',
+          sourceId: 'rel-art-fails',
+          title: 'Artwork Unavailable',
+        ),
+        barcode,
+        'ean13',
+      );
+
+      expect(result, isNull);
+    });
   });
 }
