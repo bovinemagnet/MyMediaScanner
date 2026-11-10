@@ -771,5 +771,129 @@ void main() {
         },
       );
     });
+
+    // #131: re-scan used to delete every track and insert replacements
+    // with fresh ids, which orphaned playlist entries (or cascaded them
+    // away with foreign keys on) even for an unchanged album.
+    group('updateAlbumAndReplaceTracks keeps stable track ids', () {
+      late int now;
+
+      RipAlbumsTableCompanion album() => RipAlbumsTableCompanion(
+            id: const Value('rip-1'),
+            libraryPath: const Value('Artist/Album'),
+            trackCount: const Value(2),
+            totalSizeBytes: const Value(100),
+            lastScannedAt: Value(now),
+            updatedAt: Value(now),
+          );
+
+      RipTracksTableCompanion track(
+        String id,
+        int number,
+        String path, {
+        String? title,
+        int size = 50,
+        int disc = 1,
+      }) =>
+          RipTracksTableCompanion(
+            id: Value(id),
+            ripAlbumId: const Value('rip-1'),
+            discNumber: Value(disc),
+            trackNumber: Value(number),
+            title: Value(title),
+            filePath: Value(path),
+            fileSizeBytes: Value(size),
+            updatedAt: Value(now),
+          );
+
+      setUp(() async {
+        now = DateTime.now().millisecondsSinceEpoch;
+        await dao.insertAlbumWithTracks(album(), [
+          track('t1', 1, '/m/01.flac', title: 'One'),
+          track('t2', 2, '/m/02.flac', title: 'Two'),
+        ]);
+      });
+
+      test('an unchanged rescan keeps ids and playlist membership', () async {
+        await db.playlistDao.insertPlaylist(PlaylistsTableCompanion(
+          id: const Value('p1'),
+          name: const Value('Mix'),
+          createdAt: Value(now),
+          updatedAt: Value(now),
+        ));
+        await db.playlistDao.insertPlaylistTracks([
+          PlaylistTracksTableCompanion(
+            id: const Value('pt1'),
+            playlistId: const Value('p1'),
+            ripTrackId: const Value('t2'),
+            sortOrder: const Value(0),
+            addedAt: Value(now),
+          ),
+        ]);
+
+        // The scanner allocates fresh ids for every track it finds.
+        await dao.updateAlbumAndReplaceTracks(album(), [
+          track('new-1', 1, '/m/01.flac', title: 'One'),
+          track('new-2', 2, '/m/02.flac', title: 'Two'),
+        ]);
+
+        final ids = (await dao.getTracksForAlbum('rip-1')).map((t) => t.id);
+        expect(ids, unorderedEquals(['t1', 't2']));
+        final inPlaylist = await db.playlistDao.getRipTracksForPlaylist('p1');
+        expect(inPlaylist.map((t) => t.id), ['t2']);
+      });
+
+      test('a rescan keeps quality analysis and refreshes scan fields',
+          () async {
+        await dao.updateTrackQuality('t1',
+            arStatus: 'verified', peakLevel: 0.9, clickCount: 3);
+
+        await dao.updateAlbumAndReplaceTracks(album(), [
+          track('new-1', 1, '/m/01.flac', title: 'One (Remaster)'),
+          track('new-2', 2, '/m/02.flac', title: 'Two'),
+        ]);
+
+        final t1 = (await dao.getTracksForAlbum('rip-1'))
+            .singleWhere((t) => t.id == 't1');
+        expect(t1.title, 'One (Remaster)');
+        expect(t1.accurateripStatus, 'verified');
+        expect(t1.peakLevel, 0.9);
+        expect(t1.clickCount, 3);
+      });
+
+      test('new tracks are inserted and missing tracks removed', () async {
+        await dao.updateAlbumAndReplaceTracks(album(), [
+          track('new-1', 1, '/m/01.flac', title: 'One'),
+          track('new-3', 3, '/m/03.flac', title: 'Three'),
+        ]);
+
+        final ids = (await dao.getTracksForAlbum('rip-1')).map((t) => t.id);
+        expect(ids, unorderedEquals(['t1', 'new-3']));
+      });
+
+      test('CUE tracks sharing one file are matched by disc and number',
+          () async {
+        await dao.updateAlbumAndReplaceTracks(album(), [
+          track('c1', 1, '/m/image.flac'),
+          track('c2', 2, '/m/image.flac'),
+        ]);
+        final first = {
+          for (final t in await dao.getTracksForAlbum('rip-1'))
+            t.trackNumber: t.id,
+        };
+
+        await dao.updateAlbumAndReplaceTracks(album(), [
+          track('c1-again', 1, '/m/image.flac'),
+          track('c2-again', 2, '/m/image.flac'),
+        ]);
+        final second = {
+          for (final t in await dao.getTracksForAlbum('rip-1'))
+            t.trackNumber: t.id,
+        };
+
+        expect(second, first);
+      });
+    });
   });
 }
+
