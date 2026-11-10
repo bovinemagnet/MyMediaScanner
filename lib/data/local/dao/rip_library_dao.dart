@@ -145,6 +145,8 @@ class RipLibraryDao extends DatabaseAccessor<AppDatabase>
             durationMs: t.durationMs,
             fileSizeBytes: t.fileSizeBytes,
             updatedAt: t.updatedAt,
+            startMs: t.startMs,
+            endMs: t.endMs,
           ),
         );
       }

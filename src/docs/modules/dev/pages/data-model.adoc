@@ -586,6 +586,14 @@ Individual FLAC tracks within a rip album, with quality metadata.
 | INTEGER
 | Track duration in milliseconds
 
+| `start_ms`
+| INTEGER, nullable
+| For a CUE track that shares one audio file with the rest of the album: where the track starts within `file_path`, in milliseconds (the CUE `INDEX 01`). Null for an ordinary one-file-per-track rip.
+
+| `end_ms`
+| INTEGER, nullable
+| Where a CUE track ends within `file_path` (the next track's `INDEX 01` in the same file), in milliseconds. Null for the last track in a file, which plays to the end of the file, and for ordinary rips.
+
 | `size_bytes`
 | INTEGER
 | File size in bytes

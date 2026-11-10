@@ -14,6 +14,10 @@ sealed class RipTrack with _$RipTrack {
     int? durationMs,
     required int fileSizeBytes,
     required int updatedAt,
+    // Span inside [filePath] for CUE tracks sharing one audio file;
+    // null means the start / end of the file.
+    int? startMs,
+    int? endMs,
     // Audio quality analysis fields (Phase B)
     String? accurateRipStatus,
     int? accurateRipConfidence,
