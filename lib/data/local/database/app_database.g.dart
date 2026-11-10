@@ -6690,6 +6690,26 @@ class $RipTracksTableTable extends RipTracksTable
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _startMsMeta = const VerificationMeta(
+    'startMs',
+  );
+  @override
+  late final GeneratedColumn<int> startMs = GeneratedColumn<int>(
+    'start_ms',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _endMsMeta = const VerificationMeta('endMs');
+  @override
+  late final GeneratedColumn<int> endMs = GeneratedColumn<int>(
+    'end_ms',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _accurateripStatusMeta = const VerificationMeta(
     'accurateripStatus',
   );
@@ -6855,6 +6875,8 @@ class $RipTracksTableTable extends RipTracksTable
     durationMs,
     fileSizeBytes,
     updatedAt,
+    startMs,
+    endMs,
     accurateripStatus,
     accurateripConfidence,
     accurateripCrcV1,
@@ -6953,6 +6975,18 @@ class $RipTracksTableTable extends RipTracksTable
       );
     } else if (isInserting) {
       context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('start_ms')) {
+      context.handle(
+        _startMsMeta,
+        startMs.isAcceptableOrUnknown(data['start_ms']!, _startMsMeta),
+      );
+    }
+    if (data.containsKey('end_ms')) {
+      context.handle(
+        _endMsMeta,
+        endMs.isAcceptableOrUnknown(data['end_ms']!, _endMsMeta),
+      );
     }
     if (data.containsKey('accuraterip_status')) {
       context.handle(
@@ -7113,6 +7147,14 @@ class $RipTracksTableTable extends RipTracksTable
         DriftSqlType.int,
         data['${effectivePrefix}updated_at'],
       )!,
+      startMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}start_ms'],
+      ),
+      endMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}end_ms'],
+      ),
       accurateripStatus: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}accuraterip_status'],
@@ -7189,6 +7231,8 @@ class RipTracksTableData extends DataClass
   final int? durationMs;
   final int fileSizeBytes;
   final int updatedAt;
+  final int? startMs;
+  final int? endMs;
   final String? accurateripStatus;
   final int? accurateripConfidence;
   final String? accurateripCrcV1;
@@ -7213,6 +7257,8 @@ class RipTracksTableData extends DataClass
     this.durationMs,
     required this.fileSizeBytes,
     required this.updatedAt,
+    this.startMs,
+    this.endMs,
     this.accurateripStatus,
     this.accurateripConfidence,
     this.accurateripCrcV1,
@@ -7244,6 +7290,12 @@ class RipTracksTableData extends DataClass
     }
     map['file_size_bytes'] = Variable<int>(fileSizeBytes);
     map['updated_at'] = Variable<int>(updatedAt);
+    if (!nullToAbsent || startMs != null) {
+      map['start_ms'] = Variable<int>(startMs);
+    }
+    if (!nullToAbsent || endMs != null) {
+      map['end_ms'] = Variable<int>(endMs);
+    }
     if (!nullToAbsent || accurateripStatus != null) {
       map['accuraterip_status'] = Variable<String>(accurateripStatus);
     }
@@ -7304,6 +7356,12 @@ class RipTracksTableData extends DataClass
           : Value(durationMs),
       fileSizeBytes: Value(fileSizeBytes),
       updatedAt: Value(updatedAt),
+      startMs: startMs == null && nullToAbsent
+          ? const Value.absent()
+          : Value(startMs),
+      endMs: endMs == null && nullToAbsent
+          ? const Value.absent()
+          : Value(endMs),
       accurateripStatus: accurateripStatus == null && nullToAbsent
           ? const Value.absent()
           : Value(accurateripStatus),
@@ -7364,6 +7422,8 @@ class RipTracksTableData extends DataClass
       durationMs: serializer.fromJson<int?>(json['durationMs']),
       fileSizeBytes: serializer.fromJson<int>(json['fileSizeBytes']),
       updatedAt: serializer.fromJson<int>(json['updatedAt']),
+      startMs: serializer.fromJson<int?>(json['startMs']),
+      endMs: serializer.fromJson<int?>(json['endMs']),
       accurateripStatus: serializer.fromJson<String?>(
         json['accurateripStatus'],
       ),
@@ -7397,6 +7457,8 @@ class RipTracksTableData extends DataClass
       'durationMs': serializer.toJson<int?>(durationMs),
       'fileSizeBytes': serializer.toJson<int>(fileSizeBytes),
       'updatedAt': serializer.toJson<int>(updatedAt),
+      'startMs': serializer.toJson<int?>(startMs),
+      'endMs': serializer.toJson<int?>(endMs),
       'accurateripStatus': serializer.toJson<String?>(accurateripStatus),
       'accurateripConfidence': serializer.toJson<int?>(accurateripConfidence),
       'accurateripCrcV1': serializer.toJson<String?>(accurateripCrcV1),
@@ -7424,6 +7486,8 @@ class RipTracksTableData extends DataClass
     Value<int?> durationMs = const Value.absent(),
     int? fileSizeBytes,
     int? updatedAt,
+    Value<int?> startMs = const Value.absent(),
+    Value<int?> endMs = const Value.absent(),
     Value<String?> accurateripStatus = const Value.absent(),
     Value<int?> accurateripConfidence = const Value.absent(),
     Value<String?> accurateripCrcV1 = const Value.absent(),
@@ -7448,6 +7512,8 @@ class RipTracksTableData extends DataClass
     durationMs: durationMs.present ? durationMs.value : this.durationMs,
     fileSizeBytes: fileSizeBytes ?? this.fileSizeBytes,
     updatedAt: updatedAt ?? this.updatedAt,
+    startMs: startMs.present ? startMs.value : this.startMs,
+    endMs: endMs.present ? endMs.value : this.endMs,
     accurateripStatus: accurateripStatus.present
         ? accurateripStatus.value
         : this.accurateripStatus,
@@ -7498,6 +7564,8 @@ class RipTracksTableData extends DataClass
           ? data.fileSizeBytes.value
           : this.fileSizeBytes,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      startMs: data.startMs.present ? data.startMs.value : this.startMs,
+      endMs: data.endMs.present ? data.endMs.value : this.endMs,
       accurateripStatus: data.accurateripStatus.present
           ? data.accurateripStatus.value
           : this.accurateripStatus,
@@ -7549,6 +7617,8 @@ class RipTracksTableData extends DataClass
           ..write('durationMs: $durationMs, ')
           ..write('fileSizeBytes: $fileSizeBytes, ')
           ..write('updatedAt: $updatedAt, ')
+          ..write('startMs: $startMs, ')
+          ..write('endMs: $endMs, ')
           ..write('accurateripStatus: $accurateripStatus, ')
           ..write('accurateripConfidence: $accurateripConfidence, ')
           ..write('accurateripCrcV1: $accurateripCrcV1, ')
@@ -7578,6 +7648,8 @@ class RipTracksTableData extends DataClass
     durationMs,
     fileSizeBytes,
     updatedAt,
+    startMs,
+    endMs,
     accurateripStatus,
     accurateripConfidence,
     accurateripCrcV1,
@@ -7606,6 +7678,8 @@ class RipTracksTableData extends DataClass
           other.durationMs == this.durationMs &&
           other.fileSizeBytes == this.fileSizeBytes &&
           other.updatedAt == this.updatedAt &&
+          other.startMs == this.startMs &&
+          other.endMs == this.endMs &&
           other.accurateripStatus == this.accurateripStatus &&
           other.accurateripConfidence == this.accurateripConfidence &&
           other.accurateripCrcV1 == this.accurateripCrcV1 &&
@@ -7632,6 +7706,8 @@ class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
   final Value<int?> durationMs;
   final Value<int> fileSizeBytes;
   final Value<int> updatedAt;
+  final Value<int?> startMs;
+  final Value<int?> endMs;
   final Value<String?> accurateripStatus;
   final Value<int?> accurateripConfidence;
   final Value<String?> accurateripCrcV1;
@@ -7657,6 +7733,8 @@ class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
     this.durationMs = const Value.absent(),
     this.fileSizeBytes = const Value.absent(),
     this.updatedAt = const Value.absent(),
+    this.startMs = const Value.absent(),
+    this.endMs = const Value.absent(),
     this.accurateripStatus = const Value.absent(),
     this.accurateripConfidence = const Value.absent(),
     this.accurateripCrcV1 = const Value.absent(),
@@ -7683,6 +7761,8 @@ class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
     this.durationMs = const Value.absent(),
     required int fileSizeBytes,
     required int updatedAt,
+    this.startMs = const Value.absent(),
+    this.endMs = const Value.absent(),
     this.accurateripStatus = const Value.absent(),
     this.accurateripConfidence = const Value.absent(),
     this.accurateripCrcV1 = const Value.absent(),
@@ -7714,6 +7794,8 @@ class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
     Expression<int>? durationMs,
     Expression<int>? fileSizeBytes,
     Expression<int>? updatedAt,
+    Expression<int>? startMs,
+    Expression<int>? endMs,
     Expression<String>? accurateripStatus,
     Expression<int>? accurateripConfidence,
     Expression<String>? accurateripCrcV1,
@@ -7740,6 +7822,8 @@ class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
       if (durationMs != null) 'duration_ms': durationMs,
       if (fileSizeBytes != null) 'file_size_bytes': fileSizeBytes,
       if (updatedAt != null) 'updated_at': updatedAt,
+      if (startMs != null) 'start_ms': startMs,
+      if (endMs != null) 'end_ms': endMs,
       if (accurateripStatus != null) 'accuraterip_status': accurateripStatus,
       if (accurateripConfidence != null)
         'accuraterip_confidence': accurateripConfidence,
@@ -7769,6 +7853,8 @@ class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
     Value<int?>? durationMs,
     Value<int>? fileSizeBytes,
     Value<int>? updatedAt,
+    Value<int?>? startMs,
+    Value<int?>? endMs,
     Value<String?>? accurateripStatus,
     Value<int?>? accurateripConfidence,
     Value<String?>? accurateripCrcV1,
@@ -7795,6 +7881,8 @@ class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
       durationMs: durationMs ?? this.durationMs,
       fileSizeBytes: fileSizeBytes ?? this.fileSizeBytes,
       updatedAt: updatedAt ?? this.updatedAt,
+      startMs: startMs ?? this.startMs,
+      endMs: endMs ?? this.endMs,
       accurateripStatus: accurateripStatus ?? this.accurateripStatus,
       accurateripConfidence:
           accurateripConfidence ?? this.accurateripConfidence,
@@ -7843,6 +7931,12 @@ class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
     }
     if (updatedAt.present) {
       map['updated_at'] = Variable<int>(updatedAt.value);
+    }
+    if (startMs.present) {
+      map['start_ms'] = Variable<int>(startMs.value);
+    }
+    if (endMs.present) {
+      map['end_ms'] = Variable<int>(endMs.value);
     }
     if (accurateripStatus.present) {
       map['accuraterip_status'] = Variable<String>(accurateripStatus.value);
@@ -7906,6 +8000,8 @@ class RipTracksTableCompanion extends UpdateCompanion<RipTracksTableData> {
           ..write('durationMs: $durationMs, ')
           ..write('fileSizeBytes: $fileSizeBytes, ')
           ..write('updatedAt: $updatedAt, ')
+          ..write('startMs: $startMs, ')
+          ..write('endMs: $endMs, ')
           ..write('accurateripStatus: $accurateripStatus, ')
           ..write('accurateripConfidence: $accurateripConfidence, ')
           ..write('accurateripCrcV1: $accurateripCrcV1, ')
@@ -16705,6 +16801,8 @@ typedef $$RipTracksTableTableCreateCompanionBuilder =
       Value<int?> durationMs,
       required int fileSizeBytes,
       required int updatedAt,
+      Value<int?> startMs,
+      Value<int?> endMs,
       Value<String?> accurateripStatus,
       Value<int?> accurateripConfidence,
       Value<String?> accurateripCrcV1,
@@ -16732,6 +16830,8 @@ typedef $$RipTracksTableTableUpdateCompanionBuilder =
       Value<int?> durationMs,
       Value<int> fileSizeBytes,
       Value<int> updatedAt,
+      Value<int?> startMs,
+      Value<int?> endMs,
       Value<String?> accurateripStatus,
       Value<int?> accurateripConfidence,
       Value<String?> accurateripCrcV1,
@@ -16850,6 +16950,16 @@ class $$RipTracksTableTableFilterComposer
 
   ColumnFilters<int> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get startMs => $composableBuilder(
+    column: $table.startMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get endMs => $composableBuilder(
+    column: $table.endMs,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -17021,6 +17131,16 @@ class $$RipTracksTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get startMs => $composableBuilder(
+    column: $table.startMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get endMs => $composableBuilder(
+    column: $table.endMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get accurateripStatus => $composableBuilder(
     column: $table.accurateripStatus,
     builder: (column) => ColumnOrderings(column),
@@ -17155,6 +17275,12 @@ class $$RipTracksTableTableAnnotationComposer
 
   GeneratedColumn<int> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get startMs =>
+      $composableBuilder(column: $table.startMs, builder: (column) => column);
+
+  GeneratedColumn<int> get endMs =>
+      $composableBuilder(column: $table.endMs, builder: (column) => column);
 
   GeneratedColumn<String> get accurateripStatus => $composableBuilder(
     column: $table.accurateripStatus,
@@ -17312,6 +17438,8 @@ class $$RipTracksTableTableTableManager
                 Value<int?> durationMs = const Value.absent(),
                 Value<int> fileSizeBytes = const Value.absent(),
                 Value<int> updatedAt = const Value.absent(),
+                Value<int?> startMs = const Value.absent(),
+                Value<int?> endMs = const Value.absent(),
                 Value<String?> accurateripStatus = const Value.absent(),
                 Value<int?> accurateripConfidence = const Value.absent(),
                 Value<String?> accurateripCrcV1 = const Value.absent(),
@@ -17337,6 +17465,8 @@ class $$RipTracksTableTableTableManager
                 durationMs: durationMs,
                 fileSizeBytes: fileSizeBytes,
                 updatedAt: updatedAt,
+                startMs: startMs,
+                endMs: endMs,
                 accurateripStatus: accurateripStatus,
                 accurateripConfidence: accurateripConfidence,
                 accurateripCrcV1: accurateripCrcV1,
@@ -17364,6 +17494,8 @@ class $$RipTracksTableTableTableManager
                 Value<int?> durationMs = const Value.absent(),
                 required int fileSizeBytes,
                 required int updatedAt,
+                Value<int?> startMs = const Value.absent(),
+                Value<int?> endMs = const Value.absent(),
                 Value<String?> accurateripStatus = const Value.absent(),
                 Value<int?> accurateripConfidence = const Value.absent(),
                 Value<String?> accurateripCrcV1 = const Value.absent(),
@@ -17389,6 +17521,8 @@ class $$RipTracksTableTableTableManager
                 durationMs: durationMs,
                 fileSizeBytes: fileSizeBytes,
                 updatedAt: updatedAt,
+                startMs: startMs,
+                endMs: endMs,
                 accurateripStatus: accurateripStatus,
                 accurateripConfidence: accurateripConfidence,
                 accurateripCrcV1: accurateripCrcV1,

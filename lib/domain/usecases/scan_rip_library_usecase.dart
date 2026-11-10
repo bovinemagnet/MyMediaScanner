@@ -7,6 +7,7 @@ import 'package:mymediascanner/core/utils/rip_cover_extractor.dart';
 import 'package:mymediascanner/domain/entities/rip_album.dart';
 import 'package:mymediascanner/domain/entities/rip_track.dart';
 import 'package:mymediascanner/domain/repositories/i_rip_library_repository.dart';
+import 'package:mymediascanner/domain/services/cue_track_planner.dart';
 import 'package:uuid/uuid.dart';
 
 /// Progress reported during a rip library scan.
@@ -57,7 +58,21 @@ class _TrackScanResult {
     required this.title,
     required this.durationMs,
     required this.fileSizeBytes,
+    this.startMs,
+    this.endMs,
   });
+
+  /// One scan result per CUE track, each with its own FILE and span.
+  factory _TrackScanResult.fromCue(CueTrackPlan plan) => _TrackScanResult(
+        filePath: plan.filePath,
+        discNumber: plan.discNumber,
+        trackNumber: plan.trackNumber,
+        title: plan.title,
+        durationMs: plan.durationMs,
+        fileSizeBytes: 0,
+        startMs: plan.startMs,
+        endMs: plan.endMs,
+      );
 
   final String filePath;
   final int discNumber;
@@ -65,6 +80,8 @@ class _TrackScanResult {
   final String? title;
   final int? durationMs;
   final int fileSizeBytes;
+  final int? startMs;
+  final int? endMs;
 }
 
 /// Scans a local directory of ripped audio files (FLAC and MP3) and upserts rip albums
@@ -194,6 +211,8 @@ class ScanRipLibraryUseCase {
               durationMs: t.durationMs,
               fileSizeBytes: t.fileSizeBytes,
               updatedAt: now,
+              startMs: t.startMs,
+              endMs: t.endMs,
             ))
         .toList();
   }
@@ -307,26 +326,15 @@ class ScanRipLibraryUseCase {
       final cueFile = cueByDir[dirPath];
       if (cueFile != null) {
         final cueSheet = await parseCueFile(cueFile.path);
-        final cueTracksList = cueSheet?.files
-                .expand((f) => f.tracks)
-                .toList() ??
-            const [];
-        if (cueSheet != null && cueTracksList.isNotEmpty) {
+        final cuePlans = cueSheet == null
+            ? const <CueTrackPlan>[]
+            : planCueTracks(cueSheet, dirPath);
+        if (cueSheet != null && cuePlans.isNotEmpty) {
           final cueArtist = cueSheet.performer ?? firstTrackMeta?.effectiveArtist;
           final cueTitle = cueSheet.title ?? firstTrackMeta?.album;
           final cueBarcode = cueSheet.barcode ?? firstTrackMeta?.barcode;
 
-          final cueTracks = <_TrackScanResult>[];
-          for (final cueTrack in cueTracksList) {
-            cueTracks.add(_TrackScanResult(
-              filePath: files.isNotEmpty ? files.first.path : '',
-              discNumber: cueSheet.discNumber ?? 1,
-              trackNumber: cueTrack.trackNumber,
-              title: cueTrack.title,
-              durationMs: cueTrack.duration?.inMilliseconds,
-              fileSizeBytes: 0,
-            ));
-          }
+          final cueTracks = cuePlans.map(_TrackScanResult.fromCue).toList();
 
           final cueRelativePath = cueFile.path.startsWith(rootPath)
               ? cueFile.path.substring(rootPath.length).replaceAll(RegExp(r'^[/\\]'), '')
@@ -356,39 +364,24 @@ class ScanRipLibraryUseCase {
       final dirPath = entry.key;
       final cueFile = entry.value;
       final cueSheet = await parseCueFile(cueFile.path);
-      final cueTracksList = cueSheet?.files
-              .expand((f) => f.tracks)
-              .toList() ??
-          const [];
-      if (cueSheet == null || cueTracksList.isEmpty) continue;
+      final cuePlans = cueSheet == null
+          ? const <CueTrackPlan>[]
+          : planCueTracks(cueSheet, dirPath);
+      if (cueSheet == null || cuePlans.isEmpty) continue;
 
       final relativePath = dirPath.startsWith(rootPath)
           ? dirPath.substring(rootPath.length).replaceAll(RegExp(r'^[/\\]'), '')
           : dirPath;
 
-      String audioFilePath = '';
-      int totalSize = 0;
-      final cueFilename = cueSheet.files.isNotEmpty
-          ? cueSheet.files.first.filename
-          : null;
-      if (cueFilename != null) {
-        final audioFile = File('$dirPath/$cueFilename');
+      var totalSize = 0;
+      for (final path in {for (final t in cuePlans) t.filePath}) {
+        final audioFile = File(path);
         if (await audioFile.exists()) {
-          audioFilePath = audioFile.path;
-          totalSize = (await audioFile.stat()).size;
+          totalSize += (await audioFile.stat()).size;
         }
       }
 
-      final cueTracks = cueTracksList
-          .map((t) => _TrackScanResult(
-                filePath: audioFilePath,
-                discNumber: cueSheet.discNumber ?? 1,
-                trackNumber: t.trackNumber,
-                title: t.title,
-                durationMs: t.duration?.inMilliseconds,
-                fileSizeBytes: 0,
-              ))
-          .toList();
+      final cueTracks = cuePlans.map(_TrackScanResult.fromCue).toList();
 
       final cueRelativePath = cueFile.path.startsWith(rootPath)
           ? cueFile.path.substring(rootPath.length).replaceAll(RegExp(r'^[/\\]'), '')

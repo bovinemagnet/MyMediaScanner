@@ -14,7 +14,9 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$RipTrack {
 
- String get id; String get ripAlbumId; int get discNumber; int get trackNumber; String? get title; String get filePath; int? get durationMs; int get fileSizeBytes; int get updatedAt;// Audio quality analysis fields (Phase B)
+ String get id; String get ripAlbumId; int get discNumber; int get trackNumber; String? get title; String get filePath; int? get durationMs; int get fileSizeBytes; int get updatedAt;// Span inside [filePath] for CUE tracks sharing one audio file;
+// null means the start / end of the file.
+ int? get startMs; int? get endMs;// Audio quality analysis fields (Phase B)
  String? get accurateRipStatus; int? get accurateRipConfidence; String? get accurateRipCrcV1; String? get accurateRipCrcV2; double? get peakLevel; double? get trackQuality; String? get copyCrc; int? get clickCount; int? get popCount; int? get clippingCount; int? get dropoutCount; double? get defectConfidence; String? get ripLogSource; int? get qualityCheckedAt;
 /// Create a copy of RipTrack
 /// with the given fields replaced by the non-null parameter values.
@@ -26,16 +28,16 @@ $RipTrackCopyWith<RipTrack> get copyWith => _$RipTrackCopyWithImpl<RipTrack>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RipTrack&&(identical(other.id, id) || other.id == id)&&(identical(other.ripAlbumId, ripAlbumId) || other.ripAlbumId == ripAlbumId)&&(identical(other.discNumber, discNumber) || other.discNumber == discNumber)&&(identical(other.trackNumber, trackNumber) || other.trackNumber == trackNumber)&&(identical(other.title, title) || other.title == title)&&(identical(other.filePath, filePath) || other.filePath == filePath)&&(identical(other.durationMs, durationMs) || other.durationMs == durationMs)&&(identical(other.fileSizeBytes, fileSizeBytes) || other.fileSizeBytes == fileSizeBytes)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.accurateRipStatus, accurateRipStatus) || other.accurateRipStatus == accurateRipStatus)&&(identical(other.accurateRipConfidence, accurateRipConfidence) || other.accurateRipConfidence == accurateRipConfidence)&&(identical(other.accurateRipCrcV1, accurateRipCrcV1) || other.accurateRipCrcV1 == accurateRipCrcV1)&&(identical(other.accurateRipCrcV2, accurateRipCrcV2) || other.accurateRipCrcV2 == accurateRipCrcV2)&&(identical(other.peakLevel, peakLevel) || other.peakLevel == peakLevel)&&(identical(other.trackQuality, trackQuality) || other.trackQuality == trackQuality)&&(identical(other.copyCrc, copyCrc) || other.copyCrc == copyCrc)&&(identical(other.clickCount, clickCount) || other.clickCount == clickCount)&&(identical(other.popCount, popCount) || other.popCount == popCount)&&(identical(other.clippingCount, clippingCount) || other.clippingCount == clippingCount)&&(identical(other.dropoutCount, dropoutCount) || other.dropoutCount == dropoutCount)&&(identical(other.defectConfidence, defectConfidence) || other.defectConfidence == defectConfidence)&&(identical(other.ripLogSource, ripLogSource) || other.ripLogSource == ripLogSource)&&(identical(other.qualityCheckedAt, qualityCheckedAt) || other.qualityCheckedAt == qualityCheckedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RipTrack&&(identical(other.id, id) || other.id == id)&&(identical(other.ripAlbumId, ripAlbumId) || other.ripAlbumId == ripAlbumId)&&(identical(other.discNumber, discNumber) || other.discNumber == discNumber)&&(identical(other.trackNumber, trackNumber) || other.trackNumber == trackNumber)&&(identical(other.title, title) || other.title == title)&&(identical(other.filePath, filePath) || other.filePath == filePath)&&(identical(other.durationMs, durationMs) || other.durationMs == durationMs)&&(identical(other.fileSizeBytes, fileSizeBytes) || other.fileSizeBytes == fileSizeBytes)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.startMs, startMs) || other.startMs == startMs)&&(identical(other.endMs, endMs) || other.endMs == endMs)&&(identical(other.accurateRipStatus, accurateRipStatus) || other.accurateRipStatus == accurateRipStatus)&&(identical(other.accurateRipConfidence, accurateRipConfidence) || other.accurateRipConfidence == accurateRipConfidence)&&(identical(other.accurateRipCrcV1, accurateRipCrcV1) || other.accurateRipCrcV1 == accurateRipCrcV1)&&(identical(other.accurateRipCrcV2, accurateRipCrcV2) || other.accurateRipCrcV2 == accurateRipCrcV2)&&(identical(other.peakLevel, peakLevel) || other.peakLevel == peakLevel)&&(identical(other.trackQuality, trackQuality) || other.trackQuality == trackQuality)&&(identical(other.copyCrc, copyCrc) || other.copyCrc == copyCrc)&&(identical(other.clickCount, clickCount) || other.clickCount == clickCount)&&(identical(other.popCount, popCount) || other.popCount == popCount)&&(identical(other.clippingCount, clippingCount) || other.clippingCount == clippingCount)&&(identical(other.dropoutCount, dropoutCount) || other.dropoutCount == dropoutCount)&&(identical(other.defectConfidence, defectConfidence) || other.defectConfidence == defectConfidence)&&(identical(other.ripLogSource, ripLogSource) || other.ripLogSource == ripLogSource)&&(identical(other.qualityCheckedAt, qualityCheckedAt) || other.qualityCheckedAt == qualityCheckedAt));
 }
 
 
 @override
-int get hashCode => Object.hashAll([runtimeType,id,ripAlbumId,discNumber,trackNumber,title,filePath,durationMs,fileSizeBytes,updatedAt,accurateRipStatus,accurateRipConfidence,accurateRipCrcV1,accurateRipCrcV2,peakLevel,trackQuality,copyCrc,clickCount,popCount,clippingCount,dropoutCount,defectConfidence,ripLogSource,qualityCheckedAt]);
+int get hashCode => Object.hashAll([runtimeType,id,ripAlbumId,discNumber,trackNumber,title,filePath,durationMs,fileSizeBytes,updatedAt,startMs,endMs,accurateRipStatus,accurateRipConfidence,accurateRipCrcV1,accurateRipCrcV2,peakLevel,trackQuality,copyCrc,clickCount,popCount,clippingCount,dropoutCount,defectConfidence,ripLogSource,qualityCheckedAt]);
 
 @override
 String toString() {
-  return 'RipTrack(id: $id, ripAlbumId: $ripAlbumId, discNumber: $discNumber, trackNumber: $trackNumber, title: $title, filePath: $filePath, durationMs: $durationMs, fileSizeBytes: $fileSizeBytes, updatedAt: $updatedAt, accurateRipStatus: $accurateRipStatus, accurateRipConfidence: $accurateRipConfidence, accurateRipCrcV1: $accurateRipCrcV1, accurateRipCrcV2: $accurateRipCrcV2, peakLevel: $peakLevel, trackQuality: $trackQuality, copyCrc: $copyCrc, clickCount: $clickCount, popCount: $popCount, clippingCount: $clippingCount, dropoutCount: $dropoutCount, defectConfidence: $defectConfidence, ripLogSource: $ripLogSource, qualityCheckedAt: $qualityCheckedAt)';
+  return 'RipTrack(id: $id, ripAlbumId: $ripAlbumId, discNumber: $discNumber, trackNumber: $trackNumber, title: $title, filePath: $filePath, durationMs: $durationMs, fileSizeBytes: $fileSizeBytes, updatedAt: $updatedAt, startMs: $startMs, endMs: $endMs, accurateRipStatus: $accurateRipStatus, accurateRipConfidence: $accurateRipConfidence, accurateRipCrcV1: $accurateRipCrcV1, accurateRipCrcV2: $accurateRipCrcV2, peakLevel: $peakLevel, trackQuality: $trackQuality, copyCrc: $copyCrc, clickCount: $clickCount, popCount: $popCount, clippingCount: $clippingCount, dropoutCount: $dropoutCount, defectConfidence: $defectConfidence, ripLogSource: $ripLogSource, qualityCheckedAt: $qualityCheckedAt)';
 }
 
 
@@ -46,7 +48,7 @@ abstract mixin class $RipTrackCopyWith<$Res>  {
   factory $RipTrackCopyWith(RipTrack value, $Res Function(RipTrack) _then) = _$RipTrackCopyWithImpl;
 @useResult
 $Res call({
- String id, String ripAlbumId, int discNumber, int trackNumber, String? title, String filePath, int? durationMs, int fileSizeBytes, int updatedAt, String? accurateRipStatus, int? accurateRipConfidence, String? accurateRipCrcV1, String? accurateRipCrcV2, double? peakLevel, double? trackQuality, String? copyCrc, int? clickCount, int? popCount, int? clippingCount, int? dropoutCount, double? defectConfidence, String? ripLogSource, int? qualityCheckedAt
+ String id, String ripAlbumId, int discNumber, int trackNumber, String? title, String filePath, int? durationMs, int fileSizeBytes, int updatedAt, int? startMs, int? endMs, String? accurateRipStatus, int? accurateRipConfidence, String? accurateRipCrcV1, String? accurateRipCrcV2, double? peakLevel, double? trackQuality, String? copyCrc, int? clickCount, int? popCount, int? clippingCount, int? dropoutCount, double? defectConfidence, String? ripLogSource, int? qualityCheckedAt
 });
 
 
@@ -63,7 +65,7 @@ class _$RipTrackCopyWithImpl<$Res>
 
 /// Create a copy of RipTrack
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? ripAlbumId = null,Object? discNumber = null,Object? trackNumber = null,Object? title = freezed,Object? filePath = null,Object? durationMs = freezed,Object? fileSizeBytes = null,Object? updatedAt = null,Object? accurateRipStatus = freezed,Object? accurateRipConfidence = freezed,Object? accurateRipCrcV1 = freezed,Object? accurateRipCrcV2 = freezed,Object? peakLevel = freezed,Object? trackQuality = freezed,Object? copyCrc = freezed,Object? clickCount = freezed,Object? popCount = freezed,Object? clippingCount = freezed,Object? dropoutCount = freezed,Object? defectConfidence = freezed,Object? ripLogSource = freezed,Object? qualityCheckedAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? ripAlbumId = null,Object? discNumber = null,Object? trackNumber = null,Object? title = freezed,Object? filePath = null,Object? durationMs = freezed,Object? fileSizeBytes = null,Object? updatedAt = null,Object? startMs = freezed,Object? endMs = freezed,Object? accurateRipStatus = freezed,Object? accurateRipConfidence = freezed,Object? accurateRipCrcV1 = freezed,Object? accurateRipCrcV2 = freezed,Object? peakLevel = freezed,Object? trackQuality = freezed,Object? copyCrc = freezed,Object? clickCount = freezed,Object? popCount = freezed,Object? clippingCount = freezed,Object? dropoutCount = freezed,Object? defectConfidence = freezed,Object? ripLogSource = freezed,Object? qualityCheckedAt = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,ripAlbumId: null == ripAlbumId ? _self.ripAlbumId : ripAlbumId // ignore: cast_nullable_to_non_nullable
@@ -74,7 +76,9 @@ as String?,filePath: null == filePath ? _self.filePath : filePath // ignore: cas
 as String,durationMs: freezed == durationMs ? _self.durationMs : durationMs // ignore: cast_nullable_to_non_nullable
 as int?,fileSizeBytes: null == fileSizeBytes ? _self.fileSizeBytes : fileSizeBytes // ignore: cast_nullable_to_non_nullable
 as int,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
-as int,accurateRipStatus: freezed == accurateRipStatus ? _self.accurateRipStatus : accurateRipStatus // ignore: cast_nullable_to_non_nullable
+as int,startMs: freezed == startMs ? _self.startMs : startMs // ignore: cast_nullable_to_non_nullable
+as int?,endMs: freezed == endMs ? _self.endMs : endMs // ignore: cast_nullable_to_non_nullable
+as int?,accurateRipStatus: freezed == accurateRipStatus ? _self.accurateRipStatus : accurateRipStatus // ignore: cast_nullable_to_non_nullable
 as String?,accurateRipConfidence: freezed == accurateRipConfidence ? _self.accurateRipConfidence : accurateRipConfidence // ignore: cast_nullable_to_non_nullable
 as int?,accurateRipCrcV1: freezed == accurateRipCrcV1 ? _self.accurateRipCrcV1 : accurateRipCrcV1 // ignore: cast_nullable_to_non_nullable
 as String?,accurateRipCrcV2: freezed == accurateRipCrcV2 ? _self.accurateRipCrcV2 : accurateRipCrcV2 // ignore: cast_nullable_to_non_nullable
@@ -170,10 +174,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String ripAlbumId,  int discNumber,  int trackNumber,  String? title,  String filePath,  int? durationMs,  int fileSizeBytes,  int updatedAt,  String? accurateRipStatus,  int? accurateRipConfidence,  String? accurateRipCrcV1,  String? accurateRipCrcV2,  double? peakLevel,  double? trackQuality,  String? copyCrc,  int? clickCount,  int? popCount,  int? clippingCount,  int? dropoutCount,  double? defectConfidence,  String? ripLogSource,  int? qualityCheckedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String ripAlbumId,  int discNumber,  int trackNumber,  String? title,  String filePath,  int? durationMs,  int fileSizeBytes,  int updatedAt,  int? startMs,  int? endMs,  String? accurateRipStatus,  int? accurateRipConfidence,  String? accurateRipCrcV1,  String? accurateRipCrcV2,  double? peakLevel,  double? trackQuality,  String? copyCrc,  int? clickCount,  int? popCount,  int? clippingCount,  int? dropoutCount,  double? defectConfidence,  String? ripLogSource,  int? qualityCheckedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _RipTrack() when $default != null:
-return $default(_that.id,_that.ripAlbumId,_that.discNumber,_that.trackNumber,_that.title,_that.filePath,_that.durationMs,_that.fileSizeBytes,_that.updatedAt,_that.accurateRipStatus,_that.accurateRipConfidence,_that.accurateRipCrcV1,_that.accurateRipCrcV2,_that.peakLevel,_that.trackQuality,_that.copyCrc,_that.clickCount,_that.popCount,_that.clippingCount,_that.dropoutCount,_that.defectConfidence,_that.ripLogSource,_that.qualityCheckedAt);case _:
+return $default(_that.id,_that.ripAlbumId,_that.discNumber,_that.trackNumber,_that.title,_that.filePath,_that.durationMs,_that.fileSizeBytes,_that.updatedAt,_that.startMs,_that.endMs,_that.accurateRipStatus,_that.accurateRipConfidence,_that.accurateRipCrcV1,_that.accurateRipCrcV2,_that.peakLevel,_that.trackQuality,_that.copyCrc,_that.clickCount,_that.popCount,_that.clippingCount,_that.dropoutCount,_that.defectConfidence,_that.ripLogSource,_that.qualityCheckedAt);case _:
   return orElse();
 
 }
@@ -191,10 +195,10 @@ return $default(_that.id,_that.ripAlbumId,_that.discNumber,_that.trackNumber,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String ripAlbumId,  int discNumber,  int trackNumber,  String? title,  String filePath,  int? durationMs,  int fileSizeBytes,  int updatedAt,  String? accurateRipStatus,  int? accurateRipConfidence,  String? accurateRipCrcV1,  String? accurateRipCrcV2,  double? peakLevel,  double? trackQuality,  String? copyCrc,  int? clickCount,  int? popCount,  int? clippingCount,  int? dropoutCount,  double? defectConfidence,  String? ripLogSource,  int? qualityCheckedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String ripAlbumId,  int discNumber,  int trackNumber,  String? title,  String filePath,  int? durationMs,  int fileSizeBytes,  int updatedAt,  int? startMs,  int? endMs,  String? accurateRipStatus,  int? accurateRipConfidence,  String? accurateRipCrcV1,  String? accurateRipCrcV2,  double? peakLevel,  double? trackQuality,  String? copyCrc,  int? clickCount,  int? popCount,  int? clippingCount,  int? dropoutCount,  double? defectConfidence,  String? ripLogSource,  int? qualityCheckedAt)  $default,) {final _that = this;
 switch (_that) {
 case _RipTrack():
-return $default(_that.id,_that.ripAlbumId,_that.discNumber,_that.trackNumber,_that.title,_that.filePath,_that.durationMs,_that.fileSizeBytes,_that.updatedAt,_that.accurateRipStatus,_that.accurateRipConfidence,_that.accurateRipCrcV1,_that.accurateRipCrcV2,_that.peakLevel,_that.trackQuality,_that.copyCrc,_that.clickCount,_that.popCount,_that.clippingCount,_that.dropoutCount,_that.defectConfidence,_that.ripLogSource,_that.qualityCheckedAt);}
+return $default(_that.id,_that.ripAlbumId,_that.discNumber,_that.trackNumber,_that.title,_that.filePath,_that.durationMs,_that.fileSizeBytes,_that.updatedAt,_that.startMs,_that.endMs,_that.accurateRipStatus,_that.accurateRipConfidence,_that.accurateRipCrcV1,_that.accurateRipCrcV2,_that.peakLevel,_that.trackQuality,_that.copyCrc,_that.clickCount,_that.popCount,_that.clippingCount,_that.dropoutCount,_that.defectConfidence,_that.ripLogSource,_that.qualityCheckedAt);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -208,10 +212,10 @@ return $default(_that.id,_that.ripAlbumId,_that.discNumber,_that.trackNumber,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String ripAlbumId,  int discNumber,  int trackNumber,  String? title,  String filePath,  int? durationMs,  int fileSizeBytes,  int updatedAt,  String? accurateRipStatus,  int? accurateRipConfidence,  String? accurateRipCrcV1,  String? accurateRipCrcV2,  double? peakLevel,  double? trackQuality,  String? copyCrc,  int? clickCount,  int? popCount,  int? clippingCount,  int? dropoutCount,  double? defectConfidence,  String? ripLogSource,  int? qualityCheckedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String ripAlbumId,  int discNumber,  int trackNumber,  String? title,  String filePath,  int? durationMs,  int fileSizeBytes,  int updatedAt,  int? startMs,  int? endMs,  String? accurateRipStatus,  int? accurateRipConfidence,  String? accurateRipCrcV1,  String? accurateRipCrcV2,  double? peakLevel,  double? trackQuality,  String? copyCrc,  int? clickCount,  int? popCount,  int? clippingCount,  int? dropoutCount,  double? defectConfidence,  String? ripLogSource,  int? qualityCheckedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _RipTrack() when $default != null:
-return $default(_that.id,_that.ripAlbumId,_that.discNumber,_that.trackNumber,_that.title,_that.filePath,_that.durationMs,_that.fileSizeBytes,_that.updatedAt,_that.accurateRipStatus,_that.accurateRipConfidence,_that.accurateRipCrcV1,_that.accurateRipCrcV2,_that.peakLevel,_that.trackQuality,_that.copyCrc,_that.clickCount,_that.popCount,_that.clippingCount,_that.dropoutCount,_that.defectConfidence,_that.ripLogSource,_that.qualityCheckedAt);case _:
+return $default(_that.id,_that.ripAlbumId,_that.discNumber,_that.trackNumber,_that.title,_that.filePath,_that.durationMs,_that.fileSizeBytes,_that.updatedAt,_that.startMs,_that.endMs,_that.accurateRipStatus,_that.accurateRipConfidence,_that.accurateRipCrcV1,_that.accurateRipCrcV2,_that.peakLevel,_that.trackQuality,_that.copyCrc,_that.clickCount,_that.popCount,_that.clippingCount,_that.dropoutCount,_that.defectConfidence,_that.ripLogSource,_that.qualityCheckedAt);case _:
   return null;
 
 }
@@ -223,7 +227,7 @@ return $default(_that.id,_that.ripAlbumId,_that.discNumber,_that.trackNumber,_th
 
 
 class _RipTrack implements RipTrack {
-  const _RipTrack({required this.id, required this.ripAlbumId, this.discNumber = 1, required this.trackNumber, this.title, required this.filePath, this.durationMs, required this.fileSizeBytes, required this.updatedAt, this.accurateRipStatus, this.accurateRipConfidence, this.accurateRipCrcV1, this.accurateRipCrcV2, this.peakLevel, this.trackQuality, this.copyCrc, this.clickCount, this.popCount, this.clippingCount, this.dropoutCount, this.defectConfidence, this.ripLogSource, this.qualityCheckedAt});
+  const _RipTrack({required this.id, required this.ripAlbumId, this.discNumber = 1, required this.trackNumber, this.title, required this.filePath, this.durationMs, required this.fileSizeBytes, required this.updatedAt, this.startMs, this.endMs, this.accurateRipStatus, this.accurateRipConfidence, this.accurateRipCrcV1, this.accurateRipCrcV2, this.peakLevel, this.trackQuality, this.copyCrc, this.clickCount, this.popCount, this.clippingCount, this.dropoutCount, this.defectConfidence, this.ripLogSource, this.qualityCheckedAt});
   
 
 @override final  String id;
@@ -235,6 +239,10 @@ class _RipTrack implements RipTrack {
 @override final  int? durationMs;
 @override final  int fileSizeBytes;
 @override final  int updatedAt;
+// Span inside [filePath] for CUE tracks sharing one audio file;
+// null means the start / end of the file.
+@override final  int? startMs;
+@override final  int? endMs;
 // Audio quality analysis fields (Phase B)
 @override final  String? accurateRipStatus;
 @override final  int? accurateRipConfidence;
@@ -261,16 +269,16 @@ _$RipTrackCopyWith<_RipTrack> get copyWith => __$RipTrackCopyWithImpl<_RipTrack>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RipTrack&&(identical(other.id, id) || other.id == id)&&(identical(other.ripAlbumId, ripAlbumId) || other.ripAlbumId == ripAlbumId)&&(identical(other.discNumber, discNumber) || other.discNumber == discNumber)&&(identical(other.trackNumber, trackNumber) || other.trackNumber == trackNumber)&&(identical(other.title, title) || other.title == title)&&(identical(other.filePath, filePath) || other.filePath == filePath)&&(identical(other.durationMs, durationMs) || other.durationMs == durationMs)&&(identical(other.fileSizeBytes, fileSizeBytes) || other.fileSizeBytes == fileSizeBytes)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.accurateRipStatus, accurateRipStatus) || other.accurateRipStatus == accurateRipStatus)&&(identical(other.accurateRipConfidence, accurateRipConfidence) || other.accurateRipConfidence == accurateRipConfidence)&&(identical(other.accurateRipCrcV1, accurateRipCrcV1) || other.accurateRipCrcV1 == accurateRipCrcV1)&&(identical(other.accurateRipCrcV2, accurateRipCrcV2) || other.accurateRipCrcV2 == accurateRipCrcV2)&&(identical(other.peakLevel, peakLevel) || other.peakLevel == peakLevel)&&(identical(other.trackQuality, trackQuality) || other.trackQuality == trackQuality)&&(identical(other.copyCrc, copyCrc) || other.copyCrc == copyCrc)&&(identical(other.clickCount, clickCount) || other.clickCount == clickCount)&&(identical(other.popCount, popCount) || other.popCount == popCount)&&(identical(other.clippingCount, clippingCount) || other.clippingCount == clippingCount)&&(identical(other.dropoutCount, dropoutCount) || other.dropoutCount == dropoutCount)&&(identical(other.defectConfidence, defectConfidence) || other.defectConfidence == defectConfidence)&&(identical(other.ripLogSource, ripLogSource) || other.ripLogSource == ripLogSource)&&(identical(other.qualityCheckedAt, qualityCheckedAt) || other.qualityCheckedAt == qualityCheckedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RipTrack&&(identical(other.id, id) || other.id == id)&&(identical(other.ripAlbumId, ripAlbumId) || other.ripAlbumId == ripAlbumId)&&(identical(other.discNumber, discNumber) || other.discNumber == discNumber)&&(identical(other.trackNumber, trackNumber) || other.trackNumber == trackNumber)&&(identical(other.title, title) || other.title == title)&&(identical(other.filePath, filePath) || other.filePath == filePath)&&(identical(other.durationMs, durationMs) || other.durationMs == durationMs)&&(identical(other.fileSizeBytes, fileSizeBytes) || other.fileSizeBytes == fileSizeBytes)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.startMs, startMs) || other.startMs == startMs)&&(identical(other.endMs, endMs) || other.endMs == endMs)&&(identical(other.accurateRipStatus, accurateRipStatus) || other.accurateRipStatus == accurateRipStatus)&&(identical(other.accurateRipConfidence, accurateRipConfidence) || other.accurateRipConfidence == accurateRipConfidence)&&(identical(other.accurateRipCrcV1, accurateRipCrcV1) || other.accurateRipCrcV1 == accurateRipCrcV1)&&(identical(other.accurateRipCrcV2, accurateRipCrcV2) || other.accurateRipCrcV2 == accurateRipCrcV2)&&(identical(other.peakLevel, peakLevel) || other.peakLevel == peakLevel)&&(identical(other.trackQuality, trackQuality) || other.trackQuality == trackQuality)&&(identical(other.copyCrc, copyCrc) || other.copyCrc == copyCrc)&&(identical(other.clickCount, clickCount) || other.clickCount == clickCount)&&(identical(other.popCount, popCount) || other.popCount == popCount)&&(identical(other.clippingCount, clippingCount) || other.clippingCount == clippingCount)&&(identical(other.dropoutCount, dropoutCount) || other.dropoutCount == dropoutCount)&&(identical(other.defectConfidence, defectConfidence) || other.defectConfidence == defectConfidence)&&(identical(other.ripLogSource, ripLogSource) || other.ripLogSource == ripLogSource)&&(identical(other.qualityCheckedAt, qualityCheckedAt) || other.qualityCheckedAt == qualityCheckedAt));
 }
 
 
 @override
-int get hashCode => Object.hashAll([runtimeType,id,ripAlbumId,discNumber,trackNumber,title,filePath,durationMs,fileSizeBytes,updatedAt,accurateRipStatus,accurateRipConfidence,accurateRipCrcV1,accurateRipCrcV2,peakLevel,trackQuality,copyCrc,clickCount,popCount,clippingCount,dropoutCount,defectConfidence,ripLogSource,qualityCheckedAt]);
+int get hashCode => Object.hashAll([runtimeType,id,ripAlbumId,discNumber,trackNumber,title,filePath,durationMs,fileSizeBytes,updatedAt,startMs,endMs,accurateRipStatus,accurateRipConfidence,accurateRipCrcV1,accurateRipCrcV2,peakLevel,trackQuality,copyCrc,clickCount,popCount,clippingCount,dropoutCount,defectConfidence,ripLogSource,qualityCheckedAt]);
 
 @override
 String toString() {
-  return 'RipTrack(id: $id, ripAlbumId: $ripAlbumId, discNumber: $discNumber, trackNumber: $trackNumber, title: $title, filePath: $filePath, durationMs: $durationMs, fileSizeBytes: $fileSizeBytes, updatedAt: $updatedAt, accurateRipStatus: $accurateRipStatus, accurateRipConfidence: $accurateRipConfidence, accurateRipCrcV1: $accurateRipCrcV1, accurateRipCrcV2: $accurateRipCrcV2, peakLevel: $peakLevel, trackQuality: $trackQuality, copyCrc: $copyCrc, clickCount: $clickCount, popCount: $popCount, clippingCount: $clippingCount, dropoutCount: $dropoutCount, defectConfidence: $defectConfidence, ripLogSource: $ripLogSource, qualityCheckedAt: $qualityCheckedAt)';
+  return 'RipTrack(id: $id, ripAlbumId: $ripAlbumId, discNumber: $discNumber, trackNumber: $trackNumber, title: $title, filePath: $filePath, durationMs: $durationMs, fileSizeBytes: $fileSizeBytes, updatedAt: $updatedAt, startMs: $startMs, endMs: $endMs, accurateRipStatus: $accurateRipStatus, accurateRipConfidence: $accurateRipConfidence, accurateRipCrcV1: $accurateRipCrcV1, accurateRipCrcV2: $accurateRipCrcV2, peakLevel: $peakLevel, trackQuality: $trackQuality, copyCrc: $copyCrc, clickCount: $clickCount, popCount: $popCount, clippingCount: $clippingCount, dropoutCount: $dropoutCount, defectConfidence: $defectConfidence, ripLogSource: $ripLogSource, qualityCheckedAt: $qualityCheckedAt)';
 }
 
 
@@ -281,7 +289,7 @@ abstract mixin class _$RipTrackCopyWith<$Res> implements $RipTrackCopyWith<$Res>
   factory _$RipTrackCopyWith(_RipTrack value, $Res Function(_RipTrack) _then) = __$RipTrackCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String ripAlbumId, int discNumber, int trackNumber, String? title, String filePath, int? durationMs, int fileSizeBytes, int updatedAt, String? accurateRipStatus, int? accurateRipConfidence, String? accurateRipCrcV1, String? accurateRipCrcV2, double? peakLevel, double? trackQuality, String? copyCrc, int? clickCount, int? popCount, int? clippingCount, int? dropoutCount, double? defectConfidence, String? ripLogSource, int? qualityCheckedAt
+ String id, String ripAlbumId, int discNumber, int trackNumber, String? title, String filePath, int? durationMs, int fileSizeBytes, int updatedAt, int? startMs, int? endMs, String? accurateRipStatus, int? accurateRipConfidence, String? accurateRipCrcV1, String? accurateRipCrcV2, double? peakLevel, double? trackQuality, String? copyCrc, int? clickCount, int? popCount, int? clippingCount, int? dropoutCount, double? defectConfidence, String? ripLogSource, int? qualityCheckedAt
 });
 
 
@@ -298,7 +306,7 @@ class __$RipTrackCopyWithImpl<$Res>
 
 /// Create a copy of RipTrack
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? ripAlbumId = null,Object? discNumber = null,Object? trackNumber = null,Object? title = freezed,Object? filePath = null,Object? durationMs = freezed,Object? fileSizeBytes = null,Object? updatedAt = null,Object? accurateRipStatus = freezed,Object? accurateRipConfidence = freezed,Object? accurateRipCrcV1 = freezed,Object? accurateRipCrcV2 = freezed,Object? peakLevel = freezed,Object? trackQuality = freezed,Object? copyCrc = freezed,Object? clickCount = freezed,Object? popCount = freezed,Object? clippingCount = freezed,Object? dropoutCount = freezed,Object? defectConfidence = freezed,Object? ripLogSource = freezed,Object? qualityCheckedAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? ripAlbumId = null,Object? discNumber = null,Object? trackNumber = null,Object? title = freezed,Object? filePath = null,Object? durationMs = freezed,Object? fileSizeBytes = null,Object? updatedAt = null,Object? startMs = freezed,Object? endMs = freezed,Object? accurateRipStatus = freezed,Object? accurateRipConfidence = freezed,Object? accurateRipCrcV1 = freezed,Object? accurateRipCrcV2 = freezed,Object? peakLevel = freezed,Object? trackQuality = freezed,Object? copyCrc = freezed,Object? clickCount = freezed,Object? popCount = freezed,Object? clippingCount = freezed,Object? dropoutCount = freezed,Object? defectConfidence = freezed,Object? ripLogSource = freezed,Object? qualityCheckedAt = freezed,}) {
   return _then(_RipTrack(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,ripAlbumId: null == ripAlbumId ? _self.ripAlbumId : ripAlbumId // ignore: cast_nullable_to_non_nullable
@@ -309,7 +317,9 @@ as String?,filePath: null == filePath ? _self.filePath : filePath // ignore: cas
 as String,durationMs: freezed == durationMs ? _self.durationMs : durationMs // ignore: cast_nullable_to_non_nullable
 as int?,fileSizeBytes: null == fileSizeBytes ? _self.fileSizeBytes : fileSizeBytes // ignore: cast_nullable_to_non_nullable
 as int,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
-as int,accurateRipStatus: freezed == accurateRipStatus ? _self.accurateRipStatus : accurateRipStatus // ignore: cast_nullable_to_non_nullable
+as int,startMs: freezed == startMs ? _self.startMs : startMs // ignore: cast_nullable_to_non_nullable
+as int?,endMs: freezed == endMs ? _self.endMs : endMs // ignore: cast_nullable_to_non_nullable
+as int?,accurateRipStatus: freezed == accurateRipStatus ? _self.accurateRipStatus : accurateRipStatus // ignore: cast_nullable_to_non_nullable
 as String?,accurateRipConfidence: freezed == accurateRipConfidence ? _self.accurateRipConfidence : accurateRipConfidence // ignore: cast_nullable_to_non_nullable
 as int?,accurateRipCrcV1: freezed == accurateRipCrcV1 ? _self.accurateRipCrcV1 : accurateRipCrcV1 // ignore: cast_nullable_to_non_nullable
 as String?,accurateRipCrcV2: freezed == accurateRipCrcV2 ? _self.accurateRipCrcV2 : accurateRipCrcV2 // ignore: cast_nullable_to_non_nullable
