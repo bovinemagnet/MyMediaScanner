@@ -11,7 +11,6 @@ MediaItem _item({
   String title = 'Title',
   String? coverUrl,
   MediaType mediaType = MediaType.film,
-  List<String> tags = const [],
   bool deleted = false,
   int? year,
 }) =>
@@ -24,7 +23,6 @@ MediaItem _item({
       coverUrl: coverUrl,
       year: year,
       deleted: deleted,
-      extraMetadata: tags.isEmpty ? const {} : {'tags': tags},
       dateAdded: 0,
       dateScanned: 0,
       updatedAt: 0,
@@ -52,20 +50,47 @@ void main() {
   });
 
   test('excludes items tagged with the private tag', () {
-    final out = service.build(items: [
-      _item(id: 'visible'),
-      _item(id: 'secret', tags: ['private']),
-    ]);
+    final out = service.build(
+      items: [_item(id: 'visible'), _item(id: 'secret')],
+      tagsByItemId: {
+        'secret': ['private'],
+      },
+    );
     expect(out.keys, isNot(contains('items/secret.html')));
     expect(_asString(out['index.html']!), isNot(contains('secret')));
   });
 
   test('uses custom private tag when overridden', () {
     final out = service.build(
-      items: [_item(id: 'a', tags: ['nsfw'])],
+      items: [_item(id: 'a')],
+      tagsByItemId: {
+        'a': ['nsfw'],
+      },
       options: const StaticExportOptions(privateTag: 'nsfw'),
     );
     expect(out.keys, ['index.html']);
+  });
+
+  // #131: the private tag is a privacy control, so a differently-cased
+  // tag name must still hide the item.
+  test('matches the private tag case-insensitively', () {
+    final out = service.build(
+      items: [_item(id: 'a')],
+      tagsByItemId: {
+        'a': ['Private'],
+      },
+    );
+    expect(out.keys, ['index.html']);
+  });
+
+  // #131: tags live in media_item_tags, not extraMetadata. A stray
+  // `tags` key in extraMetadata must not be treated as an assignment.
+  test('ignores tags stored in extraMetadata', () {
+    final item = _item(id: 'a').copyWith(extraMetadata: {
+      'tags': ['private'],
+    });
+    final out = service.build(items: [item]);
+    expect(out.keys, contains('items/a.html'));
   });
 
   test('HTML escapes item titles', () {
@@ -83,6 +108,26 @@ void main() {
     );
     expect(_asString(out['index.html']!),
         contains('https://example.com/a.jpg'));
+  });
+
+  // #131: the detail page lives in items/, so only bundled relative
+  // paths need the ../ prefix; absolute URLs must pass through as-is.
+  test('detail page keeps an absolute cover URL when not bundling', () {
+    final out = service.build(
+      items: [_item(id: 'a', coverUrl: 'https://example.com/a.jpg')],
+    );
+    final page = _asString(out['items/a.html']!);
+    expect(page, contains('src="https://example.com/a.jpg"'));
+    expect(page, isNot(contains('../https')));
+  });
+
+  test('detail page prefixes a bundled cover with ../', () {
+    final out = service.build(
+      items: [_item(id: 'a', coverUrl: 'https://example.com/a.jpg')],
+      options: const StaticExportOptions(bundleCovers: true),
+      covers: {'a.jpg': Uint8List.fromList(const [1])},
+    );
+    expect(_asString(out['items/a.html']!), contains('src="../covers/a.jpg"'));
   });
 
   test('rewrites cover path when bundling covers and the cover exists', () {
@@ -126,10 +171,13 @@ void main() {
   });
 
   test('tag dropdown excludes the private tag', () {
-    final out = service.build(items: [
-      _item(id: 'a', tags: ['favourite']),
-      _item(id: 'b', tags: ['private', 'favourite']),
-    ]);
+    final out = service.build(
+      items: [_item(id: 'a'), _item(id: 'b')],
+      tagsByItemId: {
+        'a': ['favourite'],
+        'b': ['private', 'favourite'],
+      },
+    );
     final index = _asString(out['index.html']!);
     expect(index, contains('<option>favourite</option>'));
     expect(index, isNot(contains('<option>private</option>')));
@@ -162,12 +210,11 @@ void main() {
       final out = service.build(
         items: [
           _item(id: 'visible', coverUrl: 'https://example.com/visible.jpg'),
-          _item(
-            id: 'secret',
-            coverUrl: 'https://example.com/secret.jpg',
-            tags: ['private'],
-          ),
+          _item(id: 'secret', coverUrl: 'https://example.com/secret.jpg'),
         ],
+        tagsByItemId: {
+          'secret': ['private'],
+        },
         options: const StaticExportOptions(bundleCovers: true),
         covers: {
           'visible.jpg': bytes,
@@ -203,12 +250,11 @@ void main() {
       final bytes = Uint8List.fromList(const [1, 2, 3]);
       final out = service.build(
         items: [
-          _item(
-            id: 'a',
-            coverUrl: 'https://example.com/a.jpg',
-            tags: ['nsfw'],
-          ),
+          _item(id: 'a', coverUrl: 'https://example.com/a.jpg'),
         ],
+        tagsByItemId: {
+          'a': ['nsfw'],
+        },
         options:
             const StaticExportOptions(privateTag: 'nsfw', bundleCovers: true),
         covers: {'a.jpg': bytes},

@@ -74,7 +74,7 @@ image::screenshots/desktop/settings.png[Settings screen, home of the static HTML
 | The heading shown at the top of the exported site.
 
 | Private tag
-| Items carrying this tag are left out of the export entirely — useful for anything you would rather not include if you share the export.
+| Items carrying this tag are left out of the export entirely — useful for anything you would rather not include if you share the export. The tag name is matched regardless of capitalisation, so `Private` and `private` are treated the same.
 
 | Download and bundle cover art
 | Saves a local copy of every cover image so the exported site still shows artwork when viewed offline.
@@ -83,6 +83,8 @@ image::screenshots/desktop/settings.png[Settings screen, home of the static HTML
 Choose a destination folder and the export writes a searchable, filterable website — a grid of your collection plus a page per item — that you can open directly in a browser, drop into a static hosting service such as Netlify Drop or GitHub Pages, or serve from your own web server.
 
 NOTE: Deleted (trashed) items are never included in the static export, and items tagged with your chosen private tag are left out as well — neither their covers nor their titles appear anywhere in the exported files.
+
+If you export again into the same folder, the pages and covers of items that have since become private or been deleted are removed. A folder created by an export made with an older version of the app cannot be tidied this way, so empty it (or choose a new folder) once before exporting again.
 
 == Related pages
 

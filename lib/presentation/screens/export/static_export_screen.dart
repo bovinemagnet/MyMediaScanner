@@ -13,6 +13,7 @@ import 'package:mymediascanner/data/services/static_export_writer.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/services/static_export_service.dart';
 import 'package:mymediascanner/presentation/providers/recommendations_provider.dart';
+import 'package:mymediascanner/presentation/providers/repository_providers.dart';
 import 'package:mymediascanner/presentation/widgets/screen_header.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -177,10 +178,14 @@ class _StaticExportScreenState extends ConsumerState<StaticExportScreen> {
 
     try {
       final items = ref.read(ownedItemsProvider).value ?? <MediaItem>[];
+      // The private filter must see real tag assignments (#131).
+      final tagsByItemId =
+          await ref.read(tagRepositoryProvider).getTagNamesByMediaItemId();
       final writer = StaticExportWriter();
       final indexPath = await writer.write(
         targetDir: Directory(dirPath),
         items: items,
+        tagsByItemId: tagsByItemId,
         options: StaticExportOptions(
           title: _titleController.text.trim().isEmpty
               ? 'My collection'

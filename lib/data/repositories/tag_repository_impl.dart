@@ -110,6 +110,10 @@ class TagRepositoryImpl implements ITagRepository {
   Future<List<String>> getTagIdsForMediaItem(String mediaItemId) =>
       _tagsDao.getTagIdsForMediaItem(mediaItemId);
 
+  @override
+  Future<Map<String, List<String>>> getTagNamesByMediaItemId() =>
+      _tagsDao.getTagNamesByMediaItemId();
+
   /// Enqueue a `sync_log` row carrying a full snake_case snapshot of
   /// [tag]. Push uses the payload keys to derive the upsert column list.
   Future<void> _logSync(Tag tag, String operation) {

@@ -17,7 +17,6 @@ MediaItem _item({
   String title = 'Title',
   String? coverUrl,
   MediaType mediaType = MediaType.film,
-  List<String> tags = const [],
   bool deleted = false,
 }) =>
     MediaItem(
@@ -28,7 +27,6 @@ MediaItem _item({
       title: title,
       coverUrl: coverUrl,
       deleted: deleted,
-      extraMetadata: tags.isEmpty ? const {} : {'tags': tags},
       dateAdded: 0,
       dateScanned: 0,
       updatedAt: 0,
@@ -166,12 +164,11 @@ void main() {
       targetDir: tempDir,
       items: [
         _item(id: 'visible', coverUrl: 'https://example.com/visible.jpg'),
-        _item(
-          id: 'secret',
-          coverUrl: 'https://example.com/secret.jpg',
-          tags: ['private'],
-        ),
+        _item(id: 'secret', coverUrl: 'https://example.com/secret.jpg'),
       ],
+      tagsByItemId: {
+        'secret': ['private'],
+      },
       options: const StaticExportOptions(bundleCovers: true),
     );
 
@@ -259,5 +256,86 @@ void main() {
           options: any(named: 'options'),
         )).called(1);
     verifyNoMoreInteractions(dio);
+  });
+
+  // #131: re-exporting into the same folder must not leave pages or
+  // covers behind for items that are now private or deleted.
+  group('re-export into an existing folder (#131)', () {
+    MockDio coverDio() {
+      final dio = MockDio();
+      when(() => dio.get<List<int>>(
+            any(),
+            options: any(named: 'options'),
+          )).thenAnswer(
+              (_) async => _bytesResponse([1, 2, 3], 'https://example.com'));
+      return dio;
+    }
+
+    test('removes output for items that became private', () async {
+      final writer = StaticExportWriter(dio: coverDio());
+      final items = [
+        _item(id: 'a', coverUrl: 'https://example.com/a.jpg'),
+        _item(id: 'b', coverUrl: 'https://example.com/b.jpg'),
+      ];
+      const options = StaticExportOptions(bundleCovers: true);
+
+      await writer.write(targetDir: tempDir, items: items, options: options);
+      expect(await File(p.join(tempDir.path, 'items', 'b.html')).exists(),
+          isTrue,
+          reason: 'precondition: the first export wrote b');
+
+      await writer.write(
+        targetDir: tempDir,
+        items: items,
+        tagsByItemId: {
+          'b': ['private'],
+        },
+        options: options,
+      );
+
+      expect(await File(p.join(tempDir.path, 'items', 'b.html')).exists(),
+          isFalse);
+      expect(await File(p.join(tempDir.path, 'covers', 'b.jpg')).exists(),
+          isFalse);
+      expect(await File(p.join(tempDir.path, 'items', 'a.html')).exists(),
+          isTrue);
+      expect(await File(p.join(tempDir.path, 'covers', 'a.jpg')).exists(),
+          isTrue);
+    });
+
+    test('leaves files it did not generate alone', () async {
+      final writer = StaticExportWriter(dio: MockDio());
+      final notes = File(p.join(tempDir.path, 'notes.txt'));
+      await notes.writeAsString('mine');
+      final ownPage = File(p.join(tempDir.path, 'items', 'mine.html'));
+      await ownPage.parent.create(recursive: true);
+      await ownPage.writeAsString('mine');
+
+      await writer.write(targetDir: tempDir, items: [_item(id: 'a')]);
+      await writer.write(targetDir: tempDir, items: [_item(id: 'b')]);
+
+      expect(await notes.exists(), isTrue);
+      expect(await ownPage.exists(), isTrue);
+      expect(await File(p.join(tempDir.path, 'items', 'a.html')).exists(),
+          isFalse);
+    });
+
+    test('ignores manifest entries that point outside the folder',
+        () async {
+      final outside =
+          File(p.join(tempDir.parent.path, '${p.basename(tempDir.path)}.txt'));
+      await outside.writeAsString('keep');
+      addTearDown(() async {
+        if (await outside.exists()) await outside.delete();
+      });
+      await File(p.join(tempDir.path, StaticExportWriter.manifestFileName))
+          .writeAsString(
+              '{"files":["../${p.basename(outside.path)}","/etc/hosts"]}');
+
+      final writer = StaticExportWriter(dio: MockDio());
+      await writer.write(targetDir: tempDir, items: [_item(id: 'a')]);
+
+      expect(await outside.exists(), isTrue);
+    });
   });
 }
