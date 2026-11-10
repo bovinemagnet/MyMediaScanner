@@ -84,6 +84,23 @@ class TagsDao extends DatabaseAccessor<AppDatabase> with _$TagsDaoMixin {
     ));
   }
 
+  /// Live tag names per media item in one query: assignments and tags
+  /// that are soft-deleted are excluded.
+  Future<Map<String, List<String>>> getTagNamesByMediaItemId() async {
+    final query = select(mediaItemTagsTable).join([
+      innerJoin(tagsTable, tagsTable.id.equalsExp(mediaItemTagsTable.tagId)),
+    ])
+      ..where(mediaItemTagsTable.deleted.equals(0) &
+          tagsTable.deleted.equals(0));
+    final result = <String, List<String>>{};
+    for (final row in await query.get()) {
+      result
+          .putIfAbsent(row.readTable(mediaItemTagsTable).mediaItemId, () => [])
+          .add(row.readTable(tagsTable).name);
+    }
+    return result;
+  }
+
   Future<List<String>> getTagIdsForMediaItem(String mediaItemId) async {
     final rows = await (select(mediaItemTagsTable)
           ..where((t) =>

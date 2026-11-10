@@ -11,7 +11,8 @@ class StaticExportOptions {
     this.title = 'My collection',
   });
 
-  /// Items with this tag (in `extraMetadata['tags']`) are excluded.
+  /// Items assigned this tag are excluded. Matched case-insensitively,
+  /// so `Private` also hides an item when the default is `private`.
   final String privateTag;
 
   /// When true, cover images are expected to be supplied via the
@@ -42,13 +43,19 @@ class StaticExportService {
   /// Items that survive the private/deleted exclusion for [options].
   /// Exposed so callers (e.g. [StaticExportWriter]) can apply the same
   /// exclusion before fetching cover assets.
+  ///
+  /// [tagsByItemId] maps a media item id to the names of the tags
+  /// assigned to it (from `media_item_tags`); items absent from the map
+  /// have no tags.
   List<MediaItem> visibleItems(
     List<MediaItem> items,
-    StaticExportOptions options,
-  ) =>
+    StaticExportOptions options, {
+    Map<String, List<String>> tagsByItemId = const {},
+  }) =>
       items
           .where((i) => !i.deleted)
-          .where((i) => !_hasTag(i, options.privateTag))
+          .where((i) => !(tagsByItemId[i.id] ?? const <String>[])
+              .any((t) => _isPrivate(t, options)))
           .toList();
 
   /// Build the export. Returns a map of relative paths to byte content.
@@ -60,10 +67,12 @@ class StaticExportService {
   /// rendered HTML never links to a local asset that doesn't exist.
   Map<String, Uint8List> build({
     required List<MediaItem> items,
+    Map<String, List<String>> tagsByItemId = const {},
     StaticExportOptions options = const StaticExportOptions(),
     Map<String, Uint8List> covers = const {},
   }) {
-    final visible = visibleItems(items, options);
+    final visible =
+        visibleItems(items, options, tagsByItemId: tagsByItemId);
 
     final expectedCoverKeys = <String>{
       for (final i in visible)
@@ -76,7 +85,7 @@ class StaticExportService {
     };
     final bundledKeys = bundledCovers.keys.toSet();
 
-    final index = _renderIndex(visible, options, bundledKeys);
+    final index = _renderIndex(visible, options, bundledKeys, tagsByItemId);
     final output = <String, Uint8List>{
       'index.html': Uint8List.fromList(utf8.encode(index)),
     };
@@ -100,21 +109,21 @@ class StaticExportService {
     List<MediaItem> items,
     StaticExportOptions opts,
     Set<String> bundledCoverKeys,
+    Map<String, List<String>> tagsByItemId,
   ) {
+    List<String> publicTagsOf(MediaItem item) => [
+          for (final t in tagsByItemId[item.id] ?? const <String>[])
+            if (!_isPrivate(t, opts)) t,
+        ];
     final mediaTypes = <String>{for (final i in items) i.mediaType.label};
     final tags = <String>{
-      for (final i in items)
-        if (i.extraMetadata['tags'] is List)
-          for (final t in i.extraMetadata['tags'] as List)
-            if (t is String && t != opts.privateTag) t,
+      for (final i in items) ...publicTagsOf(i),
     };
 
     final cards = <String>[];
     for (final item in items) {
       final cover = _coverPath(item, opts, bundledCoverKeys);
-      final tagList = _tagsOf(item)
-          .where((t) => t != opts.privateTag)
-          .join(',');
+      final tagList = publicTagsOf(item).join(',');
       cards.add('''
       <a class="card"
          href="items/${_esc(item.id)}.html"
@@ -212,6 +221,11 @@ ${cards.join('\n')}
     Set<String> bundledCoverKeys,
   ) {
     final cover = _coverPath(item, opts, bundledCoverKeys);
+    // The detail page sits in items/, so a bundled `covers/...` path
+    // needs `../`; an absolute remote URL must pass through unchanged.
+    final coverSrc = cover == null
+        ? null
+        : (opts.bundleCovers ? '../$cover' : cover);
     final details = <(String, String)>[
       if (item.year != null) ('Year', item.year.toString()),
       if (item.publisher != null) ('Publisher', item.publisher!),
@@ -258,7 +272,7 @@ ${cards.join('\n')}
 <body>
 <a class="back" href="../index.html">← Back to collection</a>
 <div class="layout">
-  ${cover != null ? '<img class="cover" src="../${_esc(cover)}" alt="">' : '<div class="cover"></div>'}
+  ${coverSrc != null ? '<img class="cover" src="${_esc(coverSrc)}" alt="">' : '<div class="cover"></div>'}
   <div>
     <h1>${_esc(item.title)}</h1>
     ${item.subtitle != null ? '<div class="sub">${_esc(item.subtitle!)}</div>' : ''}
@@ -307,16 +321,8 @@ ${cards.join('\n')}
     return allowed.contains(ext) ? ext : '.jpg';
   }
 
-  static List<String> _tagsOf(MediaItem item) {
-    final tags = item.extraMetadata['tags'];
-    if (tags is List) {
-      return [for (final t in tags) if (t is String) t];
-    }
-    return const [];
-  }
-
-  static bool _hasTag(MediaItem item, String tag) =>
-      _tagsOf(item).contains(tag);
+  static bool _isPrivate(String tag, StaticExportOptions opts) =>
+      tag.trim().toLowerCase() == opts.privateTag.trim().toLowerCase();
 
   static String _esc(String input) => input
       .replaceAll('&', '&amp;')

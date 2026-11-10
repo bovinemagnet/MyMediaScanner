@@ -28,6 +28,7 @@ After you select a destination folder the export begins immediately.
 | *Private tag*
 | `private`
 | Items carrying this tag are excluded entirely — they do not appear on the index and no detail page is written for them.
+The match is case-insensitive and ignores surrounding whitespace, so a tag named `Private` matches the default.
 Rename the tag if your catalogue uses a different convention.
 
 | *Download and bundle cover art*
@@ -67,6 +68,11 @@ A *← Back to collection* link returns to `index.html`.
 | Cover image for a single item.
 Only written when *Download and bundle cover art* is enabled and the download succeeds.
 The extension (`.jpg`, `.jpeg`, `.png`, `.webp`, or `.gif`) is derived from the original URL.
+When covers are not bundled, both the index and the detail pages reference the original absolute cover URL as-is; bundled covers are referenced as `../covers/<id>.<ext>` from detail pages.
+
+| `.mymediascanner-export.json`
+| Manifest of the paths the export generated.
+The next export into the same folder uses it to remove stale output.
 |===
 
 == Privacy Model
@@ -74,8 +80,12 @@ The extension (`.jpg`, `.jpeg`, `.png`, `.webp`, or `.gif`) is derived from the 
 Two categories of item are excluded from every export:
 
 * *Soft-deleted items* — records with `deleted = 1` in the database are never included, regardless of settings.
-* *Privately tagged items* — any item whose tag list (stored in `extraMetadata['tags']`) contains the configured private tag is excluded.
+* *Privately tagged items* — any item with a tag assignment (the `media_item_tags` table, joined to `tags`) matching the configured private tag is excluded. Soft-deleted assignments and deleted tags are ignored, and the match is case-insensitive with surrounding whitespace trimmed.
 No detail page is written for excluded items and they do not appear as cards on the index, so their titles are not visible even in the HTML source.
+
+Re-exporting into the same folder removes files that the previous export generated but the current one does not, such as the detail page and bundled cover of an item that has since been made private or deleted.
+The writer records the files it generates in `.mymediascanner-export.json` at the root of the folder, and files it did not generate are never touched.
+A folder exported by an older version has no manifest, so its stale files are not removed; export into a fresh folder once, or empty the folder first.
 
 == Hosting the Export
 
