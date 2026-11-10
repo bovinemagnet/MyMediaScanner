@@ -93,25 +93,71 @@ class RipLibraryDao extends DatabaseAccessor<AppDatabase>
     });
   }
 
-  /// Atomically update an existing album row and replace all of its
-  /// tracks with [tracks]. Used by re-scan: the old track set is wiped
-  /// and the freshly-discovered set is committed in the same
+  /// Atomically update an existing album row and reconcile its tracks
+  /// with the freshly-scanned [tracks]. Used by re-scan, in a single
   /// transaction so a crash mid-rescan can't leave the album with a
   /// half-updated track list.
+  ///
+  /// Tracks keep their id across re-scans (#131): playlist entries
+  /// reference `rip_tracks.id`, so replacing an unchanged track with a
+  /// new id silently dropped it from every playlist. An incoming track
+  /// matches an existing one with the same file path, disc and track
+  /// number (CUE tracks share a file, so the path alone is not enough).
+  /// A match keeps its id and quality-analysis columns and has only its
+  /// scan-derived columns refreshed; an unmatched incoming track is
+  /// inserted with its own id; an existing track with no match is gone
+  /// from disk and is deleted.
   Future<void> updateAlbumAndReplaceTracks(
     RipAlbumsTableCompanion album,
     List<RipTracksTableCompanion> tracks,
   ) {
+    String key(String path, int disc, int number) =>
+        '$path\u0000$disc\u0000$number';
+
     return transaction(() async {
-      await (update(ripAlbumsTable)
-            ..where((t) => t.id.equals(album.id.value)))
-          .write(album);
-      await (delete(ripTracksTable)
-            ..where((t) => t.ripAlbumId.equals(album.id.value)))
-          .go();
-      if (tracks.isNotEmpty) {
+      final albumId = album.id.value;
+      await (update(
+        ripAlbumsTable,
+      )..where((t) => t.id.equals(albumId))).write(album);
+
+      final existingIdByKey = <String, String>{
+        for (final t in await getTracksForAlbum(albumId))
+          key(t.filePath, t.discNumber, t.trackNumber): t.id,
+      };
+      final inserts = <RipTracksTableCompanion>[];
+      for (final t in tracks) {
+        final existingId = existingIdByKey.remove(
+          key(
+            t.filePath.value,
+            t.discNumber.present ? t.discNumber.value : 1,
+            t.trackNumber.value,
+          ),
+        );
+        if (existingId == null) {
+          inserts.add(t);
+          continue;
+        }
+        await (update(
+          ripTracksTable,
+        )..where((r) => r.id.equals(existingId))).write(
+          RipTracksTableCompanion(
+            title: t.title,
+            durationMs: t.durationMs,
+            fileSizeBytes: t.fileSizeBytes,
+            updatedAt: t.updatedAt,
+          ),
+        );
+      }
+
+      final removedIds = existingIdByKey.values.toList();
+      if (removedIds.isNotEmpty) {
+        await (delete(
+          ripTracksTable,
+        )..where((r) => r.id.isIn(removedIds))).go();
+      }
+      if (inserts.isNotEmpty) {
         await batch((b) {
-          b.insertAll(ripTracksTable, tracks);
+          b.insertAll(ripTracksTable, inserts);
         });
       }
     });

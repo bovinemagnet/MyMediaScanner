@@ -18,9 +18,12 @@ abstract interface class IRipLibraryRepository {
   Future<void> insertAlbumWithTracks(
       RipAlbum album, List<RipTrack> tracks);
 
-  /// Atomically update an existing album and replace all of its tracks.
-  /// Used by re-scan; the album row and the track set are committed
-  /// together so a crash mid-rescan can't leave them out of sync.
+  /// Atomically update an existing album and reconcile its tracks with
+  /// [tracks]. Used by re-scan; the album row and the track set are
+  /// committed together so a crash mid-rescan can't leave them out of
+  /// sync. Tracks that still exist keep their id (and so their playlist
+  /// membership and quality analysis); only genuinely new tracks take
+  /// the id supplied in [tracks].
   Future<void> updateAlbumAndReplaceTracks(
       RipAlbum album, List<RipTrack> tracks);
   Stream<Set<String>> watchRippedMediaItemIds();
