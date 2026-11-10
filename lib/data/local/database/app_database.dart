@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:mymediascanner/core/constants/app_constants.dart';
+import 'package:mymediascanner/data/local/database/database_location.dart';
 import 'package:mymediascanner/data/local/database/tables/media_items_table.dart';
 import 'package:mymediascanner/data/local/database/tables/tags_table.dart';
 import 'package:mymediascanner/data/local/database/tables/media_item_tags_table.dart';
@@ -83,6 +84,11 @@ class AppDatabase extends _$AppDatabase {
                 name: AppConstants.databaseName,
                 native: const DriftNativeOptions(
                   shareAcrossIsolates: true,
+                  // Same file drift_flutter's default resolves to, but
+                  // owned by DatabaseLocation so backup/restore use the
+                  // identical path and a staged restore is applied
+                  // before the file is opened.
+                  databasePath: DatabaseLocation.openPath,
                 ),
               ),
         );
