@@ -705,7 +705,9 @@ class SyncRepositoryImpl implements ISyncRepository {
         resolutions.any((r) =>
             r.entityId == c.entityId && r.fieldName == c.fieldName));
 
-    await _storeLastSyncedAt(DateTime.now().millisecondsSinceEpoch);
+    // Do not advance the pull cursor here: only the conflicted ids were
+    // fetched, so unrelated remote changes since the last pull would
+    // fall behind the cursor and never be downloaded (#131).
     await _emitStatus(
       isSyncing: false,
       conflictCount: _pendingConflicts.length,
@@ -728,7 +730,9 @@ class SyncRepositoryImpl implements ISyncRepository {
 
   @override
   Future<void> clearSyncHistory() async {
-    await _syncLogDao.deleteAll();
+    // sync_log doubles as the upload queue: deleting pending or failed
+    // entries would silently drop unsent local edits (#131).
+    await _syncLogDao.deleteCompleted();
     await _emitStatus();
   }
 

@@ -53,8 +53,11 @@ class SyncLogDao extends DatabaseAccessor<AppDatabase>
         .write(SyncLogTableCompanion(payloadJson: Value(payloadJson)));
   }
 
-  Future<void> deleteAll() {
-    return delete(syncLogTable).go();
+  /// Delete every completed (`synced = 1`) entry regardless of age.
+  /// Pending and failed entries are the upload queue, not history, so
+  /// they are kept.
+  Future<int> deleteCompleted() {
+    return (delete(syncLogTable)..where((t) => t.synced.equals(1))).go();
   }
 
   /// Watch all sync log entries, ordered by creation time descending.

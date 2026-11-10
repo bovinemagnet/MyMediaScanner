@@ -193,4 +193,54 @@ void main() {
     expect(row!.title, 'Remote Title');
     expect(await repo.getConflicts(), isEmpty);
   });
+
+  test('resolveConflicts does not advance the global pull cursor (#131)',
+      () async {
+    await mediaRepo.save(baseItem('m1'));
+    when(() => client.pullRecords('media_items',
+            afterTimestamp: any(named: 'afterTimestamp')))
+        .thenAnswer((_) async => [remoteRow('m1')]);
+    when(() => client.pullRecordsByIds('media_items', any()))
+        .thenAnswer((_) async => [remoteRow('m1')]);
+
+    await repo.pullChanges();
+    final prefs = await SharedPreferences.getInstance();
+    final cursorAfterPull = prefs.getInt('sync_last_synced_at');
+    expect(cursorAfterPull, 999999,
+        reason: 'precondition: pull stores the server boundary');
+
+    final conflicts = await repo.getConflicts();
+    await repo.resolveConflicts(conflicts
+        .map((c) => c.copyWith(resolution: ConflictResolution.keepRemote))
+        .toList());
+
+    // Resolution only fetched the conflicted ids; unrelated remote
+    // changes since the last pull have not been downloaded, so moving
+    // the cursor here would skip them permanently.
+    expect(prefs.getInt('sync_last_synced_at'), cursorAfterPull);
+  });
+
+  test('clearSyncHistory keeps unsent changes queued (#131)', () async {
+    await mediaRepo.save(baseItem('m1'));
+    expect(await db.syncLogDao.getPending(), isNotEmpty,
+        reason: 'precondition: saving queues a pending upload');
+
+    await repo.clearSyncHistory();
+
+    final pending = await db.syncLogDao.getPending();
+    expect(pending.map((l) => l.entityId), contains('m1'),
+        reason: 'clearing history must not discard operational work');
+  });
+
+  test('clearSyncHistory removes completed history (#131)', () async {
+    await mediaRepo.save(baseItem('m1'));
+    when(() => client.upsertRecords(any(), any())).thenAnswer((_) async {});
+    await repo.pushChanges();
+    expect(await repo.getSyncHistory(), isNotEmpty,
+        reason: 'precondition: the push left a completed history entry');
+
+    await repo.clearSyncHistory();
+
+    expect(await repo.getSyncHistory(), isEmpty);
+  });
 }
