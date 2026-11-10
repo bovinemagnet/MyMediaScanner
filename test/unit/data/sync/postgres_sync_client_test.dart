@@ -249,12 +249,11 @@ void main() {
       });
     });
 
-    group('serverTimestampSql (issue #102 pre-read pull boundary)', () {
-      test('reads the server clock scaled to epoch milliseconds', () {
-        expect(PostgresSyncClient.serverTimestampSql,
-            contains('clock_timestamp()'));
-        expect(
-            PostgresSyncClient.serverTimestampSql, contains('extract(epoch'));
+    group('pullHorizonSql (#131 transaction-id pull cursor)', () {
+      test('reads the snapshot xmin and checks migration 008', () {
+        expect(PostgresSyncClient.pullHorizonSql,
+            contains('pg_snapshot_xmin(pg_current_snapshot())'));
+        expect(PostgresSyncClient.pullHorizonSql, contains("'change_txid'"));
       });
     });
 

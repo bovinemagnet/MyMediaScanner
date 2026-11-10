@@ -63,11 +63,11 @@ void main() {
 
     // Default stubs — every table empty unless overridden.
     when(() => client.pullRecords(any(),
-            afterTimestamp: any(named: 'afterTimestamp')))
+            sinceTxid: any(named: 'sinceTxid')))
         .thenAnswer((_) async => <Map<String, dynamic>>[]);
     when(() => client.pullRecordsByIds(any(), any()))
         .thenAnswer((_) async => <Map<String, dynamic>>[]);
-    when(() => client.fetchServerTimestampMillis())
+    when(() => client.fetchPullHorizon())
         .thenAnswer((_) async => 999999);
   });
 
@@ -80,7 +80,7 @@ void main() {
       () async {
     await mediaRepo.save(baseItem('m1'));
     when(() => client.pullRecords('media_items',
-            afterTimestamp: any(named: 'afterTimestamp')))
+            sinceTxid: any(named: 'sinceTxid')))
         .thenAnswer((_) async => [remoteRow('m1')]);
 
     await repo.pullChanges();
@@ -90,14 +90,14 @@ void main() {
         reason: 'precondition: the edit must surface as a conflict');
 
     final prefs = await SharedPreferences.getInstance();
-    expect(prefs.getInt('sync_last_synced_at'), isNotNull,
+    expect(prefs.getInt('sync_pull_cursor_txid'), isNotNull,
         reason: 'a pending conflict must not hold the watermark back');
   });
 
   test('unresolved conflicts survive a subsequent pull', () async {
     await mediaRepo.save(baseItem('m1'));
     when(() => client.pullRecords('media_items',
-            afterTimestamp: any(named: 'afterTimestamp')))
+            sinceTxid: any(named: 'sinceTxid')))
         .thenAnswer((_) async => [remoteRow('m1')]);
 
     await repo.pullChanges();
@@ -107,7 +107,7 @@ void main() {
     // Next pull returns an empty delta (the watermark advanced past the
     // conflicted row). The still-unresolved conflict must not vanish.
     when(() => client.pullRecords('media_items',
-            afterTimestamp: any(named: 'afterTimestamp')))
+            sinceTxid: any(named: 'sinceTxid')))
         .thenAnswer((_) async => <Map<String, dynamic>>[]);
     await repo.pullChanges();
 
@@ -119,7 +119,7 @@ void main() {
     await mediaRepo.save(baseItem('m1'));
     await mediaRepo.save(baseItem('m2'));
     when(() => client.pullRecords('media_items',
-            afterTimestamp: any(named: 'afterTimestamp')))
+            sinceTxid: any(named: 'sinceTxid')))
         .thenAnswer((_) async => [remoteRow('m1')]);
     when(() => client.upsertRecords(any(), any())).thenAnswer((_) async {});
 
@@ -145,7 +145,7 @@ void main() {
       () async {
     await mediaRepo.save(baseItem('m1'));
     when(() => client.pullRecords('media_items',
-            afterTimestamp: any(named: 'afterTimestamp')))
+            sinceTxid: any(named: 'sinceTxid')))
         .thenAnswer((_) async => [remoteRow('m1')]);
     when(() => client.upsertRecords(any(), any())).thenAnswer((_) async {});
 
@@ -169,7 +169,7 @@ void main() {
       () async {
     await mediaRepo.save(baseItem('m1'));
     when(() => client.pullRecords('media_items',
-            afterTimestamp: any(named: 'afterTimestamp')))
+            sinceTxid: any(named: 'sinceTxid')))
         .thenAnswer((_) async => [remoteRow('m1')]);
     when(() => client.pullRecordsByIds('media_items', any()))
         .thenAnswer((_) async => [remoteRow('m1')]);
@@ -187,7 +187,7 @@ void main() {
     // Exactly one media_items pull overall — the incremental one inside
     // pullChanges. Resolution itself must not pull the whole table.
     verify(() => client.pullRecords('media_items',
-        afterTimestamp: any(named: 'afterTimestamp'))).called(1);
+        sinceTxid: any(named: 'sinceTxid'))).called(1);
 
     final row = await db.mediaItemsDao.getById('m1');
     expect(row!.title, 'Remote Title');
@@ -198,14 +198,14 @@ void main() {
       () async {
     await mediaRepo.save(baseItem('m1'));
     when(() => client.pullRecords('media_items',
-            afterTimestamp: any(named: 'afterTimestamp')))
+            sinceTxid: any(named: 'sinceTxid')))
         .thenAnswer((_) async => [remoteRow('m1')]);
     when(() => client.pullRecordsByIds('media_items', any()))
         .thenAnswer((_) async => [remoteRow('m1')]);
 
     await repo.pullChanges();
     final prefs = await SharedPreferences.getInstance();
-    final cursorAfterPull = prefs.getInt('sync_last_synced_at');
+    final cursorAfterPull = prefs.getInt('sync_pull_cursor_txid');
     expect(cursorAfterPull, 999999,
         reason: 'precondition: pull stores the server boundary');
 
@@ -217,7 +217,7 @@ void main() {
     // Resolution only fetched the conflicted ids; unrelated remote
     // changes since the last pull have not been downloaded, so moving
     // the cursor here would skip them permanently.
-    expect(prefs.getInt('sync_last_synced_at'), cursorAfterPull);
+    expect(prefs.getInt('sync_pull_cursor_txid'), cursorAfterPull);
   });
 
   test('clearSyncHistory keeps unsent changes queued (#131)', () async {
@@ -243,4 +243,85 @@ void main() {
 
     expect(await repo.getSyncHistory(), isEmpty);
   });
+
+  // #131 finding 3: conflicts lived only in memory while the pull cursor
+  // moved past them, so a restart lost them and unblocked a push that
+  // would overwrite the other device's edit.
+  group('conflicts survive a restart (#131)', () {
+    SyncRepositoryImpl restart() => SyncRepositoryImpl(
+          mediaItemsDao: db.mediaItemsDao,
+          syncLogDao: db.syncLogDao,
+          syncClient: client,
+        );
+
+    test('unresolved conflicts are still listed after a restart', () async {
+      await mediaRepo.save(baseItem('m1'));
+      when(() => client.pullRecords('media_items',
+              sinceTxid: any(named: 'sinceTxid')))
+          .thenAnswer((_) async => [remoteRow('m1')]);
+      await repo.pullChanges();
+      final before = await repo.getConflicts();
+      expect(before, isNotEmpty);
+      await repo.dispose();
+
+      repo = restart();
+
+      final after = await repo.getConflicts();
+      expect(after.map((c) => (c.entityId, c.fieldName)),
+          before.map((c) => (c.entityId, c.fieldName)));
+      final title = after.singleWhere((c) => c.fieldName == 'title');
+      expect(title.localValue, 'Local Title');
+      expect(title.remoteValue, 'Remote Title');
+    });
+
+    test('a conflicted item stays held back from push after a restart',
+        () async {
+      await mediaRepo.save(baseItem('m1'));
+      when(() => client.pullRecords('media_items',
+              sinceTxid: any(named: 'sinceTxid')))
+          .thenAnswer((_) async => [remoteRow('m1')]);
+      when(() => client.upsertRecords(any(), any())).thenAnswer((_) async {});
+      await repo.pullChanges();
+      await repo.dispose();
+
+      repo = restart();
+      await repo.pushChanges();
+
+      verifyNever(() => client.upsertRecords('media_items', any()));
+    });
+
+    test('resolving a conflict removes it for good', () async {
+      await mediaRepo.save(baseItem('m1'));
+      when(() => client.pullRecords('media_items',
+              sinceTxid: any(named: 'sinceTxid')))
+          .thenAnswer((_) async => [remoteRow('m1')]);
+      when(() => client.pullRecordsByIds('media_items', any()))
+          .thenAnswer((_) async => [remoteRow('m1')]);
+      await repo.pullChanges();
+      await repo.resolveConflicts((await repo.getConflicts())
+          .map((c) => c.copyWith(resolution: ConflictResolution.keepRemote))
+          .toList());
+      await repo.dispose();
+
+      repo = restart();
+
+      expect(await repo.getConflicts(), isEmpty);
+    });
+
+    test('the status stream reports persisted conflicts after a restart',
+        () async {
+      await mediaRepo.save(baseItem('m1'));
+      when(() => client.pullRecords('media_items',
+              sinceTxid: any(named: 'sinceTxid')))
+          .thenAnswer((_) async => [remoteRow('m1')]);
+      await repo.pullChanges();
+      final count = (await repo.getConflicts()).length;
+      await repo.dispose();
+
+      repo = restart();
+
+      expect((await repo.watchSyncStatus().first).conflictCount, count);
+    });
+  });
 }
+

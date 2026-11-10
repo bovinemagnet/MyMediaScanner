@@ -49,12 +49,35 @@ The full sync cycle is as follows:
 
 === Pull Phase
 
-After pushing, the client pulls any rows that have changed in PostgreSQL since the last known `synced_at`:
+After pushing, the client pulls any rows that have changed in PostgreSQL since the previous pull, using a server-side change cursor rather than `updated_at`:
 
-1. The client queries PostgreSQL for rows where `updated_at > :last_synced_at`, parameterised per table.
-2. Each remote row is merged into the local SQLite database using the same last-write-wins field comparison.
-3. Rows present remotely but absent locally are inserted (this handles additions from other devices).
-4. Soft-deleted rows pulled from PostgreSQL set `deleted = 1` locally — the record is never hard-deleted.
+1. Before reading any table, the client reads a horizon from the server: `pg_snapshot_xmin(pg_current_snapshot())`.
+   Every transaction below the horizon has finished.
+2. The client queries each synced table for rows where `change_txid >= :cursor`, where the cursor is the horizon stored by the previous pull (SharedPreferences key `sync_pull_cursor_txid`).
+   On the first pull there is no cursor, so everything is fetched.
+3. Each remote row is merged into the local SQLite database using the same last-write-wins field comparison.
+4. Rows present remotely but absent locally are inserted (this handles additions from other devices).
+5. Soft-deleted rows pulled from PostgreSQL set `deleted = 1` locally — the record is never hard-deleted.
+6. Once the whole pull completes, the horizon read in step 1 is stored as the new cursor.
+   A failed pull leaves the cursor unchanged.
+
+==== Why a change cursor
+
+`updated_at` is the client's edit time, not the time the row reached the server.
+An edit made offline and uploaded after another device had pulled keeps its old `updated_at`, so a filter on `updated_at > :last_synced_at` would never fetch it on that device.
+`updated_at` therefore remains the last-write-wins basis for conflict decisions only.
+
+Server migration `lib/data/remote/sync/migrations/008_change_cursor.sql` adds a `change_txid BIGINT` column and a `BEFORE INSERT OR UPDATE` trigger (`mms_stamp_change_txid`) to every synced table: `media_items`, `tags`, `shelves`, `borrowers`, `loans`, `locations`, `series`, `media_item_tags` and `shelf_items`.
+The trigger stamps each written row with the id of the writing transaction (`pg_current_xact_id()`).
+
+Because the horizon is read before any table, a transaction still running at pull time has an id at or above the horizon, so the next pull (`change_txid >= cursor`) always picks it up however late it commits.
+Some rows may be fetched twice; this is harmless because applying a remote row is idempotent.
+
+The legacy timestamp watermark is ignored, so the first pull after upgrading fetches everything once.
+
+IMPORTANT: Migration 008 requires PostgreSQL 13 or later and is safe to run more than once.
+Migrations are applied by hand, in order (001 to 008), with `psql`.
+If 008 has not been applied, sync stops with "The sync server needs migration 008_change_cursor.sql (PostgreSQL 13 or later) before this version can sync."
 
 === Concurrent Edit Threshold
 
@@ -62,6 +85,15 @@ When the `updated_at` difference between the local and remote version of a row f
 
 The conflict resolution UI presents both versions side-by-side and allows the user to choose the winning value on a per-field basis.
 The outcome is recorded in the `sync_log` table as `resolved_by = 'user'`.
+
+=== Conflict Persistence
+
+Unresolved conflicts are stored in the local `sync_conflicts` table (local schema v26) rather than held in memory.
+Previously a restart lost them and unblocked the conflicted item's pending upload, which could overwrite the other device's edit.
+
+Each row holds `entity_type`, `entity_id`, `field_name`, `local_value_json`, `remote_value_json`, `local_updated_at`, `remote_updated_at` and `detected_at`, with a primary key of `entity_type`, `entity_id` and `field_name`.
+The push phase holds back any entity that has rows in this table until the conflict is resolved.
+Resolving a conflict removes its rows.
 
 == Sync Log
 

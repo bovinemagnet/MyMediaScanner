@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 import 'package:mymediascanner/core/utils/debug_log.dart';
 import 'package:mymediascanner/data/local/dao/media_items_dao.dart';
+import 'package:mymediascanner/data/local/dao/sync_conflicts_dao.dart';
 import 'package:mymediascanner/data/local/dao/sync_log_dao.dart';
 import 'package:mymediascanner/data/local/database/app_database.dart';
 import 'package:mymediascanner/data/remote/sync/json_key_case.dart';
@@ -28,9 +29,20 @@ class SyncRepositoryImpl implements ISyncRepository {
   final PostgresSyncClient _syncClient;
   final _statusController = StreamController<SyncStatus>.broadcast();
   final _progressController = StreamController<SyncProgress>.broadcast();
-  final List<SyncConflict> _pendingConflicts = [];
 
+  /// Unresolved conflicts live in SQLite, not memory (#131): the pull
+  /// cursor moves past a conflicted row, so a restart would otherwise
+  /// lose the conflict and unblock a push that overwrites the other
+  /// device's edit.
+  SyncConflictsDao get _conflictsDao =>
+      _mediaItemsDao.attachedDatabase.syncConflictsDao;
+
+  /// When the last pull completed (client clock), for display only.
   static const _lastSyncedAtKey = 'sync_last_synced_at';
+
+  /// Server transaction-id horizon from the last completed pull; the
+  /// next pull fetches rows with `change_txid >= cursor` (#131).
+  static const _pullCursorKey = 'sync_pull_cursor_txid';
 
   /// 30 days in milliseconds for automatic purge.
   static const _purgeThresholdMs = 30 * 24 * 60 * 60 * 1000;
@@ -55,10 +67,8 @@ class SyncRepositoryImpl implements ISyncRepository {
       // unconditional upsert would overwrite the other device's edit
       // before the user has chosen a resolution. They stay pending and
       // push after resolveConflicts refreshes their payload.
-      final conflictedIds = {
-        for (final c in _pendingConflicts)
-          if (c.entityType == 'media_item') c.entityId,
-      };
+      final conflictedIds =
+          await _conflictsDao.conflictedEntityIds('media_item');
 
       for (var i = 0; i < pending.length; i++) {
         final log = pending[i];
@@ -149,7 +159,7 @@ class SyncRepositoryImpl implements ISyncRepository {
       // conflict count rather than resetting it to zero.
       await _emitStatus(
         isSyncing: false,
-        conflictCount: _pendingConflicts.length,
+        conflictCount: await _conflictsDao.count(),
       );
       if (firstFailure != null) {
         // Surface the failure to the caller while the status stream
@@ -161,7 +171,7 @@ class SyncRepositoryImpl implements ISyncRepository {
       await _emitStatus(
         isSyncing: false,
         error: e.toString(),
-        conflictCount: _pendingConflicts.length,
+        conflictCount: await _conflictsDao.count(),
       );
       rethrow;
     }
@@ -171,27 +181,27 @@ class SyncRepositoryImpl implements ISyncRepository {
   Future<void> pullChanges() async {
     await _emitStatus(isSyncing: true);
     try {
-      // Pull only remote rows modified since our last successful sync.
+      // Pull only remote rows written since our last successful pull.
       // Without this the pull grows linearly with the remote table size
       // and eventually times out on mobile networks.
-      final lastSyncedAt = await _getLastSyncedAt();
+      //
+      // The cursor is a server transaction id, not a timestamp (#131).
+      // `updated_at` is the client's edit time, so an edit made offline
+      // and uploaded later kept an old `updated_at` and fell behind any
+      // `updated_at > watermark` filter. A legacy timestamp watermark
+      // is therefore ignored: with no cursor the first pull fetches
+      // everything, which last-write-wins applies idempotently.
+      final prefs = await SharedPreferences.getInstance();
+      final pullCursor = prefs.getInt(_pullCursorKey);
 
-      // Capture a server-side boundary BEFORE reading any table (issue
-      // #102). The previous implementation read every remote table
-      // sequentially against `lastSyncedAt`, then stored the CLIENT
-      // clock (`DateTime.now()`) as the new watermark only once every
-      // table had already been read. A remote row updated after its
-      // table was read but before that final client-clock snapshot has
-      // an `updated_at` older than the new watermark, so a later pull
-      // (`updated_at > watermark`) would never fetch it again —
-      // permanently skipped. A boundary captured up-front, before any
-      // read, doesn't have that gap: anything written afterwards keeps
-      // an `updated_at` at or beyond this boundary and stays eligible
-      // for the next pull.
-      final pullBoundary = await _syncClient.fetchServerTimestampMillis();
+      // Read the horizon BEFORE any table: every transaction below it
+      // has finished, and every one still running gets an id at or
+      // above it, so the next pull fetches its rows however late it
+      // commits.
+      final pullHorizon = await _syncClient.fetchPullHorizon();
       final remoteItems = await _syncClient.pullRecords(
         'media_items',
-        afterTimestamp: lastSyncedAt,
+        sinceTxid: pullCursor,
       );
       final total = remoteItems.length;
 
@@ -200,12 +210,10 @@ class SyncRepositoryImpl implements ISyncRepository {
         final remoteId = remote['id'];
         if (remoteId is! String) continue;
 
-        // Refresh this row's conflict entries from the fresh remote
-        // state; conflicts for rows outside this delta are retained —
-        // clearing them here silently discarded unresolved conflicts
-        // once the watermark advanced past their `updated_at`.
-        _pendingConflicts.removeWhere((c) => c.entityId == remoteId);
-
+        // This row's conflict entries are refreshed from the fresh
+        // remote state below; conflicts for rows outside this delta are
+        // retained — clearing them discarded unresolved conflicts once
+        // the cursor moved past their row.
         _progressController.add(SyncProgress(
           phase: SyncPhase.pull,
           current: i + 1,
@@ -220,7 +228,10 @@ class SyncRepositoryImpl implements ISyncRepository {
           // immediately re-flag this row as pending push.
           final insertData = Map<String, dynamic>.of(remote)
             ..['synced_at'] = DateTime.now().millisecondsSinceEpoch;
-          await _mediaItemsDao.insertItem(_mapToCompanion(insertData));
+          await _mediaItemsDao.transaction(() async {
+            await _mediaItemsDao.insertItem(_mapToCompanion(insertData));
+            await _conflictsDao.replaceForEntity('media_item', remoteId, []);
+          });
           continue;
         }
 
@@ -247,7 +258,14 @@ class SyncRepositoryImpl implements ISyncRepository {
         );
 
         if (conflicts.isNotEmpty) {
-          _pendingConflicts.addAll(conflicts);
+          // Persisted before the cursor advances at the end of the pull,
+          // so a crash in between re-fetches the row and records the
+          // conflict again rather than losing it.
+          await _conflictsDao.replaceForEntity(
+            'media_item',
+            remoteId,
+            conflicts.map(_conflictToCompanion).toList(),
+          );
           // Skip this item — user must resolve conflicts first
           continue;
         }
@@ -270,6 +288,7 @@ class SyncRepositoryImpl implements ISyncRepository {
             remoteId,
             jsonEncode(merged),
           );
+          await _conflictsDao.replaceForEntity('media_item', remoteId, []);
         });
       }
 
@@ -283,43 +302,43 @@ class SyncRepositoryImpl implements ISyncRepository {
       await _pullLastWriteWins(
         tableName: 'tags',
         entityType: 'tag',
-        afterTimestamp: lastSyncedAt,
+        sinceTxid: pullCursor,
       );
       await _pullLastWriteWins(
         tableName: 'shelves',
         entityType: 'shelf',
-        afterTimestamp: lastSyncedAt,
+        sinceTxid: pullCursor,
       );
       await _pullLastWriteWins(
         tableName: 'borrowers',
         entityType: 'borrower',
-        afterTimestamp: lastSyncedAt,
+        sinceTxid: pullCursor,
       );
       await _pullLastWriteWins(
         tableName: 'loans',
         entityType: 'loan',
-        afterTimestamp: lastSyncedAt,
+        sinceTxid: pullCursor,
       );
       await _pullLastWriteWins(
         tableName: 'locations',
         entityType: 'location',
-        afterTimestamp: lastSyncedAt,
+        sinceTxid: pullCursor,
       );
       await _pullLastWriteWins(
         tableName: 'series',
         entityType: 'series',
-        afterTimestamp: lastSyncedAt,
+        sinceTxid: pullCursor,
       );
 
       // Join tables last, so their parent rows (media items, tags,
       // shelves) have already been pulled in this same pass.
       await _pullJoinTable(
         tableName: 'media_item_tags',
-        afterTimestamp: lastSyncedAt,
+        sinceTxid: pullCursor,
       );
       await _pullJoinTable(
         tableName: 'shelf_items',
-        afterTimestamp: lastSyncedAt,
+        sinceTxid: pullCursor,
       );
 
       // Auto-purge old sync log entries (30 days)
@@ -333,14 +352,16 @@ class SyncRepositoryImpl implements ISyncRepository {
       // watermark back only forced every subsequent pull to re-download
       // everything since the last clean sync.
       //
-      // Store the pre-read server boundary captured above, not the
-      // client clock — see the comment where `pullBoundary` is captured.
-      await _storeLastSyncedAt(pullBoundary);
+      // Store the horizon read before any table — see where
+      // `pullHorizon` is captured.
+      await prefs.setInt(_pullCursorKey, pullHorizon);
+      await prefs.setInt(
+          _lastSyncedAtKey, DateTime.now().millisecondsSinceEpoch);
 
       _progressController.add(SyncProgress.idle);
       await _emitStatus(
         isSyncing: false,
-        conflictCount: _pendingConflicts.length,
+        conflictCount: await _conflictsDao.count(),
       );
     } on Exception catch (e) {
       _progressController.add(SyncProgress.idle);
@@ -366,11 +387,11 @@ class SyncRepositoryImpl implements ISyncRepository {
   Future<void> _pullLastWriteWins({
     required String tableName,
     required String entityType,
-    required int? afterTimestamp,
+    required int? sinceTxid,
   }) async {
     final rows = await _syncClient.pullRecords(
       tableName,
-      afterTimestamp: afterTimestamp,
+      sinceTxid: sinceTxid,
     );
     // Preload every affected local `updated_at` in ONE query rather than
     // a `getById` per remote row (the N+1 this replaces).
@@ -414,11 +435,11 @@ class SyncRepositoryImpl implements ISyncRepository {
   /// watermark, so the per-row read stays small.
   Future<void> _pullJoinTable({
     required String tableName,
-    required int? afterTimestamp,
+    required int? sinceTxid,
   }) async {
     final rows = await _syncClient.pullRecords(
       tableName,
-      afterTimestamp: afterTimestamp,
+      sinceTxid: sinceTxid,
     );
     final db = _mediaItemsDao.attachedDatabase;
     final entityType =
@@ -604,9 +625,10 @@ class SyncRepositoryImpl implements ISyncRepository {
       // barcode cache) are left alone since the server has nothing to
       // repopulate them with.
       await _mediaItemsDao.attachedDatabase.wipeSyncedUserData();
-      _pendingConflicts.clear();
+      await _conflictsDao.deleteAllConflicts();
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_lastSyncedAtKey);
+      await prefs.remove(_pullCursorKey);
 
       await pullChanges();
       await _emitStatus(isSyncing: false);
@@ -625,7 +647,7 @@ class SyncRepositoryImpl implements ISyncRepository {
     // status..." until the first push/pull event, which on a fresh
     // launch with no pending work would never arrive.
     yield await _computeStatus(
-      conflictCount: _pendingConflicts.length,
+      conflictCount: await _conflictsDao.count(),
     );
     yield* _statusController.stream;
   }
@@ -635,8 +657,29 @@ class SyncRepositoryImpl implements ISyncRepository {
 
   @override
   Future<List<SyncConflict>> getConflicts() async {
-    return List.unmodifiable(_pendingConflicts);
+    final rows = await _conflictsDao.getAll();
+    return List.unmodifiable(rows.map((r) => SyncConflict(
+          entityType: r.entityType,
+          entityId: r.entityId,
+          fieldName: r.fieldName,
+          localValue: jsonDecode(r.localValueJson),
+          remoteValue: jsonDecode(r.remoteValueJson),
+          localUpdatedAt: r.localUpdatedAt,
+          remoteUpdatedAt: r.remoteUpdatedAt,
+        )));
   }
+
+  SyncConflictsTableCompanion _conflictToCompanion(SyncConflict c) =>
+      SyncConflictsTableCompanion.insert(
+        entityType: c.entityType,
+        entityId: c.entityId,
+        fieldName: c.fieldName,
+        localValueJson: jsonEncode(c.localValue),
+        remoteValueJson: jsonEncode(c.remoteValue),
+        localUpdatedAt: c.localUpdatedAt,
+        remoteUpdatedAt: c.remoteUpdatedAt,
+        detectedAt: DateTime.now().millisecondsSinceEpoch,
+      );
 
   @override
   Future<void> resolveConflicts(List<SyncConflict> resolutions) async {
@@ -716,16 +759,18 @@ class SyncRepositoryImpl implements ISyncRepository {
     }
 
     // Clear resolved conflicts
-    _pendingConflicts.removeWhere((c) =>
-        resolutions.any((r) =>
-            r.entityId == c.entityId && r.fieldName == c.fieldName));
+    await _conflictsDao.transaction(() async {
+      for (final r in resolutions) {
+        await _conflictsDao.deleteField(r.entityType, r.entityId, r.fieldName);
+      }
+    });
 
     // Do not advance the pull cursor here: only the conflicted ids were
     // fetched, so unrelated remote changes since the last pull would
     // fall behind the cursor and never be downloaded (#131).
     await _emitStatus(
       isSyncing: false,
-      conflictCount: _pendingConflicts.length,
+      conflictCount: await _conflictsDao.count(),
     );
   }
 
@@ -807,11 +852,6 @@ class SyncRepositoryImpl implements ISyncRepository {
   Future<int?> _getLastSyncedAt() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt(_lastSyncedAtKey);
-  }
-
-  Future<void> _storeLastSyncedAt(int epochMs) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_lastSyncedAtKey, epochMs);
   }
 
   /// Resolve an ownership_status value received from the remote, logging a
