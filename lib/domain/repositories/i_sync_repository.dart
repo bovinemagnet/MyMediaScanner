@@ -25,12 +25,11 @@ abstract interface class ISyncRepository {
   /// rows are preserved so the user can still inspect or retry them.
   Future<void> purgeSyncHistory(int olderThanEpochMs);
 
-  /// Remove every sync log entry, including pending and failed ones.
+  /// Remove every completed sync log entry, regardless of age.
   ///
-  /// Wires the "Clear sync history" affordance honestly — the prior
-  /// implementation routed through [purgeSyncHistory] which only deletes
-  /// successfully-synced rows, so pending/failed entries silently
-  /// survived a "Clear all" tap.
+  /// Pending and failed entries are kept: they are the upload queue,
+  /// and deleting them would discard local edits that have not yet
+  /// reached the server.
   Future<void> clearSyncHistory();
 }
 

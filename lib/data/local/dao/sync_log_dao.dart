@@ -43,6 +43,24 @@ class SyncLogDao extends DatabaseAccessor<AppDatabase>
   /// should land on the server when the pending push fires. Without
   /// this refresh the next push silently overwrites whichever fields
   /// remote just contributed.
+  /// Retire every pending entry for [entityType]/[entityId] because a
+  /// newer remote version has just been applied locally. The queued
+  /// payload carries the older local state, so pushing it would
+  /// overwrite the newer remote edit. Entries stay in history, marked
+  /// as resolved by the remote side.
+  Future<int> supersedePending(String entityType, String entityId) {
+    return (update(syncLogTable)
+          ..where((t) =>
+              t.entityType.equals(entityType) &
+              t.entityId.equals(entityId) &
+              t.synced.equals(0)))
+        .write(const SyncLogTableCompanion(
+      synced: Value(1),
+      direction: Value('pull'),
+      resolvedBy: Value('remote'),
+    ));
+  }
+
   Future<int> updatePendingPayload(
       String entityType, String entityId, String payloadJson) {
     return (update(syncLogTable)
@@ -53,8 +71,11 @@ class SyncLogDao extends DatabaseAccessor<AppDatabase>
         .write(SyncLogTableCompanion(payloadJson: Value(payloadJson)));
   }
 
-  Future<void> deleteAll() {
-    return delete(syncLogTable).go();
+  /// Delete every completed (`synced = 1`) entry regardless of age.
+  /// Pending and failed entries are the upload queue, not history, so
+  /// they are kept.
+  Future<int> deleteCompleted() {
+    return (delete(syncLogTable)..where((t) => t.synced.equals(1))).go();
   }
 
   /// Watch all sync log entries, ordered by creation time descending.

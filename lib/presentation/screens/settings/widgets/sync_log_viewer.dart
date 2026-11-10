@@ -136,7 +136,9 @@ class _SyncLogViewerState extends ConsumerState<SyncLogViewer> {
       builder: (ctx) => AlertDialog(
         title: const Text('Clear sync history?'),
         content: const Text(
-          'This will remove all sync log entries. This cannot be undone.',
+          'This will remove all completed sync log entries. Pending and '
+          'failed uploads are kept so they can still be sent. This cannot '
+          'be undone.',
         ),
         actions: [
           TextButton(
@@ -151,10 +153,8 @@ class _SyncLogViewerState extends ConsumerState<SyncLogViewer> {
               Navigator.pop(ctx);
               final repo = ref.read(syncRepositoryProvider);
               if (repo != null) {
-                // Use clearSyncHistory (true clear-all) rather than the
-                // older purgeSyncHistory(now), which only deleted synced
-                // rows — failed/pending entries were silently preserved
-                // despite the dialog promising "remove all".
+                // clearSyncHistory removes completed entries only;
+                // pending/failed entries are the upload queue.
                 await repo.clearSyncHistory();
                 ref.invalidate(syncHistoryProvider);
               }

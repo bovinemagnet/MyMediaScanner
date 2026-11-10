@@ -395,7 +395,12 @@ class SyncRepositoryImpl implements ISyncRepository {
       if (localUpdatedAt != null && remoteUpdatedAt <= localUpdatedAt) {
         continue;
       }
-      await _applyRemoteRow(entityType, remote);
+      // Atomic: apply the newer remote row AND retire any queued upload
+      // for it, whose payload is older local state (#131).
+      await _syncLogDao.transaction(() async {
+        await _applyRemoteRow(entityType, remote);
+        await _syncLogDao.supersedePending(entityType, id);
+      });
     }
   }
 
@@ -440,12 +445,17 @@ class SyncRepositoryImpl implements ISyncRepository {
           if (localUpdatedAt != null && remoteUpdatedAt <= localUpdatedAt) {
             continue;
           }
-          await db.tagsDao.upsertAssignmentRow(MediaItemTagsTableCompanion(
-            mediaItemId: Value(mediaItemId),
-            tagId: Value(tagId),
-            updatedAt: Value(remoteUpdatedAt),
-            deleted: Value(deleted),
-          ));
+          await _syncLogDao.transaction(() async {
+            await db.tagsDao.upsertAssignmentRow(MediaItemTagsTableCompanion(
+              mediaItemId: Value(mediaItemId),
+              tagId: Value(tagId),
+              updatedAt: Value(remoteUpdatedAt),
+              deleted: Value(deleted),
+            ));
+            // Same entity id format as TagRepositoryImpl's sync log.
+            await _syncLogDao.supersedePending(
+                entityType, '$mediaItemId|$tagId');
+          });
         case 'shelf_items':
           final shelfId = remote['shelf_id'];
           final mediaItemId = remote['media_item_id'];
@@ -455,13 +465,18 @@ class SyncRepositoryImpl implements ISyncRepository {
           if (localUpdatedAt != null && remoteUpdatedAt <= localUpdatedAt) {
             continue;
           }
-          await db.shelvesDao.upsertItemRow(ShelfItemsTableCompanion(
-            shelfId: Value(shelfId),
-            mediaItemId: Value(mediaItemId),
-            position: Value((remote['position'] as num?)?.toInt() ?? 0),
-            updatedAt: Value(remoteUpdatedAt),
-            deleted: Value(deleted),
-          ));
+          await _syncLogDao.transaction(() async {
+            await db.shelvesDao.upsertItemRow(ShelfItemsTableCompanion(
+              shelfId: Value(shelfId),
+              mediaItemId: Value(mediaItemId),
+              position: Value((remote['position'] as num?)?.toInt() ?? 0),
+              updatedAt: Value(remoteUpdatedAt),
+              deleted: Value(deleted),
+            ));
+            // Same entity id format as ShelfRepositoryImpl's sync log.
+            await _syncLogDao.supersedePending(
+                entityType, '$shelfId|$mediaItemId');
+          });
         default:
           throw StateError('Unsupported join table for pull: $tableName');
       }
@@ -705,7 +720,9 @@ class SyncRepositoryImpl implements ISyncRepository {
         resolutions.any((r) =>
             r.entityId == c.entityId && r.fieldName == c.fieldName));
 
-    await _storeLastSyncedAt(DateTime.now().millisecondsSinceEpoch);
+    // Do not advance the pull cursor here: only the conflicted ids were
+    // fetched, so unrelated remote changes since the last pull would
+    // fall behind the cursor and never be downloaded (#131).
     await _emitStatus(
       isSyncing: false,
       conflictCount: _pendingConflicts.length,
@@ -728,7 +745,9 @@ class SyncRepositoryImpl implements ISyncRepository {
 
   @override
   Future<void> clearSyncHistory() async {
-    await _syncLogDao.deleteAll();
+    // sync_log doubles as the upload queue: deleting pending or failed
+    // entries would silently drop unsent local edits (#131).
+    await _syncLogDao.deleteCompleted();
     await _emitStatus();
   }
 
