@@ -7,9 +7,10 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/data/services/backup_service.dart';
+import 'package:mymediascanner/presentation/providers/database_provider.dart';
 
 final _backupServiceProvider = Provider<BackupService>(
-  (ref) => const BackupService(),
+  (ref) => BackupService(db: ref.watch(databaseProvider)),
 );
 
 class BackupScreen extends ConsumerStatefulWidget {
@@ -37,9 +38,10 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Backups capture the full local database. Restoring '
-              'overwrites the currently-active database — restart the '
-              'app afterwards so it reopens from the restored file.',
+              'Backups capture the full local database as a single '
+              'file. Restoring replaces the current database the next '
+              'time the app starts; the replaced database is kept as a '
+              'rollback copy.',
               style: theme.textTheme.bodyMedium,
             ),
             const SizedBox(height: 16),
@@ -112,8 +114,10 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Replace database?'),
         content: const Text(
-          'Restoring overwrites your current local data. Make sure you '
-          'have an export of any unsynced work first.',
+          'Restoring replaces your current local data the next time '
+          'the app starts (the replaced database is kept as a rollback '
+          'copy). Make sure you have an export of any unsynced work '
+          'first.',
         ),
         actions: [
           TextButton(
@@ -140,10 +144,11 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
       );
       final path = result?.files.single.path;
       if (path == null) return;
-      await ref.read(_backupServiceProvider).restoreFromBackup(path);
+      await ref.read(_backupServiceProvider).stageRestore(path);
       if (mounted) {
         setState(() => _statusMessage =
-            'Restore complete. Restart the app for the changes to take effect.');
+            'Backup checked and ready. Restart the app to finish '
+            'restoring — your current data is replaced at the next start.');
       }
     } catch (e) {
       if (mounted) setState(() => _errorMessage = e.toString());
