@@ -91,7 +91,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 24;
+  int get schemaVersion => 25;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -381,6 +381,19 @@ class AppDatabase extends _$AppDatabase {
       ).get();
       if (ripAlbumsExists.isNotEmpty) {
         await _addColumnIfMissing(m, ripAlbumsTable, ripAlbumsTable.coverPath);
+      }
+    }
+    if (from < 25) {
+      // CUE track offsets inside a shared audio file (#131). Guarded:
+      // the v17 branch recreates rip_tracks from the current Dart
+      // definition, which already includes these columns.
+      final ripTracksExists = await customSelect(
+        'SELECT name FROM sqlite_master '
+        "WHERE type='table' AND name='rip_tracks'",
+      ).get();
+      if (ripTracksExists.isNotEmpty) {
+        await _addColumnIfMissing(m, ripTracksTable, ripTracksTable.startMs);
+        await _addColumnIfMissing(m, ripTracksTable, ripTracksTable.endMs);
       }
     }
   }

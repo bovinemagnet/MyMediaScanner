@@ -16,6 +16,11 @@ class RipTracksTable extends Table {
   IntColumn get fileSizeBytes => integer()();
   IntColumn get updatedAt => integer()();
 
+  // CUE tracks share one audio file: the span of this track inside
+  // [filePath]. Null start/end mean the start/end of the file.
+  IntColumn get startMs => integer().nullable()();
+  IntColumn get endMs => integer().nullable()();
+
   // Audio quality analysis columns (Phase B)
   TextColumn get accurateripStatus => text().nullable()();
   IntColumn get accurateripConfidence => integer().nullable()();

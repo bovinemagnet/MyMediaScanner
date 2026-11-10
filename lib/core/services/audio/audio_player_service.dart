@@ -74,9 +74,7 @@ class AudioPlayerService {
 
     final source = ConcatenatingAudioSource(
       useLazyPreparation: true,
-      children: tracks
-          .map((track) => AudioSource.file(track.filePath, tag: track.title))
-          .toList(),
+      children: tracks.map(_sourceFor).toList(),
     );
 
     await _player.setAudioSource(source, initialIndex: startIndex);
@@ -98,13 +96,27 @@ class AudioPlayerService {
 
     final source = ConcatenatingAudioSource(
       useLazyPreparation: true,
-      children: tracks
-          .map((track) => AudioSource.file(track.filePath, tag: track.title))
-          .toList(),
+      children: tracks.map(_sourceFor).toList(),
     );
 
     await _player.setAudioSource(source, initialIndex: startIndex);
     await _player.play();
+  }
+
+  /// A CUE track shares its audio file with the rest of the album, so it
+  /// plays only its own span; any other track plays the whole file
+  /// (#131).
+  static AudioSource _sourceFor(RipTrack track) {
+    final file = AudioSource.file(track.filePath, tag: track.title);
+    if (track.startMs == null && track.endMs == null) return file;
+    return ClippingAudioSource(
+      child: file,
+      start: track.startMs == null
+          ? null
+          : Duration(milliseconds: track.startMs!),
+      end: track.endMs == null ? null : Duration(milliseconds: track.endMs!),
+      tag: track.title,
+    );
   }
 
   /// Resumes playback if paused.

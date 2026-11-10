@@ -196,6 +196,71 @@ void main() {
         expect(captured.first, isA<ConcatenatingAudioSource>());
       });
 
+      // #131: CUE tracks share one audio file; each must play only its
+      // own span, not restart from the beginning of the image.
+      test('plays CUE tracks as clipped spans of their shared file',
+          () async {
+        when(() => mockPlayer.setAudioSource(any(),
+                initialIndex: any(named: 'initialIndex')))
+            .thenAnswer((_) async => const Duration(seconds: 600));
+        when(() => mockPlayer.play()).thenAnswer((_) async {});
+
+        const cueTracks = [
+          RipTrack(
+            id: 'c1',
+            ripAlbumId: 'album-1',
+            trackNumber: 1,
+            filePath: '/music/image.flac',
+            fileSizeBytes: 0,
+            updatedAt: 1000,
+            startMs: 0,
+            endMs: 200000,
+          ),
+          RipTrack(
+            id: 'c2',
+            ripAlbumId: 'album-1',
+            trackNumber: 2,
+            filePath: '/music/image.flac',
+            fileSizeBytes: 0,
+            updatedAt: 1000,
+            startMs: 200000,
+          ),
+        ];
+
+        await service.playAlbum(album: testAlbum, tracks: cueTracks);
+
+        final source = verify(() => mockPlayer.setAudioSource(captureAny(),
+                initialIndex: any(named: 'initialIndex')))
+            .captured
+            .single as ConcatenatingAudioSource;
+        final children = source.children.cast<ClippingAudioSource>();
+        expect(children.map((c) => c.start), [
+          Duration.zero,
+          const Duration(milliseconds: 200000),
+        ]);
+        expect(children.map((c) => c.end), [
+          const Duration(milliseconds: 200000),
+          null,
+        ]);
+        expect(children.map((c) => c.child.uri.toFilePath()),
+            everyElement('/music/image.flac'));
+      });
+
+      test('plays ordinary tracks as whole files', () async {
+        when(() => mockPlayer.setAudioSource(any(),
+                initialIndex: any(named: 'initialIndex')))
+            .thenAnswer((_) async => const Duration(seconds: 600));
+        when(() => mockPlayer.play()).thenAnswer((_) async {});
+
+        await service.playAlbum(album: testAlbum, tracks: testTracks);
+
+        final source = verify(() => mockPlayer.setAudioSource(captureAny(),
+                initialIndex: any(named: 'initialIndex')))
+            .captured
+            .single as ConcatenatingAudioSource;
+        expect(source.children, everyElement(isA<UriAudioSource>()));
+      });
+
       test('passes startIndex to setAudioSource', () async {
         when(() => mockPlayer.setAudioSource(any(), initialIndex: any(named: 'initialIndex')))
             .thenAnswer((_) async => const Duration(seconds: 600));
