@@ -17,6 +17,9 @@ jobs:
   analyse-and-test:
     name: Analyse & Test
     runs-on: ubuntu-latest
+    # A healthy run takes ~5 minutes; without this a hung step burns the
+    # 6-hour GitHub default before being cancelled.
+    timeout-minutes: 30
 
     steps:
       - name: Checkout repository
@@ -48,6 +51,7 @@ jobs:
           restore-keys: build-runner-${{ runner.os }}-
 
       - name: Run code generation
+        timeout-minutes: 10
         run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Analyse code
