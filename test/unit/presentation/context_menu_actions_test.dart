@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mymediascanner/presentation/widgets/context_menu_actions.dart';
 import 'package:mymediascanner/presentation/widgets/desktop_context_menu.dart';

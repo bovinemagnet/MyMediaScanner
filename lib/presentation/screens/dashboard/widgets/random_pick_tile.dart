@@ -3,7 +3,7 @@
 // Author: Paul Snow
 // Since: 0.0.0
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:mymediascanner/presentation/screens/dashboard/widgets/random_pick_sheet.dart';
 
 class RandomPickTile extends StatelessWidget {

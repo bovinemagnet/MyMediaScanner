@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/l10n/app_localizations.dart';
 import 'package:mymediascanner/presentation/providers/rip_provider.dart';
@@ -105,7 +105,12 @@ class _AppState extends ConsumerState<App> {
       routerConfig: router,
       scaffoldMessengerKey: rootScaffoldMessengerKey,
       debugShowCheckedModeBanner: false,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      // Not AppLocalizations.localizationsDelegates: gen-l10n still emits the
+      // flutter_localizations delegates, which material_ui does not read.
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        ...GlobalMaterialLocalizations.delegates,
+      ],
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) {
         if (child == null) return const SizedBox.shrink();

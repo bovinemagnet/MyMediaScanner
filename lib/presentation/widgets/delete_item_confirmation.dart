@@ -4,7 +4,7 @@
 /// Since: 0.0.0
 library;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Shows a confirmation dialog asking whether to delete an item from
 /// the collection.

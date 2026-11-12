@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:mymediascanner/app/theme/app_theme_extensions.dart';
 
 /// A container with glassmorphism effect (backdrop blur + semi-transparent

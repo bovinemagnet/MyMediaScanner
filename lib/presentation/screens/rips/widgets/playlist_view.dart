@@ -7,7 +7,7 @@
 /// Since: 0.0.0
 library;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/app/theme/app_typography.dart';
 import 'package:mymediascanner/data/local/database/app_database.dart';

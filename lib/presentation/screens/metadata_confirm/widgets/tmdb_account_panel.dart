@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:mymediascanner/domain/entities/tmdb_bridge_item.dart';
 
 /// Account-state panel shown on the metadata-confirm screen when a

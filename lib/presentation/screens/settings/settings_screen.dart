@@ -1,6 +1,6 @@
 import 'package:audio_defect_detector/audio_defect_detector.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:mymediascanner/app/theme/app_colors.dart';
 import 'package:mymediascanner/core/constants/app_constants.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:mymediascanner/core/utils/platform_utils.dart';
 import 'package:mymediascanner/presentation/screens/scanner/desktop_scan_screen.dart';
 import 'package:mymediascanner/presentation/screens/scanner/mobile_scan_screen.dart';

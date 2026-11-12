@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// First-flip-on confirmation dialog for the "Allow remote-first save"
 /// settings toggle. Returns `true` when the user confirms, `false` on

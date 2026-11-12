@@ -4,7 +4,7 @@
 /// Since: 0.0.0
 library;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:mymediascanner/domain/services/gnudb_mapper.dart';
 import 'package:mymediascanner/domain/usecases/lookup_gnudb_for_rip_usecase.dart';
 import 'package:mymediascanner/presentation/screens/disambiguation/widgets/candidate_card.dart';

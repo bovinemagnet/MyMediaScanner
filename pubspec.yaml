@@ -32,13 +32,15 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
+  # Material widgets moved out of the Flutter SDK in 3.50 (#140).
+  material_ui: ^1.11.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   flutter_riverpod: ^3.3.1
   riverpod_annotation: ^4.0.2
-  go_router: ^17.1.0
+  go_router: ^18.1.4
   drift: ^2.32.0
   drift_flutter: ^0.3.0
   sqlite3_flutter_libs: ^0.6.0+eol
@@ -52,7 +54,7 @@ dependencies:
   # the last release on Kotlin 2.1.0. Revisit when the app's AGP/Kotlin are bumped.
   mobile_scanner: 7.2.0
   flutter_secure_storage: ^10.0.0
-  cached_network_image: ^3.4.1
+  cached_network_image: ^4.0.7
   freezed_annotation: ^3.1.0
   json_annotation: ^4.11.0
   uuid: ^4.5.3
@@ -64,7 +66,7 @@ dependencies:
   flutter_local_notifications: ^19.0.0
   fl_chart: ^0.70.2
   shared_preferences: ^2.5.4
-  data_table_2: ^2.7.2
+  data_table_2: ^3.0.0
   package_info_plus: ^9.0.1
   url_launcher: ^6.3.1
   google_mlkit_text_recognition: ^0.15.1

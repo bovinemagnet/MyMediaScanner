@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:mymediascanner/app/theme/app_theme_extensions.dart';
 
 /// A CTA button with a gradient background matching the design system's

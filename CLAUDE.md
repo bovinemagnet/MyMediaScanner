@@ -215,6 +215,7 @@ Shape tokens live in `AppShapes` (chunkier Popcorn radii) and the hero-numeric `
 
 - Repository interfaces live in `domain/repositories/` and are prefixed with `I` (e.g. `IMediaItemRepository`)
 - All Riverpod providers are hand-written using Riverpod 3.x Notifier/AsyncNotifier classes (`riverpod_generator` is not used)
+- Import Material from `package:material_ui/material_ui.dart`, never `package:flutter/material.dart` (deprecated since Flutter 3.50). Its types are distinct from the SDK copy, so a dependency whose public API takes Material types (e.g. `data_table_2`'s `DataRow`/`DataCell`, or `go_router` detecting `MaterialApp`) must be on its `material_ui` release. `MaterialApp` takes `GlobalMaterialLocalizations.delegates` from `material_ui`; the gen-l10n output (`lib/l10n/app_localizations.dart`) still references the deprecated `flutter_localizations` delegates, so it is excluded from analysis and its `localizationsDelegates` list is not used
 - Platform checks use `core/utils/platform_utils.dart` — never use `dart:io Platform` directly in presentation layer
 - Soft deletes only: set `deleted = 1`, never hard-delete rows; deleted records are included in sync
 - Metadata lookup follows a tiered strategy: cache check → barcode type detection → specialist API → UPCitemdb fallback
