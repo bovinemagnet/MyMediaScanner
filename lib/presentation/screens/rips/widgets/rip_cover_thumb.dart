@@ -10,7 +10,7 @@ library;
 
 import 'dart:io';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class RipCoverThumb extends StatelessWidget {
   const RipCoverThumb({

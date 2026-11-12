@@ -3,7 +3,7 @@
 //
 // Author: Paul Snow
 // Since: 0.0.0
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// A semi-transparent overlay with a clear rectangular cutout in the centre,
 /// corner brackets, and instructional text below.

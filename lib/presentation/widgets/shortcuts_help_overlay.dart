@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Modal dialog listing all available desktop keyboard shortcuts.
 class ShortcutsHelpOverlay extends StatelessWidget {

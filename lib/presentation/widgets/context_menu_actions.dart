@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:mymediascanner/presentation/widgets/desktop_context_menu.dart';
 
 /// Builds standard context menu action sets for reuse across screens.

@@ -3,7 +3,7 @@
 // Author: Paul Snow
 // Since: 0.0.0
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/domain/entities/media_item.dart';
 import 'package:mymediascanner/domain/usecases/detect_duplicate_usecase.dart';

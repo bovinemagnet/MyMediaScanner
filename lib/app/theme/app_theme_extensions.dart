@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:mymediascanner/app/theme/app_colors.dart';
 
 /// Design system extension carrying glassmorphism, gradient, and

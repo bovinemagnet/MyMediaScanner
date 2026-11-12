@@ -4,7 +4,7 @@
 // Since: 0.0.0
 
 import 'package:fl_chart/fl_chart.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Card showing lending analytics: active loans, overdue count,
 /// top borrowers bar chart, and most borrowed items list.

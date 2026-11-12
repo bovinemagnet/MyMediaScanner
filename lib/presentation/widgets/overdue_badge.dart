@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// A small chip showing "OVERDUE" with the number of days overdue.
 /// Uses the error colour from the current theme.

@@ -5,7 +5,7 @@
 
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymediascanner/domain/usecases/fetch_missing_cover_usecase.dart';
 import 'package:mymediascanner/domain/usecases/fill_missing_covers_usecase.dart';

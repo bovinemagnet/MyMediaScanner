@@ -5,7 +5,7 @@
 
 import 'dart:math' as math;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:mymediascanner/app/theme/app_media_colors.dart';
 
 /// Card showing rip library statistics: total albums, matched/unmatched

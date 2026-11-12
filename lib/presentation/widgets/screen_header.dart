@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:mymediascanner/app/theme/app_typography.dart';
 
 /// Inline screen header used on desktop in place of [AppBar].
