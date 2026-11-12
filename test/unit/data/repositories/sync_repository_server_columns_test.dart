@@ -66,11 +66,11 @@ void main() {
     );
 
     when(() => client.pullRecords(any(),
-            afterTimestamp: any(named: 'afterTimestamp')))
+            sinceTxid: any(named: 'sinceTxid')))
         .thenAnswer((_) async => <Map<String, dynamic>>[]);
     when(() => client.pullRecordsByIds(any(), any()))
         .thenAnswer((_) async => <Map<String, dynamic>>[]);
-    when(() => client.fetchServerTimestampMillis())
+    when(() => client.fetchPullHorizon())
         .thenAnswer((_) async => 999999);
   });
 
@@ -84,7 +84,7 @@ void main() {
     await mediaRepo.save(baseItem('m1'));
     // updated_at far outside the 60 s conflict threshold → silent merge path.
     when(() => client.pullRecords('media_items',
-            afterTimestamp: any(named: 'afterTimestamp')))
+            sinceTxid: any(named: 'sinceTxid')))
         .thenAnswer((_) async => [remoteRow('m1', updatedAt: 1000 + 61000)]);
 
     await repo.pullChanges();
@@ -111,7 +111,7 @@ void main() {
     await mediaRepo.save(baseItem('m1'));
     // Within the threshold → surfaces as a conflict.
     when(() => client.pullRecords('media_items',
-            afterTimestamp: any(named: 'afterTimestamp')))
+            sinceTxid: any(named: 'sinceTxid')))
         .thenAnswer((_) async => [remoteRow('m1', updatedAt: 2000)]);
     when(() => client.pullRecordsByIds('media_items', any()))
         .thenAnswer((_) async => [remoteRow('m1', updatedAt: 2000)]);

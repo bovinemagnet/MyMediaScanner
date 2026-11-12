@@ -34,9 +34,9 @@ void main() {
 
     // Default stubs — every table empty unless overridden.
     when(() => client.pullRecords(any(),
-            afterTimestamp: any(named: 'afterTimestamp')))
+            sinceTxid: any(named: 'sinceTxid')))
         .thenAnswer((_) async => <Map<String, dynamic>>[]);
-    when(() => client.fetchServerTimestampMillis())
+    when(() => client.fetchPullHorizon())
         .thenAnswer((_) async => 999999);
   });
 
@@ -47,7 +47,7 @@ void main() {
 
   test('pullChanges inserts new tag from remote', () async {
     when(() => client.pullRecords('tags',
-        afterTimestamp: any(named: 'afterTimestamp'))).thenAnswer(
+        sinceTxid: any(named: 'sinceTxid'))).thenAnswer(
       (_) async => [
         {
           'id': 't-remote',
@@ -78,7 +78,7 @@ void main() {
     ));
     // Remote: updated_at=100 (older). Should not overwrite.
     when(() => client.pullRecords('tags',
-        afterTimestamp: any(named: 'afterTimestamp'))).thenAnswer(
+        sinceTxid: any(named: 'sinceTxid'))).thenAnswer(
       (_) async => [
         {
           'id': 't1',
@@ -105,7 +105,7 @@ void main() {
       updatedAt: 100,
     ));
     when(() => client.pullRecords('tags',
-        afterTimestamp: any(named: 'afterTimestamp'))).thenAnswer(
+        sinceTxid: any(named: 'sinceTxid'))).thenAnswer(
       (_) async => [
         {
           'id': 't1',
@@ -127,7 +127,7 @@ void main() {
   test('pullChanges inserts shelf, borrower, loan, location, series',
       () async {
     when(() => client.pullRecords('shelves',
-        afterTimestamp: any(named: 'afterTimestamp'))).thenAnswer(
+        sinceTxid: any(named: 'sinceTxid'))).thenAnswer(
       (_) async => [
         {
           'id': 's1',
@@ -140,7 +140,7 @@ void main() {
       ],
     );
     when(() => client.pullRecords('borrowers',
-        afterTimestamp: any(named: 'afterTimestamp'))).thenAnswer(
+        sinceTxid: any(named: 'sinceTxid'))).thenAnswer(
       (_) async => [
         {
           'id': 'b1',
@@ -154,7 +154,7 @@ void main() {
       ],
     );
     when(() => client.pullRecords('loans',
-        afterTimestamp: any(named: 'afterTimestamp'))).thenAnswer(
+        sinceTxid: any(named: 'sinceTxid'))).thenAnswer(
       (_) async => [
         {
           'id': 'ln1',
@@ -170,7 +170,7 @@ void main() {
       ],
     );
     when(() => client.pullRecords('locations',
-        afterTimestamp: any(named: 'afterTimestamp'))).thenAnswer(
+        sinceTxid: any(named: 'sinceTxid'))).thenAnswer(
       (_) async => [
         {
           'id': 'l1',
@@ -183,7 +183,7 @@ void main() {
       ],
     );
     when(() => client.pullRecords('series',
-        afterTimestamp: any(named: 'afterTimestamp'))).thenAnswer(
+        sinceTxid: any(named: 'sinceTxid'))).thenAnswer(
       (_) async => [
         {
           'id': 'sr1',
@@ -235,7 +235,7 @@ void main() {
           const Tag(id: 't1', name: 'Local rename', updatedAt: 5000));
       final localUpdatedAt = (await db.tagsDao.getById('t1'))!.updatedAt;
       when(() => client.pullRecords('tags',
-          afterTimestamp: any(named: 'afterTimestamp'))).thenAnswer(
+          sinceTxid: any(named: 'sinceTxid'))).thenAnswer(
         (_) async => [
           {
             'id': 't1',
@@ -260,7 +260,7 @@ void main() {
           const Tag(id: 't1', name: 'Local rename', updatedAt: 5000));
       final localUpdatedAt = (await db.tagsDao.getById('t1'))!.updatedAt;
       when(() => client.pullRecords('tags',
-          afterTimestamp: any(named: 'afterTimestamp'))).thenAnswer(
+          sinceTxid: any(named: 'sinceTxid'))).thenAnswer(
         (_) async => [
           {
             'id': 't1',
@@ -283,7 +283,7 @@ void main() {
       final localUpdatedAt =
           (await db.tagsDao.assignmentUpdatedAt('m1', 't1'))!;
       when(() => client.pullRecords('media_item_tags',
-          afterTimestamp: any(named: 'afterTimestamp'))).thenAnswer(
+          sinceTxid: any(named: 'sinceTxid'))).thenAnswer(
         (_) async => [
           {
             'media_item_id': 'm1',
@@ -309,7 +309,7 @@ void main() {
       await shelfRepo.addItem('s1', 'm1', 0);
       final localUpdatedAt = (await db.shelvesDao.itemUpdatedAt('s1', 'm1'))!;
       when(() => client.pullRecords('shelf_items',
-          afterTimestamp: any(named: 'afterTimestamp'))).thenAnswer(
+          sinceTxid: any(named: 'sinceTxid'))).thenAnswer(
         (_) async => [
           {
             'shelf_id': 's1',

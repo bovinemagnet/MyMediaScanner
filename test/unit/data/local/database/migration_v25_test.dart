@@ -16,12 +16,6 @@ import 'package:sqlite3/sqlite3.dart';
 /// Author: Paul Snow
 /// Since: 0.0.0
 void main() {
-  test('schema version is 25', () {
-    final db = AppDatabase.forTesting(NativeDatabase.memory());
-    addTearDown(db.close);
-    expect(db.schemaVersion, 25);
-  });
-
   test('fresh schema exposes rip_tracks start_ms and end_ms', () async {
     final db = AppDatabase.forTesting(NativeDatabase.memory());
     addTearDown(db.close);

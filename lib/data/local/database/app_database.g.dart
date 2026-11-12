@@ -11922,6 +11922,551 @@ class TmdbAccountSyncItemsTableCompanion
   }
 }
 
+class $SyncConflictsTableTable extends SyncConflictsTable
+    with TableInfo<$SyncConflictsTableTable, SyncConflictsTableData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SyncConflictsTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _entityTypeMeta = const VerificationMeta(
+    'entityType',
+  );
+  @override
+  late final GeneratedColumn<String> entityType = GeneratedColumn<String>(
+    'entity_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _entityIdMeta = const VerificationMeta(
+    'entityId',
+  );
+  @override
+  late final GeneratedColumn<String> entityId = GeneratedColumn<String>(
+    'entity_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _fieldNameMeta = const VerificationMeta(
+    'fieldName',
+  );
+  @override
+  late final GeneratedColumn<String> fieldName = GeneratedColumn<String>(
+    'field_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _localValueJsonMeta = const VerificationMeta(
+    'localValueJson',
+  );
+  @override
+  late final GeneratedColumn<String> localValueJson = GeneratedColumn<String>(
+    'local_value_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _remoteValueJsonMeta = const VerificationMeta(
+    'remoteValueJson',
+  );
+  @override
+  late final GeneratedColumn<String> remoteValueJson = GeneratedColumn<String>(
+    'remote_value_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _localUpdatedAtMeta = const VerificationMeta(
+    'localUpdatedAt',
+  );
+  @override
+  late final GeneratedColumn<int> localUpdatedAt = GeneratedColumn<int>(
+    'local_updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _remoteUpdatedAtMeta = const VerificationMeta(
+    'remoteUpdatedAt',
+  );
+  @override
+  late final GeneratedColumn<int> remoteUpdatedAt = GeneratedColumn<int>(
+    'remote_updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _detectedAtMeta = const VerificationMeta(
+    'detectedAt',
+  );
+  @override
+  late final GeneratedColumn<int> detectedAt = GeneratedColumn<int>(
+    'detected_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    entityType,
+    entityId,
+    fieldName,
+    localValueJson,
+    remoteValueJson,
+    localUpdatedAt,
+    remoteUpdatedAt,
+    detectedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'sync_conflicts';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SyncConflictsTableData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('entity_type')) {
+      context.handle(
+        _entityTypeMeta,
+        entityType.isAcceptableOrUnknown(data['entity_type']!, _entityTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_entityTypeMeta);
+    }
+    if (data.containsKey('entity_id')) {
+      context.handle(
+        _entityIdMeta,
+        entityId.isAcceptableOrUnknown(data['entity_id']!, _entityIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_entityIdMeta);
+    }
+    if (data.containsKey('field_name')) {
+      context.handle(
+        _fieldNameMeta,
+        fieldName.isAcceptableOrUnknown(data['field_name']!, _fieldNameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fieldNameMeta);
+    }
+    if (data.containsKey('local_value_json')) {
+      context.handle(
+        _localValueJsonMeta,
+        localValueJson.isAcceptableOrUnknown(
+          data['local_value_json']!,
+          _localValueJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_localValueJsonMeta);
+    }
+    if (data.containsKey('remote_value_json')) {
+      context.handle(
+        _remoteValueJsonMeta,
+        remoteValueJson.isAcceptableOrUnknown(
+          data['remote_value_json']!,
+          _remoteValueJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_remoteValueJsonMeta);
+    }
+    if (data.containsKey('local_updated_at')) {
+      context.handle(
+        _localUpdatedAtMeta,
+        localUpdatedAt.isAcceptableOrUnknown(
+          data['local_updated_at']!,
+          _localUpdatedAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_localUpdatedAtMeta);
+    }
+    if (data.containsKey('remote_updated_at')) {
+      context.handle(
+        _remoteUpdatedAtMeta,
+        remoteUpdatedAt.isAcceptableOrUnknown(
+          data['remote_updated_at']!,
+          _remoteUpdatedAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_remoteUpdatedAtMeta);
+    }
+    if (data.containsKey('detected_at')) {
+      context.handle(
+        _detectedAtMeta,
+        detectedAt.isAcceptableOrUnknown(data['detected_at']!, _detectedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_detectedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {entityType, entityId, fieldName};
+  @override
+  SyncConflictsTableData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SyncConflictsTableData(
+      entityType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}entity_type'],
+      )!,
+      entityId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}entity_id'],
+      )!,
+      fieldName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}field_name'],
+      )!,
+      localValueJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}local_value_json'],
+      )!,
+      remoteValueJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}remote_value_json'],
+      )!,
+      localUpdatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}local_updated_at'],
+      )!,
+      remoteUpdatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}remote_updated_at'],
+      )!,
+      detectedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}detected_at'],
+      )!,
+    );
+  }
+
+  @override
+  $SyncConflictsTableTable createAlias(String alias) {
+    return $SyncConflictsTableTable(attachedDatabase, alias);
+  }
+}
+
+class SyncConflictsTableData extends DataClass
+    implements Insertable<SyncConflictsTableData> {
+  final String entityType;
+  final String entityId;
+  final String fieldName;
+
+  /// JSON-encoded field values on each side.
+  final String localValueJson;
+  final String remoteValueJson;
+  final int localUpdatedAt;
+  final int remoteUpdatedAt;
+  final int detectedAt;
+  const SyncConflictsTableData({
+    required this.entityType,
+    required this.entityId,
+    required this.fieldName,
+    required this.localValueJson,
+    required this.remoteValueJson,
+    required this.localUpdatedAt,
+    required this.remoteUpdatedAt,
+    required this.detectedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['entity_type'] = Variable<String>(entityType);
+    map['entity_id'] = Variable<String>(entityId);
+    map['field_name'] = Variable<String>(fieldName);
+    map['local_value_json'] = Variable<String>(localValueJson);
+    map['remote_value_json'] = Variable<String>(remoteValueJson);
+    map['local_updated_at'] = Variable<int>(localUpdatedAt);
+    map['remote_updated_at'] = Variable<int>(remoteUpdatedAt);
+    map['detected_at'] = Variable<int>(detectedAt);
+    return map;
+  }
+
+  SyncConflictsTableCompanion toCompanion(bool nullToAbsent) {
+    return SyncConflictsTableCompanion(
+      entityType: Value(entityType),
+      entityId: Value(entityId),
+      fieldName: Value(fieldName),
+      localValueJson: Value(localValueJson),
+      remoteValueJson: Value(remoteValueJson),
+      localUpdatedAt: Value(localUpdatedAt),
+      remoteUpdatedAt: Value(remoteUpdatedAt),
+      detectedAt: Value(detectedAt),
+    );
+  }
+
+  factory SyncConflictsTableData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SyncConflictsTableData(
+      entityType: serializer.fromJson<String>(json['entityType']),
+      entityId: serializer.fromJson<String>(json['entityId']),
+      fieldName: serializer.fromJson<String>(json['fieldName']),
+      localValueJson: serializer.fromJson<String>(json['localValueJson']),
+      remoteValueJson: serializer.fromJson<String>(json['remoteValueJson']),
+      localUpdatedAt: serializer.fromJson<int>(json['localUpdatedAt']),
+      remoteUpdatedAt: serializer.fromJson<int>(json['remoteUpdatedAt']),
+      detectedAt: serializer.fromJson<int>(json['detectedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'entityType': serializer.toJson<String>(entityType),
+      'entityId': serializer.toJson<String>(entityId),
+      'fieldName': serializer.toJson<String>(fieldName),
+      'localValueJson': serializer.toJson<String>(localValueJson),
+      'remoteValueJson': serializer.toJson<String>(remoteValueJson),
+      'localUpdatedAt': serializer.toJson<int>(localUpdatedAt),
+      'remoteUpdatedAt': serializer.toJson<int>(remoteUpdatedAt),
+      'detectedAt': serializer.toJson<int>(detectedAt),
+    };
+  }
+
+  SyncConflictsTableData copyWith({
+    String? entityType,
+    String? entityId,
+    String? fieldName,
+    String? localValueJson,
+    String? remoteValueJson,
+    int? localUpdatedAt,
+    int? remoteUpdatedAt,
+    int? detectedAt,
+  }) => SyncConflictsTableData(
+    entityType: entityType ?? this.entityType,
+    entityId: entityId ?? this.entityId,
+    fieldName: fieldName ?? this.fieldName,
+    localValueJson: localValueJson ?? this.localValueJson,
+    remoteValueJson: remoteValueJson ?? this.remoteValueJson,
+    localUpdatedAt: localUpdatedAt ?? this.localUpdatedAt,
+    remoteUpdatedAt: remoteUpdatedAt ?? this.remoteUpdatedAt,
+    detectedAt: detectedAt ?? this.detectedAt,
+  );
+  SyncConflictsTableData copyWithCompanion(SyncConflictsTableCompanion data) {
+    return SyncConflictsTableData(
+      entityType: data.entityType.present
+          ? data.entityType.value
+          : this.entityType,
+      entityId: data.entityId.present ? data.entityId.value : this.entityId,
+      fieldName: data.fieldName.present ? data.fieldName.value : this.fieldName,
+      localValueJson: data.localValueJson.present
+          ? data.localValueJson.value
+          : this.localValueJson,
+      remoteValueJson: data.remoteValueJson.present
+          ? data.remoteValueJson.value
+          : this.remoteValueJson,
+      localUpdatedAt: data.localUpdatedAt.present
+          ? data.localUpdatedAt.value
+          : this.localUpdatedAt,
+      remoteUpdatedAt: data.remoteUpdatedAt.present
+          ? data.remoteUpdatedAt.value
+          : this.remoteUpdatedAt,
+      detectedAt: data.detectedAt.present
+          ? data.detectedAt.value
+          : this.detectedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncConflictsTableData(')
+          ..write('entityType: $entityType, ')
+          ..write('entityId: $entityId, ')
+          ..write('fieldName: $fieldName, ')
+          ..write('localValueJson: $localValueJson, ')
+          ..write('remoteValueJson: $remoteValueJson, ')
+          ..write('localUpdatedAt: $localUpdatedAt, ')
+          ..write('remoteUpdatedAt: $remoteUpdatedAt, ')
+          ..write('detectedAt: $detectedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    entityType,
+    entityId,
+    fieldName,
+    localValueJson,
+    remoteValueJson,
+    localUpdatedAt,
+    remoteUpdatedAt,
+    detectedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SyncConflictsTableData &&
+          other.entityType == this.entityType &&
+          other.entityId == this.entityId &&
+          other.fieldName == this.fieldName &&
+          other.localValueJson == this.localValueJson &&
+          other.remoteValueJson == this.remoteValueJson &&
+          other.localUpdatedAt == this.localUpdatedAt &&
+          other.remoteUpdatedAt == this.remoteUpdatedAt &&
+          other.detectedAt == this.detectedAt);
+}
+
+class SyncConflictsTableCompanion
+    extends UpdateCompanion<SyncConflictsTableData> {
+  final Value<String> entityType;
+  final Value<String> entityId;
+  final Value<String> fieldName;
+  final Value<String> localValueJson;
+  final Value<String> remoteValueJson;
+  final Value<int> localUpdatedAt;
+  final Value<int> remoteUpdatedAt;
+  final Value<int> detectedAt;
+  final Value<int> rowid;
+  const SyncConflictsTableCompanion({
+    this.entityType = const Value.absent(),
+    this.entityId = const Value.absent(),
+    this.fieldName = const Value.absent(),
+    this.localValueJson = const Value.absent(),
+    this.remoteValueJson = const Value.absent(),
+    this.localUpdatedAt = const Value.absent(),
+    this.remoteUpdatedAt = const Value.absent(),
+    this.detectedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SyncConflictsTableCompanion.insert({
+    required String entityType,
+    required String entityId,
+    required String fieldName,
+    required String localValueJson,
+    required String remoteValueJson,
+    required int localUpdatedAt,
+    required int remoteUpdatedAt,
+    required int detectedAt,
+    this.rowid = const Value.absent(),
+  }) : entityType = Value(entityType),
+       entityId = Value(entityId),
+       fieldName = Value(fieldName),
+       localValueJson = Value(localValueJson),
+       remoteValueJson = Value(remoteValueJson),
+       localUpdatedAt = Value(localUpdatedAt),
+       remoteUpdatedAt = Value(remoteUpdatedAt),
+       detectedAt = Value(detectedAt);
+  static Insertable<SyncConflictsTableData> custom({
+    Expression<String>? entityType,
+    Expression<String>? entityId,
+    Expression<String>? fieldName,
+    Expression<String>? localValueJson,
+    Expression<String>? remoteValueJson,
+    Expression<int>? localUpdatedAt,
+    Expression<int>? remoteUpdatedAt,
+    Expression<int>? detectedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (entityType != null) 'entity_type': entityType,
+      if (entityId != null) 'entity_id': entityId,
+      if (fieldName != null) 'field_name': fieldName,
+      if (localValueJson != null) 'local_value_json': localValueJson,
+      if (remoteValueJson != null) 'remote_value_json': remoteValueJson,
+      if (localUpdatedAt != null) 'local_updated_at': localUpdatedAt,
+      if (remoteUpdatedAt != null) 'remote_updated_at': remoteUpdatedAt,
+      if (detectedAt != null) 'detected_at': detectedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SyncConflictsTableCompanion copyWith({
+    Value<String>? entityType,
+    Value<String>? entityId,
+    Value<String>? fieldName,
+    Value<String>? localValueJson,
+    Value<String>? remoteValueJson,
+    Value<int>? localUpdatedAt,
+    Value<int>? remoteUpdatedAt,
+    Value<int>? detectedAt,
+    Value<int>? rowid,
+  }) {
+    return SyncConflictsTableCompanion(
+      entityType: entityType ?? this.entityType,
+      entityId: entityId ?? this.entityId,
+      fieldName: fieldName ?? this.fieldName,
+      localValueJson: localValueJson ?? this.localValueJson,
+      remoteValueJson: remoteValueJson ?? this.remoteValueJson,
+      localUpdatedAt: localUpdatedAt ?? this.localUpdatedAt,
+      remoteUpdatedAt: remoteUpdatedAt ?? this.remoteUpdatedAt,
+      detectedAt: detectedAt ?? this.detectedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (entityType.present) {
+      map['entity_type'] = Variable<String>(entityType.value);
+    }
+    if (entityId.present) {
+      map['entity_id'] = Variable<String>(entityId.value);
+    }
+    if (fieldName.present) {
+      map['field_name'] = Variable<String>(fieldName.value);
+    }
+    if (localValueJson.present) {
+      map['local_value_json'] = Variable<String>(localValueJson.value);
+    }
+    if (remoteValueJson.present) {
+      map['remote_value_json'] = Variable<String>(remoteValueJson.value);
+    }
+    if (localUpdatedAt.present) {
+      map['local_updated_at'] = Variable<int>(localUpdatedAt.value);
+    }
+    if (remoteUpdatedAt.present) {
+      map['remote_updated_at'] = Variable<int>(remoteUpdatedAt.value);
+    }
+    if (detectedAt.present) {
+      map['detected_at'] = Variable<int>(detectedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncConflictsTableCompanion(')
+          ..write('entityType: $entityType, ')
+          ..write('entityId: $entityId, ')
+          ..write('fieldName: $fieldName, ')
+          ..write('localValueJson: $localValueJson, ')
+          ..write('remoteValueJson: $remoteValueJson, ')
+          ..write('localUpdatedAt: $localUpdatedAt, ')
+          ..write('remoteUpdatedAt: $remoteUpdatedAt, ')
+          ..write('detectedAt: $detectedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -11953,6 +12498,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $SeriesTableTable seriesTable = $SeriesTableTable(this);
   late final $TmdbAccountSyncItemsTableTable tmdbAccountSyncItemsTable =
       $TmdbAccountSyncItemsTableTable(this);
+  late final $SyncConflictsTableTable syncConflictsTable =
+      $SyncConflictsTableTable(this);
   late final MediaItemsDao mediaItemsDao = MediaItemsDao(this as AppDatabase);
   late final TagsDao tagsDao = TagsDao(this as AppDatabase);
   late final ShelvesDao shelvesDao = ShelvesDao(this as AppDatabase);
@@ -11970,6 +12517,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final LocationsDao locationsDao = LocationsDao(this as AppDatabase);
   late final SeriesDao seriesDao = SeriesDao(this as AppDatabase);
   late final TmdbAccountSyncDao tmdbAccountSyncDao = TmdbAccountSyncDao(
+    this as AppDatabase,
+  );
+  late final SyncConflictsDao syncConflictsDao = SyncConflictsDao(
     this as AppDatabase,
   );
   @override
@@ -11995,6 +12545,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     locationsTable,
     seriesTable,
     tmdbAccountSyncItemsTable,
+    syncConflictsTable,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -19949,6 +20500,288 @@ typedef $$TmdbAccountSyncItemsTableTableProcessedTableManager =
       TmdbAccountSyncItemsTableData,
       PrefetchHooks Function()
     >;
+typedef $$SyncConflictsTableTableCreateCompanionBuilder =
+    SyncConflictsTableCompanion Function({
+      required String entityType,
+      required String entityId,
+      required String fieldName,
+      required String localValueJson,
+      required String remoteValueJson,
+      required int localUpdatedAt,
+      required int remoteUpdatedAt,
+      required int detectedAt,
+      Value<int> rowid,
+    });
+typedef $$SyncConflictsTableTableUpdateCompanionBuilder =
+    SyncConflictsTableCompanion Function({
+      Value<String> entityType,
+      Value<String> entityId,
+      Value<String> fieldName,
+      Value<String> localValueJson,
+      Value<String> remoteValueJson,
+      Value<int> localUpdatedAt,
+      Value<int> remoteUpdatedAt,
+      Value<int> detectedAt,
+      Value<int> rowid,
+    });
+
+class $$SyncConflictsTableTableFilterComposer
+    extends Composer<_$AppDatabase, $SyncConflictsTableTable> {
+  $$SyncConflictsTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get entityType => $composableBuilder(
+    column: $table.entityType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get entityId => $composableBuilder(
+    column: $table.entityId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get fieldName => $composableBuilder(
+    column: $table.fieldName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get localValueJson => $composableBuilder(
+    column: $table.localValueJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get remoteValueJson => $composableBuilder(
+    column: $table.remoteValueJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get localUpdatedAt => $composableBuilder(
+    column: $table.localUpdatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get remoteUpdatedAt => $composableBuilder(
+    column: $table.remoteUpdatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get detectedAt => $composableBuilder(
+    column: $table.detectedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$SyncConflictsTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $SyncConflictsTableTable> {
+  $$SyncConflictsTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get entityType => $composableBuilder(
+    column: $table.entityType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get entityId => $composableBuilder(
+    column: $table.entityId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get fieldName => $composableBuilder(
+    column: $table.fieldName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get localValueJson => $composableBuilder(
+    column: $table.localValueJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get remoteValueJson => $composableBuilder(
+    column: $table.remoteValueJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get localUpdatedAt => $composableBuilder(
+    column: $table.localUpdatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get remoteUpdatedAt => $composableBuilder(
+    column: $table.remoteUpdatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get detectedAt => $composableBuilder(
+    column: $table.detectedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SyncConflictsTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SyncConflictsTableTable> {
+  $$SyncConflictsTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get entityType => $composableBuilder(
+    column: $table.entityType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get entityId =>
+      $composableBuilder(column: $table.entityId, builder: (column) => column);
+
+  GeneratedColumn<String> get fieldName =>
+      $composableBuilder(column: $table.fieldName, builder: (column) => column);
+
+  GeneratedColumn<String> get localValueJson => $composableBuilder(
+    column: $table.localValueJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get remoteValueJson => $composableBuilder(
+    column: $table.remoteValueJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get localUpdatedAt => $composableBuilder(
+    column: $table.localUpdatedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get remoteUpdatedAt => $composableBuilder(
+    column: $table.remoteUpdatedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get detectedAt => $composableBuilder(
+    column: $table.detectedAt,
+    builder: (column) => column,
+  );
+}
+
+class $$SyncConflictsTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SyncConflictsTableTable,
+          SyncConflictsTableData,
+          $$SyncConflictsTableTableFilterComposer,
+          $$SyncConflictsTableTableOrderingComposer,
+          $$SyncConflictsTableTableAnnotationComposer,
+          $$SyncConflictsTableTableCreateCompanionBuilder,
+          $$SyncConflictsTableTableUpdateCompanionBuilder,
+          (
+            SyncConflictsTableData,
+            BaseReferences<
+              _$AppDatabase,
+              $SyncConflictsTableTable,
+              SyncConflictsTableData
+            >,
+          ),
+          SyncConflictsTableData,
+          PrefetchHooks Function()
+        > {
+  $$SyncConflictsTableTableTableManager(
+    _$AppDatabase db,
+    $SyncConflictsTableTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SyncConflictsTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SyncConflictsTableTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SyncConflictsTableTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> entityType = const Value.absent(),
+                Value<String> entityId = const Value.absent(),
+                Value<String> fieldName = const Value.absent(),
+                Value<String> localValueJson = const Value.absent(),
+                Value<String> remoteValueJson = const Value.absent(),
+                Value<int> localUpdatedAt = const Value.absent(),
+                Value<int> remoteUpdatedAt = const Value.absent(),
+                Value<int> detectedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SyncConflictsTableCompanion(
+                entityType: entityType,
+                entityId: entityId,
+                fieldName: fieldName,
+                localValueJson: localValueJson,
+                remoteValueJson: remoteValueJson,
+                localUpdatedAt: localUpdatedAt,
+                remoteUpdatedAt: remoteUpdatedAt,
+                detectedAt: detectedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String entityType,
+                required String entityId,
+                required String fieldName,
+                required String localValueJson,
+                required String remoteValueJson,
+                required int localUpdatedAt,
+                required int remoteUpdatedAt,
+                required int detectedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => SyncConflictsTableCompanion.insert(
+                entityType: entityType,
+                entityId: entityId,
+                fieldName: fieldName,
+                localValueJson: localValueJson,
+                remoteValueJson: remoteValueJson,
+                localUpdatedAt: localUpdatedAt,
+                remoteUpdatedAt: remoteUpdatedAt,
+                detectedAt: detectedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$SyncConflictsTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SyncConflictsTableTable,
+      SyncConflictsTableData,
+      $$SyncConflictsTableTableFilterComposer,
+      $$SyncConflictsTableTableOrderingComposer,
+      $$SyncConflictsTableTableAnnotationComposer,
+      $$SyncConflictsTableTableCreateCompanionBuilder,
+      $$SyncConflictsTableTableUpdateCompanionBuilder,
+      (
+        SyncConflictsTableData,
+        BaseReferences<
+          _$AppDatabase,
+          $SyncConflictsTableTable,
+          SyncConflictsTableData
+        >,
+      ),
+      SyncConflictsTableData,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -19992,4 +20825,6 @@ class $AppDatabaseManager {
         _db,
         _db.tmdbAccountSyncItemsTable,
       );
+  $$SyncConflictsTableTableTableManager get syncConflictsTable =>
+      $$SyncConflictsTableTableTableManager(_db, _db.syncConflictsTable);
 }

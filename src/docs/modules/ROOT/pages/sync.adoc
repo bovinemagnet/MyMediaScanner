@@ -17,6 +17,13 @@ It is unrelated to connecting your TMDB account to import ratings and watchlists
 A running PostgreSQL server that your device can reach over the network, along with a database, a role (username and password) that can read and write to it, and — ideally — TLS configured on the server.
 A self-signed certificate is fine for a home server.
 
+The server must run PostgreSQL 13 or later.
+Its tables are created by applying the SQL migration files shipped in the source repository (`lib/data/remote/sync/migrations`) in numeric order.
+
+IMPORTANT: If you are upgrading, apply `008_change_cursor.sql` to your server before, or right after, updating the app on any device.
+Until you do, sync stops with the error "The sync server needs migration 008_change_cursor.sql (PostgreSQL 13 or later) before this version can sync."
+The migration is safe to run more than once, and the first sync after upgrading downloads everything from the server once.
+
 If you want to sync while away from home, see <<tailscale>> — it is a far safer way to reach your server than opening a port on your router.
 
 == Setting up the connection
@@ -157,6 +164,7 @@ You can:
 * Tap *Resolve* once you are happy with the selections.
 
 Nothing is overwritten until you tap *Resolve*.
+Unresolved conflicts are remembered if you close the app, and the affected item is not uploaded until you resolve them.
 
 TIP: If you edit the same item on two devices while one of them is offline, expect a conflict dialog the next time both devices sync — this is normal and just means both edits are visible so you can pick the one to keep.
 

@@ -29,9 +29,9 @@ void main() {
     );
 
     when(() => client.pullRecords(any(),
-            afterTimestamp: any(named: 'afterTimestamp')))
+            sinceTxid: any(named: 'sinceTxid')))
         .thenAnswer((_) async => <Map<String, dynamic>>[]);
-    when(() => client.fetchServerTimestampMillis())
+    when(() => client.fetchPullHorizon())
         .thenAnswer((_) async => 999999);
 
     // Parent rows so the joins have something to reference.
@@ -54,7 +54,7 @@ void main() {
 
   void stubTable(String table, List<Map<String, dynamic>> rows) {
     when(() => client.pullRecords(table,
-        afterTimestamp: any(named: 'afterTimestamp'))).thenAnswer(
+        sinceTxid: any(named: 'sinceTxid'))).thenAnswer(
       (_) async => rows,
     );
   }

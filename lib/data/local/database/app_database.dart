@@ -33,6 +33,8 @@ import 'package:mymediascanner/data/local/dao/locations_dao.dart';
 import 'package:mymediascanner/data/local/dao/series_dao.dart';
 import 'package:mymediascanner/data/local/dao/tmdb_account_sync_dao.dart';
 import 'package:mymediascanner/data/local/database/tables/tmdb_account_sync_items_table.dart';
+import 'package:mymediascanner/data/local/dao/sync_conflicts_dao.dart';
+import 'package:mymediascanner/data/local/database/tables/sync_conflicts_table.dart';
 
 part 'app_database.g.dart';
 
@@ -59,6 +61,7 @@ part 'app_database.g.dart';
     // PostgreSQL sync — bridge state is per-device and re-derivable
     // by re-running the TMDB account import on a new device.
     TmdbAccountSyncItemsTable,
+    SyncConflictsTable,
   ],
   daos: [
     MediaItemsDao,
@@ -74,6 +77,7 @@ part 'app_database.g.dart';
     LocationsDao,
     SeriesDao,
     TmdbAccountSyncDao,
+    SyncConflictsDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -97,7 +101,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 25;
+  int get schemaVersion => 26;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -401,6 +405,10 @@ class AppDatabase extends _$AppDatabase {
         await _addColumnIfMissing(m, ripTracksTable, ripTracksTable.startMs);
         await _addColumnIfMissing(m, ripTracksTable, ripTracksTable.endMs);
       }
+    }
+    if (from < 26) {
+      // Persisted sync conflicts (#131), previously held only in memory.
+      await m.createTable(syncConflictsTable);
     }
   }
 

@@ -26,6 +26,16 @@ class PostgresConfig {
   final bool verifyCertificate;
 }
 
+/// The sync server's schema is older than this client requires.
+class SyncSchemaOutdatedException implements Exception {
+  const SyncSchemaOutdatedException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
+}
+
 /// Direct PostgreSQL connection client for sync operations.
 class PostgresSyncClient {
   PostgresSyncClient({required this.config});
@@ -250,22 +260,24 @@ class PostgresSyncClient {
     });
   }
 
-  /// Pull all records updated after a given timestamp.
+  /// Pull every row written by a transaction at or after [sinceTxid]
+  /// (the horizon stored by the previous pull), or the whole table when
+  /// [sinceTxid] is null. See [fetchPullHorizon].
   Future<List<Map<String, dynamic>>> pullRecords(
     String table, {
-    int? afterTimestamp,
+    int? sinceTxid,
   }) async {
     _assertSafeTable(table);
     return _connectionLock.synchronized(() async {
       final conn = await _getConnection();
       final Result result;
 
-      if (afterTimestamp != null) {
+      if (sinceTxid != null) {
         result = await conn.execute(
           Sql.named(
-            'SELECT * FROM $table WHERE updated_at > @ts',
+            'SELECT * FROM $table WHERE change_txid >= @txid',
           ),
-          parameters: {'ts': afterTimestamp},
+          parameters: {'txid': sinceTxid},
         );
       } else {
         result = await conn.execute('SELECT * FROM $table');
@@ -295,27 +307,36 @@ class PostgresSyncClient {
     });
   }
 
-  /// SQL used to read the server's current wall-clock time, expressed as
-  /// epoch milliseconds — the same units as the `updated_at` columns
-  /// compared throughout the sync pipeline. Exposed as a public constant
-  /// for testability without requiring a live connection.
-  static const String serverTimestampSql =
-      'SELECT (extract(epoch from clock_timestamp()) * 1000)::bigint AS ms';
+  /// Reads the pull horizon and whether migration 008 (the change
+  /// cursor) has been applied. Exposed for testability.
+  static const String pullHorizonSql =
+      'SELECT pg_snapshot_xmin(pg_current_snapshot())::text::bigint AS txid, '
+      'EXISTS (SELECT 1 FROM information_schema.columns '
+      "WHERE table_schema = current_schema() AND table_name = 'media_items' "
+      "AND column_name = 'change_txid') AS ready";
 
-  /// Returns the server's current time as epoch milliseconds.
+  /// Returns the pull horizon: every transaction with a lower id has
+  /// finished, so rows they wrote are visible now. Must be read before
+  /// any table in a pull; the next pull fetches `change_txid >= horizon`,
+  /// which includes every transaction still running at this moment —
+  /// however late it commits (#131).
   ///
-  /// Used by `SyncRepositoryImpl.pullChanges` as a safe upper boundary for
-  /// the next incremental-pull watermark, captured BEFORE any table is
-  /// read — see that method's doc comment for the race this closes.
-  Future<int> fetchServerTimestampMillis() {
+  /// Throws [SyncSchemaOutdatedException] when the server has not had
+  /// migration 008 applied.
+  Future<int> fetchPullHorizon() {
     return _connectionLock.synchronized(() async {
       final conn = await _getConnection();
-      final result = await conn.execute(serverTimestampSql);
-      final value = result.first.toColumnMap()['ms'];
+      final row = (await conn.execute(pullHorizonSql)).first.toColumnMap();
+      if (row['ready'] != true) {
+        throw const SyncSchemaOutdatedException(
+          'The sync server needs migration 008_change_cursor.sql '
+          '(PostgreSQL 13 or later) before this version can sync.',
+        );
+      }
+      final value = row['txid'];
       if (value is int) return value;
       if (value is BigInt) return value.toInt();
-      if (value is num) return value.toInt();
-      throw StateError('Unexpected server timestamp result: $value');
+      throw StateError('Unexpected pull horizon result: $value');
     });
   }
 
